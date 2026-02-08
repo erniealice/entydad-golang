@@ -1,0 +1,63 @@
+{{/*
+User drawer form — loaded into #sheetContent via HTMX.
+Used by both Add and Edit actions.
+Data: .FirstName, .LastName, .Email, .Mobile, .Active, .ID, .FormAction, .IsEdit, .CommonLabels
+*/}}
+{{define "user-drawer-form"}}
+<form hx-post="{{.FormAction}}" hx-swap="none" hx-on::after-request="Sheet.handleResponse(event)">
+    {{if .ID}}<input type="hidden" name="id" value="{{.ID}}">{{end}}
+
+    <div class="sheet-body">
+        <div class="form-row">
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "first_name"
+                "Label" .Labels.FirstName
+                "Value" .FirstName
+                "Required" true
+                "Placeholder" .Labels.FirstNamePlaceholder
+            )}}
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "last_name"
+                "Label" .Labels.LastName
+                "Value" .LastName
+                "Required" true
+                "Placeholder" .Labels.LastNamePlaceholder
+            )}}
+        </div>
+
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "email"
+                "Name" "email_address"
+                "Label" .Labels.Email
+                "Value" .Email
+                "Required" true
+                "Placeholder" .Labels.EmailPlaceholder
+            )}}
+        </div>
+
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "tel"
+                "Name" "mobile_number"
+                "Label" .Labels.Mobile
+                "Value" .Mobile
+                "Placeholder" .Labels.MobilePlaceholder
+            )}}
+        </div>
+
+        <div class="form-row single">
+            {{template "toggle" (dict
+                "Name" "active"
+                "Label" .Labels.Active
+                "Checked" .Active
+                "Value" "true"
+            )}}
+        </div>
+    </div>
+
+    {{template "sheet-form-footer" (dict "CommonLabels" .CommonLabels "ShowCancel" true "IsEdit" .IsEdit)}}
+</form>
+{{end}}

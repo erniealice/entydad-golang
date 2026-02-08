@@ -5,16 +5,22 @@ import (
 	"fmt"
 	"log"
 
-	"leapfor.xyz/entydad"
+	pyeza "github.com/erniealice/pyeza-golang"
+	"github.com/erniealice/pyeza-golang/types"
+	"github.com/erniealice/pyeza-golang/view"
 
 	clientpb "leapfor.xyz/esqyma/golang/v1/domain/entity/client"
 
-	"github.com/erniealice/pyeza-golang/types"
+	"leapfor.xyz/entydad"
 )
 
 // Deps holds view dependencies.
 type Deps struct {
 	GetListPageData func(ctx context.Context, req *clientpb.GetClientListPageDataRequest) (*clientpb.GetClientListPageDataResponse, error)
+	RefreshURL      string
+	Labels          entydad.ClientLabels
+	CommonLabels    pyeza.CommonLabels
+	TableLabels     types.TableLabels
 }
 
 // PageData holds the data for the client list page.
@@ -25,8 +31,8 @@ type PageData struct {
 }
 
 // NewView creates the client list view.
-func NewView(deps *Deps) entydad.View {
-	return entydad.ViewFunc(func(ctx context.Context, viewCtx *entydad.ViewContext) entydad.ViewResult {
+func NewView(deps *Deps) view.View {
+	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		status := viewCtx.Request.PathValue("status")
 		if status == "" {
 			status = "active"
@@ -35,61 +41,95 @@ func NewView(deps *Deps) entydad.View {
 		resp, err := deps.GetListPageData(ctx, &clientpb.GetClientListPageDataRequest{})
 		if err != nil {
 			log.Printf("Failed to list clients: %v", err)
-			return entydad.Error(fmt.Errorf("failed to load clients: %w", err))
+			return view.Error(fmt.Errorf("failed to load clients: %w", err))
 		}
 
-		t := viewCtx.T
-		columns := clientColumns(t)
-		rows := buildTableRows(resp.GetClientList(), status, t)
+		l := deps.Labels
+		columns := clientColumns(l)
+		rows := buildTableRows(resp.GetClientList(), status, l)
 		types.ApplyColumnStyles(columns, rows)
+
+		bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
+		bulkCfg.Actions = []types.BulkAction{
+			{
+				Key:            "set-inactive",
+				Label:          l.BulkActions.SetAsInactive,
+				Icon:           "icon-user-minus",
+				Variant:        "warning",
+				Endpoint:       "/action/clients/bulk-delete",
+				ConfirmTitle:   l.BulkActions.SetAsInactive,
+				ConfirmMessage: "Are you sure you want to set {{count}} customer(s) as inactive?",
+			},
+			{
+				Key:            "delete",
+				Label:          deps.CommonLabels.Bulk.Delete,
+				Icon:           "icon-trash-2",
+				Variant:        "danger",
+				Endpoint:       "/action/clients/bulk-delete",
+				ConfirmTitle:   deps.CommonLabels.Bulk.Delete,
+				ConfirmMessage: "Are you sure you want to delete {{count}} customer(s)? This action cannot be undone.",
+			},
+		}
+
+		tableConfig := &types.TableConfig{
+			ID:                   "clients-table",
+			RefreshURL:           deps.RefreshURL,
+			Columns:              columns,
+			Rows:                 rows,
+			ShowSearch:           true,
+			ShowActions:          true,
+			ShowFilters:          true,
+			ShowSort:             true,
+			ShowColumns:          true,
+			ShowExport:           true,
+			ShowDensity:          true,
+			ShowEntries:          true,
+			DefaultSortColumn:    "name",
+			DefaultSortDirection: "asc",
+			Labels:               deps.TableLabels,
+			EmptyState: types.TableEmptyState{
+				Title:   statusEmptyTitle(l, status),
+				Message: statusEmptyMessage(l, status),
+			},
+			PrimaryAction: &types.PrimaryAction{
+				Label:     l.Buttons.AddNew,
+				ActionURL: "/action/clients/add",
+				Icon:      "icon-plus",
+			},
+			BulkActions: &bulkCfg,
+		}
+		types.ApplyTableSettings(tableConfig)
 
 		pageData := &PageData{
 			PageData: types.PageData{
 				CacheVersion:   viewCtx.CacheVersion,
-				Title:          statusPageTitle(t, status),
+				Title:          statusPageTitle(l, status),
 				CurrentPath:    viewCtx.CurrentPath,
 				ActiveNav:      "clients",
 				ActiveSubNav:   status,
-				HeaderTitle:    statusPageTitle(t, status),
-				HeaderSubtitle: statusPageCaption(t, status),
+				HeaderTitle:    statusPageTitle(l, status),
+				HeaderSubtitle: statusPageCaption(l, status),
 				HeaderIcon:     "icon-users",
+				CommonLabels:   deps.CommonLabels,
 			},
 			ContentTemplate: "client-list-content",
-			Table: &types.TableConfig{
-				ID:          "clients-table",
-				Columns:     columns,
-				Rows:        rows,
-				ShowSearch:  true,
-				ShowActions: true,
-				EmptyState: types.TableEmptyState{
-					Title:   statusEmptyTitle(t, status),
-					Message: statusEmptyMessage(t, status),
-				},
-				PrimaryAction: &types.PrimaryAction{
-					Label:     t("client.buttons.addNew"),
-					ActionURL: "/action/clients/add",
-					Icon:      "icon-plus",
-				},
-			},
+			Table:           tableConfig,
 		}
 
-		return entydad.OK("client-list", pageData)
+		return view.OK("client-list", pageData)
 	})
 }
 
-// T is a translation function type (alias for readability).
-type T = func(string) string
-
-func clientColumns(t T) []types.TableColumn {
+func clientColumns(l entydad.ClientLabels) []types.TableColumn {
 	return []types.TableColumn{
-		{Key: "name", Label: t("client.columns.clientName"), Sortable: true},
-		{Key: "email", Label: t("client.form.email"), Sortable: true},
-		{Key: "phone", Label: t("client.form.phone"), Sortable: false},
-		{Key: "status", Label: t("client.detail.companyDetails.status"), Sortable: true, Width: "120px"},
+		{Key: "name", Label: l.Columns.ClientName, Sortable: true},
+		{Key: "email", Label: l.Form.Email, Sortable: true},
+		{Key: "phone", Label: l.Form.Phone, Sortable: false},
+		{Key: "status", Label: l.Detail.CompanyDetails.Status, Sortable: true, Width: "120px"},
 	}
 }
 
-func buildTableRows(clients []*clientpb.Client, status string, t T) []types.TableRow {
+func buildTableRows(clients []*clientpb.Client, status string, l entydad.ClientLabels) []types.TableRow {
 	rows := []types.TableRow{}
 	for _, c := range clients {
 		active := c.GetActive()
@@ -121,64 +161,64 @@ func buildTableRows(clients []*clientpb.Client, status string, t T) []types.Tabl
 				"status": recordStatus,
 			},
 			Actions: []types.TableAction{
-				{Type: "view", Label: t("client.detail.actions.viewClient"), Action: "view", Href: "/app/clients/" + id},
-				{Type: "edit", Label: t("client.detail.actions.editClient"), Action: "edit", URL: "/action/clients/edit/" + id, DrawerTitle: t("client.detail.actions.editClient")},
-				{Type: "delete", Label: t("client.detail.actions.deleteClient"), Action: "delete", URL: "/action/clients/delete", ItemName: name},
+				{Type: "view", Label: l.Detail.Actions.ViewClient, Action: "view", Href: "/app/clients/" + id},
+				{Type: "edit", Label: l.Detail.Actions.EditClient, Action: "edit", URL: "/action/clients/edit/" + id, DrawerTitle: l.Detail.Actions.EditClient},
+				{Type: "delete", Label: l.Detail.Actions.DeleteClient, Action: "delete", URL: "/action/clients/delete", ItemName: name},
 			},
 		})
 	}
 	return rows
 }
 
-func statusPageTitle(t T, status string) string {
+func statusPageTitle(l entydad.ClientLabels, status string) string {
 	switch status {
 	case "active":
-		return t("client.page.headingActive")
+		return l.Page.HeadingActive
 	case "prospect":
-		return t("client.page.headingProspect")
+		return l.Page.HeadingProspect
 	case "inactive":
-		return t("client.page.headingInactive")
+		return l.Page.HeadingInactive
 	default:
-		return t("client.page.heading")
+		return l.Page.Heading
 	}
 }
 
-func statusPageCaption(t T, status string) string {
+func statusPageCaption(l entydad.ClientLabels, status string) string {
 	switch status {
 	case "active":
-		return t("client.page.captionActive")
+		return l.Page.CaptionActive
 	case "prospect":
-		return t("client.page.captionProspect")
+		return l.Page.CaptionProspect
 	case "inactive":
-		return t("client.page.captionInactive")
+		return l.Page.CaptionInactive
 	default:
-		return t("client.page.caption")
+		return l.Page.Caption
 	}
 }
 
-func statusEmptyTitle(t T, status string) string {
+func statusEmptyTitle(l entydad.ClientLabels, status string) string {
 	switch status {
 	case "active":
-		return t("client.empty.activeTitle")
+		return l.Empty.ActiveTitle
 	case "prospect":
-		return t("client.empty.prospectTitle")
+		return l.Empty.ProspectTitle
 	case "inactive":
-		return t("client.empty.inactiveTitle")
+		return l.Empty.InactiveTitle
 	default:
-		return t("client.empty.activeTitle")
+		return l.Empty.ActiveTitle
 	}
 }
 
-func statusEmptyMessage(t T, status string) string {
+func statusEmptyMessage(l entydad.ClientLabels, status string) string {
 	switch status {
 	case "active":
-		return t("client.empty.activeMessage")
+		return l.Empty.ActiveMessage
 	case "prospect":
-		return t("client.empty.prospectMessage")
+		return l.Empty.ProspectMessage
 	case "inactive":
-		return t("client.empty.inactiveMessage")
+		return l.Empty.InactiveMessage
 	default:
-		return t("client.empty.activeMessage")
+		return l.Empty.ActiveMessage
 	}
 }
 
