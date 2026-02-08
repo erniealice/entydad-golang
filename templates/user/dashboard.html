@@ -1,0 +1,109 @@
+{{/* Full page — for direct access / non-HTMX */}}
+{{define "user-dashboard"}}
+{{template "app-shell" .}}
+{{end}}
+
+{{/* Content-only partial — for HTMX navigation */}}
+{{define "user-dashboard-content"}}
+<div class="page-content" data-page-css="/assets/css/dashboard.css?v={{.CacheVersion}}">
+    <!-- Stats Row -->
+    <div class="stats-row">
+        {{template "stat-card" dict "Icon" "icon-shield" "Value" "42" "Label" "Total Users" "Trend" "+3" "TrendUp" true "Color" "terracotta"}}
+        {{template "stat-card" dict "Icon" "icon-user-check" "Value" "38" "Label" "Active" "Trend" "+2" "TrendUp" true "Color" "sage"}}
+        {{template "stat-card" dict "Icon" "icon-user-minus" "Value" "4" "Label" "Inactive" "Trend" "-1" "TrendUp" false "Color" "navy"}}
+        {{template "stat-card" dict "Icon" "icon-shield" "Value" "6" "Label" "Roles" "Trend" "0" "TrendUp" true "Color" "amber"}}
+    </div>
+
+    <!-- Main Grid -->
+    <div class="dashboard-grid">
+        <!-- User Activity Chart -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">User Activity</h2>
+                <div class="card-actions">
+                    <button class="card-btn">Week</button>
+                    <button class="card-btn">Month</button>
+                    <button class="card-btn primary">Year</button>
+                </div>
+            </div>
+            <div class="chart-area">
+                <div class="chart-placeholder">
+                    <div class="chart-line">
+                        <svg viewBox="0 0 400 200" preserveAspectRatio="none">
+                            <defs>
+                                <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#7A9E7A;stop-opacity:0.3" />
+                                    <stop offset="100%" style="stop-color:#7A9E7A;stop-opacity:0" />
+                                </linearGradient>
+                            </defs>
+                            <path d="M0,160 Q50,140 100,120 T200,100 T300,110 T400,60" fill="none" stroke="#7A9E7A" stroke-width="3" stroke-linecap="round"/>
+                            <path d="M0,160 Q50,140 100,120 T200,100 T300,110 T400,60 L400,200 L0,200 Z" fill="url(#chartGradient)"/>
+                        </svg>
+                    </div>
+                    <div class="chart-labels">
+                        <span class="chart-label">Jan</span>
+                        <span class="chart-label">Mar</span>
+                        <span class="chart-label">May</span>
+                        <span class="chart-label">Jul</span>
+                        <span class="chart-label">Sep</span>
+                        <span class="chart-label">Nov</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Recent Activity</h2>
+                <button class="card-btn">View All</button>
+            </div>
+            <div class="activity-list">
+                <div class="activity-item">
+                    <div class="activity-icon client">
+                        {{template "icon-user-plus"}}
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">New User Created</div>
+                        <div class="activity-desc">Maria Santos added as Staff</div>
+                    </div>
+                    <span class="activity-time">15m ago</span>
+                </div>
+
+                <div class="activity-item">
+                    <div class="activity-icon quote">
+                        {{template "icon-shield"}}
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">Role Updated</div>
+                        <div class="activity-desc">Manager role permissions changed</div>
+                    </div>
+                    <span class="activity-time">2h ago</span>
+                </div>
+
+                <div class="activity-item">
+                    <div class="activity-icon award">
+                        {{template "icon-user-check"}}
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">User Activated</div>
+                        <div class="activity-desc">Juan Dela Cruz reactivated</div>
+                    </div>
+                    <span class="activity-time">4h ago</span>
+                </div>
+
+                <div class="activity-item">
+                    <div class="activity-icon integration">
+                        {{template "icon-user-minus"}}
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">User Deactivated</div>
+                        <div class="activity-desc">Test Account set to inactive</div>
+                    </div>
+                    <span class="activity-time">1d ago</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

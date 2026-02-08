@@ -3,12 +3,14 @@ package entydad
 // Default route constants for entydad views.
 // Consumer apps can use these or define their own.
 const (
-	ClientListURL       = "/app/clients/list/{status}"
+	ClientDashboardURL = "/app/clients/dashboard"
+	ClientListURL      = "/app/clients/list/{status}"
 	ClientAddURL        = "/action/clients/add"
 	ClientEditURL       = "/action/clients/edit/{id}"
 	ClientDeleteURL     = "/action/clients/delete"
 	ClientBulkDeleteURL = "/action/clients/bulk-delete"
 
+	UserDashboardURL     = "/app/users/dashboard"
 	UserListURL          = "/app/users/list/{status}"
 	UserTableURL         = "/action/users/table/{status}"
 	UserAddURL           = "/action/users/add"

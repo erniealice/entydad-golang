@@ -1,0 +1,109 @@
+{{/* Full page — for direct access / non-HTMX */}}
+{{define "client-dashboard"}}
+{{template "app-shell" .}}
+{{end}}
+
+{{/* Content-only partial — for HTMX navigation */}}
+{{define "client-dashboard-content"}}
+<div class="page-content" data-page-css="/assets/css/dashboard.css?v={{.CacheVersion}}">
+    <!-- Stats Row -->
+    <div class="stats-row">
+        {{template "stat-card" dict "Icon" "icon-users" "Value" "248" "Label" "Total Clients" "Trend" "+12%" "TrendUp" true "Color" "terracotta"}}
+        {{template "stat-card" dict "Icon" "icon-user-check" "Value" "210" "Label" "Active" "Trend" "+8%" "TrendUp" true "Color" "sage"}}
+        {{template "stat-card" dict "Icon" "icon-user-minus" "Value" "38" "Label" "Inactive" "Trend" "-3%" "TrendUp" false "Color" "navy"}}
+        {{template "stat-card" dict "Icon" "icon-user-plus" "Value" "24" "Label" "New This Month" "Trend" "+5" "TrendUp" true "Color" "amber"}}
+    </div>
+
+    <!-- Main Grid -->
+    <div class="dashboard-grid">
+        <!-- Growth Chart -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Client Growth</h2>
+                <div class="card-actions">
+                    <button class="card-btn">Week</button>
+                    <button class="card-btn">Month</button>
+                    <button class="card-btn primary">Year</button>
+                </div>
+            </div>
+            <div class="chart-area">
+                <div class="chart-placeholder">
+                    <div class="chart-line">
+                        <svg viewBox="0 0 400 200" preserveAspectRatio="none">
+                            <defs>
+                                <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#C4654A;stop-opacity:0.3" />
+                                    <stop offset="100%" style="stop-color:#C4654A;stop-opacity:0" />
+                                </linearGradient>
+                            </defs>
+                            <path d="M0,180 Q50,160 100,150 T200,120 T300,80 T400,40" fill="none" stroke="#C4654A" stroke-width="3" stroke-linecap="round"/>
+                            <path d="M0,180 Q50,160 100,150 T200,120 T300,80 T400,40 L400,200 L0,200 Z" fill="url(#chartGradient)"/>
+                        </svg>
+                    </div>
+                    <div class="chart-labels">
+                        <span class="chart-label">Jan</span>
+                        <span class="chart-label">Mar</span>
+                        <span class="chart-label">May</span>
+                        <span class="chart-label">Jul</span>
+                        <span class="chart-label">Sep</span>
+                        <span class="chart-label">Nov</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Recent Activity</h2>
+                <button class="card-btn">View All</button>
+            </div>
+            <div class="activity-list">
+                <div class="activity-item">
+                    <div class="activity-icon client">
+                        {{template "icon-user-plus"}}
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">New Client Added</div>
+                        <div class="activity-desc">Acme Corporation joined</div>
+                    </div>
+                    <span class="activity-time">2m ago</span>
+                </div>
+
+                <div class="activity-item">
+                    <div class="activity-icon quote">
+                        {{template "icon-check-circle"}}
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">Client Activated</div>
+                        <div class="activity-desc">TechCorp Inc. set to active</div>
+                    </div>
+                    <span class="activity-time">1h ago</span>
+                </div>
+
+                <div class="activity-item">
+                    <div class="activity-icon award">
+                        {{template "icon-edit"}}
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">Profile Updated</div>
+                        <div class="activity-desc">Global Solutions details changed</div>
+                    </div>
+                    <span class="activity-time">3h ago</span>
+                </div>
+
+                <div class="activity-item">
+                    <div class="activity-icon integration">
+                        {{template "icon-tag"}}
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">Tag Assigned</div>
+                        <div class="activity-desc">VIP tag added to 5 clients</div>
+                    </div>
+                    <span class="activity-time">5h ago</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}
