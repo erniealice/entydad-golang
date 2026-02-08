@@ -9,9 +9,9 @@ import (
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
 
-	clientpb "leapfor.xyz/esqyma/golang/v1/domain/entity/client"
+	clientpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client"
 
-	"leapfor.xyz/entydad"
+	"github.com/erniealice/entydad-golang"
 )
 
 // Deps holds view dependencies.

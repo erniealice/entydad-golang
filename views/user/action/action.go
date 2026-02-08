@@ -7,9 +7,9 @@ import (
 
 	"github.com/erniealice/pyeza-golang/view"
 
-	userpb "leapfor.xyz/esqyma/golang/v1/domain/entity/user"
+	userpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/user"
 
-	"leapfor.xyz/entydad"
+	"github.com/erniealice/entydad-golang"
 )
 
 // FormLabels holds i18n labels for the drawer form template.
@@ -41,10 +41,11 @@ type FormData struct {
 
 // Deps holds dependencies for user action handlers.
 type Deps struct {
-	CreateUser func(ctx context.Context, req *userpb.CreateUserRequest) (*userpb.CreateUserResponse, error)
-	ReadUser   func(ctx context.Context, req *userpb.ReadUserRequest) (*userpb.ReadUserResponse, error)
-	UpdateUser func(ctx context.Context, req *userpb.UpdateUserRequest) (*userpb.UpdateUserResponse, error)
-	DeleteUser func(ctx context.Context, req *userpb.DeleteUserRequest) (*userpb.DeleteUserResponse, error)
+	CreateUser    func(ctx context.Context, req *userpb.CreateUserRequest) (*userpb.CreateUserResponse, error)
+	ReadUser      func(ctx context.Context, req *userpb.ReadUserRequest) (*userpb.ReadUserResponse, error)
+	UpdateUser    func(ctx context.Context, req *userpb.UpdateUserRequest) (*userpb.UpdateUserResponse, error)
+	DeleteUser    func(ctx context.Context, req *userpb.DeleteUserRequest) (*userpb.DeleteUserResponse, error)
+	SetUserActive func(ctx context.Context, id string, active bool) error
 }
 
 func formLabels(t func(string) string) FormLabels {
@@ -207,6 +208,10 @@ func NewBulkDeleteAction(deps *Deps) view.View {
 
 // NewSetStatusAction creates the user activate/deactivate action (POST only).
 // Expects query params: ?id={userId}&status={active|inactive}
+//
+// Uses SetUserActive (raw map update) instead of UpdateUser (protobuf) because
+// proto3's protojson omits bool fields with value false, which means
+// deactivation (active=false) would silently be skipped.
 func NewSetStatusAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		id := viewCtx.Request.URL.Query().Get("id")
@@ -224,25 +229,7 @@ func NewSetStatusAction(deps *Deps) view.View {
 			return entydad.HTMXError("Invalid status")
 		}
 
-		resp, err := deps.ReadUser(ctx, &userpb.ReadUserRequest{
-			Data: &userpb.User{Id: id},
-		})
-		if err != nil {
-			log.Printf("Failed to read user %s: %v", id, err)
-			return entydad.HTMXError("User not found")
-		}
-
-		data := resp.GetData()
-		if len(data) == 0 {
-			return entydad.HTMXError("User not found")
-		}
-
-		u := data[0]
-		u.Active = targetStatus == "active"
-		clearTimestamps(u)
-
-		_, err = deps.UpdateUser(ctx, &userpb.UpdateUserRequest{Data: u})
-		if err != nil {
+		if err := deps.SetUserActive(ctx, id, targetStatus == "active"); err != nil {
 			log.Printf("Failed to update user status %s: %v", id, err)
 			return entydad.HTMXError("Failed to update user status")
 		}
@@ -270,39 +257,11 @@ func NewBulkSetStatusAction(deps *Deps) view.View {
 		active := targetStatus == "active"
 
 		for _, id := range ids {
-			resp, err := deps.ReadUser(ctx, &userpb.ReadUserRequest{
-				Data: &userpb.User{Id: id},
-			})
-			if err != nil {
-				log.Printf("Failed to read user %s for status update: %v", id, err)
-				continue
-			}
-
-			data := resp.GetData()
-			if len(data) == 0 {
-				log.Printf("User %s not found for status update", id)
-				continue
-			}
-
-			u := data[0]
-			u.Active = active
-			clearTimestamps(u)
-
-			_, err = deps.UpdateUser(ctx, &userpb.UpdateUserRequest{Data: u})
-			if err != nil {
+			if err := deps.SetUserActive(ctx, id, active); err != nil {
 				log.Printf("Failed to update user status %s: %v", id, err)
 			}
 		}
 
 		return entydad.HTMXSuccess("users-table")
 	})
-}
-
-// clearTimestamps nils out date fields to prevent the Postgres adapter from
-// writing millis back into timestamp columns (which triggers "out of range" errors).
-func clearTimestamps(u *userpb.User) {
-	u.DateCreated = nil
-	u.DateCreatedString = nil
-	u.DateModified = nil
-	u.DateModifiedString = nil
 }

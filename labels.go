@@ -127,6 +127,125 @@ type UserActionLabels struct {
 }
 
 // ---------------------------------------------------------------------------
+// Location labels
+// ---------------------------------------------------------------------------
+
+// LocationLabels holds all translatable strings for the location module.
+// JSON tags match the "location" wrapper key in retail/location.json.
+type LocationLabels struct {
+	Page    LocationPageLabels    `json:"page"`
+	Buttons LocationButtonLabels  `json:"buttons"`
+	Columns LocationColumnLabels  `json:"columns"`
+	Empty   LocationEmptyLabels   `json:"empty"`
+	Form    LocationFormLabels    `json:"form"`
+	Actions LocationActionLabels  `json:"actions"`
+}
+
+type LocationPageLabels struct {
+	Heading         string `json:"heading"`
+	HeadingActive   string `json:"headingActive"`
+	HeadingInactive string `json:"headingInactive"`
+	Caption         string `json:"caption"`
+	CaptionActive   string `json:"captionActive"`
+	CaptionInactive string `json:"captionInactive"`
+}
+
+type LocationButtonLabels struct {
+	AddLocation string `json:"addLocation"`
+}
+
+type LocationColumnLabels struct {
+	Name    string `json:"name"`
+	Address string `json:"address"`
+	Status  string `json:"status"`
+}
+
+type LocationEmptyLabels struct {
+	ActiveTitle     string `json:"activeTitle"`
+	ActiveMessage   string `json:"activeMessage"`
+	InactiveTitle   string `json:"inactiveTitle"`
+	InactiveMessage string `json:"inactiveMessage"`
+}
+
+type LocationFormLabels struct {
+	Name                   string `json:"name"`
+	NamePlaceholder        string `json:"namePlaceholder"`
+	Address                string `json:"address"`
+	AddressPlaceholder     string `json:"addressPlaceholder"`
+	Description            string `json:"description"`
+	DescriptionPlaceholder string `json:"descriptionPlaceholder"`
+	Active                 string `json:"active"`
+}
+
+type LocationActionLabels struct {
+	View       string `json:"view"`
+	Edit       string `json:"edit"`
+	Delete     string `json:"delete"`
+	Activate   string `json:"activate"`
+	Deactivate string `json:"deactivate"`
+}
+
+// ---------------------------------------------------------------------------
+// Role labels
+// ---------------------------------------------------------------------------
+
+// RoleLabels holds all translatable strings for the role module.
+// JSON tags match the "role" wrapper key in retail/role.json.
+type RoleLabels struct {
+	Page    RolePageLabels    `json:"page"`
+	Buttons RoleButtonLabels  `json:"buttons"`
+	Columns RoleColumnLabels  `json:"columns"`
+	Empty   RoleEmptyLabels   `json:"empty"`
+	Form    RoleFormLabels    `json:"form"`
+	Actions RoleActionLabels  `json:"actions"`
+}
+
+type RolePageLabels struct {
+	Heading         string `json:"heading"`
+	HeadingActive   string `json:"headingActive"`
+	HeadingInactive string `json:"headingInactive"`
+	Caption         string `json:"caption"`
+	CaptionActive   string `json:"captionActive"`
+	CaptionInactive string `json:"captionInactive"`
+}
+
+type RoleButtonLabels struct {
+	AddRole string `json:"addRole"`
+}
+
+type RoleColumnLabels struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Color       string `json:"color"`
+	Status      string `json:"status"`
+}
+
+type RoleEmptyLabels struct {
+	ActiveTitle     string `json:"activeTitle"`
+	ActiveMessage   string `json:"activeMessage"`
+	InactiveTitle   string `json:"inactiveTitle"`
+	InactiveMessage string `json:"inactiveMessage"`
+}
+
+type RoleFormLabels struct {
+	Name                   string `json:"name"`
+	NamePlaceholder        string `json:"namePlaceholder"`
+	Description            string `json:"description"`
+	DescriptionPlaceholder string `json:"descriptionPlaceholder"`
+	Color                  string `json:"color"`
+	ColorPlaceholder       string `json:"colorPlaceholder"`
+	Active                 string `json:"active"`
+}
+
+type RoleActionLabels struct {
+	View       string `json:"view"`
+	Edit       string `json:"edit"`
+	Delete     string `json:"delete"`
+	Activate   string `json:"activate"`
+	Deactivate string `json:"deactivate"`
+}
+
+// ---------------------------------------------------------------------------
 // Mapping helpers
 // ---------------------------------------------------------------------------
 

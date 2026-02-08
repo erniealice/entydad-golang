@@ -15,6 +15,8 @@ func TemplatePatterns() []string {
 	return []string{
 		filepath.Join(dir, "templates", "client", "*.html"),
 		filepath.Join(dir, "templates", "user", "*.html"),
+		filepath.Join(dir, "templates", "location", "*.html"),
+		filepath.Join(dir, "templates", "role", "*.html"),
 	}
 }
 

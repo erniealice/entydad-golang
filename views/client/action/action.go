@@ -7,10 +7,10 @@ import (
 
 	"github.com/erniealice/pyeza-golang/view"
 
-	clientpb "leapfor.xyz/esqyma/golang/v1/domain/entity/client"
-	userpb "leapfor.xyz/esqyma/golang/v1/domain/entity/user"
+	clientpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client"
+	userpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/user"
 
-	"leapfor.xyz/entydad"
+	"github.com/erniealice/entydad-golang"
 )
 
 // FormLabels holds i18n labels for the drawer form template.

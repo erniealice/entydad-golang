@@ -9,28 +9,28 @@ import (
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
 
-	userpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/user"
+	locationpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/location"
 
 	"github.com/erniealice/entydad-golang"
 )
 
 // Deps holds view dependencies.
 type Deps struct {
-	GetListPageData func(ctx context.Context, req *userpb.GetUserListPageDataRequest) (*userpb.GetUserListPageDataResponse, error)
+	GetListPageData func(ctx context.Context, req *locationpb.GetLocationListPageDataRequest) (*locationpb.GetLocationListPageDataResponse, error)
 	RefreshURL      string
-	Labels          entydad.UserLabels
+	Labels          entydad.LocationLabels
 	CommonLabels    pyeza.CommonLabels
 	TableLabels     types.TableLabels
 }
 
-// PageData holds the data for the user list page.
+// PageData holds the data for the location list page.
 type PageData struct {
 	types.PageData
 	ContentTemplate string
 	Table           *types.TableConfig
 }
 
-// NewView creates the user list view (full page).
+// NewView creates the location list view (full page).
 func NewView(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		status := viewCtx.Request.PathValue("status")
@@ -48,18 +48,18 @@ func NewView(deps *Deps) view.View {
 				CacheVersion:   viewCtx.CacheVersion,
 				Title:          statusTitle(deps.Labels, status),
 				CurrentPath:    viewCtx.CurrentPath,
-				ActiveNav:      "users",
-				ActiveSubNav:   "users-" + status,
+				ActiveNav:      "admin",
+				ActiveSubNav:   "locations-" + status,
 				HeaderTitle:    statusTitle(deps.Labels, status),
 				HeaderSubtitle: statusSubtitle(deps.Labels, status),
-				HeaderIcon:     "icon-users",
+				HeaderIcon:     "icon-map-pin",
 				CommonLabels:   deps.CommonLabels,
 			},
-			ContentTemplate: "user-list-content",
+			ContentTemplate: "location-list-content",
 			Table:           tableConfig,
 		}
 
-		return view.OK("user-list", pageData)
+		return view.OK("location-list", pageData)
 	})
 }
 
@@ -82,26 +82,26 @@ func NewTableView(deps *Deps) view.View {
 	})
 }
 
-// buildTableConfig fetches user data and builds the table configuration.
+// buildTableConfig fetches location data and builds the table configuration.
 func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.TableConfig, error) {
-	resp, err := deps.GetListPageData(ctx, &userpb.GetUserListPageDataRequest{})
+	resp, err := deps.GetListPageData(ctx, &locationpb.GetLocationListPageDataRequest{})
 	if err != nil {
-		log.Printf("Failed to list users: %v", err)
-		return nil, fmt.Errorf("failed to load users: %w", err)
+		log.Printf("Failed to list locations: %v", err)
+		return nil, fmt.Errorf("failed to load locations: %w", err)
 	}
 
 	l := deps.Labels
-	columns := userColumns(l)
-	rows := buildTableRows(resp.GetUserList(), status, l)
+	columns := locationColumns(l)
+	rows := buildTableRows(resp.GetLocationList(), status, l)
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
 	bulkCfg.Actions = buildBulkActions(l, deps.CommonLabels, status)
 
-	refreshURL := fmt.Sprintf("/action/users/table/%s", status)
+	refreshURL := fmt.Sprintf("/action/locations/table/%s", status)
 
 	tableConfig := &types.TableConfig{
-		ID:                   "users-table",
+		ID:                   "locations-table",
 		RefreshURL:           refreshURL,
 		Columns:              columns,
 		Rows:                 rows,
@@ -121,8 +121,8 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 			Message: statusEmptyMessage(l, status),
 		},
 		PrimaryAction: &types.PrimaryAction{
-			Label:     l.Buttons.AddUser,
-			ActionURL: "/action/users/add",
+			Label:     l.Buttons.AddLocation,
+			ActionURL: "/action/locations/add",
 			Icon:      "icon-plus",
 		},
 		BulkActions: &bulkCfg,
@@ -132,19 +132,18 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 	return tableConfig, nil
 }
 
-func userColumns(l entydad.UserLabels) []types.TableColumn {
+func locationColumns(l entydad.LocationLabels) []types.TableColumn {
 	return []types.TableColumn{
 		{Key: "name", Label: l.Columns.Name, Sortable: true},
-		{Key: "email", Label: l.Columns.Email, Sortable: true},
-		{Key: "mobile", Label: l.Form.Mobile, Sortable: true, Width: "150px"},
+		{Key: "address", Label: l.Columns.Address, Sortable: true},
 		{Key: "status", Label: l.Columns.Status, Sortable: true, Width: "120px"},
 	}
 }
 
-func buildTableRows(users []*userpb.User, status string, l entydad.UserLabels) []types.TableRow {
+func buildTableRows(locations []*locationpb.Location, status string, l entydad.LocationLabels) []types.TableRow {
 	rows := []types.TableRow{}
-	for _, u := range users {
-		active := u.GetActive()
+	for _, loc := range locations {
+		active := loc.GetActive()
 		recordStatus := "active"
 		if !active {
 			recordStatus = "inactive"
@@ -153,48 +152,45 @@ func buildTableRows(users []*userpb.User, status string, l entydad.UserLabels) [
 			continue
 		}
 
-		id := u.GetId()
-		name := u.GetFirstName() + " " + u.GetLastName()
-		email := u.GetEmailAddress()
-		mobile := u.GetMobileNumber()
+		id := loc.GetId()
+		name := loc.GetName()
+		address := loc.GetAddress()
 
 		actions := []types.TableAction{
-			{Type: "view", Label: l.Actions.View, Action: "view", Href: "/app/users/" + id},
-			{Type: "edit", Label: l.Actions.Edit, Action: "edit", URL: "/action/users/edit/" + id, DrawerTitle: l.Actions.Edit},
+			{Type: "view", Label: l.Actions.View, Action: "view", Href: "/app/locations/" + id},
+			{Type: "edit", Label: l.Actions.Edit, Action: "edit", URL: "/action/locations/edit/" + id, DrawerTitle: l.Actions.Edit},
 		}
 		if active {
 			actions = append(actions, types.TableAction{
 				Type: "deactivate", Label: l.Actions.Deactivate, Action: "deactivate",
-				URL: "/action/users/set-status?status=inactive", ItemName: name,
+				URL: "/action/locations/set-status?status=inactive", ItemName: name,
 				ConfirmTitle:   l.Actions.Deactivate,
 				ConfirmMessage: fmt.Sprintf("Are you sure you want to deactivate %s?", name),
 			})
 		} else {
 			actions = append(actions, types.TableAction{
 				Type: "activate", Label: l.Actions.Activate, Action: "activate",
-				URL: "/action/users/set-status?status=active", ItemName: name,
+				URL: "/action/locations/set-status?status=active", ItemName: name,
 				ConfirmTitle:   l.Actions.Activate,
 				ConfirmMessage: fmt.Sprintf("Are you sure you want to activate %s?", name),
 			})
 		}
 		actions = append(actions, types.TableAction{
 			Type: "delete", Label: l.Actions.Delete, Action: "delete",
-			URL: "/action/users/delete", ItemName: name,
+			URL: "/action/locations/delete", ItemName: name,
 		})
 
 		rows = append(rows, types.TableRow{
 			ID: id,
 			Cells: []types.TableCell{
 				{Type: "text", Value: name},
-				{Type: "text", Value: email},
-				{Type: "text", Value: mobile},
+				{Type: "text", Value: address},
 				{Type: "badge", Value: recordStatus, Variant: statusVariant(recordStatus)},
 			},
 			DataAttrs: map[string]string{
-				"name":   name,
-				"email":  email,
-				"mobile": mobile,
-				"status": recordStatus,
+				"name":    name,
+				"address": address,
+				"status":  recordStatus,
 			},
 			Actions: actions,
 		})
@@ -202,7 +198,7 @@ func buildTableRows(users []*userpb.User, status string, l entydad.UserLabels) [
 	return rows
 }
 
-func statusTitle(l entydad.UserLabels, status string) string {
+func statusTitle(l entydad.LocationLabels, status string) string {
 	switch status {
 	case "active":
 		return l.Page.HeadingActive
@@ -213,7 +209,7 @@ func statusTitle(l entydad.UserLabels, status string) string {
 	}
 }
 
-func statusSubtitle(l entydad.UserLabels, status string) string {
+func statusSubtitle(l entydad.LocationLabels, status string) string {
 	switch status {
 	case "active":
 		return l.Page.CaptionActive
@@ -224,7 +220,7 @@ func statusSubtitle(l entydad.UserLabels, status string) string {
 	}
 }
 
-func statusEmptyTitle(l entydad.UserLabels, status string) string {
+func statusEmptyTitle(l entydad.LocationLabels, status string) string {
 	switch status {
 	case "active":
 		return l.Empty.ActiveTitle
@@ -235,7 +231,7 @@ func statusEmptyTitle(l entydad.UserLabels, status string) string {
 	}
 }
 
-func statusEmptyMessage(l entydad.UserLabels, status string) string {
+func statusEmptyMessage(l entydad.LocationLabels, status string) string {
 	switch status {
 	case "active":
 		return l.Empty.ActiveMessage
@@ -257,7 +253,7 @@ func statusVariant(status string) string {
 	}
 }
 
-func buildBulkActions(l entydad.UserLabels, common pyeza.CommonLabels, status string) []types.BulkAction {
+func buildBulkActions(l entydad.LocationLabels, common pyeza.CommonLabels, status string) []types.BulkAction {
 	actions := []types.BulkAction{}
 
 	switch status {
@@ -265,22 +261,22 @@ func buildBulkActions(l entydad.UserLabels, common pyeza.CommonLabels, status st
 		actions = append(actions, types.BulkAction{
 			Key:             "deactivate",
 			Label:           l.Actions.Deactivate,
-			Icon:            "icon-user-minus",
+			Icon:            "icon-map-pin-off",
 			Variant:         "warning",
-			Endpoint:        "/action/users/bulk-set-status",
+			Endpoint:        "/action/locations/bulk-set-status",
 			ConfirmTitle:    l.Actions.Deactivate,
-			ConfirmMessage:  "Are you sure you want to deactivate {{count}} user(s)?",
+			ConfirmMessage:  "Are you sure you want to deactivate {{count}} location(s)?",
 			ExtraParamsJSON: `{"target_status":"inactive"}`,
 		})
 	case "inactive":
 		actions = append(actions, types.BulkAction{
 			Key:             "activate",
 			Label:           l.Actions.Activate,
-			Icon:            "icon-user-check",
+			Icon:            "icon-map-pin",
 			Variant:         "primary",
-			Endpoint:        "/action/users/bulk-set-status",
+			Endpoint:        "/action/locations/bulk-set-status",
 			ConfirmTitle:    l.Actions.Activate,
-			ConfirmMessage:  "Are you sure you want to activate {{count}} user(s)?",
+			ConfirmMessage:  "Are you sure you want to activate {{count}} location(s)?",
 			ExtraParamsJSON: `{"target_status":"active"}`,
 		})
 	}
@@ -290,9 +286,9 @@ func buildBulkActions(l entydad.UserLabels, common pyeza.CommonLabels, status st
 		Label:          common.Bulk.Delete,
 		Icon:           "icon-trash-2",
 		Variant:        "danger",
-		Endpoint:       "/action/users/bulk-delete",
+		Endpoint:       "/action/locations/bulk-delete",
 		ConfirmTitle:   common.Bulk.Delete,
-		ConfirmMessage: "Are you sure you want to delete {{count}} user(s)? This action cannot be undone.",
+		ConfirmMessage: "Are you sure you want to delete {{count}} location(s)? This action cannot be undone.",
 	})
 
 	return actions
