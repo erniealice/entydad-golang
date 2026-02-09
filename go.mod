@@ -13,3 +13,5 @@ replace github.com/erniealice/esqyma => ../esqyma-ryta
 replace github.com/erniealice/lyngua => ../lyngua-ryta
 
 replace leapfor.xyz/vya => ../../../master-monorepo-v2/packages/vya
+
+replace github.com/erniealice/pyeza-golang => ../pyeza-golang-ryta

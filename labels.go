@@ -458,6 +458,38 @@ type WorkspaceActionLabels struct {
 }
 
 // ---------------------------------------------------------------------------
+// Login labels
+// ---------------------------------------------------------------------------
+
+// LoginLabels holds i18n strings for the login page.
+type LoginLabels struct {
+	Title      string `json:"title"`
+	Email      string `json:"email"`
+	Password   string `json:"password"`
+	Submit     string `json:"submit"`
+	ForgotLink string `json:"forgotLink"`
+	Error      string `json:"error"`
+}
+
+// Login02Labels holds i18n strings for the login02 split-screen page.
+type Login02Labels struct {
+	Title               string `json:"title"`
+	Heading             string `json:"heading"`
+	Subheading          string `json:"subheading"`
+	EmailLabel          string `json:"emailLabel"`
+	EmailPlaceholder    string `json:"emailPlaceholder"`
+	PasswordLabel       string `json:"passwordLabel"`
+	PasswordPlaceholder string `json:"passwordPlaceholder"`
+	RememberMe          string `json:"rememberMe"`
+	ForgotPassword      string `json:"forgotPassword"`
+	SignInButton        string `json:"signInButton"`
+	NoAccount           string `json:"noAccount"`
+	SignUpLink          string `json:"signUpLink"`
+	SocialDivider       string `json:"socialDivider"`
+	Error               string `json:"error"`
+}
+
+// ---------------------------------------------------------------------------
 // Shared types
 // ---------------------------------------------------------------------------
 

@@ -1,0 +1,185 @@
+{{define "login02"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Labels.Title}}</title>
+    {{template "fonts"}}
+    <link rel="stylesheet" href="/assets/css/app/main.css?v={{.CacheVersion}}">
+    <link rel="stylesheet" href="/assets/css/components/carousel.css?v={{.CacheVersion}}">
+    <link rel="stylesheet" href="/assets/css/login02.css?v={{.CacheVersion}}">
+</head>
+<body>
+    {{template "login02-content" .}}
+
+    <!-- Carousel JavaScript -->
+    <script>
+        (function() {
+            const carousel = document.getElementById('authCarousel');
+            if (!carousel) return;
+            const slides = carousel.querySelectorAll('.carousel-slide');
+            const indicators = carousel.querySelectorAll('.carousel-indicator');
+            const prevBtn = document.getElementById('carouselPrev');
+            const nextBtn = document.getElementById('carouselNext');
+            let currentSlide = 0;
+            let autoPlayInterval;
+
+            function showSlide(index) {
+                if (index >= slides.length) index = 0;
+                if (index < 0) index = slides.length - 1;
+                slides.forEach(function(slide, i) {
+                    slide.classList.toggle('active', i === index);
+                });
+                indicators.forEach(function(indicator, i) {
+                    indicator.classList.toggle('active', i === index);
+                });
+                currentSlide = index;
+            }
+
+            function nextSlide() { showSlide(currentSlide + 1); }
+            function prevSlide() { showSlide(currentSlide - 1); }
+
+            if (nextBtn) nextBtn.addEventListener('click', function() { nextSlide(); resetAutoPlay(); });
+            if (prevBtn) prevBtn.addEventListener('click', function() { prevSlide(); resetAutoPlay(); });
+
+            indicators.forEach(function(indicator, index) {
+                indicator.addEventListener('click', function() { showSlide(index); resetAutoPlay(); });
+            });
+
+            function startAutoPlay() { autoPlayInterval = setInterval(nextSlide, 5000); }
+            function resetAutoPlay() { clearInterval(autoPlayInterval); startAutoPlay(); }
+
+            startAutoPlay();
+            carousel.addEventListener('mouseenter', function() { clearInterval(autoPlayInterval); });
+            carousel.addEventListener('mouseleave', function() { startAutoPlay(); });
+        })();
+    </script>
+</body>
+</html>
+{{end}}
+
+{{define "login02-content"}}
+<div class="auth-page">
+    <div class="auth-split">
+        <!-- Left Side - Carousel -->
+        {{if .Slides}}
+        <div class="auth-carousel-section">
+            <div class="carousel" id="authCarousel">
+                <div class="carousel-slides">
+                    {{range $i, $slide := .Slides}}
+                    <div class="carousel-slide{{if eq $i 0}} active{{end}}">
+                        <div class="carousel-slide-content">
+                            <h2 class="carousel-slide-title">{{$slide.Title}}</h2>
+                            <p class="carousel-slide-description">{{$slide.Description}}</p>
+                        </div>
+                    </div>
+                    {{end}}
+                </div>
+
+                <!-- Carousel Navigation -->
+                <button class="carousel-nav prev" id="carouselPrev" aria-label="Previous slide">
+                    {{template "icon-chevron-left"}}
+                </button>
+                <button class="carousel-nav next" id="carouselNext" aria-label="Next slide">
+                    {{template "icon-chevron-right"}}
+                </button>
+
+                <!-- Carousel Indicators -->
+                <div class="carousel-indicators">
+                    {{range $i, $slide := .Slides}}
+                    <button class="carousel-indicator{{if eq $i 0}} active{{end}}" data-slide="{{$i}}" aria-label="Go to slide {{add $i 1}}"></button>
+                    {{end}}
+                </div>
+            </div>
+        </div>
+        {{end}}
+
+        <!-- Right Side - Login Form -->
+        <div class="auth-form-section">
+            <div class="auth-form-container">
+                <!-- Logo -->
+                {{if .LogoText}}
+                <a href="/" class="auth-logo">
+                    {{if .LogoIcon}}
+                    <div class="auth-logo-mark">
+                        {{renderContent .LogoIcon .}}
+                    </div>
+                    {{end}}
+                    <span class="auth-logo-text">{{.LogoText}}</span>
+                </a>
+                {{end}}
+
+                <!-- Heading -->
+                <h1 class="auth-heading">{{.Labels.Heading}}</h1>
+                <p class="auth-subheading">{{.Labels.Subheading}}</p>
+
+                <!-- Login Form -->
+                <form class="auth-form" action="{{.LoginPostURL}}" method="POST">
+                    <div class="auth-form-group">
+                        <label class="auth-form-label" for="email">{{.Labels.EmailLabel}}</label>
+                        <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            class="auth-form-input"
+                            placeholder="{{.Labels.EmailPlaceholder}}"
+                            required
+                            autocomplete="email"
+                        >
+                        <span class="auth-form-error" id="emailError"></span>
+                    </div>
+
+                    <div class="auth-form-group">
+                        <label class="auth-form-label" for="password">{{.Labels.PasswordLabel}}</label>
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            class="auth-form-input"
+                            placeholder="{{.Labels.PasswordPlaceholder}}"
+                            required
+                            autocomplete="current-password"
+                        >
+                        <span class="auth-form-error" id="passwordError"></span>
+                    </div>
+
+                    <div class="auth-form-row">
+                        <div class="auth-form-checkbox">
+                            <input type="checkbox" id="remember" name="remember">
+                            <label for="remember">{{.Labels.RememberMe}}</label>
+                        </div>
+                        <a href="{{.ForgotURL}}" class="auth-form-link">{{.Labels.ForgotPassword}}</a>
+                    </div>
+
+                    <button type="submit" class="auth-button">{{.Labels.SignInButton}}</button>
+                </form>
+
+                {{if .SocialProviders}}
+                <div class="auth-form-divider">
+                    <span>{{.Labels.SocialDivider}}</span>
+                </div>
+
+                <!-- Social Login Buttons -->
+                <div class="auth-social-buttons">
+                    {{range .SocialProviders}}
+                    <button type="button" class="auth-social-button">
+                        {{.IconSVG}}
+                        Continue with {{.Name}}
+                    </button>
+                    {{end}}
+                </div>
+                {{end}}
+
+                <!-- Footer -->
+                {{if .Labels.NoAccount}}
+                <div class="auth-form-footer">
+                    <span>{{.Labels.NoAccount}}</span>
+                    <a href="{{.RegisterURL}}" class="auth-form-link">{{.Labels.SignUpLink}}</a>
+                </div>
+                {{end}}
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

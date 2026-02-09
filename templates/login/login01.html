@@ -1,0 +1,57 @@
+{{define "login01"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Labels.Title}}</title>
+    {{template "fonts"}}
+    <link rel="stylesheet" href="/assets/css/login01.css?v={{.CacheVersion}}">
+</head>
+<body>
+    {{template "login01-content" .}}
+</body>
+</html>
+{{end}}
+
+{{define "login01-content"}}
+<div class="login-page">
+    <div class="login-header">
+        <h1 class="login-title">{{.Labels.Title}}</h1>
+    </div>
+    <div class="login-cards">
+        <div class="login-card">
+            <div class="login-card-icon">
+                {{template "icon-shield" .}}
+            </div>
+            <h2 class="login-card-title">Admin / Owner</h2>
+            <p class="login-card-description">Sign in with your admin credentials</p>
+            <form class="login-form" method="POST" action="/login">
+                <div class="login-field">
+                    <label for="email">{{.Labels.Email}}</label>
+                    <input type="email" id="email" name="email" placeholder="you@example.com" required>
+                </div>
+                <div class="login-field">
+                    <label for="password">{{.Labels.Password}}</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="login-submit">{{.Labels.Submit}}</button>
+                <a href="#" class="login-forgot">{{.Labels.ForgotLink}}</a>
+            </form>
+        </div>
+        <div class="login-card">
+            <div class="login-card-icon">
+                {{template "icon-users" .}}
+            </div>
+            <h2 class="login-card-title">Branch Staff</h2>
+            <p class="login-card-description">Sign in with your staff PIN</p>
+            <div class="login-pin-placeholder">
+                <div class="login-card-icon login-card-icon--lock">
+                    {{template "icon-lock" .}}
+                </div>
+                <p>PIN entry coming soon</p>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

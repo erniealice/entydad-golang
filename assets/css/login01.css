@@ -1,0 +1,234 @@
+/*
+ * ==========================================================================
+ * LOGIN01 STYLES
+ * ==========================================================================
+ * Login page with dual cards for Admin/Owner and Branch Staff.
+ * Part of the entydad identity/entity management package.
+ * ==========================================================================
+ */
+
+/* --- CSS Variables --- */
+:root {
+    /* Colors */
+    --text-primary: #1f2937;
+    --text-secondary: #6b7280;
+    --text-muted: #9ca3af;
+    --text-inverse: #ffffff;
+
+    --bg-card: #ffffff;
+    --bg-page: #f9fafb;
+
+    --border: #e5e7eb;
+    --border-focus: #3b82f6;
+
+    --accent-primary: #3b82f6;
+    --accent-primary-hover: #2563eb;
+
+    --status-success: #10b981;
+    --status-success-hover: #059669;
+
+    /* Spacing & Layout */
+    --radius-sm: 0.375rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+
+    /* Transitions */
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+/* --- Base Styles --- */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+    background: var(--bg-page);
+    color: var(--text-primary);
+    line-height: 1.5;
+}
+
+/* --- Login Page Layout --- */
+.login-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem 1rem;
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.login-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem;
+    color: var(--text-primary);
+}
+
+/* --- Login Cards Grid --- */
+.login-cards {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2rem;
+    max-width: 56rem;
+    width: 100%;
+}
+
+@media (max-width: 768px) {
+    .login-cards {
+        grid-template-columns: 1fr;
+        max-width: 28rem;
+    }
+}
+
+/* --- Login Card --- */
+.login-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    text-align: center;
+    transition: box-shadow var(--transition-fast);
+}
+
+.login-card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.login-card-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    color: var(--accent-primary);
+}
+
+.login-card-icon svg {
+    width: 3rem;
+    height: 3rem;
+}
+
+.login-card-icon--lock {
+    color: var(--text-muted);
+}
+
+.login-card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0 0 0.75rem;
+    color: var(--text-primary);
+}
+
+.login-card-description {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin: 0 0 2rem;
+    line-height: 1.5;
+}
+
+/* --- Login Form --- */
+.login-form {
+    text-align: left;
+}
+
+.login-field {
+    margin-bottom: 1rem;
+}
+
+.login-field label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.login-field input {
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-family: inherit;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.login-field input:focus {
+    outline: none;
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.login-field input::placeholder {
+    color: var(--text-muted);
+}
+
+/* --- Submit Button --- */
+.login-submit {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: var(--status-success);
+    color: var(--text-inverse);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    margin-top: 0.5rem;
+    transition: background-color var(--transition-fast);
+}
+
+.login-submit:hover {
+    background: var(--status-success-hover);
+}
+
+.login-submit:focus-visible {
+    outline: 2px solid var(--status-success);
+    outline-offset: 2px;
+}
+
+/* --- Forgot Password Link --- */
+.login-forgot {
+    display: block;
+    margin-top: 1rem;
+    font-size: 0.875rem;
+    color: var(--accent-primary);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+.login-forgot:hover {
+    color: var(--accent-primary-hover);
+    text-decoration: underline;
+}
+
+/* --- PIN Placeholder (Branch Staff) --- */
+.login-pin-placeholder {
+    padding: 2rem 1rem;
+    background: var(--bg-page);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+}
+
+.login-pin-placeholder .login-card-icon {
+    margin-bottom: 1rem;
+}
+
+.login-pin-placeholder p {
+    margin: 0;
+    font-size: 0.875rem;
+}

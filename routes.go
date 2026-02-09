@@ -65,4 +65,8 @@ const (
 	WorkspaceBulkDeleteURL    = "/action/workspaces/bulk-delete"
 	WorkspaceSetStatusURL     = "/action/workspaces/set-status"
 	WorkspaceBulkSetStatusURL = "/action/workspaces/bulk-set-status"
+
+	// Login routes
+	LoginURL     = "/login"
+	LoginPostURL = "/login"
 )
