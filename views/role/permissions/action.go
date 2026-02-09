@@ -69,7 +69,8 @@ func NewAssignAction(deps *ActionDeps) view.View {
 				assignedSet[rp.GetPermissionId()] = true
 			}
 
-			// Build dropdown options excluding already-assigned
+			// Build dropdown options excluding already-assigned.
+			// Include the permission code in the label so the colon-notation is visible.
 			options := []types.SelectOption{}
 			for _, p := range permResp.GetData() {
 				if !p.GetActive() {
@@ -78,9 +79,13 @@ func NewAssignAction(deps *ActionDeps) view.View {
 				if assignedSet[p.GetId()] {
 					continue
 				}
+				label := p.GetName()
+				if code := p.GetPermissionCode(); code != "" {
+					label = label + " (" + code + ")"
+				}
 				options = append(options, types.SelectOption{
 					Value: p.GetId(),
-					Label: p.GetName(),
+					Label: label,
 				})
 			}
 

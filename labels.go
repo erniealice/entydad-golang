@@ -278,6 +278,7 @@ type PermissionButtonLabels struct {
 
 type PermissionColumnLabels struct {
 	Name           string `json:"name"`
+	Entity         string `json:"entity"`
 	PermissionCode string `json:"permissionCode"`
 	Type           string `json:"type"`
 	Status         string `json:"status"`
@@ -295,6 +296,7 @@ type PermissionFormLabels struct {
 	NamePlaceholder            string `json:"namePlaceholder"`
 	PermissionCode             string `json:"permissionCode"`
 	PermissionCodePlaceholder  string `json:"permissionCodePlaceholder"`
+	PermissionCodeHint         string `json:"permissionCodeHint"`
 	PermissionType             string `json:"permissionType"`
 	Description                string `json:"description"`
 	DescriptionPlaceholder     string `json:"descriptionPlaceholder"`

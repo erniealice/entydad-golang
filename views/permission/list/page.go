@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sort"
+	"strings"
 
 	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/pyeza-golang/types"
@@ -111,7 +113,7 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 		ShowExport:           true,
 		ShowDensity:          true,
 		ShowEntries:          true,
-		DefaultSortColumn:    "name",
+		DefaultSortColumn:    "permission_code",
 		DefaultSortDirection: "asc",
 		Labels:               deps.TableLabels,
 		EmptyState: types.TableEmptyState{
@@ -133,27 +135,60 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 func permissionColumns(l entydad.PermissionLabels) []types.TableColumn {
 	return []types.TableColumn{
 		{Key: "name", Label: l.Columns.Name, Sortable: true},
+		{Key: "entity", Label: l.Columns.Entity, Sortable: true, Width: "140px"},
 		{Key: "permission_code", Label: l.Columns.PermissionCode, Sortable: true},
 		{Key: "permission_type", Label: l.Columns.Type, Sortable: true, Width: "120px"},
 		{Key: "status", Label: l.Columns.Status, Sortable: true, Width: "120px"},
 	}
 }
 
+// extractEntity returns the entity prefix from a colon-notation permission code.
+// For example, "client:read" returns "client". If no colon is found, returns the full code.
+func extractEntity(code string) string {
+	if idx := strings.Index(code, ":"); idx >= 0 {
+		return code[:idx]
+	}
+	return code
+}
+
 func buildTableRows(permissions []*permissionpb.Permission, status string, l entydad.PermissionLabels) []types.TableRow {
-	rows := []types.TableRow{}
+	// Filter permissions by status first
+	filtered := make([]*permissionpb.Permission, 0, len(permissions))
 	for _, p := range permissions {
 		active := p.GetActive()
 		recordStatus := "active"
 		if !active {
 			recordStatus = "inactive"
 		}
-		if recordStatus != status {
-			continue
+		if recordStatus == status {
+			filtered = append(filtered, p)
+		}
+	}
+
+	// Sort by entity prefix, then by full permission code for readability
+	sort.Slice(filtered, func(i, j int) bool {
+		codeI := filtered[i].GetPermissionCode()
+		codeJ := filtered[j].GetPermissionCode()
+		entityI := extractEntity(codeI)
+		entityJ := extractEntity(codeJ)
+		if entityI != entityJ {
+			return entityI < entityJ
+		}
+		return codeI < codeJ
+	})
+
+	rows := make([]types.TableRow, 0, len(filtered))
+	for _, p := range filtered {
+		active := p.GetActive()
+		recordStatus := "active"
+		if !active {
+			recordStatus = "inactive"
 		}
 
 		id := p.GetId()
 		name := p.GetName()
 		code := p.GetPermissionCode()
+		entity := extractEntity(code)
 		permType := formatPermissionType(p.GetPermissionType())
 
 		actions := []types.TableAction{
@@ -183,12 +218,14 @@ func buildTableRows(permissions []*permissionpb.Permission, status string, l ent
 			ID: id,
 			Cells: []types.TableCell{
 				{Type: "text", Value: name},
+				{Type: "badge", Value: entity, Variant: "default", BadgeType: "type"},
 				{Type: "text", Value: code},
 				{Type: "badge", Value: permType, Variant: permTypeVariant(permType)},
 				{Type: "badge", Value: recordStatus, Variant: statusVariant(recordStatus)},
 			},
 			DataAttrs: map[string]string{
 				"name":            name,
+				"entity":          entity,
 				"permission_code": code,
 				"permission_type": permType,
 				"status":          recordStatus,

@@ -19,6 +19,7 @@ type FormLabels struct {
 	NamePlaceholder           string
 	PermissionCode            string
 	PermissionCodePlaceholder string
+	PermissionCodeHint        string
 	PermissionType            string
 	Description               string
 	DescriptionPlaceholder    string
@@ -55,6 +56,7 @@ func formLabels(t func(string) string) FormLabels {
 		NamePlaceholder:           t("form.namePlaceholder"),
 		PermissionCode:            t("form.permissionCode"),
 		PermissionCodePlaceholder: t("form.permissionCodePlaceholder"),
+		PermissionCodeHint:        t("form.permissionCodeHint"),
 		PermissionType:            t("form.permissionType"),
 		Description:               t("form.description"),
 		DescriptionPlaceholder:    t("form.descriptionPlaceholder"),
