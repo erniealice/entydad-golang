@@ -9,28 +9,28 @@ import (
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
 
-	rolepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/role"
+	permissionpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/permission"
 
 	"github.com/erniealice/entydad-golang"
 )
 
 // Deps holds view dependencies.
 type Deps struct {
-	GetListPageData func(ctx context.Context, req *rolepb.GetRoleListPageDataRequest) (*rolepb.GetRoleListPageDataResponse, error)
+	GetListPageData func(ctx context.Context, req *permissionpb.GetPermissionListPageDataRequest) (*permissionpb.GetPermissionListPageDataResponse, error)
 	RefreshURL      string
-	Labels          entydad.RoleLabels
+	Labels          entydad.PermissionLabels
 	CommonLabels    pyeza.CommonLabels
 	TableLabels     types.TableLabels
 }
 
-// PageData holds the data for the role list page.
+// PageData holds the data for the permission list page.
 type PageData struct {
 	types.PageData
 	ContentTemplate string
 	Table           *types.TableConfig
 }
 
-// NewView creates the role list view (full page).
+// NewView creates the permission list view (full page).
 func NewView(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		status := viewCtx.Request.PathValue("status")
@@ -48,24 +48,22 @@ func NewView(deps *Deps) view.View {
 				CacheVersion:   viewCtx.CacheVersion,
 				Title:          statusTitle(deps.Labels, status),
 				CurrentPath:    viewCtx.CurrentPath,
-				ActiveNav:      "users",
-				ActiveSubNav:   "roles-" + status,
+				ActiveNav:      "admin",
+				ActiveSubNav:   "permissions-" + status,
 				HeaderTitle:    statusTitle(deps.Labels, status),
 				HeaderSubtitle: statusSubtitle(deps.Labels, status),
-				HeaderIcon:     "icon-shield",
+				HeaderIcon:     "icon-key",
 				CommonLabels:   deps.CommonLabels,
 			},
-			ContentTemplate: "role-list-content",
+			ContentTemplate: "permission-list-content",
 			Table:           tableConfig,
 		}
 
-		return view.OK("role-list", pageData)
+		return view.OK("permission-list", pageData)
 	})
 }
 
 // NewTableView creates a view that returns only the table-card HTML.
-// Used as the refresh target after CRUD operations so that only the table
-// is swapped (not the entire page content).
 func NewTableView(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		status := viewCtx.Request.PathValue("status")
@@ -82,26 +80,26 @@ func NewTableView(deps *Deps) view.View {
 	})
 }
 
-// buildTableConfig fetches role data and builds the table configuration.
+// buildTableConfig fetches permission data and builds the table configuration.
 func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.TableConfig, error) {
-	resp, err := deps.GetListPageData(ctx, &rolepb.GetRoleListPageDataRequest{})
+	resp, err := deps.GetListPageData(ctx, &permissionpb.GetPermissionListPageDataRequest{})
 	if err != nil {
-		log.Printf("Failed to list roles: %v", err)
-		return nil, fmt.Errorf("failed to load roles: %w", err)
+		log.Printf("Failed to list permissions: %v", err)
+		return nil, fmt.Errorf("failed to load permissions: %w", err)
 	}
 
 	l := deps.Labels
-	columns := roleColumns(l)
-	rows := buildTableRows(resp.GetRoleList(), status, l)
+	columns := permissionColumns(l)
+	rows := buildTableRows(resp.GetPermissionList(), status, l)
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
 	bulkCfg.Actions = buildBulkActions(l, deps.CommonLabels, status)
 
-	refreshURL := fmt.Sprintf("/action/roles/table/%s", status)
+	refreshURL := fmt.Sprintf("/action/permissions/table/%s", status)
 
 	tableConfig := &types.TableConfig{
-		ID:                   "roles-table",
+		ID:                   "permissions-table",
 		RefreshURL:           refreshURL,
 		Columns:              columns,
 		Rows:                 rows,
@@ -121,8 +119,8 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 			Message: statusEmptyMessage(l, status),
 		},
 		PrimaryAction: &types.PrimaryAction{
-			Label:     l.Buttons.AddRole,
-			ActionURL: "/action/roles/add",
+			Label:     l.Buttons.AddPermission,
+			ActionURL: "/action/permissions/add",
 			Icon:      "icon-plus",
 		},
 		BulkActions: &bulkCfg,
@@ -132,20 +130,19 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 	return tableConfig, nil
 }
 
-func roleColumns(l entydad.RoleLabels) []types.TableColumn {
+func permissionColumns(l entydad.PermissionLabels) []types.TableColumn {
 	return []types.TableColumn{
 		{Key: "name", Label: l.Columns.Name, Sortable: true},
-		{Key: "description", Label: l.Columns.Description, Sortable: true},
-		{Key: "color", Label: l.Columns.Color, Sortable: true, Width: "120px"},
-		{Key: "permissions", Label: l.Columns.Permissions, Sortable: false, Width: "120px"},
+		{Key: "permission_code", Label: l.Columns.PermissionCode, Sortable: true},
+		{Key: "permission_type", Label: l.Columns.Type, Sortable: true, Width: "120px"},
 		{Key: "status", Label: l.Columns.Status, Sortable: true, Width: "120px"},
 	}
 }
 
-func buildTableRows(roles []*rolepb.Role, status string, l entydad.RoleLabels) []types.TableRow {
+func buildTableRows(permissions []*permissionpb.Permission, status string, l entydad.PermissionLabels) []types.TableRow {
 	rows := []types.TableRow{}
-	for _, r := range roles {
-		active := r.GetActive()
+	for _, p := range permissions {
+		active := p.GetActive()
 		recordStatus := "active"
 		if !active {
 			recordStatus = "inactive"
@@ -154,54 +151,47 @@ func buildTableRows(roles []*rolepb.Role, status string, l entydad.RoleLabels) [
 			continue
 		}
 
-		id := r.GetId()
-		name := r.GetName()
-		description := r.GetDescription()
-		color := r.GetColor()
+		id := p.GetId()
+		name := p.GetName()
+		code := p.GetPermissionCode()
+		permType := formatPermissionType(p.GetPermissionType())
 
 		actions := []types.TableAction{
-			{Type: "view", Label: l.Actions.View, Action: "view", Href: "/app/roles/" + id},
-			{Type: "edit", Label: l.Actions.Edit, Action: "edit", URL: "/action/roles/edit/" + id, DrawerTitle: l.Actions.Edit},
-			{Type: "view", Label: l.Actions.ManagePermissions, Action: "view", Href: "/app/manage/roles/" + id + "/permissions"},
+			{Type: "edit", Label: l.Actions.Edit, Action: "edit", URL: "/action/permissions/edit/" + id, DrawerTitle: l.Actions.Edit},
 		}
 		if active {
 			actions = append(actions, types.TableAction{
 				Type: "deactivate", Label: l.Actions.Deactivate, Action: "deactivate",
-				URL: "/action/roles/set-status?status=inactive", ItemName: name,
+				URL: "/action/permissions/set-status?status=inactive", ItemName: name,
 				ConfirmTitle:   l.Actions.Deactivate,
 				ConfirmMessage: fmt.Sprintf("Are you sure you want to deactivate %s?", name),
 			})
 		} else {
 			actions = append(actions, types.TableAction{
 				Type: "activate", Label: l.Actions.Activate, Action: "activate",
-				URL: "/action/roles/set-status?status=active", ItemName: name,
+				URL: "/action/permissions/set-status?status=active", ItemName: name,
 				ConfirmTitle:   l.Actions.Activate,
 				ConfirmMessage: fmt.Sprintf("Are you sure you want to activate %s?", name),
 			})
 		}
 		actions = append(actions, types.TableAction{
 			Type: "delete", Label: l.Actions.Delete, Action: "delete",
-			URL: "/action/roles/delete", ItemName: name,
+			URL: "/action/permissions/delete", ItemName: name,
 		})
-
-		permCount := len(r.GetRolePermissions())
-		permCountStr := fmt.Sprintf("%d", permCount)
 
 		rows = append(rows, types.TableRow{
 			ID: id,
 			Cells: []types.TableCell{
 				{Type: "text", Value: name},
-				{Type: "text", Value: description},
-				{Type: "text", Value: color},
-				{Type: "badge", Value: permCountStr, Variant: "default", BadgeType: "count"},
+				{Type: "text", Value: code},
+				{Type: "badge", Value: permType, Variant: permTypeVariant(permType)},
 				{Type: "badge", Value: recordStatus, Variant: statusVariant(recordStatus)},
 			},
 			DataAttrs: map[string]string{
-				"name":        name,
-				"description": description,
-				"color":       color,
-				"permissions": permCountStr,
-				"status":      recordStatus,
+				"name":            name,
+				"permission_code": code,
+				"permission_type": permType,
+				"status":          recordStatus,
 			},
 			Actions: actions,
 		})
@@ -209,7 +199,29 @@ func buildTableRows(roles []*rolepb.Role, status string, l entydad.RoleLabels) [
 	return rows
 }
 
-func statusTitle(l entydad.RoleLabels, status string) string {
+func formatPermissionType(pt permissionpb.PermissionType) string {
+	switch pt {
+	case permissionpb.PermissionType_PERMISSION_TYPE_ALLOW:
+		return "Allow"
+	case permissionpb.PermissionType_PERMISSION_TYPE_DENY:
+		return "Deny"
+	default:
+		return "Allow"
+	}
+}
+
+func permTypeVariant(permType string) string {
+	switch permType {
+	case "Allow":
+		return "success"
+	case "Deny":
+		return "danger"
+	default:
+		return "default"
+	}
+}
+
+func statusTitle(l entydad.PermissionLabels, status string) string {
 	switch status {
 	case "active":
 		return l.Page.HeadingActive
@@ -220,7 +232,7 @@ func statusTitle(l entydad.RoleLabels, status string) string {
 	}
 }
 
-func statusSubtitle(l entydad.RoleLabels, status string) string {
+func statusSubtitle(l entydad.PermissionLabels, status string) string {
 	switch status {
 	case "active":
 		return l.Page.CaptionActive
@@ -231,7 +243,7 @@ func statusSubtitle(l entydad.RoleLabels, status string) string {
 	}
 }
 
-func statusEmptyTitle(l entydad.RoleLabels, status string) string {
+func statusEmptyTitle(l entydad.PermissionLabels, status string) string {
 	switch status {
 	case "active":
 		return l.Empty.ActiveTitle
@@ -242,7 +254,7 @@ func statusEmptyTitle(l entydad.RoleLabels, status string) string {
 	}
 }
 
-func statusEmptyMessage(l entydad.RoleLabels, status string) string {
+func statusEmptyMessage(l entydad.PermissionLabels, status string) string {
 	switch status {
 	case "active":
 		return l.Empty.ActiveMessage
@@ -264,7 +276,7 @@ func statusVariant(status string) string {
 	}
 }
 
-func buildBulkActions(l entydad.RoleLabels, common pyeza.CommonLabels, status string) []types.BulkAction {
+func buildBulkActions(l entydad.PermissionLabels, common pyeza.CommonLabels, status string) []types.BulkAction {
 	actions := []types.BulkAction{}
 
 	switch status {
@@ -272,22 +284,22 @@ func buildBulkActions(l entydad.RoleLabels, common pyeza.CommonLabels, status st
 		actions = append(actions, types.BulkAction{
 			Key:             "deactivate",
 			Label:           l.Actions.Deactivate,
-			Icon:            "icon-shield-off",
+			Icon:            "icon-key",
 			Variant:         "warning",
-			Endpoint:        "/action/roles/bulk-set-status",
+			Endpoint:        "/action/permissions/bulk-set-status",
 			ConfirmTitle:    l.Actions.Deactivate,
-			ConfirmMessage:  "Are you sure you want to deactivate {{count}} role(s)?",
+			ConfirmMessage:  "Are you sure you want to deactivate {{count}} permission(s)?",
 			ExtraParamsJSON: `{"target_status":"inactive"}`,
 		})
 	case "inactive":
 		actions = append(actions, types.BulkAction{
 			Key:             "activate",
 			Label:           l.Actions.Activate,
-			Icon:            "icon-shield",
+			Icon:            "icon-key",
 			Variant:         "primary",
-			Endpoint:        "/action/roles/bulk-set-status",
+			Endpoint:        "/action/permissions/bulk-set-status",
 			ConfirmTitle:    l.Actions.Activate,
-			ConfirmMessage:  "Are you sure you want to activate {{count}} role(s)?",
+			ConfirmMessage:  "Are you sure you want to activate {{count}} permission(s)?",
 			ExtraParamsJSON: `{"target_status":"active"}`,
 		})
 	}
@@ -297,9 +309,9 @@ func buildBulkActions(l entydad.RoleLabels, common pyeza.CommonLabels, status st
 		Label:          common.Bulk.Delete,
 		Icon:           "icon-trash-2",
 		Variant:        "danger",
-		Endpoint:       "/action/roles/bulk-delete",
+		Endpoint:       "/action/permissions/bulk-delete",
 		ConfirmTitle:   common.Bulk.Delete,
-		ConfirmMessage: "Are you sure you want to delete {{count}} role(s)? This action cannot be undone.",
+		ConfirmMessage: "Are you sure you want to delete {{count}} permission(s)? This action cannot be undone.",
 	})
 
 	return actions

@@ -8,6 +8,7 @@ import (
 	"github.com/erniealice/pyeza-golang/view"
 
 	userpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/user"
+	workspaceuserpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace_user"
 
 	"github.com/erniealice/entydad-golang"
 )
@@ -41,11 +42,13 @@ type FormData struct {
 
 // Deps holds dependencies for user action handlers.
 type Deps struct {
-	CreateUser    func(ctx context.Context, req *userpb.CreateUserRequest) (*userpb.CreateUserResponse, error)
-	ReadUser      func(ctx context.Context, req *userpb.ReadUserRequest) (*userpb.ReadUserResponse, error)
-	UpdateUser    func(ctx context.Context, req *userpb.UpdateUserRequest) (*userpb.UpdateUserResponse, error)
-	DeleteUser    func(ctx context.Context, req *userpb.DeleteUserRequest) (*userpb.DeleteUserResponse, error)
-	SetUserActive func(ctx context.Context, id string, active bool) error
+	CreateUser          func(ctx context.Context, req *userpb.CreateUserRequest) (*userpb.CreateUserResponse, error)
+	ReadUser            func(ctx context.Context, req *userpb.ReadUserRequest) (*userpb.ReadUserResponse, error)
+	UpdateUser          func(ctx context.Context, req *userpb.UpdateUserRequest) (*userpb.UpdateUserResponse, error)
+	DeleteUser          func(ctx context.Context, req *userpb.DeleteUserRequest) (*userpb.DeleteUserResponse, error)
+	SetUserActive       func(ctx context.Context, id string, active bool) error
+	CreateWorkspaceUser func(ctx context.Context, req *workspaceuserpb.CreateWorkspaceUserRequest) (*workspaceuserpb.CreateWorkspaceUserResponse, error)
+	DefaultWorkspaceID  string
 }
 
 func formLabels(t func(string) string) FormLabels {
@@ -82,7 +85,7 @@ func NewAddAction(deps *Deps) view.View {
 		r := viewCtx.Request
 		active := r.FormValue("active") == "true"
 
-		_, err := deps.CreateUser(ctx, &userpb.CreateUserRequest{
+		createResp, err := deps.CreateUser(ctx, &userpb.CreateUserRequest{
 			Data: &userpb.User{
 				FirstName:    r.FormValue("first_name"),
 				LastName:     r.FormValue("last_name"),
@@ -94,6 +97,26 @@ func NewAddAction(deps *Deps) view.View {
 		if err != nil {
 			log.Printf("Failed to create user: %v", err)
 			return entydad.HTMXError("Failed to create user")
+		}
+
+		// Auto-create WorkspaceUser for the default workspace
+		if deps.CreateWorkspaceUser != nil && deps.DefaultWorkspaceID != "" {
+			newUserID := ""
+			if data := createResp.GetData(); len(data) > 0 {
+				newUserID = data[0].GetId()
+			}
+			if newUserID != "" {
+				_, err := deps.CreateWorkspaceUser(ctx, &workspaceuserpb.CreateWorkspaceUserRequest{
+					Data: &workspaceuserpb.WorkspaceUser{
+						WorkspaceId: deps.DefaultWorkspaceID,
+						UserId:      newUserID,
+						Active:      true,
+					},
+				})
+				if err != nil {
+					log.Printf("Warning: Failed to create workspace user for %s: %v", newUserID, err)
+				}
+			}
 		}
 
 		return entydad.HTMXSuccess("users-table")

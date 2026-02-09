@@ -9,28 +9,28 @@ import (
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
 
-	rolepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/role"
+	workspacepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace"
 
 	"github.com/erniealice/entydad-golang"
 )
 
 // Deps holds view dependencies.
 type Deps struct {
-	GetListPageData func(ctx context.Context, req *rolepb.GetRoleListPageDataRequest) (*rolepb.GetRoleListPageDataResponse, error)
+	GetListPageData func(ctx context.Context, req *workspacepb.GetWorkspaceListPageDataRequest) (*workspacepb.GetWorkspaceListPageDataResponse, error)
 	RefreshURL      string
-	Labels          entydad.RoleLabels
+	Labels          entydad.WorkspaceLabels
 	CommonLabels    pyeza.CommonLabels
 	TableLabels     types.TableLabels
 }
 
-// PageData holds the data for the role list page.
+// PageData holds the data for the workspace list page.
 type PageData struct {
 	types.PageData
 	ContentTemplate string
 	Table           *types.TableConfig
 }
 
-// NewView creates the role list view (full page).
+// NewView creates the workspace list view (full page).
 func NewView(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		status := viewCtx.Request.PathValue("status")
@@ -48,24 +48,22 @@ func NewView(deps *Deps) view.View {
 				CacheVersion:   viewCtx.CacheVersion,
 				Title:          statusTitle(deps.Labels, status),
 				CurrentPath:    viewCtx.CurrentPath,
-				ActiveNav:      "users",
-				ActiveSubNav:   "roles-" + status,
+				ActiveNav:      "admin",
+				ActiveSubNav:   "workspaces-" + status,
 				HeaderTitle:    statusTitle(deps.Labels, status),
 				HeaderSubtitle: statusSubtitle(deps.Labels, status),
-				HeaderIcon:     "icon-shield",
+				HeaderIcon:     "icon-briefcase",
 				CommonLabels:   deps.CommonLabels,
 			},
-			ContentTemplate: "role-list-content",
+			ContentTemplate: "workspace-list-content",
 			Table:           tableConfig,
 		}
 
-		return view.OK("role-list", pageData)
+		return view.OK("workspace-list", pageData)
 	})
 }
 
 // NewTableView creates a view that returns only the table-card HTML.
-// Used as the refresh target after CRUD operations so that only the table
-// is swapped (not the entire page content).
 func NewTableView(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		status := viewCtx.Request.PathValue("status")
@@ -82,26 +80,26 @@ func NewTableView(deps *Deps) view.View {
 	})
 }
 
-// buildTableConfig fetches role data and builds the table configuration.
+// buildTableConfig fetches workspace data and builds the table configuration.
 func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.TableConfig, error) {
-	resp, err := deps.GetListPageData(ctx, &rolepb.GetRoleListPageDataRequest{})
+	resp, err := deps.GetListPageData(ctx, &workspacepb.GetWorkspaceListPageDataRequest{})
 	if err != nil {
-		log.Printf("Failed to list roles: %v", err)
-		return nil, fmt.Errorf("failed to load roles: %w", err)
+		log.Printf("Failed to list workspaces: %v", err)
+		return nil, fmt.Errorf("failed to load workspaces: %w", err)
 	}
 
 	l := deps.Labels
-	columns := roleColumns(l)
-	rows := buildTableRows(resp.GetRoleList(), status, l)
+	columns := workspaceColumns(l)
+	rows := buildTableRows(resp.GetWorkspaceList(), status, l)
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
 	bulkCfg.Actions = buildBulkActions(l, deps.CommonLabels, status)
 
-	refreshURL := fmt.Sprintf("/action/roles/table/%s", status)
+	refreshURL := fmt.Sprintf("/action/workspaces/table/%s", status)
 
 	tableConfig := &types.TableConfig{
-		ID:                   "roles-table",
+		ID:                   "workspaces-table",
 		RefreshURL:           refreshURL,
 		Columns:              columns,
 		Rows:                 rows,
@@ -121,8 +119,8 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 			Message: statusEmptyMessage(l, status),
 		},
 		PrimaryAction: &types.PrimaryAction{
-			Label:     l.Buttons.AddRole,
-			ActionURL: "/action/roles/add",
+			Label:     l.Buttons.AddWorkspace,
+			ActionURL: "/action/workspaces/add",
 			Icon:      "icon-plus",
 		},
 		BulkActions: &bulkCfg,
@@ -132,20 +130,19 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 	return tableConfig, nil
 }
 
-func roleColumns(l entydad.RoleLabels) []types.TableColumn {
+func workspaceColumns(l entydad.WorkspaceLabels) []types.TableColumn {
 	return []types.TableColumn{
 		{Key: "name", Label: l.Columns.Name, Sortable: true},
 		{Key: "description", Label: l.Columns.Description, Sortable: true},
-		{Key: "color", Label: l.Columns.Color, Sortable: true, Width: "120px"},
-		{Key: "permissions", Label: l.Columns.Permissions, Sortable: false, Width: "120px"},
+		{Key: "private", Label: l.Columns.Private, Sortable: true, Width: "120px"},
 		{Key: "status", Label: l.Columns.Status, Sortable: true, Width: "120px"},
 	}
 }
 
-func buildTableRows(roles []*rolepb.Role, status string, l entydad.RoleLabels) []types.TableRow {
+func buildTableRows(workspaces []*workspacepb.Workspace, status string, l entydad.WorkspaceLabels) []types.TableRow {
 	rows := []types.TableRow{}
-	for _, r := range roles {
-		active := r.GetActive()
+	for _, w := range workspaces {
+		active := w.GetActive()
 		recordStatus := "active"
 		if !active {
 			recordStatus = "inactive"
@@ -154,53 +151,53 @@ func buildTableRows(roles []*rolepb.Role, status string, l entydad.RoleLabels) [
 			continue
 		}
 
-		id := r.GetId()
-		name := r.GetName()
-		description := r.GetDescription()
-		color := r.GetColor()
+		id := w.GetId()
+		name := w.GetName()
+		description := w.GetDescription()
+		private := w.GetPrivate()
+
+		privateLabel := "No"
+		privateVariant := "default"
+		if private {
+			privateLabel = "Yes"
+			privateVariant = "info"
+		}
 
 		actions := []types.TableAction{
-			{Type: "view", Label: l.Actions.View, Action: "view", Href: "/app/roles/" + id},
-			{Type: "edit", Label: l.Actions.Edit, Action: "edit", URL: "/action/roles/edit/" + id, DrawerTitle: l.Actions.Edit},
-			{Type: "view", Label: l.Actions.ManagePermissions, Action: "view", Href: "/app/manage/roles/" + id + "/permissions"},
+			{Type: "edit", Label: l.Actions.Edit, Action: "edit", URL: "/action/workspaces/edit/" + id, DrawerTitle: l.Actions.Edit},
 		}
 		if active {
 			actions = append(actions, types.TableAction{
 				Type: "deactivate", Label: l.Actions.Deactivate, Action: "deactivate",
-				URL: "/action/roles/set-status?status=inactive", ItemName: name,
+				URL: "/action/workspaces/set-status?status=inactive", ItemName: name,
 				ConfirmTitle:   l.Actions.Deactivate,
 				ConfirmMessage: fmt.Sprintf("Are you sure you want to deactivate %s?", name),
 			})
 		} else {
 			actions = append(actions, types.TableAction{
 				Type: "activate", Label: l.Actions.Activate, Action: "activate",
-				URL: "/action/roles/set-status?status=active", ItemName: name,
+				URL: "/action/workspaces/set-status?status=active", ItemName: name,
 				ConfirmTitle:   l.Actions.Activate,
 				ConfirmMessage: fmt.Sprintf("Are you sure you want to activate %s?", name),
 			})
 		}
 		actions = append(actions, types.TableAction{
 			Type: "delete", Label: l.Actions.Delete, Action: "delete",
-			URL: "/action/roles/delete", ItemName: name,
+			URL: "/action/workspaces/delete", ItemName: name,
 		})
-
-		permCount := len(r.GetRolePermissions())
-		permCountStr := fmt.Sprintf("%d", permCount)
 
 		rows = append(rows, types.TableRow{
 			ID: id,
 			Cells: []types.TableCell{
 				{Type: "text", Value: name},
 				{Type: "text", Value: description},
-				{Type: "text", Value: color},
-				{Type: "badge", Value: permCountStr, Variant: "default", BadgeType: "count"},
+				{Type: "badge", Value: privateLabel, Variant: privateVariant},
 				{Type: "badge", Value: recordStatus, Variant: statusVariant(recordStatus)},
 			},
 			DataAttrs: map[string]string{
 				"name":        name,
 				"description": description,
-				"color":       color,
-				"permissions": permCountStr,
+				"private":     fmt.Sprintf("%v", private),
 				"status":      recordStatus,
 			},
 			Actions: actions,
@@ -209,7 +206,7 @@ func buildTableRows(roles []*rolepb.Role, status string, l entydad.RoleLabels) [
 	return rows
 }
 
-func statusTitle(l entydad.RoleLabels, status string) string {
+func statusTitle(l entydad.WorkspaceLabels, status string) string {
 	switch status {
 	case "active":
 		return l.Page.HeadingActive
@@ -220,7 +217,7 @@ func statusTitle(l entydad.RoleLabels, status string) string {
 	}
 }
 
-func statusSubtitle(l entydad.RoleLabels, status string) string {
+func statusSubtitle(l entydad.WorkspaceLabels, status string) string {
 	switch status {
 	case "active":
 		return l.Page.CaptionActive
@@ -231,7 +228,7 @@ func statusSubtitle(l entydad.RoleLabels, status string) string {
 	}
 }
 
-func statusEmptyTitle(l entydad.RoleLabels, status string) string {
+func statusEmptyTitle(l entydad.WorkspaceLabels, status string) string {
 	switch status {
 	case "active":
 		return l.Empty.ActiveTitle
@@ -242,7 +239,7 @@ func statusEmptyTitle(l entydad.RoleLabels, status string) string {
 	}
 }
 
-func statusEmptyMessage(l entydad.RoleLabels, status string) string {
+func statusEmptyMessage(l entydad.WorkspaceLabels, status string) string {
 	switch status {
 	case "active":
 		return l.Empty.ActiveMessage
@@ -264,7 +261,7 @@ func statusVariant(status string) string {
 	}
 }
 
-func buildBulkActions(l entydad.RoleLabels, common pyeza.CommonLabels, status string) []types.BulkAction {
+func buildBulkActions(l entydad.WorkspaceLabels, common pyeza.CommonLabels, status string) []types.BulkAction {
 	actions := []types.BulkAction{}
 
 	switch status {
@@ -272,22 +269,22 @@ func buildBulkActions(l entydad.RoleLabels, common pyeza.CommonLabels, status st
 		actions = append(actions, types.BulkAction{
 			Key:             "deactivate",
 			Label:           l.Actions.Deactivate,
-			Icon:            "icon-shield-off",
+			Icon:            "icon-briefcase",
 			Variant:         "warning",
-			Endpoint:        "/action/roles/bulk-set-status",
+			Endpoint:        "/action/workspaces/bulk-set-status",
 			ConfirmTitle:    l.Actions.Deactivate,
-			ConfirmMessage:  "Are you sure you want to deactivate {{count}} role(s)?",
+			ConfirmMessage:  "Are you sure you want to deactivate {{count}} workspace(s)?",
 			ExtraParamsJSON: `{"target_status":"inactive"}`,
 		})
 	case "inactive":
 		actions = append(actions, types.BulkAction{
 			Key:             "activate",
 			Label:           l.Actions.Activate,
-			Icon:            "icon-shield",
+			Icon:            "icon-briefcase",
 			Variant:         "primary",
-			Endpoint:        "/action/roles/bulk-set-status",
+			Endpoint:        "/action/workspaces/bulk-set-status",
 			ConfirmTitle:    l.Actions.Activate,
-			ConfirmMessage:  "Are you sure you want to activate {{count}} role(s)?",
+			ConfirmMessage:  "Are you sure you want to activate {{count}} workspace(s)?",
 			ExtraParamsJSON: `{"target_status":"active"}`,
 		})
 	}
@@ -297,9 +294,9 @@ func buildBulkActions(l entydad.RoleLabels, common pyeza.CommonLabels, status st
 		Label:          common.Bulk.Delete,
 		Icon:           "icon-trash-2",
 		Variant:        "danger",
-		Endpoint:       "/action/roles/bulk-delete",
+		Endpoint:       "/action/workspaces/bulk-delete",
 		ConfirmTitle:   common.Bulk.Delete,
-		ConfirmMessage: "Are you sure you want to delete {{count}} role(s)? This action cannot be undone.",
+		ConfirmMessage: "Are you sure you want to delete {{count}} workspace(s)? This action cannot be undone.",
 	})
 
 	return actions

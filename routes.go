@@ -37,4 +37,32 @@ const (
 	RoleBulkDeleteURL    = "/action/roles/bulk-delete"
 	RoleSetStatusURL     = "/action/roles/set-status"
 	RoleBulkSetStatusURL = "/action/roles/bulk-set-status"
+
+	PermissionListURL          = "/app/permissions/list/{status}"
+	PermissionTableURL         = "/action/permissions/table/{status}"
+	PermissionAddURL           = "/action/permissions/add"
+	PermissionEditURL          = "/action/permissions/edit/{id}"
+	PermissionDeleteURL        = "/action/permissions/delete"
+	PermissionBulkDeleteURL    = "/action/permissions/bulk-delete"
+	PermissionSetStatusURL     = "/action/permissions/set-status"
+	PermissionBulkSetStatusURL = "/action/permissions/bulk-set-status"
+
+	RolePermissionsURL       = "/app/manage/roles/{id}/permissions"
+	RolePermissionsTableURL  = "/action/manage/roles/{id}/permissions/table"
+	RolePermissionsAssignURL = "/action/manage/roles/{id}/permissions/assign"
+	RolePermissionsRemoveURL = "/action/manage/roles/{id}/permissions/remove"
+
+	UserRolesURL       = "/app/manage/users/{id}/roles"
+	UserRolesTableURL  = "/action/manage/users/{id}/roles/table"
+	UserRolesAssignURL = "/action/manage/users/{id}/roles/assign"
+	UserRolesRemoveURL = "/action/manage/users/{id}/roles/remove"
+
+	WorkspaceListURL          = "/app/workspaces/list/{status}"
+	WorkspaceTableURL         = "/action/workspaces/table/{status}"
+	WorkspaceAddURL           = "/action/workspaces/add"
+	WorkspaceEditURL          = "/action/workspaces/edit/{id}"
+	WorkspaceDeleteURL        = "/action/workspaces/delete"
+	WorkspaceBulkDeleteURL    = "/action/workspaces/bulk-delete"
+	WorkspaceSetStatusURL     = "/action/workspaces/set-status"
+	WorkspaceBulkSetStatusURL = "/action/workspaces/bulk-set-status"
 )

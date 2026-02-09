@@ -17,6 +17,7 @@ import (
 // Deps holds view dependencies.
 type Deps struct {
 	GetListPageData func(ctx context.Context, req *userpb.GetUserListPageDataRequest) (*userpb.GetUserListPageDataResponse, error)
+	GetUserRolesMap func(ctx context.Context) (map[string][]entydad.RoleBadge, error)
 	RefreshURL      string
 	Labels          entydad.UserLabels
 	CommonLabels    pyeza.CommonLabels
@@ -90,9 +91,18 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 		return nil, fmt.Errorf("failed to load users: %w", err)
 	}
 
+	// Fetch user-role mappings (best-effort; nil map means no role data)
+	var userRolesMap map[string][]entydad.RoleBadge
+	if deps.GetUserRolesMap != nil {
+		userRolesMap, err = deps.GetUserRolesMap(ctx)
+		if err != nil {
+			log.Printf("Warning: Failed to load user roles map: %v", err)
+		}
+	}
+
 	l := deps.Labels
 	columns := userColumns(l)
-	rows := buildTableRows(resp.GetUserList(), status, l)
+	rows := buildTableRows(resp.GetUserList(), status, l, userRolesMap)
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
@@ -136,12 +146,12 @@ func userColumns(l entydad.UserLabels) []types.TableColumn {
 	return []types.TableColumn{
 		{Key: "name", Label: l.Columns.Name, Sortable: true},
 		{Key: "email", Label: l.Columns.Email, Sortable: true},
-		{Key: "mobile", Label: l.Form.Mobile, Sortable: true, Width: "150px"},
+		{Key: "roles", Label: l.Columns.Roles, Sortable: false},
 		{Key: "status", Label: l.Columns.Status, Sortable: true, Width: "120px"},
 	}
 }
 
-func buildTableRows(users []*userpb.User, status string, l entydad.UserLabels) []types.TableRow {
+func buildTableRows(users []*userpb.User, status string, l entydad.UserLabels, userRolesMap map[string][]entydad.RoleBadge) []types.TableRow {
 	rows := []types.TableRow{}
 	for _, u := range users {
 		active := u.GetActive()
@@ -156,11 +166,20 @@ func buildTableRows(users []*userpb.User, status string, l entydad.UserLabels) [
 		id := u.GetId()
 		name := u.GetFirstName() + " " + u.GetLastName()
 		email := u.GetEmailAddress()
-		mobile := u.GetMobileNumber()
+
+		// Build role chips for this user
+		var roleNames []string
+		if userRolesMap != nil {
+			for _, rb := range userRolesMap[id] {
+				roleNames = append(roleNames, rb.Name)
+			}
+		}
+		rolesCell := types.BuildChipCellFromLabels(roleNames, 2)
 
 		actions := []types.TableAction{
 			{Type: "view", Label: l.Actions.View, Action: "view", Href: "/app/users/" + id},
 			{Type: "edit", Label: l.Actions.Edit, Action: "edit", URL: "/action/users/edit/" + id, DrawerTitle: l.Actions.Edit},
+			{Type: "view", Label: l.Actions.ManageRoles, Action: "view", Href: "/app/manage/users/" + id + "/roles"},
 		}
 		if active {
 			actions = append(actions, types.TableAction{
@@ -187,13 +206,12 @@ func buildTableRows(users []*userpb.User, status string, l entydad.UserLabels) [
 			Cells: []types.TableCell{
 				{Type: "text", Value: name},
 				{Type: "text", Value: email},
-				{Type: "text", Value: mobile},
+				rolesCell,
 				{Type: "badge", Value: recordStatus, Variant: statusVariant(recordStatus)},
 			},
 			DataAttrs: map[string]string{
 				"name":   name,
 				"email":  email,
-				"mobile": mobile,
 				"status": recordStatus,
 			},
 			Actions: actions,

@@ -104,6 +104,7 @@ type UserButtonLabels struct {
 type UserColumnLabels struct {
 	Name   string `json:"name"`
 	Email  string `json:"email"`
+	Roles  string `json:"roles"`
 	Status string `json:"status"`
 }
 
@@ -119,11 +120,12 @@ type UserFormLabels struct {
 }
 
 type UserActionLabels struct {
-	View       string `json:"view"`
-	Edit       string `json:"edit"`
-	Delete     string `json:"delete"`
-	Activate   string `json:"activate"`
-	Deactivate string `json:"deactivate"`
+	View        string `json:"view"`
+	Edit        string `json:"edit"`
+	Delete      string `json:"delete"`
+	Activate    string `json:"activate"`
+	Deactivate  string `json:"deactivate"`
+	ManageRoles string `json:"manageRoles"`
 }
 
 // ---------------------------------------------------------------------------
@@ -217,6 +219,7 @@ type RoleColumnLabels struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Color       string `json:"color"`
+	Permissions string `json:"permissions"`
 	Status      string `json:"status"`
 }
 
@@ -238,11 +241,230 @@ type RoleFormLabels struct {
 }
 
 type RoleActionLabels struct {
+	View              string `json:"view"`
+	Edit              string `json:"edit"`
+	Delete            string `json:"delete"`
+	Activate          string `json:"activate"`
+	Deactivate        string `json:"deactivate"`
+	ManagePermissions string `json:"managePermissions"`
+}
+
+// ---------------------------------------------------------------------------
+// Permission labels
+// ---------------------------------------------------------------------------
+
+// PermissionLabels holds all translatable strings for the permission module.
+type PermissionLabels struct {
+	Page    PermissionPageLabels    `json:"page"`
+	Buttons PermissionButtonLabels  `json:"buttons"`
+	Columns PermissionColumnLabels  `json:"columns"`
+	Empty   PermissionEmptyLabels   `json:"empty"`
+	Form    PermissionFormLabels    `json:"form"`
+	Actions PermissionActionLabels  `json:"actions"`
+}
+
+type PermissionPageLabels struct {
+	Heading         string `json:"heading"`
+	HeadingActive   string `json:"headingActive"`
+	HeadingInactive string `json:"headingInactive"`
+	Caption         string `json:"caption"`
+	CaptionActive   string `json:"captionActive"`
+	CaptionInactive string `json:"captionInactive"`
+}
+
+type PermissionButtonLabels struct {
+	AddPermission string `json:"addPermission"`
+}
+
+type PermissionColumnLabels struct {
+	Name           string `json:"name"`
+	PermissionCode string `json:"permissionCode"`
+	Type           string `json:"type"`
+	Status         string `json:"status"`
+}
+
+type PermissionEmptyLabels struct {
+	ActiveTitle     string `json:"activeTitle"`
+	ActiveMessage   string `json:"activeMessage"`
+	InactiveTitle   string `json:"inactiveTitle"`
+	InactiveMessage string `json:"inactiveMessage"`
+}
+
+type PermissionFormLabels struct {
+	Name                       string `json:"name"`
+	NamePlaceholder            string `json:"namePlaceholder"`
+	PermissionCode             string `json:"permissionCode"`
+	PermissionCodePlaceholder  string `json:"permissionCodePlaceholder"`
+	PermissionType             string `json:"permissionType"`
+	Description                string `json:"description"`
+	DescriptionPlaceholder     string `json:"descriptionPlaceholder"`
+	Active                     string `json:"active"`
+}
+
+type PermissionActionLabels struct {
 	View       string `json:"view"`
 	Edit       string `json:"edit"`
 	Delete     string `json:"delete"`
 	Activate   string `json:"activate"`
 	Deactivate string `json:"deactivate"`
+}
+
+// ---------------------------------------------------------------------------
+// Role-Permission labels
+// ---------------------------------------------------------------------------
+
+// RolePermissionLabels holds all translatable strings for the role-permission assignment view.
+type RolePermissionLabels struct {
+	Page    RolePermissionPageLabels    `json:"page"`
+	Buttons RolePermissionButtonLabels  `json:"buttons"`
+	Columns RolePermissionColumnLabels  `json:"columns"`
+	Empty   RolePermissionEmptyLabels   `json:"empty"`
+	Form    RolePermissionFormLabels    `json:"form"`
+	Actions RolePermissionActionLabels  `json:"actions"`
+}
+
+type RolePermissionPageLabels struct {
+	Heading string `json:"heading"`
+	Caption string `json:"caption"`
+}
+
+type RolePermissionButtonLabels struct {
+	AssignPermission string `json:"assignPermission"`
+}
+
+type RolePermissionColumnLabels struct {
+	PermissionName string `json:"permissionName"`
+	Code           string `json:"code"`
+	Type           string `json:"type"`
+	DateAssigned   string `json:"dateAssigned"`
+}
+
+type RolePermissionEmptyLabels struct {
+	Title   string `json:"title"`
+	Message string `json:"message"`
+}
+
+type RolePermissionFormLabels struct {
+	Permission string `json:"permission"`
+}
+
+type RolePermissionActionLabels struct {
+	Assign          string `json:"assign"`
+	Remove          string `json:"remove"`
+	ManagePermissions string `json:"managePermissions"`
+}
+
+// ---------------------------------------------------------------------------
+// User-Role labels
+// ---------------------------------------------------------------------------
+
+// UserRoleLabels holds all translatable strings for the user-role assignment view.
+type UserRoleLabels struct {
+	Page    UserRolePageLabels    `json:"page"`
+	Buttons UserRoleButtonLabels  `json:"buttons"`
+	Columns UserRoleColumnLabels  `json:"columns"`
+	Empty   UserRoleEmptyLabels   `json:"empty"`
+	Form    UserRoleFormLabels    `json:"form"`
+	Actions UserRoleActionLabels  `json:"actions"`
+}
+
+type UserRolePageLabels struct {
+	Heading string `json:"heading"`
+	Caption string `json:"caption"`
+}
+
+type UserRoleButtonLabels struct {
+	AssignRole string `json:"assignRole"`
+}
+
+type UserRoleColumnLabels struct {
+	RoleName    string `json:"roleName"`
+	Description string `json:"description"`
+	Color       string `json:"color"`
+	DateAssigned string `json:"dateAssigned"`
+}
+
+type UserRoleEmptyLabels struct {
+	Title   string `json:"title"`
+	Message string `json:"message"`
+}
+
+type UserRoleFormLabels struct {
+	Role string `json:"role"`
+}
+
+type UserRoleActionLabels struct {
+	Assign      string `json:"assign"`
+	Remove      string `json:"remove"`
+	ManageRoles string `json:"manageRoles"`
+}
+
+// ---------------------------------------------------------------------------
+// Workspace labels
+// ---------------------------------------------------------------------------
+
+// WorkspaceLabels holds all translatable strings for the workspace module.
+type WorkspaceLabels struct {
+	Page    WorkspacePageLabels    `json:"page"`
+	Buttons WorkspaceButtonLabels  `json:"buttons"`
+	Columns WorkspaceColumnLabels  `json:"columns"`
+	Empty   WorkspaceEmptyLabels   `json:"empty"`
+	Form    WorkspaceFormLabels    `json:"form"`
+	Actions WorkspaceActionLabels  `json:"actions"`
+}
+
+type WorkspacePageLabels struct {
+	Heading         string `json:"heading"`
+	HeadingActive   string `json:"headingActive"`
+	HeadingInactive string `json:"headingInactive"`
+	Caption         string `json:"caption"`
+	CaptionActive   string `json:"captionActive"`
+	CaptionInactive string `json:"captionInactive"`
+}
+
+type WorkspaceButtonLabels struct {
+	AddWorkspace string `json:"addWorkspace"`
+}
+
+type WorkspaceColumnLabels struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Private     string `json:"private"`
+	Status      string `json:"status"`
+}
+
+type WorkspaceEmptyLabels struct {
+	ActiveTitle     string `json:"activeTitle"`
+	ActiveMessage   string `json:"activeMessage"`
+	InactiveTitle   string `json:"inactiveTitle"`
+	InactiveMessage string `json:"inactiveMessage"`
+}
+
+type WorkspaceFormLabels struct {
+	Name                   string `json:"name"`
+	NamePlaceholder        string `json:"namePlaceholder"`
+	Description            string `json:"description"`
+	DescriptionPlaceholder string `json:"descriptionPlaceholder"`
+	Private                string `json:"private"`
+	Active                 string `json:"active"`
+}
+
+type WorkspaceActionLabels struct {
+	View       string `json:"view"`
+	Edit       string `json:"edit"`
+	Delete     string `json:"delete"`
+	Activate   string `json:"activate"`
+	Deactivate string `json:"deactivate"`
+}
+
+// ---------------------------------------------------------------------------
+// Shared types
+// ---------------------------------------------------------------------------
+
+// RoleBadge holds minimal role info for display as a chip/badge in lists.
+type RoleBadge struct {
+	Name  string
+	Color string
 }
 
 // ---------------------------------------------------------------------------

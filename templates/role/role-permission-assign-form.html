@@ -1,0 +1,22 @@
+{{/*
+Role-Permission assign form -- loaded into #sheetContent via HTMX.
+Data: .RoleID, .FormAction, .Labels, .PermissionOptions, .CommonLabels
+*/}}
+{{define "role-permission-assign-form"}}
+<form hx-post="{{.FormAction}}" hx-swap="none" hx-on::after-request="Sheet.handleResponse(event)">
+
+    <div class="sheet-body">
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "select"
+                "Name" "permission_id"
+                "Label" .Labels.Permission
+                "Options" .PermissionOptions
+                "Required" true
+            )}}
+        </div>
+    </div>
+
+    {{template "sheet-form-footer" (dict "CommonLabels" .CommonLabels "ShowCancel" true)}}
+</form>
+{{end}}
