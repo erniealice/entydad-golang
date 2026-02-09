@@ -5,9 +5,9 @@
 
 {{/* Content-only partial — for HTMX navigation */}}
 {{define "client-dashboard-content"}}
-<div class="page-content" data-page-css="/assets/css/dashboard.css?v={{.CacheVersion}}">
+<div class="page-content" data-page-css="/assets/css/entydad/entydad-client-dashboard.css?v={{.CacheVersion}}">
     <!-- Stats Row -->
-    <div class="stats-row">
+    <div class="entydad-stats-row">
         {{template "stat-card" dict "Icon" "icon-users" "Value" "248" "Label" "Total Clients" "Trend" "+12%" "TrendUp" true "Color" "terracotta"}}
         {{template "stat-card" dict "Icon" "icon-user-check" "Value" "210" "Label" "Active" "Trend" "+8%" "TrendUp" true "Color" "sage"}}
         {{template "stat-card" dict "Icon" "icon-user-minus" "Value" "38" "Label" "Inactive" "Trend" "-3%" "TrendUp" false "Color" "navy"}}
@@ -15,7 +15,7 @@
     </div>
 
     <!-- Main Grid -->
-    <div class="dashboard-grid">
+    <div class="entydad-dashboard-grid">
         <!-- Growth Chart -->
         <div class="card">
             <div class="card-header">
@@ -26,9 +26,9 @@
                     <button class="card-btn primary">Year</button>
                 </div>
             </div>
-            <div class="chart-area">
-                <div class="chart-placeholder">
-                    <div class="chart-line">
+            <div class="entydad-chart-area">
+                <div class="entydad-chart-placeholder">
+                    <div class="entydad-chart-line">
                         <svg viewBox="0 0 400 200" preserveAspectRatio="none">
                             <defs>
                                 <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -40,13 +40,13 @@
                             <path d="M0,180 Q50,160 100,150 T200,120 T300,80 T400,40 L400,200 L0,200 Z" fill="url(#chartGradient)"/>
                         </svg>
                     </div>
-                    <div class="chart-labels">
-                        <span class="chart-label">Jan</span>
-                        <span class="chart-label">Mar</span>
-                        <span class="chart-label">May</span>
-                        <span class="chart-label">Jul</span>
-                        <span class="chart-label">Sep</span>
-                        <span class="chart-label">Nov</span>
+                    <div class="entydad-chart-labels">
+                        <span class="entydad-chart-label">Jan</span>
+                        <span class="entydad-chart-label">Mar</span>
+                        <span class="entydad-chart-label">May</span>
+                        <span class="entydad-chart-label">Jul</span>
+                        <span class="entydad-chart-label">Sep</span>
+                        <span class="entydad-chart-label">Nov</span>
                     </div>
                 </div>
             </div>
@@ -58,49 +58,49 @@
                 <h2 class="card-title">Recent Activity</h2>
                 <button class="card-btn">View All</button>
             </div>
-            <div class="activity-list">
-                <div class="activity-item">
-                    <div class="activity-icon client">
+            <div class="entydad-activity-list">
+                <div class="entydad-activity-item">
+                    <div class="entydad-activity-icon client">
                         {{template "icon-user-plus"}}
                     </div>
-                    <div class="activity-content">
-                        <div class="activity-title">New Client Added</div>
-                        <div class="activity-desc">Acme Corporation joined</div>
+                    <div class="entydad-activity-content">
+                        <div class="entydad-activity-title">New Client Added</div>
+                        <div class="entydad-activity-desc">Acme Corporation joined</div>
                     </div>
-                    <span class="activity-time">2m ago</span>
+                    <span class="entydad-activity-time">2m ago</span>
                 </div>
 
-                <div class="activity-item">
-                    <div class="activity-icon quote">
+                <div class="entydad-activity-item">
+                    <div class="entydad-activity-icon quote">
                         {{template "icon-check-circle"}}
                     </div>
-                    <div class="activity-content">
-                        <div class="activity-title">Client Activated</div>
-                        <div class="activity-desc">TechCorp Inc. set to active</div>
+                    <div class="entydad-activity-content">
+                        <div class="entydad-activity-title">Client Activated</div>
+                        <div class="entydad-activity-desc">TechCorp Inc. set to active</div>
                     </div>
-                    <span class="activity-time">1h ago</span>
+                    <span class="entydad-activity-time">1h ago</span>
                 </div>
 
-                <div class="activity-item">
-                    <div class="activity-icon award">
+                <div class="entydad-activity-item">
+                    <div class="entydad-activity-icon award">
                         {{template "icon-edit"}}
                     </div>
-                    <div class="activity-content">
-                        <div class="activity-title">Profile Updated</div>
-                        <div class="activity-desc">Global Solutions details changed</div>
+                    <div class="entydad-activity-content">
+                        <div class="entydad-activity-title">Profile Updated</div>
+                        <div class="entydad-activity-desc">Global Solutions details changed</div>
                     </div>
-                    <span class="activity-time">3h ago</span>
+                    <span class="entydad-activity-time">3h ago</span>
                 </div>
 
-                <div class="activity-item">
-                    <div class="activity-icon integration">
+                <div class="entydad-activity-item">
+                    <div class="entydad-activity-icon integration">
                         {{template "icon-tag"}}
                     </div>
-                    <div class="activity-content">
-                        <div class="activity-title">Tag Assigned</div>
-                        <div class="activity-desc">VIP tag added to 5 clients</div>
+                    <div class="entydad-activity-content">
+                        <div class="entydad-activity-title">Tag Assigned</div>
+                        <div class="entydad-activity-desc">VIP tag added to 5 clients</div>
                     </div>
-                    <span class="activity-time">5h ago</span>
+                    <span class="entydad-activity-time">5h ago</span>
                 </div>
             </div>
         </div>
