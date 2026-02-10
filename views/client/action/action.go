@@ -42,10 +42,11 @@ type FormData struct {
 
 // Deps holds dependencies for client action handlers.
 type Deps struct {
-	CreateClient func(ctx context.Context, req *clientpb.CreateClientRequest) (*clientpb.CreateClientResponse, error)
-	ReadClient   func(ctx context.Context, req *clientpb.ReadClientRequest) (*clientpb.ReadClientResponse, error)
-	UpdateClient func(ctx context.Context, req *clientpb.UpdateClientRequest) (*clientpb.UpdateClientResponse, error)
-	DeleteClient func(ctx context.Context, req *clientpb.DeleteClientRequest) (*clientpb.DeleteClientResponse, error)
+	CreateClient    func(ctx context.Context, req *clientpb.CreateClientRequest) (*clientpb.CreateClientResponse, error)
+	ReadClient      func(ctx context.Context, req *clientpb.ReadClientRequest) (*clientpb.ReadClientResponse, error)
+	UpdateClient    func(ctx context.Context, req *clientpb.UpdateClientRequest) (*clientpb.UpdateClientResponse, error)
+	DeleteClient    func(ctx context.Context, req *clientpb.DeleteClientRequest) (*clientpb.DeleteClientResponse, error)
+	SetClientActive func(ctx context.Context, id string, active bool) error
 }
 
 func formLabels(t func(string) string) FormLabels {
@@ -206,6 +207,66 @@ func NewBulkDeleteAction(deps *Deps) view.View {
 			})
 			if err != nil {
 				log.Printf("Failed to delete client %s: %v", id, err)
+			}
+		}
+
+		return entydad.HTMXSuccess("clients-table")
+	})
+}
+
+// NewSetStatusAction creates the client activate/deactivate action (POST only).
+// Expects query params: ?id={clientId}&status={active|inactive}
+//
+// Uses SetClientActive (raw map update) instead of UpdateClient (protobuf) because
+// proto3's protojson omits bool fields with value false, which means
+// deactivation (active=false) would silently be skipped.
+func NewSetStatusAction(deps *Deps) view.View {
+	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		id := viewCtx.Request.URL.Query().Get("id")
+		targetStatus := viewCtx.Request.URL.Query().Get("status")
+
+		if id == "" {
+			_ = viewCtx.Request.ParseForm()
+			id = viewCtx.Request.FormValue("id")
+			targetStatus = viewCtx.Request.FormValue("status")
+		}
+		if id == "" {
+			return entydad.HTMXError("Client ID is required")
+		}
+		if targetStatus != "active" && targetStatus != "inactive" {
+			return entydad.HTMXError("Invalid status")
+		}
+
+		if err := deps.SetClientActive(ctx, id, targetStatus == "active"); err != nil {
+			log.Printf("Failed to update client status %s: %v", id, err)
+			return entydad.HTMXError("Failed to update client status")
+		}
+
+		return entydad.HTMXSuccess("clients-table")
+	})
+}
+
+// NewBulkSetStatusAction creates the client bulk activate/deactivate action (POST only).
+// Selected IDs come as multiple "id" form fields; target status from "target_status" field.
+func NewBulkSetStatusAction(deps *Deps) view.View {
+	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		_ = viewCtx.Request.ParseMultipartForm(32 << 20)
+
+		ids := viewCtx.Request.Form["id"]
+		targetStatus := viewCtx.Request.FormValue("target_status")
+
+		if len(ids) == 0 {
+			return entydad.HTMXError("No client IDs provided")
+		}
+		if targetStatus != "active" && targetStatus != "inactive" {
+			return entydad.HTMXError("Invalid target status")
+		}
+
+		active := targetStatus == "active"
+
+		for _, id := range ids {
+			if err := deps.SetClientActive(ctx, id, active); err != nil {
+				log.Printf("Failed to update client status %s: %v", id, err)
 			}
 		}
 

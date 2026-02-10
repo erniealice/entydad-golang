@@ -1,0 +1,43 @@
+{{/*
+Client tag drawer form -- loaded into #sheetContent via HTMX.
+Used by both Add and Edit actions.
+Data: .Name, .Description, .Active, .ID, .FormAction, .IsEdit, .CommonLabels
+*/}}
+{{define "client-tag-drawer-form"}}
+<form hx-post="{{.FormAction}}" hx-swap="none" hx-on::after-request="Sheet.handleResponse(event)">
+    {{if .ID}}<input type="hidden" name="id" value="{{.ID}}">{{end}}
+
+    <div class="sheet-body">
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "name"
+                "Label" "Tag Name"
+                "Value" .Name
+                "Required" true
+            )}}
+        </div>
+
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "textarea"
+                "Name" "description"
+                "Label" "Description"
+                "Value" .Description
+                "Placeholder" "Describe this tag..."
+            )}}
+        </div>
+
+        <div class="form-row single">
+            {{template "toggle" (dict
+                "Name" "active"
+                "Label" "Active"
+                "Checked" .Active
+                "Value" "true"
+            )}}
+        </div>
+    </div>
+
+    {{template "sheet-form-footer" (dict "CommonLabels" .CommonLabels "ShowCancel" true "IsEdit" .IsEdit)}}
+</form>
+{{end}}

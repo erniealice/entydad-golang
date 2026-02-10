@@ -5,10 +5,14 @@ package entydad
 const (
 	ClientDashboardURL = "/app/clients/dashboard"
 	ClientListURL      = "/app/clients/list/{status}"
+	ClientTableURL     = "/action/clients/table/{status}"
 	ClientAddURL        = "/action/clients/add"
 	ClientEditURL       = "/action/clients/edit/{id}"
-	ClientDeleteURL     = "/action/clients/delete"
-	ClientBulkDeleteURL = "/action/clients/bulk-delete"
+	ClientDeleteURL        = "/action/clients/delete"
+	ClientBulkDeleteURL    = "/action/clients/bulk-delete"
+	ClientDetailURL        = "/app/clients/{id}"
+	ClientSetStatusURL     = "/action/clients/set-status"
+	ClientBulkSetStatusURL = "/action/clients/bulk-set-status"
 
 	UserDashboardURL     = "/app/users/dashboard"
 	UserListURL          = "/app/users/list/{status}"
@@ -65,6 +69,13 @@ const (
 	WorkspaceBulkDeleteURL    = "/action/workspaces/bulk-delete"
 	WorkspaceSetStatusURL     = "/action/workspaces/set-status"
 	WorkspaceBulkSetStatusURL = "/action/workspaces/bulk-set-status"
+
+	// Client Tag (Category) routes
+	ClientTagListURL       = "/app/clients/settings/tags/list"
+	ClientTagAddURL        = "/action/clients/tags/add"
+	ClientTagEditURL       = "/action/clients/tags/edit/{id}"
+	ClientTagDeleteURL     = "/action/clients/tags/delete"
+	ClientTagBulkDeleteURL = "/action/clients/tags/bulk-delete"
 
 	// Login routes
 	LoginURL     = "/login"

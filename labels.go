@@ -64,9 +64,11 @@ type ClientCompanyDetailLabels struct {
 }
 
 type ClientDetailActionLabels struct {
-	ViewClient   string `json:"viewClient"`
-	EditClient   string `json:"editClient"`
-	DeleteClient string `json:"deleteClient"`
+	ViewClient       string `json:"viewClient"`
+	EditClient       string `json:"editClient"`
+	DeleteClient     string `json:"deleteClient"`
+	DeactivateClient string `json:"deactivateClient"`
+	ActivateClient   string `json:"activateClient"`
 }
 
 type ClientBulkActionLabels struct {

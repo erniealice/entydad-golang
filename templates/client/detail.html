@@ -1,0 +1,62 @@
+{{/* Full page — for direct access / non-HTMX */}}
+{{define "client-detail"}}
+{{template "app-shell" .}}
+{{end}}
+
+{{/* Content-only partial — for HTMX navigation */}}
+{{define "client-detail-content"}}
+<div class="page-content client-detail-layout" data-page-css="/assets/css/entydad/entydad-client-detail.css?v={{.CacheVersion}}">
+    {{/* --- Tabs --- */}}
+    <div class="client-detail-tabs">
+        {{template "tabs" (dict "Items" .TabItems "ActiveTab" .ActiveTab "Variant" "default" "ID" "client-tabs")}}
+    </div>
+
+    {{/* --- Tab Body --- */}}
+    <div class="client-detail-body">
+
+        {{/* =============================================
+             TAB: Basic Information
+             ============================================= */}}
+        {{if eq .ActiveTab "basic"}}
+        <div class="tab-scroll">
+        <h4 class="client-section-title">Client Information</h4>
+        <div class="client-info-grid">
+            <div class="client-info-item">
+                <span class="client-info-label">Name</span>
+                <span class="client-info-value">{{.ClientName}}</span>
+            </div>
+            <div class="client-info-item">
+                <span class="client-info-label">{{.Labels.Form.Email}}</span>
+                <span class="client-info-value">{{.ClientEmail}}</span>
+            </div>
+            <div class="client-info-item">
+                <span class="client-info-label">{{.Labels.Form.Phone}}</span>
+                <span class="client-info-value">{{.ClientPhone}}</span>
+            </div>
+            <div class="client-info-item">
+                <span class="client-info-label">{{.Labels.Detail.CompanyDetails.Status}}</span>
+                <span>
+                    <span class="badge badge--{{.StatusVariant}}">
+                        {{.ClientStatus}}
+                    </span>
+                </span>
+            </div>
+        </div>
+        </div>
+        {{end}}
+
+        {{/* =============================================
+             TAB: Purchase History
+             ============================================= */}}
+        {{if eq .ActiveTab "history"}}
+        <div class="tab-scroll">
+            <div class="coming-soon-panel">
+                <div class="coming-soon-title">No purchase history yet</div>
+                <p class="coming-soon-text">Purchase history for this client will appear here once transactions are recorded.</p>
+            </div>
+        </div>
+        {{end}}
+
+    </div>
+</div>
+{{end}}
