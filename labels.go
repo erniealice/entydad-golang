@@ -50,17 +50,70 @@ type ClientEmptyLabels struct {
 }
 
 type ClientFormLabels struct {
-	Email string `json:"email"`
-	Phone string `json:"phone"`
+	Email                  string `json:"email"`
+	Phone                  string `json:"phone"`
+	CompanyName            string `json:"companyName"`
+	CompanyNamePlaceholder string `json:"companyNamePlaceholder"`
+	CustomerType           string `json:"customerType"`
+	DateOfBirth            string `json:"dateOfBirth"`
+	StreetAddress          string `json:"streetAddress"`
+	StreetAddressPlaceholder string `json:"streetAddressPlaceholder"`
+	City                   string `json:"city"`
+	CityPlaceholder        string `json:"cityPlaceholder"`
+	Province               string `json:"province"`
+	ProvincePlaceholder    string `json:"provincePlaceholder"`
+	PostalCode             string `json:"postalCode"`
+	PostalCodePlaceholder  string `json:"postalCodePlaceholder"`
+	Notes                  string `json:"notes"`
+	NotesPlaceholder       string `json:"notesPlaceholder"`
+	Tags                   string `json:"tags"`
+	TagsPlaceholder        string `json:"tagsPlaceholder"`
+	TagsSearchPlaceholder  string `json:"tagsSearchPlaceholder"`
+	TagsNoResults          string `json:"tagsNoResults"`
 }
 
 type ClientDetailLabels struct {
-	CompanyDetails ClientCompanyDetailLabels `json:"companyDetails"`
-	Actions        ClientDetailActionLabels  `json:"actions"`
+	CompanyDetails  ClientCompanyDetailLabels  `json:"companyDetails"`
+	Actions         ClientDetailActionLabels   `json:"actions"`
+	Profile         ClientDetailSectionLabels  `json:"profile"`
+	Company         ClientDetailSectionLabels  `json:"company"`
+	Personal        ClientDetailSectionLabels  `json:"personal"`
+	Address         ClientDetailSectionLabels  `json:"address"`
+	NotesSection    ClientDetailSectionLabels  `json:"notesSection"`
+	Tags            ClientDetailTagLabels      `json:"tags"`
+	PurchaseHistory ClientPurchaseHistoryLabels `json:"purchaseHistory"`
+	Tabs            ClientDetailTabLabels      `json:"tabs"`
 }
 
 type ClientCompanyDetailLabels struct {
 	Status string `json:"status"`
+}
+
+// ClientDetailSectionLabels holds a title for a detail page section.
+type ClientDetailSectionLabels struct {
+	Title string `json:"title"`
+}
+
+// ClientDetailTagLabels holds labels for the tags section on the detail page.
+type ClientDetailTagLabels struct {
+	Title      string `json:"title"`
+	NoTags     string `json:"noTags"`
+}
+
+// ClientPurchaseHistoryLabels holds labels for the purchase history section.
+type ClientPurchaseHistoryLabels struct {
+	Title         string `json:"title"`
+	LifetimeSpend string `json:"lifetimeSpend"`
+	TotalOrders   string `json:"totalOrders"`
+	AvgOrderValue string `json:"avgOrderValue"`
+	LastPurchase  string `json:"lastPurchase"`
+	Empty         string `json:"empty"`
+}
+
+// ClientDetailTabLabels holds labels for the client detail page tabs.
+type ClientDetailTabLabels struct {
+	Info            string `json:"info"`
+	PurchaseHistory string `json:"purchaseHistory"`
 }
 
 type ClientDetailActionLabels struct {
@@ -88,6 +141,7 @@ type UserLabels struct {
 	Empty   UserEmptyLabels   `json:"empty"`
 	Form    UserFormLabels    `json:"form"`
 	Actions UserActionLabels  `json:"actions"`
+	Detail  UserDetailLabels  `json:"detail"`
 }
 
 type UserPageLabels struct {
@@ -128,6 +182,29 @@ type UserActionLabels struct {
 	Activate    string `json:"activate"`
 	Deactivate  string `json:"deactivate"`
 	ManageRoles string `json:"manageRoles"`
+}
+
+// UserDetailLabels holds labels for the user detail page.
+type UserDetailLabels struct {
+	BasicInfo UserDetailBasicInfoLabels `json:"basicInfo"`
+	Tabs      UserDetailTabLabels      `json:"tabs"`
+}
+
+type UserDetailBasicInfoLabels struct {
+	Title     string `json:"title"`
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
+	Email     string `json:"email"`
+	Username  string `json:"username"`
+	Division  string `json:"division"`
+	Status    string `json:"status"`
+	UserType  string `json:"userType"`
+	Mobile    string `json:"mobile"`
+}
+
+type UserDetailTabLabels struct {
+	Info  string `json:"info"`
+	Roles string `json:"roles"`
 }
 
 // ---------------------------------------------------------------------------
@@ -202,6 +279,7 @@ type RoleLabels struct {
 	Empty   RoleEmptyLabels   `json:"empty"`
 	Form    RoleFormLabels    `json:"form"`
 	Actions RoleActionLabels  `json:"actions"`
+	Detail  RoleDetailLabels  `json:"detail"`
 }
 
 type RolePageLabels struct {
@@ -249,6 +327,26 @@ type RoleActionLabels struct {
 	Activate          string `json:"activate"`
 	Deactivate        string `json:"deactivate"`
 	ManagePermissions string `json:"managePermissions"`
+}
+
+// RoleDetailLabels holds labels for the role detail page.
+type RoleDetailLabels struct {
+	Tabs RoleDetailTabLabels  `json:"tabs"`
+	Info RoleDetailInfoLabels `json:"info"`
+}
+
+type RoleDetailTabLabels struct {
+	Info        string `json:"info"`
+	Permissions string `json:"permissions"`
+	Users       string `json:"users"`
+}
+
+type RoleDetailInfoLabels struct {
+	Title       string `json:"title"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Color       string `json:"color"`
+	Status      string `json:"status"`
 }
 
 // ---------------------------------------------------------------------------
@@ -401,6 +499,50 @@ type UserRoleActionLabels struct {
 	Assign      string `json:"assign"`
 	Remove      string `json:"remove"`
 	ManageRoles string `json:"manageRoles"`
+}
+
+// ---------------------------------------------------------------------------
+// Role-User labels (reverse of User-Role: managing users on a role)
+// ---------------------------------------------------------------------------
+
+// RoleUserLabels holds all translatable strings for the role-user assignment view.
+type RoleUserLabels struct {
+	Page    RoleUserPageLabels    `json:"page"`
+	Buttons RoleUserButtonLabels  `json:"buttons"`
+	Columns RoleUserColumnLabels  `json:"columns"`
+	Empty   RoleUserEmptyLabels   `json:"empty"`
+	Form    RoleUserFormLabels    `json:"form"`
+	Actions RoleUserActionLabels  `json:"actions"`
+}
+
+type RoleUserPageLabels struct {
+	Heading string `json:"heading"`
+	Caption string `json:"caption"`
+}
+
+type RoleUserButtonLabels struct {
+	AssignUser string `json:"assignUser"`
+}
+
+type RoleUserColumnLabels struct {
+	UserName     string `json:"userName"`
+	Email        string `json:"email"`
+	DateAssigned string `json:"dateAssigned"`
+}
+
+type RoleUserEmptyLabels struct {
+	Title   string `json:"title"`
+	Message string `json:"message"`
+}
+
+type RoleUserFormLabels struct {
+	User   string `json:"user"`
+	Assign string `json:"assign"`
+}
+
+type RoleUserActionLabels struct {
+	Assign string `json:"assign"`
+	Remove string `json:"remove"`
 }
 
 // ---------------------------------------------------------------------------

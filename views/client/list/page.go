@@ -242,7 +242,7 @@ func statusVariant(status string) string {
 
 func buildRowActions(id, name string, active bool, l entydad.ClientLabels) []types.TableAction {
 	actions := []types.TableAction{
-		{Type: "view", Label: l.Detail.Actions.ViewClient, Action: "view", Href: "/app/clients/" + id},
+		{Type: "view", Label: l.Detail.Actions.ViewClient, Action: "view", Href: "/app/clients/detail/" + id},
 		{Type: "edit", Label: l.Detail.Actions.EditClient, Action: "edit", URL: "/action/clients/edit/" + id, DrawerTitle: l.Detail.Actions.EditClient},
 	}
 	if active {

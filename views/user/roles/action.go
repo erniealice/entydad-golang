@@ -87,7 +87,7 @@ func NewAssignAction(deps *ActionDeps) view.View {
 			}
 
 			return view.OK("user-role-assign-form", &AssignFormData{
-				FormAction:   "/action/manage/users/" + userID + "/roles/assign",
+				FormAction:   "/action/users/detail/" + userID + "/roles/assign",
 				UserID:       userID,
 				Labels:       AssignFormLabels{Role: deps.Labels.Form.Role},
 				RoleOptions:  options,

@@ -177,9 +177,9 @@ func buildTableRows(users []*userpb.User, status string, l entydad.UserLabels, u
 		rolesCell := types.BuildChipCellFromLabels(roleNames, 2)
 
 		actions := []types.TableAction{
-			{Type: "view", Label: l.Actions.View, Action: "view", Href: "/app/users/" + id},
+			{Type: "view", Label: l.Actions.View, Action: "view", Href: "/app/users/detail/" + id},
 			{Type: "edit", Label: l.Actions.Edit, Action: "edit", URL: "/action/users/edit/" + id, DrawerTitle: l.Actions.Edit},
-			{Type: "view", Label: l.Actions.ManageRoles, Action: "view", Href: "/app/manage/users/" + id + "/roles"},
+			{Type: "view", Label: l.Actions.ManageRoles, Action: "view", Href: "/app/users/detail/" + id + "/roles"},
 		}
 		if active {
 			actions = append(actions, types.TableAction{

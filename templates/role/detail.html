@@ -1,0 +1,114 @@
+{{/* Full page — for direct access / non-HTMX */}}
+{{define "role-detail"}}
+{{template "app-shell" .}}
+{{end}}
+
+{{/* Content-only partial — for HTMX navigation */}}
+{{define "role-detail-content"}}
+<div class="page-content detail-layout" data-page-css="/assets/css/entydad/entydad-role-detail.css?v={{.CacheVersion}}">
+    {{/* --- HTMX Tab Buttons --- */}}
+    <div class="detail-tabs">
+        <div class="tabs" id="role-detail-tabs" role="tablist">
+            {{range .TabItems}}
+            <button type="button"
+                    class="tab{{if eq .Key $.ActiveTab}} active{{end}}{{if .Disabled}} disabled{{end}}"
+                    role="tab"
+                    aria-selected="{{if eq .Key $.ActiveTab}}true{{else}}false{{end}}"
+                    data-tab="{{.Key}}"
+                    hx-get="/action/roles/{{$.ID}}/tab/{{.Key}}"
+                    hx-target="#tabContent"
+                    hx-swap="innerHTML"
+                    hx-trigger="click"
+                    hx-push-url="/app/roles/detail/{{$.ID}}?tab={{.Key}}"
+                    {{if .Disabled}}aria-disabled="true" disabled{{end}}>
+                {{.Label}}
+                {{if .Count}}<span class="tab-badge">{{.Count}}</span>{{end}}
+            </button>
+            {{end}}
+        </div>
+    </div>
+
+    {{/* --- Tab Content Area --- */}}
+    <div id="tabContent" class="detail-body">
+        {{if eq .ActiveTab "info"}}
+            {{template "role-tab-info" .}}
+        {{else if eq .ActiveTab "permissions"}}
+            {{template "role-tab-permissions" .}}
+        {{else if eq .ActiveTab "users"}}
+            {{template "role-tab-users" .}}
+        {{end}}
+    </div>
+</div>
+{{template "sheet-form" .}}
+<script src="/assets/js/components/sheet.js?v={{.CacheVersion}}"></script>
+{{end}}
+
+{{/* =============================================
+     TAB PARTIAL: Info
+     ============================================= */}}
+{{define "role-tab-info"}}
+<div class="tab-scroll">
+    <h4 class="detail-section-title">{{.Labels.Detail.Info.Title}}</h4>
+    <div class="detail-info-grid">
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Detail.Info.Name}}</span>
+            <span class="detail-info-value">{{.RoleName}}</span>
+        </div>
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Detail.Info.Description}}</span>
+            <span class="detail-info-value">{{.RoleDescription}}</span>
+        </div>
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Detail.Info.Color}}</span>
+            <span class="detail-info-value">
+                {{if .RoleColor}}
+                <span class="role-color-swatch" style="background-color: {{.RoleColor}}"></span>
+                {{.RoleColor}}
+                {{else}}
+                —
+                {{end}}
+            </span>
+        </div>
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Detail.Info.Status}}</span>
+            <span>
+                <span class="badge badge--{{.StatusVariant}}">
+                    {{.RoleStatus}}
+                </span>
+            </span>
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{/* =============================================
+     TAB PARTIAL: Permissions
+     ============================================= */}}
+{{define "role-tab-permissions"}}
+<div class="tab-scroll tab-scroll--table">
+    {{if .PermissionsTable}}
+        {{template "table-card" .PermissionsTable}}
+    {{else}}
+        <div class="coming-soon-panel">
+            <div class="coming-soon-title">No permissions assigned</div>
+            <p class="coming-soon-text">Assign permissions to this role to control access.</p>
+        </div>
+    {{end}}
+</div>
+{{end}}
+
+{{/* =============================================
+     TAB PARTIAL: Users
+     ============================================= */}}
+{{define "role-tab-users"}}
+<div class="tab-scroll tab-scroll--table">
+    {{if .UsersTable}}
+        {{template "table-card" .UsersTable}}
+    {{else}}
+        <div class="coming-soon-panel">
+            <div class="coming-soon-title">No users assigned</div>
+            <p class="coming-soon-text">Assign users to this role to grant them its permissions.</p>
+        </div>
+    {{end}}
+</div>
+{{end}}

@@ -90,7 +90,7 @@ func NewAssignAction(deps *ActionDeps) view.View {
 			}
 
 			return view.OK("role-permission-assign-form", &AssignFormData{
-				FormAction:        "/action/manage/roles/" + roleID + "/permissions/assign",
+				FormAction:        "/action/roles/detail/" + roleID + "/permissions/assign",
 				RoleID:            roleID,
 				Labels:            AssignFormLabels{Permission: deps.Labels.Form.Permission},
 				PermissionOptions: options,

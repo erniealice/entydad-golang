@@ -1,7 +1,7 @@
 {{/*
 Client tag drawer form -- loaded into #sheetContent via HTMX.
 Used by both Add and Edit actions.
-Data: .Name, .Description, .Active, .ID, .FormAction, .IsEdit, .CommonLabels
+Data: .Name, .Code, .Description, .Active, .ID, .FormAction, .IsEdit, .CommonLabels
 */}}
 {{define "client-tag-drawer-form"}}
 <form hx-post="{{.FormAction}}" hx-swap="none" hx-on::after-request="Sheet.handleResponse(event)">
@@ -15,6 +15,16 @@ Data: .Name, .Description, .Active, .ID, .FormAction, .IsEdit, .CommonLabels
                 "Label" "Tag Name"
                 "Value" .Name
                 "Required" true
+            )}}
+        </div>
+
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "code"
+                "Label" "Code"
+                "Value" .Code
+                "Placeholder" "Auto-generated from name if empty"
             )}}
         </div>
 

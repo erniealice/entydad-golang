@@ -160,9 +160,9 @@ func buildTableRows(roles []*rolepb.Role, status string, l entydad.RoleLabels) [
 		color := r.GetColor()
 
 		actions := []types.TableAction{
-			{Type: "view", Label: l.Actions.View, Action: "view", Href: "/app/roles/" + id},
+			{Type: "view", Label: l.Actions.View, Action: "view", Href: "/app/roles/detail/" + id},
 			{Type: "edit", Label: l.Actions.Edit, Action: "edit", URL: "/action/roles/edit/" + id, DrawerTitle: l.Actions.Edit},
-			{Type: "view", Label: l.Actions.ManagePermissions, Action: "view", Href: "/app/manage/roles/" + id + "/permissions"},
+			{Type: "view", Label: l.Actions.ManagePermissions, Action: "view", Href: "/app/roles/detail/" + id + "/permissions"},
 		}
 		if active {
 			actions = append(actions, types.TableAction{

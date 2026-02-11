@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strconv"
 
 	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/pyeza-golang/types"
@@ -12,14 +13,16 @@ import (
 	"github.com/erniealice/entydad-golang"
 
 	categorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
+	clientcategorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client_category"
 )
 
 // Deps holds view dependencies.
 type Deps struct {
-	ListCategories func(ctx context.Context, req *categorypb.ListCategoriesRequest) (*categorypb.ListCategoriesResponse, error)
-	RefreshURL     string
-	CommonLabels   pyeza.CommonLabels
-	TableLabels    types.TableLabels
+	ListCategories       func(ctx context.Context, req *categorypb.ListCategoriesRequest) (*categorypb.ListCategoriesResponse, error)
+	ListClientCategories func(ctx context.Context, req *clientcategorypb.ListClientCategoriesRequest) (*clientcategorypb.ListClientCategoriesResponse, error)
+	RefreshURL           string
+	CommonLabels         pyeza.CommonLabels
+	TableLabels          types.TableLabels
 }
 
 // PageData holds the data for the client tags list page.
@@ -38,13 +41,27 @@ func NewView(deps *Deps) view.View {
 			return view.Error(fmt.Errorf("failed to load tags: %w", err))
 		}
 
+		// Build customer count per category from client_category junction records
+		customerCounts := make(map[string]int)
+		if deps.ListClientCategories != nil {
+			ccResp, err := deps.ListClientCategories(ctx, &clientcategorypb.ListClientCategoriesRequest{})
+			if err != nil {
+				log.Printf("Failed to list client categories for counts: %v", err)
+			} else {
+				for _, cc := range ccResp.GetData() {
+					customerCounts[cc.GetCategoryId()]++
+				}
+			}
+		}
+
 		columns := []types.TableColumn{
 			{Key: "name", Label: "Tag Name", Sortable: true},
+			{Key: "customers", Label: "Customers", Sortable: false, Width: "120px"},
 			{Key: "description", Label: "Description", Sortable: true},
 			{Key: "status", Label: "Status", Sortable: true, Width: "120px"},
 		}
 
-		rows := buildTableRows(resp.GetData())
+		rows := buildTableRows(resp.GetData(), customerCounts)
 		types.ApplyColumnStyles(columns, rows)
 
 		bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
@@ -103,7 +120,7 @@ func NewView(deps *Deps) view.View {
 	})
 }
 
-func buildTableRows(categories []*categorypb.Category) []types.TableRow {
+func buildTableRows(categories []*categorypb.Category, customerCounts map[string]int) []types.TableRow {
 	rows := []types.TableRow{}
 	for _, cat := range categories {
 		// Only show client-module categories
@@ -114,6 +131,7 @@ func buildTableRows(categories []*categorypb.Category) []types.TableRow {
 		id := cat.GetId()
 		name := cat.GetName()
 		desc := cat.GetDescription()
+		count := customerCounts[id]
 		status := "active"
 		variant := "success"
 		if !cat.GetActive() {
@@ -125,6 +143,7 @@ func buildTableRows(categories []*categorypb.Category) []types.TableRow {
 			ID: id,
 			Cells: []types.TableCell{
 				{Type: "text", Value: name},
+				{Type: "text", Value: strconv.Itoa(count)},
 				{Type: "text", Value: desc},
 				{Type: "badge", Value: status, Variant: variant},
 			},

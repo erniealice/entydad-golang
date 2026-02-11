@@ -10,7 +10,7 @@ const (
 	ClientEditURL       = "/action/clients/edit/{id}"
 	ClientDeleteURL        = "/action/clients/delete"
 	ClientBulkDeleteURL    = "/action/clients/bulk-delete"
-	ClientDetailURL        = "/app/clients/{id}"
+	ClientDetailURL = "/app/clients/detail/{id}"
 	ClientSetStatusURL     = "/action/clients/set-status"
 	ClientBulkSetStatusURL = "/action/clients/bulk-set-status"
 
@@ -33,6 +33,11 @@ const (
 	LocationSetStatusURL     = "/action/locations/set-status"
 	LocationBulkSetStatusURL = "/action/locations/bulk-set-status"
 
+	UserDetailURL      = "/app/users/detail/{id}"
+	UserTabActionURL   = "/action/users/{id}/tab/{tab}"
+
+	RoleDetailURL        = "/app/roles/detail/{id}"
+	RoleTabActionURL     = "/action/roles/{id}/tab/{tab}"
 	RoleListURL          = "/app/roles/list/{status}"
 	RoleTableURL         = "/action/roles/table/{status}"
 	RoleAddURL           = "/action/roles/add"
@@ -60,6 +65,23 @@ const (
 	UserRolesTableURL  = "/action/manage/users/{id}/roles/table"
 	UserRolesAssignURL = "/action/manage/users/{id}/roles/assign"
 	UserRolesRemoveURL = "/action/manage/users/{id}/roles/remove"
+
+	RoleUsersURL       = "/app/roles/detail/{id}/users"
+	RoleUsersTableURL  = "/action/roles/detail/{id}/users/table"
+	RoleUsersAssignURL = "/action/roles/detail/{id}/users/assign"
+	RoleUsersRemoveURL = "/action/roles/detail/{id}/users/remove"
+
+	// Migrated route constants: /detail/ pattern for user-roles and role-permissions
+	// Old /manage/ constants kept above for backward compatibility
+	UserDetailRolesURL       = "/app/users/detail/{id}/roles"
+	UserDetailRolesTableURL  = "/action/users/detail/{id}/roles/table"
+	UserDetailRolesAssignURL = "/action/users/detail/{id}/roles/assign"
+	UserDetailRolesRemoveURL = "/action/users/detail/{id}/roles/remove"
+
+	RoleDetailPermissionsURL       = "/app/roles/detail/{id}/permissions"
+	RoleDetailPermissionsTableURL  = "/action/roles/detail/{id}/permissions/table"
+	RoleDetailPermissionsAssignURL = "/action/roles/detail/{id}/permissions/assign"
+	RoleDetailPermissionsRemoveURL = "/action/roles/detail/{id}/permissions/remove"
 
 	WorkspaceListURL          = "/app/workspaces/list/{status}"
 	WorkspaceTableURL         = "/action/workspaces/table/{status}"

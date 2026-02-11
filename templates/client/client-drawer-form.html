@@ -1,13 +1,16 @@
 {{/*
 Client drawer form — loaded into #sheetContent via HTMX.
 Used by both Add and Edit actions.
-Data: .FirstName, .LastName, .Email, .Mobile, .Active, .ID, .FormAction, .IsEdit, .CommonLabels
+Data: .FirstName, .LastName, .Email, .Mobile, .Active, .ID, .FormAction, .IsEdit,
+      .CompanyName, .CustomerType, .DateOfBirth, .StreetAddress, .City, .Province,
+      .PostalCode, .Notes, .TagOptions, .SelectedTags, .Labels, .CommonLabels
 */}}
 {{define "client-drawer-form"}}
 <form hx-post="{{.FormAction}}" hx-swap="none" hx-on::after-request="Sheet.handleResponse(event)">
     {{if .ID}}<input type="hidden" name="id" value="{{.ID}}">{{end}}
 
     <div class="sheet-body">
+        {{/* --- Contact Info --- */}}
         <div class="form-row">
             {{template "form-group" (dict
                 "Type" "text"
@@ -48,6 +51,113 @@ Data: .FirstName, .LastName, .Email, .Mobile, .Active, .ID, .FormAction, .IsEdit
             )}}
         </div>
 
+        {{/* --- Company Section --- */}}
+        {{template "form-section" (dict "Title" .Labels.CompanyName)}}
+
+        <div class="form-row">
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "company_name"
+                "Label" .Labels.CompanyName
+                "Value" .CompanyName
+                "Placeholder" .Labels.CompanyNamePlaceholder
+            )}}
+            {{template "form-group" (dict
+                "Type" "select"
+                "Name" "customer_type"
+                "Label" .Labels.CustomerType
+                "Value" .CustomerType
+                "Placeholder" "Select type"
+                "Options" (list
+                    (dict "Value" "retail" "Label" "Retail" "Selected" (eq .CustomerType "retail"))
+                    (dict "Value" "wholesale" "Label" "Wholesale" "Selected" (eq .CustomerType "wholesale"))
+                    (dict "Value" "vip" "Label" "VIP" "Selected" (eq .CustomerType "vip"))
+                )
+            )}}
+        </div>
+
+        {{/* --- Personal Section --- */}}
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "date"
+                "Name" "date_of_birth"
+                "Label" .Labels.DateOfBirth
+                "Value" .DateOfBirth
+            )}}
+        </div>
+
+        {{/* --- Address Section --- */}}
+        {{template "form-section" (dict "Title" .Labels.StreetAddress)}}
+
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "street_address"
+                "Label" .Labels.StreetAddress
+                "Value" .StreetAddress
+                "Placeholder" .Labels.StreetAddressPlaceholder
+            )}}
+        </div>
+
+        <div class="form-row">
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "city"
+                "Label" .Labels.City
+                "Value" .City
+                "Placeholder" .Labels.CityPlaceholder
+            )}}
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "province"
+                "Label" .Labels.Province
+                "Value" .Province
+                "Placeholder" .Labels.ProvincePlaceholder
+            )}}
+        </div>
+
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "postal_code"
+                "Label" .Labels.PostalCode
+                "Value" .PostalCode
+                "Placeholder" .Labels.PostalCodePlaceholder
+            )}}
+        </div>
+
+        {{/* --- Notes Section --- */}}
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "textarea"
+                "Name" "notes"
+                "Label" .Labels.Notes
+                "Value" .Notes
+                "Placeholder" .Labels.NotesPlaceholder
+                "Rows" 3
+            )}}
+        </div>
+
+        {{/* --- Tags Section --- */}}
+        {{if .TagOptions}}
+        <div class="form-row single">
+            <div class="form-group">
+                <label class="form-label">{{.Labels.Tags}}</label>
+                {{template "multi-select" (dict
+                    "ID" "client-tags"
+                    "Name" "tags"
+                    "Placeholder" .Labels.TagsPlaceholder
+                    "SearchPlaceholder" .Labels.TagsSearchPlaceholder
+                    "Options" .TagOptions
+                    "Selected" .SelectedTags
+                    "NoResults" .Labels.TagsNoResults
+                    "MaxVisibleChips" 3
+                )}}
+            </div>
+        </div>
+        {{end}}
+
+        {{/* --- Active Toggle --- */}}
         <div class="form-row single">
             {{template "toggle" (dict
                 "Name" "active"

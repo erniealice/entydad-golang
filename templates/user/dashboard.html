@@ -8,10 +8,10 @@
 <div class="page-content" data-page-css="/assets/css/entydad/entydad-user-dashboard.css?v={{.CacheVersion}}">
     <!-- Stats Row -->
     <div class="entydad-stats-row">
-        {{template "stat-card" dict "Icon" "icon-shield" "Value" "42" "Label" "Total Users" "Trend" "+3" "TrendUp" true "Color" "terracotta"}}
-        {{template "stat-card" dict "Icon" "icon-user-check" "Value" "38" "Label" "Active" "Trend" "+2" "TrendUp" true "Color" "sage"}}
-        {{template "stat-card" dict "Icon" "icon-user-minus" "Value" "4" "Label" "Inactive" "Trend" "-1" "TrendUp" false "Color" "navy"}}
-        {{template "stat-card" dict "Icon" "icon-shield" "Value" "6" "Label" "Roles" "Trend" "0" "TrendUp" true "Color" "amber"}}
+        {{template "stat-card" dict "Icon" "icon-shield" "Value" (printf "%d" .Stats.TotalUsers) "Label" "Total Users" "Trend" "" "TrendUp" true "Color" "terracotta"}}
+        {{template "stat-card" dict "Icon" "icon-user-check" "Value" (printf "%d" .Stats.ActiveUsers) "Label" "Active" "Trend" "" "TrendUp" true "Color" "sage"}}
+        {{template "stat-card" dict "Icon" "icon-user-minus" "Value" (printf "%d" .Stats.InactiveUsers) "Label" "Inactive" "Trend" "" "TrendUp" false "Color" "navy"}}
+        {{template "stat-card" dict "Icon" "icon-shield" "Value" (printf "%d" .Stats.TotalRoles) "Label" "Roles" "Trend" "" "TrendUp" true "Color" "amber"}}
     </div>
 
     <!-- Main Grid -->
@@ -21,9 +21,9 @@
             <div class="card-header">
                 <h2 class="card-title">User Activity</h2>
                 <div class="card-actions">
-                    <button class="card-btn">Week</button>
-                    <button class="card-btn">Month</button>
-                    <button class="card-btn primary">Year</button>
+                    <a href="?period=week" class="card-btn{{if eq .ActivePeriod "week"}} primary{{end}}">Week</a>
+                    <a href="?period=month" class="card-btn{{if eq .ActivePeriod "month"}} primary{{end}}">Month</a>
+                    <a href="?period=year" class="card-btn{{if eq .ActivePeriod "year"}} primary{{end}}">Year</a>
                 </div>
             </div>
             <div class="entydad-chart-area">
@@ -36,17 +36,28 @@
                                     <stop offset="100%" style="stop-color:#7A9E7A;stop-opacity:0" />
                                 </linearGradient>
                             </defs>
+                            {{if .ChartSVGPath}}
+                            <path d="{{.ChartSVGPath}}" fill="none" stroke="#7A9E7A" stroke-width="3" stroke-linecap="round"/>
+                            <path d="{{.ChartFillPath}}" fill="url(#chartGradient)"/>
+                            {{else}}
                             <path d="M0,160 Q50,140 100,120 T200,100 T300,110 T400,60" fill="none" stroke="#7A9E7A" stroke-width="3" stroke-linecap="round"/>
                             <path d="M0,160 Q50,140 100,120 T200,100 T300,110 T400,60 L400,200 L0,200 Z" fill="url(#chartGradient)"/>
+                            {{end}}
                         </svg>
                     </div>
                     <div class="entydad-chart-labels">
-                        <span class="entydad-chart-label">Jan</span>
-                        <span class="entydad-chart-label">Mar</span>
-                        <span class="entydad-chart-label">May</span>
-                        <span class="entydad-chart-label">Jul</span>
-                        <span class="entydad-chart-label">Sep</span>
-                        <span class="entydad-chart-label">Nov</span>
+                        {{if .ChartData.Labels}}
+                            {{range .ChartData.Labels}}
+                            <span class="entydad-chart-label">{{.}}</span>
+                            {{end}}
+                        {{else}}
+                            <span class="entydad-chart-label">Jan</span>
+                            <span class="entydad-chart-label">Mar</span>
+                            <span class="entydad-chart-label">May</span>
+                            <span class="entydad-chart-label">Jul</span>
+                            <span class="entydad-chart-label">Sep</span>
+                            <span class="entydad-chart-label">Nov</span>
+                        {{end}}
                     </div>
                 </div>
             </div>
@@ -59,49 +70,24 @@
                 <button class="card-btn">View All</button>
             </div>
             <div class="entydad-activity-list">
-                <div class="entydad-activity-item">
-                    <div class="entydad-activity-icon client">
-                        {{template "icon-user-plus"}}
+                {{if .RecentActivity}}
+                    {{range .RecentActivity}}
+                    <div class="entydad-activity-item">
+                        <div class="entydad-activity-icon">
+                            {{.IconHTML}}
+                        </div>
+                        <div class="entydad-activity-content">
+                            <div class="entydad-activity-title">{{.Title}}</div>
+                            <div class="entydad-activity-desc">{{.Description}}</div>
+                        </div>
+                        <span class="entydad-activity-time">{{.TimeAgo}}</span>
                     </div>
-                    <div class="entydad-activity-content">
-                        <div class="entydad-activity-title">New User Created</div>
-                        <div class="entydad-activity-desc">Maria Santos added as Staff</div>
-                    </div>
-                    <span class="entydad-activity-time">15m ago</span>
+                    {{end}}
+                {{else}}
+                <div class="entydad-activity-empty">
+                    <p>No recent activity</p>
                 </div>
-
-                <div class="entydad-activity-item">
-                    <div class="entydad-activity-icon quote">
-                        {{template "icon-shield"}}
-                    </div>
-                    <div class="entydad-activity-content">
-                        <div class="entydad-activity-title">Role Updated</div>
-                        <div class="entydad-activity-desc">Manager role permissions changed</div>
-                    </div>
-                    <span class="entydad-activity-time">2h ago</span>
-                </div>
-
-                <div class="entydad-activity-item">
-                    <div class="entydad-activity-icon award">
-                        {{template "icon-user-check"}}
-                    </div>
-                    <div class="entydad-activity-content">
-                        <div class="entydad-activity-title">User Activated</div>
-                        <div class="entydad-activity-desc">Juan Dela Cruz reactivated</div>
-                    </div>
-                    <span class="entydad-activity-time">4h ago</span>
-                </div>
-
-                <div class="entydad-activity-item">
-                    <div class="entydad-activity-icon integration">
-                        {{template "icon-user-minus"}}
-                    </div>
-                    <div class="entydad-activity-content">
-                        <div class="entydad-activity-title">User Deactivated</div>
-                        <div class="entydad-activity-desc">Test Account set to inactive</div>
-                    </div>
-                    <span class="entydad-activity-time">1d ago</span>
-                </div>
+                {{end}}
             </div>
         </div>
     </div>

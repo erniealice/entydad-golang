@@ -1,0 +1,93 @@
+{{/* Full page — for direct access / non-HTMX */}}
+{{define "user-detail"}}
+{{template "app-shell" .}}
+{{end}}
+
+{{/* Content-only partial — for HTMX navigation */}}
+{{define "user-detail-content"}}
+<div class="page-content detail-layout" data-page-css="/assets/css/entydad/entydad-user-detail.css?v={{.CacheVersion}}">
+    {{/* --- HTMX Tab Buttons --- */}}
+    <div class="detail-tabs">
+        <div class="tabs" id="user-detail-tabs" role="tablist">
+            {{range .TabItems}}
+            <button type="button"
+                    class="tab{{if eq .Key $.ActiveTab}} active{{end}}{{if .Disabled}} disabled{{end}}"
+                    role="tab"
+                    aria-selected="{{if eq .Key $.ActiveTab}}true{{else}}false{{end}}"
+                    data-tab="{{.Key}}"
+                    hx-get="/action/users/{{$.ID}}/tab/{{.Key}}"
+                    hx-target="#tabContent"
+                    hx-swap="innerHTML"
+                    hx-trigger="click"
+                    hx-push-url="/app/users/detail/{{$.ID}}?tab={{.Key}}"
+                    {{if .Disabled}}aria-disabled="true" disabled{{end}}>
+                {{.Label}}
+                {{if .Count}}<span class="tab-badge">{{.Count}}</span>{{end}}
+            </button>
+            {{end}}
+        </div>
+    </div>
+
+    {{/* --- Tab Content Area --- */}}
+    <div id="tabContent" class="detail-body">
+        {{if eq .ActiveTab "info"}}
+            {{template "user-tab-info" .}}
+        {{else if eq .ActiveTab "roles"}}
+            {{template "user-tab-roles" .}}
+        {{end}}
+    </div>
+</div>
+{{template "sheet-form" .}}
+<script src="/assets/js/components/sheet.js?v={{.CacheVersion}}"></script>
+{{end}}
+
+{{/* =============================================
+     TAB PARTIAL: Info
+     ============================================= */}}
+{{define "user-tab-info"}}
+<div class="tab-scroll">
+    <h4 class="detail-section-title">{{.Labels.Detail.BasicInfo.Title}}</h4>
+    <div class="detail-info-grid">
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Detail.BasicInfo.FirstName}}</span>
+            <span class="detail-info-value">{{.UserFirstName}}</span>
+        </div>
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Detail.BasicInfo.LastName}}</span>
+            <span class="detail-info-value">{{.UserLastName}}</span>
+        </div>
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Detail.BasicInfo.Email}}</span>
+            <span class="detail-info-value">{{.UserEmail}}</span>
+        </div>
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Detail.BasicInfo.Mobile}}</span>
+            <span class="detail-info-value">{{.UserMobile}}</span>
+        </div>
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Detail.BasicInfo.Status}}</span>
+            <span>
+                <span class="badge badge--{{.StatusVariant}}">
+                    {{.UserStatus}}
+                </span>
+            </span>
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{/* =============================================
+     TAB PARTIAL: Roles
+     ============================================= */}}
+{{define "user-tab-roles"}}
+<div class="tab-scroll tab-scroll--table">
+    {{if .RolesTable}}
+        {{template "table-card" .RolesTable}}
+    {{else}}
+        <div class="coming-soon-panel">
+            <div class="coming-soon-title">No roles assigned</div>
+            <p class="coming-soon-text">Assign roles to this user to control their access.</p>
+        </div>
+    {{end}}
+</div>
+{{end}}

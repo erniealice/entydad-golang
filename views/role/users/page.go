@@ -1,4 +1,4 @@
-package permissions
+package users
 
 import (
 	"context"
@@ -11,20 +11,29 @@ import (
 
 	rolepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/role"
 
-	permissionpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/permission"
-
 	"github.com/erniealice/entydad-golang"
 )
 
-// Deps holds view dependencies.
-type Deps struct {
-	GetRoleItemPageData func(ctx context.Context, req *rolepb.GetRoleItemPageDataRequest) (*rolepb.GetRoleItemPageDataResponse, error)
-	Labels              entydad.RolePermissionLabels
-	CommonLabels        pyeza.CommonLabels
-	TableLabels         types.TableLabels
+// UserByRole holds user info for display in the role-users table.
+type UserByRole struct {
+	WorkspaceUserRoleID string
+	WorkspaceUserID     string
+	UserID              string
+	UserName            string
+	Email               string
+	DateAssigned        string
 }
 
-// PageData holds the data for the role permissions page.
+// Deps holds view dependencies.
+type Deps struct {
+	GetUsersByRoleID func(ctx context.Context, roleID string) ([]UserByRole, error)
+	ReadRole         func(ctx context.Context, req *rolepb.ReadRoleRequest) (*rolepb.ReadRoleResponse, error)
+	Labels           entydad.RoleUserLabels
+	CommonLabels     pyeza.CommonLabels
+	TableLabels      types.TableLabels
+}
+
+// PageData holds the data for the role users page.
 type PageData struct {
 	types.PageData
 	ContentTemplate string
@@ -33,7 +42,7 @@ type PageData struct {
 	RoleName        string
 }
 
-// NewView creates the role permissions view (full page).
+// NewView creates the role users view (full page).
 func NewView(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		roleID := viewCtx.Request.PathValue("id")
@@ -55,16 +64,16 @@ func NewView(deps *Deps) view.View {
 				ActiveSubNav:   "roles-active",
 				HeaderTitle:    fmt.Sprintf("%s: %s", deps.Labels.Page.Heading, roleName),
 				HeaderSubtitle: deps.Labels.Page.Caption,
-				HeaderIcon:     "icon-key",
+				HeaderIcon:     "icon-users",
 				CommonLabels:   deps.CommonLabels,
 			},
-			ContentTemplate: "role-permissions-content",
+			ContentTemplate: "role-users-content",
 			Table:           tableConfig,
 			RoleID:          roleID,
 			RoleName:        roleName,
 		}
 
-		return view.OK("role-permissions", pageData)
+		return view.OK("role-users", pageData)
 	})
 }
 
@@ -85,28 +94,41 @@ func NewTableView(deps *Deps) view.View {
 	})
 }
 
-// buildTableConfig fetches role data with permissions and builds the table.
+// buildTableConfig fetches users assigned to a role and builds the table.
 func buildTableConfig(ctx context.Context, deps *Deps, roleID string) (*types.TableConfig, string, error) {
-	resp, err := deps.GetRoleItemPageData(ctx, &rolepb.GetRoleItemPageDataRequest{
-		RoleId: roleID,
+	// Get role name for the header
+	roleResp, err := deps.ReadRole(ctx, &rolepb.ReadRoleRequest{
+		Data: &rolepb.Role{Id: roleID},
 	})
 	if err != nil {
-		log.Printf("Failed to get role item page data: %v", err)
+		log.Printf("Failed to read role %s: %v", roleID, err)
 		return nil, "", fmt.Errorf("failed to load role: %w", err)
 	}
+	data := roleResp.GetData()
+	if len(data) == 0 {
+		return nil, "", fmt.Errorf("role not found")
+	}
+	roleName := data[0].GetName()
 
-	role := resp.GetRole()
-	roleName := role.GetName()
+	// Get users assigned to this role
+	var users []UserByRole
+	if deps.GetUsersByRoleID != nil {
+		users, err = deps.GetUsersByRoleID(ctx, roleID)
+		if err != nil {
+			log.Printf("Failed to get users for role %s: %v", roleID, err)
+			// Continue with empty table rather than erroring
+		}
+	}
 
 	l := deps.Labels
-	columns := permissionColumns(l)
-	rows := buildTableRows(role, l)
+	columns := userColumns(l)
+	rows := buildTableRows(users, roleID, l)
 	types.ApplyColumnStyles(columns, rows)
 
-	refreshURL := fmt.Sprintf("/action/roles/detail/%s/permissions/table", roleID)
+	refreshURL := fmt.Sprintf("/action/roles/detail/%s/users/table", roleID)
 
 	tableConfig := &types.TableConfig{
-		ID:                   "role-permissions-table",
+		ID:                   "role-users-table",
 		RefreshURL:           refreshURL,
 		Columns:              columns,
 		Rows:                 rows,
@@ -118,7 +140,7 @@ func buildTableConfig(ctx context.Context, deps *Deps, roleID string) (*types.Ta
 		ShowExport:           false,
 		ShowDensity:          true,
 		ShowEntries:          true,
-		DefaultSortColumn:    "permissionName",
+		DefaultSortColumn:    "userName",
 		DefaultSortDirection: "asc",
 		Labels:               deps.TableLabels,
 		EmptyState: types.TableEmptyState{
@@ -126,8 +148,8 @@ func buildTableConfig(ctx context.Context, deps *Deps, roleID string) (*types.Ta
 			Message: l.Empty.Message,
 		},
 		PrimaryAction: &types.PrimaryAction{
-			Label:     l.Buttons.AssignPermission,
-			ActionURL: fmt.Sprintf("/action/roles/detail/%s/permissions/assign", roleID),
+			Label:     l.Buttons.AssignUser,
+			ActionURL: fmt.Sprintf("/action/roles/detail/%s/users/assign", roleID),
 			Icon:      "icon-plus",
 		},
 	}
@@ -136,62 +158,38 @@ func buildTableConfig(ctx context.Context, deps *Deps, roleID string) (*types.Ta
 	return tableConfig, roleName, nil
 }
 
-func permissionColumns(l entydad.RolePermissionLabels) []types.TableColumn {
+func userColumns(l entydad.RoleUserLabels) []types.TableColumn {
 	return []types.TableColumn{
-		{Key: "permissionName", Label: l.Columns.PermissionName, Sortable: true},
-		{Key: "code", Label: l.Columns.Code, Sortable: true},
-		{Key: "type", Label: l.Columns.Type, Sortable: true, Width: "120px"},
+		{Key: "userName", Label: l.Columns.UserName, Sortable: true},
+		{Key: "email", Label: l.Columns.Email, Sortable: true},
 		{Key: "dateAssigned", Label: l.Columns.DateAssigned, Sortable: true, Width: "180px"},
 	}
 }
 
-func buildTableRows(role *rolepb.Role, l entydad.RolePermissionLabels) []types.TableRow {
+func buildTableRows(users []UserByRole, roleID string, l entydad.RoleUserLabels) []types.TableRow {
 	rows := []types.TableRow{}
 
-	for _, rp := range role.GetRolePermissions() {
-		perm := rp.GetPermission()
-		if perm == nil {
-			continue
-		}
-
-		rpID := rp.GetId()
-		permName := perm.GetName()
-		permCode := perm.GetPermissionCode()
-		permType := "Allow"
-		dateAssigned := rp.GetDateCreatedString()
-
-		// Permission type badge — from the embedded Permission object
-		pt := perm.GetPermissionType()
-		if pt == permissionpb.PermissionType_PERMISSION_TYPE_DENY {
-			permType = "Deny"
-		}
-		typeVariant := "success"
-		if permType == "Deny" {
-			typeVariant = "danger"
-		}
-
+	for _, u := range users {
 		actions := []types.TableAction{
 			{
 				Type: "delete", Label: l.Actions.Remove, Action: "delete",
-				URL:            fmt.Sprintf("/action/roles/detail/%s/permissions/remove", role.GetId()),
-				ItemName:       permName,
+				URL:            fmt.Sprintf("/action/roles/detail/%s/users/remove", roleID),
+				ItemName:       u.UserName,
 				ConfirmTitle:   l.Actions.Remove,
-				ConfirmMessage: fmt.Sprintf("Are you sure you want to remove %s from this role?", permName),
+				ConfirmMessage: fmt.Sprintf("Are you sure you want to remove %s from this role?", u.UserName),
 			},
 		}
 
 		rows = append(rows, types.TableRow{
-			ID: rpID,
+			ID: u.WorkspaceUserRoleID,
 			Cells: []types.TableCell{
-				{Type: "text", Value: permName},
-				{Type: "text", Value: permCode},
-				{Type: "badge", Value: permType, Variant: typeVariant},
-				{Type: "text", Value: dateAssigned},
+				{Type: "text", Value: u.UserName},
+				{Type: "text", Value: u.Email},
+				{Type: "text", Value: u.DateAssigned},
 			},
 			DataAttrs: map[string]string{
-				"permissionName": permName,
-				"code":           permCode,
-				"type":           permType,
+				"userName": u.UserName,
+				"email":    u.Email,
 			},
 			Actions: actions,
 		})

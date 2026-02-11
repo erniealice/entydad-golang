@@ -139,7 +139,7 @@ func buildTableConfig(ctx context.Context, deps *Deps, userID string) (*types.Ta
 	rows := buildTableRows(workspaceUser, userID, l)
 	types.ApplyColumnStyles(columns, rows)
 
-	refreshURL := fmt.Sprintf("/action/manage/users/%s/roles/table", userID)
+	refreshURL := fmt.Sprintf("/action/users/detail/%s/roles/table", userID)
 
 	tableConfig := &types.TableConfig{
 		ID:                   "user-roles-table",
@@ -163,7 +163,7 @@ func buildTableConfig(ctx context.Context, deps *Deps, userID string) (*types.Ta
 		},
 		PrimaryAction: &types.PrimaryAction{
 			Label:     l.Buttons.AssignRole,
-			ActionURL: fmt.Sprintf("/action/manage/users/%s/roles/assign", userID),
+			ActionURL: fmt.Sprintf("/action/users/detail/%s/roles/assign", userID),
 			Icon:      "icon-plus",
 		},
 	}
@@ -176,7 +176,7 @@ func buildEmptyTableConfig(deps *Deps, userID string) *types.TableConfig {
 	l := deps.Labels
 	columns := roleColumns(l)
 
-	refreshURL := fmt.Sprintf("/action/manage/users/%s/roles/table", userID)
+	refreshURL := fmt.Sprintf("/action/users/detail/%s/roles/table", userID)
 
 	tableConfig := &types.TableConfig{
 		ID:                   "user-roles-table",
@@ -200,7 +200,7 @@ func buildEmptyTableConfig(deps *Deps, userID string) *types.TableConfig {
 		},
 		PrimaryAction: &types.PrimaryAction{
 			Label:     l.Buttons.AssignRole,
-			ActionURL: fmt.Sprintf("/action/manage/users/%s/roles/assign", userID),
+			ActionURL: fmt.Sprintf("/action/users/detail/%s/roles/assign", userID),
 			Icon:      "icon-plus",
 		},
 	}
@@ -242,7 +242,7 @@ func buildTableRows(workspaceUser *workspaceuserpb.WorkspaceUser, userID string,
 		actions := []types.TableAction{
 			{
 				Type: "delete", Label: l.Actions.Remove, Action: "delete",
-				URL:            fmt.Sprintf("/action/manage/users/%s/roles/remove", userID),
+				URL:            fmt.Sprintf("/action/users/detail/%s/roles/remove", userID),
 				ItemName:       roleName,
 				ConfirmTitle:   l.Actions.Remove,
 				ConfirmMessage: fmt.Sprintf("Are you sure you want to remove %s from this user?", roleName),
