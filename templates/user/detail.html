@@ -8,24 +8,7 @@
 <div class="page-content detail-layout" data-page-css="/assets/css/entydad/entydad-user-detail.css?v={{.CacheVersion}}">
     {{/* --- HTMX Tab Buttons --- */}}
     <div class="detail-tabs">
-        <div class="tabs" id="user-detail-tabs" role="tablist">
-            {{range .TabItems}}
-            <button type="button"
-                    class="tab{{if eq .Key $.ActiveTab}} active{{end}}{{if .Disabled}} disabled{{end}}"
-                    role="tab"
-                    aria-selected="{{if eq .Key $.ActiveTab}}true{{else}}false{{end}}"
-                    data-tab="{{.Key}}"
-                    hx-get="/action/users/{{$.ID}}/tab/{{.Key}}"
-                    hx-target="#tabContent"
-                    hx-swap="innerHTML"
-                    hx-trigger="click"
-                    hx-push-url="/app/users/detail/{{$.ID}}?tab={{.Key}}"
-                    {{if .Disabled}}aria-disabled="true" disabled{{end}}>
-                {{.Label}}
-                {{if .Count}}<span class="tab-badge">{{.Count}}</span>{{end}}
-            </button>
-            {{end}}
-        </div>
+        {{template "tabs" (dict "Items" .TabItems "ActiveTab" .ActiveTab "Variant" "default" "ID" "user-detail-tabs")}}
     </div>
 
     {{/* --- Tab Content Area --- */}}

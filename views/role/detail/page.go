@@ -28,23 +28,13 @@ type Deps struct {
 	TableLabels         types.TableLabels
 }
 
-// TabItem represents a tab in the detail view.
-type TabItem struct {
-	Key      string
-	Label    string
-	Href     string
-	Icon     string
-	Count    int
-	Disabled bool
-}
-
 // PageData holds the data for the role detail page.
 type PageData struct {
 	types.PageData
 	ContentTemplate  string
 	Labels           entydad.RoleLabels
 	ActiveTab        string
-	TabItems         []TabItem
+	TabItems         []pyeza.TabItem
 	ID               string
 	RoleName         string
 	RoleDescription  string
@@ -195,12 +185,13 @@ func buildPageData(ctx context.Context, deps *Deps, id, activeTab string, viewCt
 	return pageData, nil
 }
 
-func buildTabItems(id string, labels entydad.RoleLabels, permCount, userCount int) []TabItem {
+func buildTabItems(id string, labels entydad.RoleLabels, permCount, userCount int) []pyeza.TabItem {
 	base := "/app/roles/detail/" + id
-	return []TabItem{
-		{Key: "info", Label: labels.Detail.Tabs.Info, Href: base + "?tab=info", Icon: "icon-info", Count: 0, Disabled: false},
-		{Key: "permissions", Label: labels.Detail.Tabs.Permissions, Href: base + "?tab=permissions", Icon: "icon-key", Count: permCount, Disabled: false},
-		{Key: "users", Label: labels.Detail.Tabs.Users, Href: base + "?tab=users", Icon: "icon-user", Count: userCount, Disabled: false},
+	action := "/action/roles/" + id + "/tab/"
+	return []pyeza.TabItem{
+		{Key: "info", Label: labels.Detail.Tabs.Info, Href: base + "?tab=info", HxGet: action + "info", Icon: "icon-info", Count: 0, Disabled: false},
+		{Key: "permissions", Label: labels.Detail.Tabs.Permissions, Href: base + "?tab=permissions", HxGet: action + "permissions", Icon: "icon-key", Count: permCount, Disabled: false},
+		{Key: "users", Label: labels.Detail.Tabs.Users, Href: base + "?tab=users", HxGet: action + "users", Icon: "icon-user", Count: userCount, Disabled: false},
 	}
 }
 

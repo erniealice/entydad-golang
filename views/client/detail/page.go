@@ -59,7 +59,7 @@ type PageData struct {
 	Client          *clientpb.Client
 	Labels          entydad.ClientLabels
 	ActiveTab       string
-	TabItems        []TabItem
+	TabItems        []pyeza.TabItem
 	ClientName      string
 	ClientEmail     string
 	ClientPhone     string
@@ -201,23 +201,97 @@ func NewView(deps *Deps) view.View {
 	})
 }
 
-// TabItem represents a tab in the detail view.
-// Fields match the pyeza tabs.html template expectations.
-type TabItem struct {
-	Key      string
-	Label    string
-	Href     string
-	Icon     string
-	Count    int
-	Disabled bool
+func buildTabItems(id string) []pyeza.TabItem {
+	base := "/app/clients/detail/" + id
+	action := "/action/clients/" + id + "/tab/"
+	return []pyeza.TabItem{
+		{Key: "basic", Label: "Basic Information", Href: base + "?tab=basic", HxGet: action + "basic", Icon: "icon-info"},
+		{Key: "history", Label: "Purchase History", Href: base + "?tab=history", HxGet: action + "history", Icon: "icon-shopping-bag"},
+	}
 }
 
-func buildTabItems(id string) []TabItem {
-	base := "/app/clients/detail/" + id
-	return []TabItem{
-		{Key: "basic", Label: "Basic Information", Href: base + "?tab=basic", Icon: "icon-info"},
-		{Key: "history", Label: "Purchase History", Href: base + "?tab=history", Icon: "icon-shopping-bag"},
-	}
+// NewTabAction creates the tab action view (partial — returns only the tab content).
+func NewTabAction(deps *Deps) view.View {
+	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		id := viewCtx.Request.PathValue("id")
+		tab := viewCtx.Request.PathValue("tab")
+		if tab == "" {
+			tab = "basic"
+		}
+
+		resp, err := deps.ReadClient(ctx, &clientpb.ReadClientRequest{
+			Data: &clientpb.Client{Id: id},
+		})
+		if err != nil {
+			log.Printf("Failed to read client %s: %v", id, err)
+			return view.Error(fmt.Errorf("failed to load client: %w", err))
+		}
+
+		data := resp.GetData()
+		if len(data) == 0 {
+			return view.Error(fmt.Errorf("client not found"))
+		}
+		client := data[0]
+		u := client.GetUser()
+
+		clientName := clientDisplayName(client)
+		clientEmail := ""
+		clientPhone := ""
+		if u != nil {
+			clientEmail = u.GetEmailAddress()
+			clientPhone = u.GetMobileNumber()
+		}
+
+		clientStatus := "active"
+		if !client.GetActive() {
+			clientStatus = "inactive"
+		}
+		statusVariant := "success"
+		if clientStatus == "inactive" {
+			statusVariant = "warning"
+		}
+
+		pageData := &PageData{
+			PageData: types.PageData{
+				CacheVersion: viewCtx.CacheVersion,
+				CommonLabels: deps.CommonLabels,
+			},
+			Client:        client,
+			Labels:        deps.Labels,
+			ActiveTab:     tab,
+			TabItems:      buildTabItems(id),
+			ClientName:    clientName,
+			ClientEmail:   clientEmail,
+			ClientPhone:   clientPhone,
+			ClientStatus:  clientStatus,
+			StatusVariant: statusVariant,
+		}
+
+		switch tab {
+		case "basic":
+			pageData.CompanyName = client.GetCompanyName()
+			pageData.CustomerType = client.GetCustomerType()
+			pageData.DateOfBirth = client.GetDateOfBirth()
+			pageData.StreetAddress = client.GetStreetAddress()
+			pageData.City = client.GetCity()
+			pageData.Province = client.GetProvince()
+			pageData.PostalCode = client.GetPostalCode()
+			pageData.Notes = client.GetNotes()
+			pageData.FullAddress = buildFullAddress(pageData.StreetAddress, pageData.City, pageData.Province, pageData.PostalCode)
+			pageData.HasCompany = pageData.CompanyName != "" || pageData.CustomerType != ""
+			pageData.HasPersonal = pageData.DateOfBirth != ""
+			pageData.HasAddress = pageData.StreetAddress != "" || pageData.City != "" || pageData.Province != "" || pageData.PostalCode != ""
+			pageData.HasNotes = pageData.Notes != ""
+			pageData.Tags = loadClientTags(ctx, deps, id)
+			pageData.HasTags = len(pageData.Tags) > 0
+		case "history":
+			pageData.PurchaseStats, pageData.Orders = loadPurchaseHistory(ctx, deps, id)
+			pageData.HasOrders = len(pageData.Orders) > 0
+		}
+
+		templateName := "client-tab-" + tab
+		return view.OK(templateName, pageData)
+	})
 }
 
 // clientDisplayName returns the client's display name from the embedded user.

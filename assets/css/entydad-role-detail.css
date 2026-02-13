@@ -1,6 +1,5 @@
-/* entydad - role detail page layout
-   Uses shared .detail-* classes from entydad-user-detail.css
-   Only role-specific additions here */
+/* entydad - role detail page layout */
+@import url("entydad-user-detail.css");
 
 .role-color-swatch {
     display: inline-block;

@@ -7,189 +7,187 @@
 {{define "client-detail-content"}}
 <div class="page-content client-detail-layout" data-page-css="/assets/css/entydad/entydad-client-detail.css?v={{.CacheVersion}}">
     {{/* --- Tabs --- */}}
-    <div class="client-detail-tabs">
+    <div class="detail-tabs">
         {{template "tabs" (dict "Items" .TabItems "ActiveTab" .ActiveTab "Variant" "default" "ID" "client-tabs")}}
     </div>
 
     {{/* --- Tab Body --- */}}
-    <div class="client-detail-body">
-
-        {{/* =============================================
-             TAB: Basic Information
-             ============================================= */}}
+    <div id="tabContent" class="detail-body">
         {{if eq .ActiveTab "basic"}}
-        <div class="tab-scroll">
-
-            {{/* --- Profile Section --- */}}
-            <h4 class="client-section-title">{{.Labels.Detail.Profile.Title}}</h4>
-            <div class="client-info-grid">
-                <div class="client-info-item">
-                    <span class="client-info-label">Name</span>
-                    <span class="client-info-value">{{.ClientName}}</span>
-                </div>
-                <div class="client-info-item">
-                    <span class="client-info-label">{{.Labels.Form.Email}}</span>
-                    <span class="client-info-value">{{if .ClientEmail}}{{.ClientEmail}}{{else}}&mdash;{{end}}</span>
-                </div>
-                <div class="client-info-item">
-                    <span class="client-info-label">{{.Labels.Form.Phone}}</span>
-                    <span class="client-info-value">{{if .ClientPhone}}{{.ClientPhone}}{{else}}&mdash;{{end}}</span>
-                </div>
-                <div class="client-info-item">
-                    <span class="client-info-label">{{.Labels.Detail.CompanyDetails.Status}}</span>
-                    <span>
-                        <span class="badge badge--{{.StatusVariant}}">
-                            {{.ClientStatus}}
-                        </span>
-                    </span>
-                </div>
-            </div>
-
-            {{/* --- Company Section --- */}}
-            {{if .HasCompany}}
-            <h4 class="client-section-title client-section-title--spaced">{{.Labels.Detail.Company.Title}}</h4>
-            <div class="client-info-grid">
-                {{if .CompanyName}}
-                <div class="client-info-item">
-                    <span class="client-info-label">{{.Labels.Form.CompanyName}}</span>
-                    <span class="client-info-value">{{.CompanyName}}</span>
-                </div>
-                {{end}}
-                {{if .CustomerType}}
-                <div class="client-info-item">
-                    <span class="client-info-label">{{.Labels.Form.CustomerType}}</span>
-                    <span class="client-info-value client-customer-type">{{.CustomerType}}</span>
-                </div>
-                {{end}}
-            </div>
-            {{end}}
-
-            {{/* --- Personal Section --- */}}
-            {{if .HasPersonal}}
-            <h4 class="client-section-title client-section-title--spaced">{{.Labels.Detail.Personal.Title}}</h4>
-            <div class="client-info-grid">
-                {{if .DateOfBirth}}
-                <div class="client-info-item">
-                    <span class="client-info-label">{{.Labels.Form.DateOfBirth}}</span>
-                    <span class="client-info-value">{{.DateOfBirth}}</span>
-                </div>
-                {{end}}
-            </div>
-            {{end}}
-
-            {{/* --- Address Section --- */}}
-            {{if .HasAddress}}
-            <h4 class="client-section-title client-section-title--spaced">{{.Labels.Detail.Address.Title}}</h4>
-            <div class="client-info-grid">
-                {{if .StreetAddress}}
-                <div class="client-info-item">
-                    <span class="client-info-label">{{.Labels.Form.StreetAddress}}</span>
-                    <span class="client-info-value">{{.StreetAddress}}</span>
-                </div>
-                {{end}}
-                {{if .City}}
-                <div class="client-info-item">
-                    <span class="client-info-label">{{.Labels.Form.City}}</span>
-                    <span class="client-info-value">{{.City}}</span>
-                </div>
-                {{end}}
-                {{if .Province}}
-                <div class="client-info-item">
-                    <span class="client-info-label">{{.Labels.Form.Province}}</span>
-                    <span class="client-info-value">{{.Province}}</span>
-                </div>
-                {{end}}
-                {{if .PostalCode}}
-                <div class="client-info-item">
-                    <span class="client-info-label">{{.Labels.Form.PostalCode}}</span>
-                    <span class="client-info-value">{{.PostalCode}}</span>
-                </div>
-                {{end}}
-            </div>
-            {{end}}
-
-            {{/* --- Notes Section --- */}}
-            {{if .HasNotes}}
-            <h4 class="client-section-title client-section-title--spaced">{{.Labels.Detail.NotesSection.Title}}</h4>
-            <div class="client-notes-content">
-                {{.Notes}}
-            </div>
-            {{end}}
-
-            {{/* --- Tags Section --- */}}
-            <h4 class="client-section-title client-section-title--spaced">{{.Labels.Detail.Tags.Title}}</h4>
-            {{if .HasTags}}
-            <div class="client-tags-list">
-                {{range .Tags}}
-                <span class="client-tag-chip">{{.Name}}</span>
-                {{end}}
-            </div>
-            {{else}}
-            <p class="client-tags-empty">{{.Labels.Detail.Tags.NoTags}}</p>
-            {{end}}
-
-        </div>
+        {{template "client-tab-basic" .}}
+        {{else if eq .ActiveTab "history"}}
+        {{template "client-tab-history" .}}
         {{end}}
-
-        {{/* =============================================
-             TAB: Purchase History
-             ============================================= */}}
-        {{if eq .ActiveTab "history"}}
-        <div class="tab-scroll">
-            {{if .HasOrders}}
-            {{/* --- Stat Cards --- */}}
-            <div class="purchase-stats-row">
-                <div class="purchase-stat-card">
-                    <span class="stat-label">{{.Labels.Detail.PurchaseHistory.LifetimeSpend}}</span>
-                    <span class="stat-value">{{.PurchaseStats.LifetimeSpend}}</span>
-                </div>
-                <div class="purchase-stat-card">
-                    <span class="stat-label">{{.Labels.Detail.PurchaseHistory.TotalOrders}}</span>
-                    <span class="stat-value">{{.PurchaseStats.TotalOrders}}</span>
-                </div>
-                <div class="purchase-stat-card">
-                    <span class="stat-label">{{.Labels.Detail.PurchaseHistory.AvgOrderValue}}</span>
-                    <span class="stat-value">{{.PurchaseStats.AvgOrderValue}}</span>
-                </div>
-                <div class="purchase-stat-card">
-                    <span class="stat-label">{{.Labels.Detail.PurchaseHistory.LastPurchase}}</span>
-                    <span class="stat-value">{{.PurchaseStats.LastPurchase}}</span>
-                </div>
-            </div>
-
-            {{/* --- Orders Table --- */}}
-            <h4 class="client-section-title client-section-title--spaced">Recent Orders</h4>
-            <div class="purchase-orders-table">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Reference</th>
-                            <th>Amount</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {{range .Orders}}
-                        <tr>
-                            <td>{{.Date}}</td>
-                            <td>{{.Reference}}</td>
-                            <td>{{.Amount}}</td>
-                            <td><span class="badge badge--{{.Variant}}">{{.Status}}</span></td>
-                        </tr>
-                        {{end}}
-                    </tbody>
-                </table>
-            </div>
-            {{else}}
-            <div class="coming-soon-panel">
-                <div class="coming-soon-title">{{.Labels.Detail.PurchaseHistory.Empty}}</div>
-                <p class="coming-soon-text">Purchase history for this client will appear here once transactions are recorded.</p>
-            </div>
-            {{end}}
-        </div>
-        {{end}}
-
     </div>
+</div>
+{{end}}
+
+{{/* Basic Information Tab */}}
+{{define "client-tab-basic"}}
+<div class="tab-scroll">
+    {{/* --- Profile Section --- */}}
+    <h4 class="client-section-title">{{.Labels.Detail.Profile.Title}}</h4>
+    <div class="client-info-grid">
+        <div class="client-info-item">
+            <span class="client-info-label">Name</span>
+            <span class="client-info-value">{{.ClientName}}</span>
+        </div>
+        <div class="client-info-item">
+            <span class="client-info-label">{{.Labels.Form.Email}}</span>
+            <span class="client-info-value">{{if .ClientEmail}}{{.ClientEmail}}{{else}}&mdash;{{end}}</span>
+        </div>
+        <div class="client-info-item">
+            <span class="client-info-label">{{.Labels.Form.Phone}}</span>
+            <span class="client-info-value">{{if .ClientPhone}}{{.ClientPhone}}{{else}}&mdash;{{end}}</span>
+        </div>
+        <div class="client-info-item">
+            <span class="client-info-label">{{.Labels.Detail.CompanyDetails.Status}}</span>
+            <span>
+                <span class="badge badge--{{.StatusVariant}}">
+                    {{.ClientStatus}}
+                </span>
+            </span>
+        </div>
+    </div>
+
+    {{/* --- Company Section --- */}}
+    {{if .HasCompany}}
+    <h4 class="client-section-title client-section-title--spaced">{{.Labels.Detail.Company.Title}}</h4>
+    <div class="client-info-grid">
+        {{if .CompanyName}}
+        <div class="client-info-item">
+            <span class="client-info-label">{{.Labels.Form.CompanyName}}</span>
+            <span class="client-info-value">{{.CompanyName}}</span>
+        </div>
+        {{end}}
+        {{if .CustomerType}}
+        <div class="client-info-item">
+            <span class="client-info-label">{{.Labels.Form.CustomerType}}</span>
+            <span class="client-info-value client-customer-type">{{.CustomerType}}</span>
+        </div>
+        {{end}}
+    </div>
+    {{end}}
+
+    {{/* --- Personal Section --- */}}
+    {{if .HasPersonal}}
+    <h4 class="client-section-title client-section-title--spaced">{{.Labels.Detail.Personal.Title}}</h4>
+    <div class="client-info-grid">
+        {{if .DateOfBirth}}
+        <div class="client-info-item">
+            <span class="client-info-label">{{.Labels.Form.DateOfBirth}}</span>
+            <span class="client-info-value">{{.DateOfBirth}}</span>
+        </div>
+        {{end}}
+    </div>
+    {{end}}
+
+    {{/* --- Address Section --- */}}
+    {{if .HasAddress}}
+    <h4 class="client-section-title client-section-title--spaced">{{.Labels.Detail.Address.Title}}</h4>
+    <div class="client-info-grid">
+        {{if .StreetAddress}}
+        <div class="client-info-item">
+            <span class="client-info-label">{{.Labels.Form.StreetAddress}}</span>
+            <span class="client-info-value">{{.StreetAddress}}</span>
+        </div>
+        {{end}}
+        {{if .City}}
+        <div class="client-info-item">
+            <span class="client-info-label">{{.Labels.Form.City}}</span>
+            <span class="client-info-value">{{.City}}</span>
+        </div>
+        {{end}}
+        {{if .Province}}
+        <div class="client-info-item">
+            <span class="client-info-label">{{.Labels.Form.Province}}</span>
+            <span class="client-info-value">{{.Province}}</span>
+        </div>
+        {{end}}
+        {{if .PostalCode}}
+        <div class="client-info-item">
+            <span class="client-info-label">{{.Labels.Form.PostalCode}}</span>
+            <span class="client-info-value">{{.PostalCode}}</span>
+        </div>
+        {{end}}
+    </div>
+    {{end}}
+
+    {{/* --- Notes Section --- */}}
+    {{if .HasNotes}}
+    <h4 class="client-section-title client-section-title--spaced">{{.Labels.Detail.NotesSection.Title}}</h4>
+    <div class="client-notes-content">
+        {{.Notes}}
+    </div>
+    {{end}}
+
+    {{/* --- Tags Section --- */}}
+    <h4 class="client-section-title client-section-title--spaced">{{.Labels.Detail.Tags.Title}}</h4>
+    {{if .HasTags}}
+    <div class="client-tags-list">
+        {{range .Tags}}
+        <span class="client-tag-chip">{{.Name}}</span>
+        {{end}}
+    </div>
+    {{else}}
+    <p class="client-tags-empty">{{.Labels.Detail.Tags.NoTags}}</p>
+    {{end}}
+</div>
+{{end}}
+
+{{/* Purchase History Tab */}}
+{{define "client-tab-history"}}
+<div class="tab-scroll">
+    {{if .HasOrders}}
+    {{/* --- Stat Cards --- */}}
+    <div class="purchase-stats-row">
+        <div class="purchase-stat-card">
+            <span class="stat-label">{{.Labels.Detail.PurchaseHistory.LifetimeSpend}}</span>
+            <span class="stat-value">{{.PurchaseStats.LifetimeSpend}}</span>
+        </div>
+        <div class="purchase-stat-card">
+            <span class="stat-label">{{.Labels.Detail.PurchaseHistory.TotalOrders}}</span>
+            <span class="stat-value">{{.PurchaseStats.TotalOrders}}</span>
+        </div>
+        <div class="purchase-stat-card">
+            <span class="stat-label">{{.Labels.Detail.PurchaseHistory.AvgOrderValue}}</span>
+            <span class="stat-value">{{.PurchaseStats.AvgOrderValue}}</span>
+        </div>
+        <div class="purchase-stat-card">
+            <span class="stat-label">{{.Labels.Detail.PurchaseHistory.LastPurchase}}</span>
+            <span class="stat-value">{{.PurchaseStats.LastPurchase}}</span>
+        </div>
+    </div>
+
+    {{/* --- Orders Table --- */}}
+    <h4 class="client-section-title client-section-title--spaced">Recent Orders</h4>
+    <div class="purchase-orders-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Reference</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .Orders}}
+                <tr>
+                    <td>{{.Date}}</td>
+                    <td>{{.Reference}}</td>
+                    <td>{{.Amount}}</td>
+                    <td><span class="badge badge--{{.Variant}}">{{.Status}}</span></td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+    {{else}}
+    <div class="coming-soon-panel">
+        <div class="coming-soon-title">{{.Labels.Detail.PurchaseHistory.Empty}}</div>
+        <p class="coming-soon-text">Purchase history for this client will appear here once transactions are recorded.</p>
+    </div>
+    {{end}}
 </div>
 {{end}}

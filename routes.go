@@ -10,7 +10,8 @@ const (
 	ClientEditURL       = "/action/clients/edit/{id}"
 	ClientDeleteURL        = "/action/clients/delete"
 	ClientBulkDeleteURL    = "/action/clients/bulk-delete"
-	ClientDetailURL = "/app/clients/detail/{id}"
+	ClientDetailURL     = "/app/clients/detail/{id}"
+	ClientTabActionURL  = "/action/clients/{id}/tab/{tab}"
 	ClientSetStatusURL     = "/action/clients/set-status"
 	ClientBulkSetStatusURL = "/action/clients/bulk-set-status"
 
