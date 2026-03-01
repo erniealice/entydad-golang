@@ -40,8 +40,8 @@ const (
 
 	RoleDetailURL        = "/app/roles/detail/{id}"
 	RoleTabActionURL     = "/action/roles/{id}/tab/{tab}"
-	RoleListURL          = "/app/roles/list/{status}"
-	RoleTableURL         = "/action/roles/table/{status}"
+	RoleListURL          = "/app/roles/list"
+	RoleTableURL         = "/action/roles/table"
 	RoleAddURL           = "/action/roles/add"
 	RoleEditURL          = "/action/roles/edit/{id}"
 	RoleDeleteURL        = "/action/roles/delete"

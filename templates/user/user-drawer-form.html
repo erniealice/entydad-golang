@@ -49,6 +49,28 @@ Data: .FirstName, .LastName, .Email, .Mobile, .Active, .ID, .FormAction, .IsEdit
         </div>
 
         <div class="form-row single">
+            <div class="form-group">
+                <label class="form-label" for="password">{{.Labels.Password}}</label>
+                <div class="password-field-wrapper">
+                    <div class="input-icon-wrapper icon-both">
+                        <span class="input-icon">{{template "icon-lock"}}</span>
+                        <input type="password" id="password" name="password" class="form-input" placeholder="{{.Labels.PasswordPlaceholder}}" autocomplete="new-password">
+                        <button type="button" class="password-toggle-btn" data-target="password" aria-label="Toggle password visibility">
+                            <span class="eye-icon">{{template "icon-eye"}}</span>
+                            <span class="eye-off-icon" style="display: none;">{{template "icon-eye-off"}}</span>
+                        </button>
+                    </div>
+                    <div class="password-actions-row">
+                        <button type="button" class="btn-generate-password" id="generatePasswordBtn">
+                            <span class="btn-generate-icon">{{template "icon-dice"}}</span>
+                            {{.Labels.PasswordGenerate}}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-row single">
             {{template "toggle" (dict
                 "Name" "active"
                 "Label" .Labels.Active
@@ -60,4 +82,70 @@ Data: .FirstName, .LastName, .Email, .Mobile, .Active, .ID, .FormAction, .IsEdit
 
     {{template "sheet-form-footer" (dict "CommonLabels" .CommonLabels "ShowCancel" true "IsEdit" .IsEdit)}}
 </form>
+<script>
+(function() {
+    // Password toggle visibility
+    var toggleBtn = document.querySelector('.password-toggle-btn');
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            var input = document.getElementById(this.dataset.target);
+            var eyeIcon = this.querySelector('.eye-icon');
+            var eyeOffIcon = this.querySelector('.eye-off-icon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                eyeIcon.style.display = 'none';
+                eyeOffIcon.style.display = 'block';
+            } else {
+                input.type = 'password';
+                eyeIcon.style.display = 'block';
+                eyeOffIcon.style.display = 'none';
+            }
+        });
+    }
+
+    // Generate random password
+    var generateBtn = document.getElementById('generatePasswordBtn');
+    var passwordInput = document.getElementById('password');
+    if (generateBtn && passwordInput) {
+        generateBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            var lower = 'abcdefghijklmnopqrstuvwxyz';
+            var upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            var nums = '0123456789';
+            var symbols = '!@#$%^&*_+-=';
+            var all = lower + upper + nums + symbols;
+            var pw = '';
+            pw += lower.charAt(Math.floor(Math.random() * lower.length));
+            pw += upper.charAt(Math.floor(Math.random() * upper.length));
+            pw += nums.charAt(Math.floor(Math.random() * nums.length));
+            pw += symbols.charAt(Math.floor(Math.random() * symbols.length));
+            for (var i = 4; i < 16; i++) {
+                pw += all.charAt(Math.floor(Math.random() * all.length));
+            }
+            pw = pw.split('').sort(function() { return Math.random() - 0.5; }).join('');
+            passwordInput.value = pw;
+            passwordInput.type = 'text';
+            // Update toggle icon state
+            var tBtn = document.querySelector('.password-toggle-btn');
+            if (tBtn) {
+                var eye = tBtn.querySelector('.eye-icon');
+                var eyeOff = tBtn.querySelector('.eye-off-icon');
+                if (eye) eye.style.display = 'none';
+                if (eyeOff) eyeOff.style.display = 'block';
+            }
+            // Dice roll animation
+            var dice = this.querySelector('.btn-generate-icon');
+            if (dice) {
+                dice.classList.remove('rolling');
+                void dice.offsetWidth;
+                dice.classList.add('rolling');
+                dice.addEventListener('animationend', function() {
+                    dice.classList.remove('rolling');
+                }, { once: true });
+            }
+        });
+    }
+})();
+</script>
 {{end}}

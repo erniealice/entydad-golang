@@ -148,7 +148,7 @@ func buildPageData(ctx context.Context, deps *Deps, id, activeTab string, viewCt
 			Title:          roleName,
 			CurrentPath:    viewCtx.CurrentPath,
 			ActiveNav:      "users",
-			ActiveSubNav:   "roles-active",
+			ActiveSubNav:   "roles",
 			HeaderTitle:    roleName,
 			HeaderSubtitle: roleDesc,
 			HeaderIcon:     "icon-shield",

@@ -35,12 +35,7 @@ type PageData struct {
 // NewView creates the role list view (full page).
 func NewView(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
-		status := viewCtx.Request.PathValue("status")
-		if status == "" {
-			status = "active"
-		}
-
-		tableConfig, err := buildTableConfig(ctx, deps, status)
+		tableConfig, err := buildTableConfig(ctx, deps)
 		if err != nil {
 			return view.Error(err)
 		}
@@ -48,12 +43,12 @@ func NewView(deps *Deps) view.View {
 		pageData := &PageData{
 			PageData: types.PageData{
 				CacheVersion:   viewCtx.CacheVersion,
-				Title:          statusTitle(deps.Labels, status),
+				Title:          deps.Labels.Page.Heading,
 				CurrentPath:    viewCtx.CurrentPath,
 				ActiveNav:      "users",
-				ActiveSubNav:   "roles-" + status,
-				HeaderTitle:    statusTitle(deps.Labels, status),
-				HeaderSubtitle: statusSubtitle(deps.Labels, status),
+				ActiveSubNav:   "roles",
+				HeaderTitle:    deps.Labels.Page.Heading,
+				HeaderSubtitle: deps.Labels.Page.Caption,
 				HeaderIcon:     "icon-shield",
 				CommonLabels:   deps.CommonLabels,
 			},
@@ -70,12 +65,7 @@ func NewView(deps *Deps) view.View {
 // is swapped (not the entire page content).
 func NewTableView(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
-		status := viewCtx.Request.PathValue("status")
-		if status == "" {
-			status = "active"
-		}
-
-		tableConfig, err := buildTableConfig(ctx, deps, status)
+		tableConfig, err := buildTableConfig(ctx, deps)
 		if err != nil {
 			return view.Error(err)
 		}
@@ -85,7 +75,7 @@ func NewTableView(deps *Deps) view.View {
 }
 
 // buildTableConfig fetches role data and builds the table configuration.
-func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.TableConfig, error) {
+func buildTableConfig(ctx context.Context, deps *Deps) (*types.TableConfig, error) {
 	resp, err := deps.GetListPageData(ctx, &rolepb.GetRoleListPageDataRequest{})
 	if err != nil {
 		log.Printf("Failed to list roles: %v", err)
@@ -94,17 +84,15 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 
 	l := deps.Labels
 	columns := roleColumns(l)
-	rows := buildTableRows(resp.GetRoleList(), status, l, deps.Routes)
+	rows := buildTableRows(resp.GetRoleList(), l, deps.Routes)
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
-	bulkCfg.Actions = buildBulkActions(l, deps.CommonLabels, status, deps.Routes)
-
-	refreshURL := route.ResolveURL(deps.Routes.TableURL, "status", status)
+	bulkCfg.Actions = buildBulkActions(l, deps.CommonLabels, deps.Routes)
 
 	tableConfig := &types.TableConfig{
 		ID:                   "roles-table",
-		RefreshURL:           refreshURL,
+		RefreshURL:           deps.Routes.TableURL,
 		Columns:              columns,
 		Rows:                 rows,
 		ShowSearch:           true,
@@ -119,8 +107,8 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 		DefaultSortDirection: "asc",
 		Labels:               deps.TableLabels,
 		EmptyState: types.TableEmptyState{
-			Title:   statusEmptyTitle(l, status),
-			Message: statusEmptyMessage(l, status),
+			Title:   l.Empty.ActiveTitle,
+			Message: l.Empty.ActiveMessage,
 		},
 		PrimaryAction: &types.PrimaryAction{
 			Label:     l.Buttons.AddRole,
@@ -144,16 +132,13 @@ func roleColumns(l entydad.RoleLabels) []types.TableColumn {
 	}
 }
 
-func buildTableRows(roles []*rolepb.Role, status string, l entydad.RoleLabels, routes entydad.RoleRoutes) []types.TableRow {
+func buildTableRows(roles []*rolepb.Role, l entydad.RoleLabels, routes entydad.RoleRoutes) []types.TableRow {
 	rows := []types.TableRow{}
 	for _, r := range roles {
 		active := r.GetActive()
 		recordStatus := "active"
 		if !active {
 			recordStatus = "inactive"
-		}
-		if recordStatus != status {
-			continue
 		}
 
 		id := r.GetId()
@@ -163,8 +148,6 @@ func buildTableRows(roles []*rolepb.Role, status string, l entydad.RoleLabels, r
 
 		actions := []types.TableAction{
 			{Type: "view", Label: l.Actions.View, Action: "view", Href: route.ResolveURL(routes.DetailURL, "id", id)},
-			{Type: "edit", Label: l.Actions.Edit, Action: "edit", URL: route.ResolveURL(routes.EditURL, "id", id), DrawerTitle: l.Actions.Edit},
-			{Type: "view", Label: l.Actions.ManagePermissions, Action: "view", Href: route.ResolveURL(routes.DetailPermissionsURL, "id", id)},
 		}
 		if active {
 			actions = append(actions, types.TableAction{
@@ -211,50 +194,6 @@ func buildTableRows(roles []*rolepb.Role, status string, l entydad.RoleLabels, r
 	return rows
 }
 
-func statusTitle(l entydad.RoleLabels, status string) string {
-	switch status {
-	case "active":
-		return l.Page.HeadingActive
-	case "inactive":
-		return l.Page.HeadingInactive
-	default:
-		return l.Page.Heading
-	}
-}
-
-func statusSubtitle(l entydad.RoleLabels, status string) string {
-	switch status {
-	case "active":
-		return l.Page.CaptionActive
-	case "inactive":
-		return l.Page.CaptionInactive
-	default:
-		return l.Page.Caption
-	}
-}
-
-func statusEmptyTitle(l entydad.RoleLabels, status string) string {
-	switch status {
-	case "active":
-		return l.Empty.ActiveTitle
-	case "inactive":
-		return l.Empty.InactiveTitle
-	default:
-		return l.Empty.ActiveTitle
-	}
-}
-
-func statusEmptyMessage(l entydad.RoleLabels, status string) string {
-	switch status {
-	case "active":
-		return l.Empty.ActiveMessage
-	case "inactive":
-		return l.Empty.InactiveMessage
-	default:
-		return l.Empty.ActiveMessage
-	}
-}
-
 func statusVariant(status string) string {
 	switch status {
 	case "active":
@@ -266,23 +205,9 @@ func statusVariant(status string) string {
 	}
 }
 
-func buildBulkActions(l entydad.RoleLabels, common pyeza.CommonLabels, status string, routes entydad.RoleRoutes) []types.BulkAction {
-	actions := []types.BulkAction{}
-
-	switch status {
-	case "active":
-		actions = append(actions, types.BulkAction{
-			Key:             "deactivate",
-			Label:           l.Actions.Deactivate,
-			Icon:            "icon-shield-off",
-			Variant:         "warning",
-			Endpoint:        routes.BulkSetStatusURL,
-			ConfirmTitle:    l.Actions.Deactivate,
-			ConfirmMessage:  "Are you sure you want to deactivate {{count}} role(s)?",
-			ExtraParamsJSON: `{"target_status":"inactive"}`,
-		})
-	case "inactive":
-		actions = append(actions, types.BulkAction{
+func buildBulkActions(l entydad.RoleLabels, common pyeza.CommonLabels, routes entydad.RoleRoutes) []types.BulkAction {
+	return []types.BulkAction{
+		{
 			Key:             "activate",
 			Label:           l.Actions.Activate,
 			Icon:            "icon-shield",
@@ -291,18 +216,25 @@ func buildBulkActions(l entydad.RoleLabels, common pyeza.CommonLabels, status st
 			ConfirmTitle:    l.Actions.Activate,
 			ConfirmMessage:  "Are you sure you want to activate {{count}} role(s)?",
 			ExtraParamsJSON: `{"target_status":"active"}`,
-		})
+		},
+		{
+			Key:             "deactivate",
+			Label:           l.Actions.Deactivate,
+			Icon:            "icon-shield-off",
+			Variant:         "warning",
+			Endpoint:        routes.BulkSetStatusURL,
+			ConfirmTitle:    l.Actions.Deactivate,
+			ConfirmMessage:  "Are you sure you want to deactivate {{count}} role(s)?",
+			ExtraParamsJSON: `{"target_status":"inactive"}`,
+		},
+		{
+			Key:            "delete",
+			Label:          common.Bulk.Delete,
+			Icon:           "icon-trash-2",
+			Variant:        "danger",
+			Endpoint:       routes.BulkDeleteURL,
+			ConfirmTitle:   common.Bulk.Delete,
+			ConfirmMessage: "Are you sure you want to delete {{count}} role(s)? This action cannot be undone.",
+		},
 	}
-
-	actions = append(actions, types.BulkAction{
-		Key:            "delete",
-		Label:          common.Bulk.Delete,
-		Icon:           "icon-trash-2",
-		Variant:        "danger",
-		Endpoint:       routes.BulkDeleteURL,
-		ConfirmTitle:   common.Bulk.Delete,
-		ConfirmMessage: "Are you sure you want to delete {{count}} role(s)? This action cannot be undone.",
-	})
-
-	return actions
 }

@@ -181,7 +181,7 @@ func buildTableRows(users []*userpb.User, status string, l entydad.UserLabels, u
 		actions := []types.TableAction{
 			{Type: "view", Label: l.Actions.View, Action: "view", Href: route.ResolveURL(routes.DetailURL, "id", id)},
 			{Type: "edit", Label: l.Actions.Edit, Action: "edit", URL: route.ResolveURL(routes.EditURL, "id", id), DrawerTitle: l.Actions.Edit},
-			{Type: "view", Label: l.Actions.ManageRoles, Action: "view", Href: route.ResolveURL(routes.DetailRolesURL, "id", id)},
+			{Type: "manage", Label: l.Actions.ManageRoles, Action: "view", Href: route.ResolveURL(routes.DetailRolesURL, "id", id)},
 		}
 		if active {
 			actions = append(actions, types.TableAction{

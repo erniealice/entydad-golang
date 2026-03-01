@@ -24,6 +24,9 @@ type FormLabels struct {
 	EmailPlaceholder     string
 	Mobile               string
 	MobilePlaceholder    string
+	Password             string
+	PasswordPlaceholder  string
+	PasswordGenerate     string
 	Active               string
 }
 
@@ -51,6 +54,7 @@ type Deps struct {
 	SetUserActive       func(ctx context.Context, id string, active bool) error
 	CreateWorkspaceUser func(ctx context.Context, req *workspaceuserpb.CreateWorkspaceUserRequest) (*workspaceuserpb.CreateWorkspaceUserResponse, error)
 	DefaultWorkspaceID  string
+	HashPassword        func(password string) (string, error) // optional; if nil, password stored as-is
 }
 
 func formLabels(t func(string) string) FormLabels {
@@ -63,8 +67,19 @@ func formLabels(t func(string) string) FormLabels {
 		EmailPlaceholder:     t("form.emailPlaceholder"),
 		Mobile:               t("form.mobile"),
 		MobilePlaceholder:    t("form.mobilePlaceholder"),
+		Password:             t("form.password"),
+		PasswordPlaceholder:  t("form.passwordPlaceholder"),
+		PasswordGenerate:     t("form.passwordGenerate"),
 		Active:               t("form.active"),
 	}
+}
+
+// hashPassword hashes the password using the deps.HashPassword func, or returns it as-is.
+func hashPassword(deps *Deps, password string) (string, error) {
+	if deps.HashPassword != nil {
+		return deps.HashPassword(password)
+	}
+	return password, nil
 }
 
 // NewAddAction creates the user add action (GET = form, POST = create).
@@ -87,12 +102,23 @@ func NewAddAction(deps *Deps) view.View {
 		r := viewCtx.Request
 		active := r.FormValue("active") == "true"
 
+		var pwHash string
+		if pw := r.FormValue("password"); pw != "" {
+			h, hashErr := hashPassword(deps, pw)
+			if hashErr != nil {
+				log.Printf("Failed to hash password: %v", hashErr)
+				return entydad.HTMXError("Failed to process password")
+			}
+			pwHash = h
+		}
+
 		createResp, err := deps.CreateUser(ctx, &userpb.CreateUserRequest{
 			Data: &userpb.User{
 				FirstName:    r.FormValue("first_name"),
 				LastName:     r.FormValue("last_name"),
 				EmailAddress: r.FormValue("email_address"),
 				MobileNumber: r.FormValue("mobile_number"),
+				PasswordHash: pwHash,
 				Active:       active,
 			},
 		})
@@ -163,19 +189,31 @@ func NewEditAction(deps *Deps) view.View {
 		r := viewCtx.Request
 		active := r.FormValue("active") == "true"
 
-		_, err := deps.UpdateUser(ctx, &userpb.UpdateUserRequest{
-			Data: &userpb.User{
-				Id:           id,
-				FirstName:    r.FormValue("first_name"),
-				LastName:     r.FormValue("last_name"),
-				EmailAddress: r.FormValue("email_address"),
-				MobileNumber: r.FormValue("mobile_number"),
-				Active:       active,
-			},
+		userData := &userpb.User{
+			Id:           id,
+			FirstName:    r.FormValue("first_name"),
+			LastName:     r.FormValue("last_name"),
+			EmailAddress: r.FormValue("email_address"),
+			MobileNumber: r.FormValue("mobile_number"),
+			Active:       active,
+		}
+
+		// Only update password if a new one was provided
+		if pw := r.FormValue("password"); pw != "" {
+			pwHash, hashErr := hashPassword(deps, pw)
+			if hashErr != nil {
+				log.Printf("Failed to hash password: %v", hashErr)
+				return entydad.HTMXError("Failed to process password")
+			}
+			userData.PasswordHash = pwHash
+		}
+
+		_, updateErr := deps.UpdateUser(ctx, &userpb.UpdateUserRequest{
+			Data: userData,
 		})
-		if err != nil {
-			log.Printf("Failed to update user %s: %v", id, err)
-			return entydad.HTMXError(err.Error())
+		if updateErr != nil {
+			log.Printf("Failed to update user %s: %v", id, updateErr)
+			return entydad.HTMXError(updateErr.Error())
 		}
 
 		return entydad.HTMXSuccess("users-table")
