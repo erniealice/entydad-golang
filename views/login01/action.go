@@ -3,6 +3,7 @@ package login01
 import (
 	"context"
 
+	entydad "github.com/erniealice/entydad-golang"
 	"github.com/erniealice/pyeza-golang/view"
 )
 
@@ -17,7 +18,7 @@ type ActionDeps struct {
 func NewAction(deps *ActionDeps) view.View {
 	redirectURL := deps.RedirectURL
 	if redirectURL == "" {
-		redirectURL = "/app/"
+		redirectURL = entydad.DefaultAppRedirectURL
 	}
 
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {

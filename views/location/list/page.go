@@ -159,7 +159,7 @@ func buildTableRows(locations []*locationpb.Location, status string, l entydad.L
 		address := loc.GetAddress()
 
 		actions := []types.TableAction{
-			{Type: "view", Label: l.Actions.View, Action: "view", Href: "/app/locations/" + id},
+			{Type: "view", Label: l.Actions.View, Action: "view", Href: route.ResolveURL(routes.DetailURL, "id", id)},
 			{Type: "edit", Label: l.Actions.Edit, Action: "edit", URL: route.ResolveURL(routes.EditURL, "id", id), DrawerTitle: l.Actions.Edit},
 		}
 		if active {

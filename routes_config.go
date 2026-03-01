@@ -280,6 +280,7 @@ func (r RoleRoutes) RouteMap() map[string]string {
 // LocationRoutes holds all route paths for location management.
 type LocationRoutes struct {
 	ListURL          string `json:"list_url"`
+	DetailURL        string `json:"detail_url"`
 	TableURL         string `json:"table_url"`
 	AddURL           string `json:"add_url"`
 	EditURL          string `json:"edit_url"`
@@ -294,6 +295,7 @@ type LocationRoutes struct {
 func DefaultLocationRoutes() LocationRoutes {
 	return LocationRoutes{
 		ListURL:          LocationListURL,
+		DetailURL:        LocationDetailURL,
 		TableURL:         LocationTableURL,
 		AddURL:           LocationAddURL,
 		EditURL:          LocationEditURL,
@@ -308,6 +310,7 @@ func DefaultLocationRoutes() LocationRoutes {
 func (r LocationRoutes) RouteMap() map[string]string {
 	return map[string]string{
 		"location.list":           r.ListURL,
+		"location.detail":         r.DetailURL,
 		"location.table":          r.TableURL,
 		"location.add":            r.AddURL,
 		"location.edit":           r.EditURL,

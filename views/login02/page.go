@@ -54,7 +54,7 @@ type PageData struct {
 func NewView(deps *Deps) view.View {
 	redirectURL := deps.RedirectURL
 	if redirectURL == "" {
-		redirectURL = "/app/"
+		redirectURL = entydad.DefaultAppRedirectURL
 	}
 	loginPostURL := deps.LoginPostURL
 	if loginPostURL == "" {

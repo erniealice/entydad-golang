@@ -25,6 +25,7 @@ const (
 	UserSetStatusURL     = "/action/users/set-status"
 	UserBulkSetStatusURL = "/action/users/bulk-set-status"
 
+	LocationDetailURL        = "/app/locations/{id}"
 	LocationListURL          = "/app/locations/list/{status}"
 	LocationTableURL         = "/action/locations/table/{status}"
 	LocationAddURL           = "/action/locations/add"
@@ -103,4 +104,8 @@ const (
 	// Login routes
 	LoginURL     = "/login"
 	LoginPostURL = "/login"
+
+	// DefaultAppRedirectURL is the default post-login redirect path.
+	// Consumer apps should set Deps.RedirectURL to override this.
+	DefaultAppRedirectURL = "/app/"
 )
