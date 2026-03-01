@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
 
@@ -32,6 +33,7 @@ type AssignFormData struct {
 
 // ActionDeps holds dependencies for user-role action handlers.
 type ActionDeps struct {
+	Routes                       entydad.UserRoutes
 	CreateWorkspaceUserRole      func(ctx context.Context, req *workspaceuserrolepb.CreateWorkspaceUserRoleRequest) (*workspaceuserrolepb.CreateWorkspaceUserRoleResponse, error)
 	DeleteWorkspaceUserRole      func(ctx context.Context, req *workspaceuserrolepb.DeleteWorkspaceUserRoleRequest) (*workspaceuserrolepb.DeleteWorkspaceUserRoleResponse, error)
 	ListRoles                    func(ctx context.Context, req *rolepb.ListRolesRequest) (*rolepb.ListRolesResponse, error)
@@ -87,7 +89,7 @@ func NewAssignAction(deps *ActionDeps) view.View {
 			}
 
 			return view.OK("user-role-assign-form", &AssignFormData{
-				FormAction:   "/action/users/detail/" + userID + "/roles/assign",
+				FormAction:   route.ResolveURL(deps.Routes.DetailRolesAssignURL, "id", userID),
 				UserID:       userID,
 				Labels:       AssignFormLabels{Role: deps.Labels.Form.Role},
 				RoleOptions:  options,

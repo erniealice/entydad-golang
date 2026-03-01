@@ -6,6 +6,7 @@ import (
 	"log"
 
 	pyeza "github.com/erniealice/pyeza-golang"
+	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
 
@@ -18,6 +19,7 @@ import (
 type Deps struct {
 	GetListPageData func(ctx context.Context, req *locationpb.GetLocationListPageDataRequest) (*locationpb.GetLocationListPageDataResponse, error)
 	RefreshURL      string
+	Routes          entydad.LocationRoutes
 	Labels          entydad.LocationLabels
 	CommonLabels    pyeza.CommonLabels
 	TableLabels     types.TableLabels
@@ -48,7 +50,7 @@ func NewView(deps *Deps) view.View {
 				CacheVersion:   viewCtx.CacheVersion,
 				Title:          statusTitle(deps.Labels, status),
 				CurrentPath:    viewCtx.CurrentPath,
-				ActiveNav:      "admin",
+				ActiveNav:      "locations",
 				ActiveSubNav:   "locations-" + status,
 				HeaderTitle:    statusTitle(deps.Labels, status),
 				HeaderSubtitle: statusSubtitle(deps.Labels, status),
@@ -92,13 +94,13 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 
 	l := deps.Labels
 	columns := locationColumns(l)
-	rows := buildTableRows(resp.GetLocationList(), status, l)
+	rows := buildTableRows(resp.GetLocationList(), status, l, deps.Routes)
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
-	bulkCfg.Actions = buildBulkActions(l, deps.CommonLabels, status)
+	bulkCfg.Actions = buildBulkActions(l, deps.CommonLabels, status, deps.Routes)
 
-	refreshURL := fmt.Sprintf("/action/locations/table/%s", status)
+	refreshURL := route.ResolveURL(deps.Routes.TableURL, "status", status)
 
 	tableConfig := &types.TableConfig{
 		ID:                   "locations-table",
@@ -122,7 +124,7 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 		},
 		PrimaryAction: &types.PrimaryAction{
 			Label:     l.Buttons.AddLocation,
-			ActionURL: "/action/locations/add",
+			ActionURL: deps.Routes.AddURL,
 			Icon:      "icon-plus",
 		},
 		BulkActions: &bulkCfg,
@@ -140,7 +142,7 @@ func locationColumns(l entydad.LocationLabels) []types.TableColumn {
 	}
 }
 
-func buildTableRows(locations []*locationpb.Location, status string, l entydad.LocationLabels) []types.TableRow {
+func buildTableRows(locations []*locationpb.Location, status string, l entydad.LocationLabels, routes entydad.LocationRoutes) []types.TableRow {
 	rows := []types.TableRow{}
 	for _, loc := range locations {
 		active := loc.GetActive()
@@ -158,26 +160,26 @@ func buildTableRows(locations []*locationpb.Location, status string, l entydad.L
 
 		actions := []types.TableAction{
 			{Type: "view", Label: l.Actions.View, Action: "view", Href: "/app/locations/" + id},
-			{Type: "edit", Label: l.Actions.Edit, Action: "edit", URL: "/action/locations/edit/" + id, DrawerTitle: l.Actions.Edit},
+			{Type: "edit", Label: l.Actions.Edit, Action: "edit", URL: route.ResolveURL(routes.EditURL, "id", id), DrawerTitle: l.Actions.Edit},
 		}
 		if active {
 			actions = append(actions, types.TableAction{
 				Type: "deactivate", Label: l.Actions.Deactivate, Action: "deactivate",
-				URL: "/action/locations/set-status?status=inactive", ItemName: name,
+				URL: routes.SetStatusURL + "?status=inactive", ItemName: name,
 				ConfirmTitle:   l.Actions.Deactivate,
 				ConfirmMessage: fmt.Sprintf("Are you sure you want to deactivate %s?", name),
 			})
 		} else {
 			actions = append(actions, types.TableAction{
 				Type: "activate", Label: l.Actions.Activate, Action: "activate",
-				URL: "/action/locations/set-status?status=active", ItemName: name,
+				URL: routes.SetStatusURL + "?status=active", ItemName: name,
 				ConfirmTitle:   l.Actions.Activate,
 				ConfirmMessage: fmt.Sprintf("Are you sure you want to activate %s?", name),
 			})
 		}
 		actions = append(actions, types.TableAction{
 			Type: "delete", Label: l.Actions.Delete, Action: "delete",
-			URL: "/action/locations/delete", ItemName: name,
+			URL: routes.DeleteURL, ItemName: name,
 		})
 
 		rows = append(rows, types.TableRow{
@@ -253,7 +255,7 @@ func statusVariant(status string) string {
 	}
 }
 
-func buildBulkActions(l entydad.LocationLabels, common pyeza.CommonLabels, status string) []types.BulkAction {
+func buildBulkActions(l entydad.LocationLabels, common pyeza.CommonLabels, status string, routes entydad.LocationRoutes) []types.BulkAction {
 	actions := []types.BulkAction{}
 
 	switch status {
@@ -263,7 +265,7 @@ func buildBulkActions(l entydad.LocationLabels, common pyeza.CommonLabels, statu
 			Label:           l.Actions.Deactivate,
 			Icon:            "icon-map-pin-off",
 			Variant:         "warning",
-			Endpoint:        "/action/locations/bulk-set-status",
+			Endpoint:        routes.BulkSetStatusURL,
 			ConfirmTitle:    l.Actions.Deactivate,
 			ConfirmMessage:  "Are you sure you want to deactivate {{count}} location(s)?",
 			ExtraParamsJSON: `{"target_status":"inactive"}`,
@@ -274,7 +276,7 @@ func buildBulkActions(l entydad.LocationLabels, common pyeza.CommonLabels, statu
 			Label:           l.Actions.Activate,
 			Icon:            "icon-map-pin",
 			Variant:         "primary",
-			Endpoint:        "/action/locations/bulk-set-status",
+			Endpoint:        routes.BulkSetStatusURL,
 			ConfirmTitle:    l.Actions.Activate,
 			ConfirmMessage:  "Are you sure you want to activate {{count}} location(s)?",
 			ExtraParamsJSON: `{"target_status":"active"}`,
@@ -286,7 +288,7 @@ func buildBulkActions(l entydad.LocationLabels, common pyeza.CommonLabels, statu
 		Label:          common.Bulk.Delete,
 		Icon:           "icon-trash-2",
 		Variant:        "danger",
-		Endpoint:       "/action/locations/bulk-delete",
+		Endpoint:       routes.BulkDeleteURL,
 		ConfirmTitle:   common.Bulk.Delete,
 		ConfirmMessage: "Are you sure you want to delete {{count}} location(s)? This action cannot be undone.",
 	})

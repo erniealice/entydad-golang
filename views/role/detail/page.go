@@ -6,6 +6,7 @@ import (
 	"log"
 
 	pyeza "github.com/erniealice/pyeza-golang"
+	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
 
@@ -21,6 +22,7 @@ type Deps struct {
 	ReadRole            func(ctx context.Context, req *rolepb.ReadRoleRequest) (*rolepb.ReadRoleResponse, error)
 	RoleGetItemPageData func(ctx context.Context, req *rolepb.GetRoleItemPageDataRequest) (*rolepb.GetRoleItemPageDataResponse, error)
 	GetUsersByRoleID    func(ctx context.Context, roleID string) ([]roleusers.UserByRole, error)
+	Routes               entydad.RoleRoutes
 	Labels              entydad.RoleLabels
 	RolePermissionLabels entydad.RolePermissionLabels
 	RoleUserLabels       entydad.RoleUserLabels
@@ -138,7 +140,7 @@ func buildPageData(ctx context.Context, deps *Deps, id, activeTab string, viewCt
 		}
 	}
 
-	tabItems := buildTabItems(id, deps.Labels, permCount, userCount)
+	tabItems := buildTabItems(id, deps.Labels, deps.Routes, permCount, userCount)
 
 	pageData := &PageData{
 		PageData: types.PageData{
@@ -185,9 +187,9 @@ func buildPageData(ctx context.Context, deps *Deps, id, activeTab string, viewCt
 	return pageData, nil
 }
 
-func buildTabItems(id string, labels entydad.RoleLabels, permCount, userCount int) []pyeza.TabItem {
-	base := "/app/roles/detail/" + id
-	action := "/action/roles/" + id + "/tab/"
+func buildTabItems(id string, labels entydad.RoleLabels, routes entydad.RoleRoutes, permCount, userCount int) []pyeza.TabItem {
+	base := route.ResolveURL(routes.DetailURL, "id", id)
+	action := route.ResolveURL(routes.TabActionURL, "id", id, "tab", "")
 	return []pyeza.TabItem{
 		{Key: "info", Label: labels.Detail.Tabs.Info, Href: base + "?tab=info", HxGet: action + "info", Icon: "icon-info", Count: 0, Disabled: false},
 		{Key: "permissions", Label: labels.Detail.Tabs.Permissions, Href: base + "?tab=permissions", HxGet: action + "permissions", Icon: "icon-key", Count: permCount, Disabled: false},
@@ -246,7 +248,7 @@ func buildPermissionsTable(ctx context.Context, deps *Deps, roleID string) (*typ
 		actions := []types.TableAction{
 			{
 				Type: "delete", Label: l.Actions.Remove, Action: "delete",
-				URL:            fmt.Sprintf("/action/roles/detail/%s/permissions/remove", roleID),
+				URL:            route.ResolveURL(deps.Routes.DetailPermissionsRemoveURL, "id", roleID),
 				ItemName:       permName,
 				ConfirmTitle:   l.Actions.Remove,
 				ConfirmMessage: fmt.Sprintf("Are you sure you want to remove %s from this role?", permName),
@@ -274,7 +276,7 @@ func buildPermissionsTable(ctx context.Context, deps *Deps, roleID string) (*typ
 
 	tableConfig := &types.TableConfig{
 		ID:                   "role-permissions-table",
-		RefreshURL:           fmt.Sprintf("/action/roles/detail/%s/permissions/table", roleID),
+		RefreshURL:           route.ResolveURL(deps.Routes.DetailPermissionsTableURL, "id", roleID),
 		Columns:              columns,
 		Rows:                 rows,
 		ShowSearch:           true,
@@ -294,7 +296,7 @@ func buildPermissionsTable(ctx context.Context, deps *Deps, roleID string) (*typ
 		},
 		PrimaryAction: &types.PrimaryAction{
 			Label:     l.Buttons.AssignPermission,
-			ActionURL: fmt.Sprintf("/action/roles/detail/%s/permissions/assign", roleID),
+			ActionURL: route.ResolveURL(deps.Routes.DetailPermissionsAssignURL, "id", roleID),
 			Icon:      "icon-plus",
 		},
 	}
@@ -331,7 +333,7 @@ func buildUsersTable(ctx context.Context, deps *Deps, roleID string) (*types.Tab
 		actions := []types.TableAction{
 			{
 				Type: "delete", Label: l.Actions.Remove, Action: "delete",
-				URL:            fmt.Sprintf("/action/roles/detail/%s/users/remove", roleID),
+				URL:            route.ResolveURL(deps.Routes.UsersRemoveURL, "id", roleID),
 				ItemName:       u.UserName,
 				ConfirmTitle:   l.Actions.Remove,
 				ConfirmMessage: fmt.Sprintf("Are you sure you want to remove %s from this role?", u.UserName),
@@ -357,7 +359,7 @@ func buildUsersTable(ctx context.Context, deps *Deps, roleID string) (*types.Tab
 
 	tableConfig := &types.TableConfig{
 		ID:                   "role-users-table",
-		RefreshURL:           fmt.Sprintf("/action/roles/detail/%s/users/table", roleID),
+		RefreshURL:           route.ResolveURL(deps.Routes.UsersTableURL, "id", roleID),
 		Columns:              columns,
 		Rows:                 rows,
 		ShowSearch:           true,
@@ -377,7 +379,7 @@ func buildUsersTable(ctx context.Context, deps *Deps, roleID string) (*types.Tab
 		},
 		PrimaryAction: &types.PrimaryAction{
 			Label:     l.Buttons.AssignUser,
-			ActionURL: fmt.Sprintf("/action/roles/detail/%s/users/assign", roleID),
+			ActionURL: route.ResolveURL(deps.Routes.UsersAssignURL, "id", roleID),
 			Icon:      "icon-plus",
 		},
 	}

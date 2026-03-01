@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
 
@@ -35,6 +36,7 @@ type ActionDeps struct {
 	DeleteRolePermission func(ctx context.Context, req *rolepermissionpb.DeleteRolePermissionRequest) (*rolepermissionpb.DeleteRolePermissionResponse, error)
 	ListPermissions      func(ctx context.Context, req *permissionpb.ListPermissionsRequest) (*permissionpb.ListPermissionsResponse, error)
 	GetRoleItemPageData  func(ctx context.Context, req *rolepb.GetRoleItemPageDataRequest) (*rolepb.GetRoleItemPageDataResponse, error)
+	Routes               entydad.RoleRoutes
 	Labels               entydad.RolePermissionLabels
 }
 
@@ -90,7 +92,7 @@ func NewAssignAction(deps *ActionDeps) view.View {
 			}
 
 			return view.OK("role-permission-assign-form", &AssignFormData{
-				FormAction:        "/action/roles/detail/" + roleID + "/permissions/assign",
+				FormAction:        route.ResolveURL(deps.Routes.DetailPermissionsAssignURL, "id", roleID),
 				RoleID:            roleID,
 				Labels:            AssignFormLabels{Permission: deps.Labels.Form.Permission},
 				PermissionOptions: options,

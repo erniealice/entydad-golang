@@ -6,6 +6,7 @@ import (
 	"log"
 
 	pyeza "github.com/erniealice/pyeza-golang"
+	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
 
@@ -17,6 +18,7 @@ import (
 
 // Deps holds view dependencies.
 type Deps struct {
+	Routes                       entydad.UserRoutes
 	ListWorkspaceUsers           func(ctx context.Context, req *workspaceuserpb.ListWorkspaceUsersRequest) (*workspaceuserpb.ListWorkspaceUsersResponse, error)
 	GetWorkspaceUserItemPageData func(ctx context.Context, req *workspaceuserpb.GetWorkspaceUserItemPageDataRequest) (*workspaceuserpb.GetWorkspaceUserItemPageDataResponse, error)
 	ReadUser                     func(ctx context.Context, req *userpb.ReadUserRequest) (*userpb.ReadUserResponse, error)
@@ -136,10 +138,10 @@ func buildTableConfig(ctx context.Context, deps *Deps, userID string) (*types.Ta
 
 	l := deps.Labels
 	columns := roleColumns(l)
-	rows := buildTableRows(workspaceUser, userID, l)
+	rows := buildTableRows(workspaceUser, userID, l, deps.Routes)
 	types.ApplyColumnStyles(columns, rows)
 
-	refreshURL := fmt.Sprintf("/action/users/detail/%s/roles/table", userID)
+	refreshURL := route.ResolveURL(deps.Routes.DetailRolesTableURL, "id", userID)
 
 	tableConfig := &types.TableConfig{
 		ID:                   "user-roles-table",
@@ -163,7 +165,7 @@ func buildTableConfig(ctx context.Context, deps *Deps, userID string) (*types.Ta
 		},
 		PrimaryAction: &types.PrimaryAction{
 			Label:     l.Buttons.AssignRole,
-			ActionURL: fmt.Sprintf("/action/users/detail/%s/roles/assign", userID),
+			ActionURL: route.ResolveURL(deps.Routes.DetailRolesAssignURL, "id", userID),
 			Icon:      "icon-plus",
 		},
 	}
@@ -176,7 +178,7 @@ func buildEmptyTableConfig(deps *Deps, userID string) *types.TableConfig {
 	l := deps.Labels
 	columns := roleColumns(l)
 
-	refreshURL := fmt.Sprintf("/action/users/detail/%s/roles/table", userID)
+	refreshURL := route.ResolveURL(deps.Routes.DetailRolesTableURL, "id", userID)
 
 	tableConfig := &types.TableConfig{
 		ID:                   "user-roles-table",
@@ -200,7 +202,7 @@ func buildEmptyTableConfig(deps *Deps, userID string) *types.TableConfig {
 		},
 		PrimaryAction: &types.PrimaryAction{
 			Label:     l.Buttons.AssignRole,
-			ActionURL: fmt.Sprintf("/action/users/detail/%s/roles/assign", userID),
+			ActionURL: route.ResolveURL(deps.Routes.DetailRolesAssignURL, "id", userID),
 			Icon:      "icon-plus",
 		},
 	}
@@ -218,7 +220,7 @@ func roleColumns(l entydad.UserRoleLabels) []types.TableColumn {
 	}
 }
 
-func buildTableRows(workspaceUser *workspaceuserpb.WorkspaceUser, userID string, l entydad.UserRoleLabels) []types.TableRow {
+func buildTableRows(workspaceUser *workspaceuserpb.WorkspaceUser, userID string, l entydad.UserRoleLabels, routes entydad.UserRoutes) []types.TableRow {
 	rows := []types.TableRow{}
 
 	for _, wur := range workspaceUser.GetWorkspaceUserRoles() {
@@ -242,7 +244,7 @@ func buildTableRows(workspaceUser *workspaceuserpb.WorkspaceUser, userID string,
 		actions := []types.TableAction{
 			{
 				Type: "delete", Label: l.Actions.Remove, Action: "delete",
-				URL:            fmt.Sprintf("/action/users/detail/%s/roles/remove", userID),
+				URL:            route.ResolveURL(routes.DetailRolesRemoveURL, "id", userID),
 				ItemName:       roleName,
 				ConfirmTitle:   l.Actions.Remove,
 				ConfirmMessage: fmt.Sprintf("Are you sure you want to remove %s from this user?", roleName),

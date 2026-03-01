@@ -6,6 +6,7 @@ import (
 	"log"
 
 	pyeza "github.com/erniealice/pyeza-golang"
+	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
 
@@ -18,6 +19,7 @@ import (
 type Deps struct {
 	GetListPageData func(ctx context.Context, req *workspacepb.GetWorkspaceListPageDataRequest) (*workspacepb.GetWorkspaceListPageDataResponse, error)
 	RefreshURL      string
+	Routes          entydad.WorkspaceRoutes
 	Labels          entydad.WorkspaceLabels
 	CommonLabels    pyeza.CommonLabels
 	TableLabels     types.TableLabels
@@ -90,13 +92,13 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 
 	l := deps.Labels
 	columns := workspaceColumns(l)
-	rows := buildTableRows(resp.GetWorkspaceList(), status, l)
+	rows := buildTableRows(resp.GetWorkspaceList(), status, l, deps.Routes)
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
-	bulkCfg.Actions = buildBulkActions(l, deps.CommonLabels, status)
+	bulkCfg.Actions = buildBulkActions(l, deps.CommonLabels, status, deps.Routes)
 
-	refreshURL := fmt.Sprintf("/action/workspaces/table/%s", status)
+	refreshURL := route.ResolveURL(deps.Routes.TableURL, "status", status)
 
 	tableConfig := &types.TableConfig{
 		ID:                   "workspaces-table",
@@ -120,7 +122,7 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 		},
 		PrimaryAction: &types.PrimaryAction{
 			Label:     l.Buttons.AddWorkspace,
-			ActionURL: "/action/workspaces/add",
+			ActionURL: deps.Routes.AddURL,
 			Icon:      "icon-plus",
 		},
 		BulkActions: &bulkCfg,
@@ -139,7 +141,7 @@ func workspaceColumns(l entydad.WorkspaceLabels) []types.TableColumn {
 	}
 }
 
-func buildTableRows(workspaces []*workspacepb.Workspace, status string, l entydad.WorkspaceLabels) []types.TableRow {
+func buildTableRows(workspaces []*workspacepb.Workspace, status string, l entydad.WorkspaceLabels, routes entydad.WorkspaceRoutes) []types.TableRow {
 	rows := []types.TableRow{}
 	for _, w := range workspaces {
 		active := w.GetActive()
@@ -164,26 +166,26 @@ func buildTableRows(workspaces []*workspacepb.Workspace, status string, l entyda
 		}
 
 		actions := []types.TableAction{
-			{Type: "edit", Label: l.Actions.Edit, Action: "edit", URL: "/action/workspaces/edit/" + id, DrawerTitle: l.Actions.Edit},
+			{Type: "edit", Label: l.Actions.Edit, Action: "edit", URL: route.ResolveURL(routes.EditURL, "id", id), DrawerTitle: l.Actions.Edit},
 		}
 		if active {
 			actions = append(actions, types.TableAction{
 				Type: "deactivate", Label: l.Actions.Deactivate, Action: "deactivate",
-				URL: "/action/workspaces/set-status?status=inactive", ItemName: name,
+				URL: routes.SetStatusURL + "?status=inactive", ItemName: name,
 				ConfirmTitle:   l.Actions.Deactivate,
 				ConfirmMessage: fmt.Sprintf("Are you sure you want to deactivate %s?", name),
 			})
 		} else {
 			actions = append(actions, types.TableAction{
 				Type: "activate", Label: l.Actions.Activate, Action: "activate",
-				URL: "/action/workspaces/set-status?status=active", ItemName: name,
+				URL: routes.SetStatusURL + "?status=active", ItemName: name,
 				ConfirmTitle:   l.Actions.Activate,
 				ConfirmMessage: fmt.Sprintf("Are you sure you want to activate %s?", name),
 			})
 		}
 		actions = append(actions, types.TableAction{
 			Type: "delete", Label: l.Actions.Delete, Action: "delete",
-			URL: "/action/workspaces/delete", ItemName: name,
+			URL: routes.DeleteURL, ItemName: name,
 		})
 
 		rows = append(rows, types.TableRow{
@@ -261,7 +263,7 @@ func statusVariant(status string) string {
 	}
 }
 
-func buildBulkActions(l entydad.WorkspaceLabels, common pyeza.CommonLabels, status string) []types.BulkAction {
+func buildBulkActions(l entydad.WorkspaceLabels, common pyeza.CommonLabels, status string, routes entydad.WorkspaceRoutes) []types.BulkAction {
 	actions := []types.BulkAction{}
 
 	switch status {
@@ -271,7 +273,7 @@ func buildBulkActions(l entydad.WorkspaceLabels, common pyeza.CommonLabels, stat
 			Label:           l.Actions.Deactivate,
 			Icon:            "icon-briefcase",
 			Variant:         "warning",
-			Endpoint:        "/action/workspaces/bulk-set-status",
+			Endpoint:        routes.BulkSetStatusURL,
 			ConfirmTitle:    l.Actions.Deactivate,
 			ConfirmMessage:  "Are you sure you want to deactivate {{count}} workspace(s)?",
 			ExtraParamsJSON: `{"target_status":"inactive"}`,
@@ -282,7 +284,7 @@ func buildBulkActions(l entydad.WorkspaceLabels, common pyeza.CommonLabels, stat
 			Label:           l.Actions.Activate,
 			Icon:            "icon-briefcase",
 			Variant:         "primary",
-			Endpoint:        "/action/workspaces/bulk-set-status",
+			Endpoint:        routes.BulkSetStatusURL,
 			ConfirmTitle:    l.Actions.Activate,
 			ConfirmMessage:  "Are you sure you want to activate {{count}} workspace(s)?",
 			ExtraParamsJSON: `{"target_status":"active"}`,
@@ -294,7 +296,7 @@ func buildBulkActions(l entydad.WorkspaceLabels, common pyeza.CommonLabels, stat
 		Label:          common.Bulk.Delete,
 		Icon:           "icon-trash-2",
 		Variant:        "danger",
-		Endpoint:       "/action/workspaces/bulk-delete",
+		Endpoint:       routes.BulkDeleteURL,
 		ConfirmTitle:   common.Bulk.Delete,
 		ConfirmMessage: "Are you sure you want to delete {{count}} workspace(s)? This action cannot be undone.",
 	})

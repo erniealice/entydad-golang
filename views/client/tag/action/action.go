@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/view"
 
 	"github.com/erniealice/entydad-golang"
@@ -47,6 +48,7 @@ func resolveCode(code, name string) string {
 
 // Deps holds dependencies for client tag action handlers.
 type Deps struct {
+	Routes         entydad.ClientTagRoutes
 	ListCategories func(ctx context.Context, req *categorypb.ListCategoriesRequest) (*categorypb.ListCategoriesResponse, error)
 	CreateCategory func(ctx context.Context, req *categorypb.CreateCategoryRequest) (*categorypb.CreateCategoryResponse, error)
 	ReadCategory   func(ctx context.Context, req *categorypb.ReadCategoryRequest) (*categorypb.ReadCategoryResponse, error)
@@ -84,7 +86,7 @@ func NewAddAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		if viewCtx.Request.Method == http.MethodGet {
 			return view.OK("client-tag-drawer-form", &FormData{
-				FormAction:   "/action/clients/tags/add",
+				FormAction:   deps.Routes.AddURL,
 				Active:       true,
 				CommonLabels: nil,
 			})
@@ -141,7 +143,7 @@ func NewEditAction(deps *Deps) view.View {
 			cat := data[0]
 
 			return view.OK("client-tag-drawer-form", &FormData{
-				FormAction:   "/action/clients/tags/edit/" + id,
+				FormAction:   route.ResolveURL(deps.Routes.EditURL, "id", id),
 				IsEdit:       true,
 				ID:           id,
 				Name:         cat.GetName(),

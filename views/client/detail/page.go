@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	pyeza "github.com/erniealice/pyeza-golang"
+	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
 
@@ -21,6 +22,7 @@ import (
 
 // Deps holds view dependencies.
 type Deps struct {
+	Routes               entydad.ClientRoutes
 	ReadClient           func(ctx context.Context, req *clientpb.ReadClientRequest) (*clientpb.ReadClientResponse, error)
 	ListCategories       func(ctx context.Context, req *categorypb.ListCategoriesRequest) (*categorypb.ListCategoriesResponse, error)
 	ListClientCategories func(ctx context.Context, req *clientcategorypb.ListClientCategoriesRequest) (*clientcategorypb.ListClientCategoriesResponse, error)
@@ -130,7 +132,7 @@ func NewView(deps *Deps) view.View {
 			statusVariant = "warning"
 		}
 
-		tabItems := buildTabItems(id)
+		tabItems := buildTabItems(id, deps.Routes)
 
 		// CRM fields
 		companyName := client.GetCompanyName()
@@ -201,9 +203,9 @@ func NewView(deps *Deps) view.View {
 	})
 }
 
-func buildTabItems(id string) []pyeza.TabItem {
-	base := "/app/clients/detail/" + id
-	action := "/action/clients/" + id + "/tab/"
+func buildTabItems(id string, routes entydad.ClientRoutes) []pyeza.TabItem {
+	base := route.ResolveURL(routes.DetailURL, "id", id)
+	action := route.ResolveURL(routes.TabActionURL, "id", id, "tab", "")
 	return []pyeza.TabItem{
 		{Key: "basic", Label: "Basic Information", Href: base + "?tab=basic", HxGet: action + "basic", Icon: "icon-info"},
 		{Key: "history", Label: "Purchase History", Href: base + "?tab=history", HxGet: action + "history", Icon: "icon-shopping-bag"},
@@ -259,7 +261,7 @@ func NewTabAction(deps *Deps) view.View {
 			Client:        client,
 			Labels:        deps.Labels,
 			ActiveTab:     tab,
-			TabItems:      buildTabItems(id),
+			TabItems:      buildTabItems(id, deps.Routes),
 			ClientName:    clientName,
 			ClientEmail:   clientEmail,
 			ClientPhone:   clientPhone,

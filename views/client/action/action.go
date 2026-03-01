@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/view"
 
 	categorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
@@ -87,6 +88,7 @@ type FormData struct {
 
 // Deps holds dependencies for client action handlers.
 type Deps struct {
+	Routes          entydad.ClientRoutes
 	CreateClient    func(ctx context.Context, req *clientpb.CreateClientRequest) (*clientpb.CreateClientResponse, error)
 	ReadClient      func(ctx context.Context, req *clientpb.ReadClientRequest) (*clientpb.ReadClientResponse, error)
 	UpdateClient    func(ctx context.Context, req *clientpb.UpdateClientRequest) (*clientpb.UpdateClientResponse, error)
@@ -272,7 +274,7 @@ func NewAddAction(deps *Deps) view.View {
 		if viewCtx.Request.Method == http.MethodGet {
 			tagOptions, _ := loadTagData(ctx, deps, "")
 			return view.OK("client-drawer-form", &FormData{
-				FormAction:   "/action/clients/add",
+				FormAction:   deps.Routes.AddURL,
 				Active:       true,
 				TagOptions:   tagOptions,
 				Labels:       formLabels(viewCtx.T),
@@ -345,7 +347,7 @@ func NewEditAction(deps *Deps) view.View {
 			tagOptions, selectedTags := loadTagData(ctx, deps, id)
 
 			return view.OK("client-drawer-form", &FormData{
-				FormAction:    "/action/clients/edit/" + id,
+				FormAction:    route.ResolveURL(deps.Routes.EditURL, "id", id),
 				IsEdit:        true,
 				ID:            id,
 				FirstName:     u.GetFirstName(),

@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/view"
 
 	rolepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/role"
@@ -43,6 +44,7 @@ type Deps struct {
 	UpdateRole    func(ctx context.Context, req *rolepb.UpdateRoleRequest) (*rolepb.UpdateRoleResponse, error)
 	DeleteRole    func(ctx context.Context, req *rolepb.DeleteRoleRequest) (*rolepb.DeleteRoleResponse, error)
 	SetRoleActive func(ctx context.Context, id string, active bool) error
+	Routes        entydad.RoleRoutes
 }
 
 func formLabels(t func(string) string) FormLabels {
@@ -62,7 +64,7 @@ func NewAddAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		if viewCtx.Request.Method == http.MethodGet {
 			return view.OK("role-drawer-form", &FormData{
-				FormAction:   "/action/roles/add",
+				FormAction:   deps.Routes.AddURL,
 				Active:       true,
 				Labels:       formLabels(viewCtx.T),
 				CommonLabels: nil, // injected by ViewAdapter
@@ -111,7 +113,7 @@ func NewEditAction(deps *Deps) view.View {
 			role := resp.GetData()[0]
 
 			return view.OK("role-drawer-form", &FormData{
-				FormAction:   "/action/roles/edit/" + id,
+				FormAction:   route.ResolveURL(deps.Routes.EditURL, "id", id),
 				IsEdit:       true,
 				ID:           id,
 				Name:         role.GetName(),

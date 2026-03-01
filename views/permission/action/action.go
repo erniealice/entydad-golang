@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
 
@@ -48,6 +49,7 @@ type Deps struct {
 	UpdatePermission    func(ctx context.Context, req *permissionpb.UpdatePermissionRequest) (*permissionpb.UpdatePermissionResponse, error)
 	DeletePermission    func(ctx context.Context, req *permissionpb.DeletePermissionRequest) (*permissionpb.DeletePermissionResponse, error)
 	SetPermissionActive func(ctx context.Context, id string, active bool) error
+	Routes              entydad.PermissionRoutes
 }
 
 func formLabels(t func(string) string) FormLabels {
@@ -94,7 +96,7 @@ func NewAddAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		if viewCtx.Request.Method == http.MethodGet {
 			return view.OK("permission-drawer-form", &FormData{
-				FormAction:            "/action/permissions/add",
+				FormAction:            deps.Routes.AddURL,
 				Active:                true,
 				PermissionType:        "PERMISSION_TYPE_ALLOW",
 				Labels:                formLabels(viewCtx.T),
@@ -146,7 +148,7 @@ func NewEditAction(deps *Deps) view.View {
 			perm := resp.GetData()[0]
 
 			return view.OK("permission-drawer-form", &FormData{
-				FormAction:            "/action/permissions/edit/" + id,
+				FormAction:            route.ResolveURL(deps.Routes.EditURL, "id", id),
 				IsEdit:                true,
 				ID:                    id,
 				Name:                  perm.GetName(),

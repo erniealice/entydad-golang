@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/view"
 
 	workspacepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace"
@@ -42,6 +43,7 @@ type Deps struct {
 	UpdateWorkspace    func(ctx context.Context, req *workspacepb.UpdateWorkspaceRequest) (*workspacepb.UpdateWorkspaceResponse, error)
 	DeleteWorkspace    func(ctx context.Context, req *workspacepb.DeleteWorkspaceRequest) (*workspacepb.DeleteWorkspaceResponse, error)
 	SetWorkspaceActive func(ctx context.Context, id string, active bool) error
+	Routes             entydad.WorkspaceRoutes
 }
 
 func formLabels(t func(string) string) FormLabels {
@@ -60,7 +62,7 @@ func NewAddAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		if viewCtx.Request.Method == http.MethodGet {
 			return view.OK("workspace-drawer-form", &FormData{
-				FormAction:   "/action/workspaces/add",
+				FormAction:   deps.Routes.AddURL,
 				Active:       true,
 				Labels:       formLabels(viewCtx.T),
 				CommonLabels: nil, // injected by ViewAdapter
@@ -110,7 +112,7 @@ func NewEditAction(deps *Deps) view.View {
 			ws := resp.GetData()[0]
 
 			return view.OK("workspace-drawer-form", &FormData{
-				FormAction:   "/action/workspaces/edit/" + id,
+				FormAction:   route.ResolveURL(deps.Routes.EditURL, "id", id),
 				IsEdit:       true,
 				ID:           id,
 				Name:         ws.GetName(),

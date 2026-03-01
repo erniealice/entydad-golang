@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/view"
 
 	userpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/user"
@@ -42,6 +43,7 @@ type FormData struct {
 
 // Deps holds dependencies for user action handlers.
 type Deps struct {
+	Routes              entydad.UserRoutes
 	CreateUser          func(ctx context.Context, req *userpb.CreateUserRequest) (*userpb.CreateUserResponse, error)
 	ReadUser            func(ctx context.Context, req *userpb.ReadUserRequest) (*userpb.ReadUserResponse, error)
 	UpdateUser          func(ctx context.Context, req *userpb.UpdateUserRequest) (*userpb.UpdateUserResponse, error)
@@ -70,7 +72,7 @@ func NewAddAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		if viewCtx.Request.Method == http.MethodGet {
 			return view.OK("user-drawer-form", &FormData{
-				FormAction:   "/action/users/add",
+				FormAction:   deps.Routes.AddURL,
 				Active:       true,
 				Labels:       formLabels(viewCtx.T),
 				CommonLabels: nil, // injected by ViewAdapter
@@ -140,7 +142,7 @@ func NewEditAction(deps *Deps) view.View {
 			u := resp.GetData()[0]
 
 			return view.OK("user-drawer-form", &FormData{
-				FormAction:   "/action/users/edit/" + id,
+				FormAction:   route.ResolveURL(deps.Routes.EditURL, "id", id),
 				IsEdit:       true,
 				ID:           id,
 				FirstName:    u.GetFirstName(),

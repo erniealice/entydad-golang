@@ -6,6 +6,7 @@ import (
 	"log"
 
 	pyeza "github.com/erniealice/pyeza-golang"
+	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
 
@@ -17,6 +18,7 @@ import (
 
 // Deps holds view dependencies.
 type Deps struct {
+	Routes                       entydad.UserRoutes
 	ReadUser                     func(ctx context.Context, req *userpb.ReadUserRequest) (*userpb.ReadUserResponse, error)
 	GetWorkspaceUserItemPageData func(ctx context.Context, req *workspaceuserpb.GetWorkspaceUserItemPageDataRequest) (*workspaceuserpb.GetWorkspaceUserItemPageDataResponse, error)
 	ListWorkspaceUsers           func(ctx context.Context, req *workspaceuserpb.ListWorkspaceUsersRequest) (*workspaceuserpb.ListWorkspaceUsersResponse, error)
@@ -121,7 +123,7 @@ func buildPageData(ctx context.Context, deps *Deps, id, activeTab string, viewCt
 	// Get role count for the Roles tab badge
 	roleCount, roleNames := getUserRoles(ctx, deps, id)
 
-	tabItems := buildTabItems(id, deps.Labels, roleCount)
+	tabItems := buildTabItems(id, deps.Labels, roleCount, deps.Routes)
 
 	pageData := &PageData{
 		PageData: types.PageData{
@@ -163,9 +165,9 @@ func buildPageData(ctx context.Context, deps *Deps, id, activeTab string, viewCt
 	return pageData, nil
 }
 
-func buildTabItems(id string, labels entydad.UserLabels, roleCount int) []pyeza.TabItem {
-	base := "/app/users/detail/" + id
-	action := "/action/users/" + id + "/tab/"
+func buildTabItems(id string, labels entydad.UserLabels, roleCount int, routes entydad.UserRoutes) []pyeza.TabItem {
+	base := route.ResolveURL(routes.DetailURL, "id", id)
+	action := route.ResolveURL(routes.TabActionURL, "id", id, "tab", "")
 	return []pyeza.TabItem{
 		{Key: "info", Label: labels.Detail.Tabs.Info, Href: base + "?tab=info", HxGet: action + "info", Icon: "icon-info", Count: 0, Disabled: false},
 		{Key: "roles", Label: labels.Detail.Tabs.Roles, Href: base + "?tab=roles", HxGet: action + "roles", Icon: "icon-shield", Count: roleCount, Disabled: false},
@@ -279,7 +281,7 @@ func buildRolesTable(ctx context.Context, deps *Deps, userID string) (*types.Tab
 		actions := []types.TableAction{
 			{
 				Type: "delete", Label: l.Actions.Remove, Action: "delete",
-				URL:            fmt.Sprintf("/action/users/detail/%s/roles/remove", userID),
+				URL:            route.ResolveURL(deps.Routes.DetailRolesRemoveURL, "id", userID),
 				ItemName:       roleName,
 				ConfirmTitle:   l.Actions.Remove,
 				ConfirmMessage: fmt.Sprintf("Are you sure you want to remove %s from this user?", roleName),
@@ -307,7 +309,7 @@ func buildRolesTable(ctx context.Context, deps *Deps, userID string) (*types.Tab
 
 	tableConfig := &types.TableConfig{
 		ID:                   "user-roles-table",
-		RefreshURL:           fmt.Sprintf("/action/users/detail/%s/roles/table", userID),
+		RefreshURL:           route.ResolveURL(deps.Routes.DetailRolesTableURL, "id", userID),
 		Columns:              columns,
 		Rows:                 rows,
 		ShowSearch:           true,
@@ -327,7 +329,7 @@ func buildRolesTable(ctx context.Context, deps *Deps, userID string) (*types.Tab
 		},
 		PrimaryAction: &types.PrimaryAction{
 			Label:     l.Buttons.AssignRole,
-			ActionURL: fmt.Sprintf("/action/users/detail/%s/roles/assign", userID),
+			ActionURL: route.ResolveURL(deps.Routes.DetailRolesAssignURL, "id", userID),
 			Icon:      "icon-plus",
 		},
 	}
@@ -347,7 +349,7 @@ func buildEmptyRolesTable(deps *Deps, userID string) *types.TableConfig {
 
 	tableConfig := &types.TableConfig{
 		ID:                   "user-roles-table",
-		RefreshURL:           fmt.Sprintf("/action/users/detail/%s/roles/table", userID),
+		RefreshURL:           route.ResolveURL(deps.Routes.DetailRolesTableURL, "id", userID),
 		Columns:              columns,
 		Rows:                 []types.TableRow{},
 		ShowSearch:           true,
@@ -367,7 +369,7 @@ func buildEmptyRolesTable(deps *Deps, userID string) *types.TableConfig {
 		},
 		PrimaryAction: &types.PrimaryAction{
 			Label:     l.Buttons.AssignRole,
-			ActionURL: fmt.Sprintf("/action/users/detail/%s/roles/assign", userID),
+			ActionURL: route.ResolveURL(deps.Routes.DetailRolesAssignURL, "id", userID),
 			Icon:      "icon-plus",
 		},
 	}

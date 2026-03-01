@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/view"
 
 	locationpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/location"
@@ -43,6 +44,7 @@ type Deps struct {
 	UpdateLocation    func(ctx context.Context, req *locationpb.UpdateLocationRequest) (*locationpb.UpdateLocationResponse, error)
 	DeleteLocation    func(ctx context.Context, req *locationpb.DeleteLocationRequest) (*locationpb.DeleteLocationResponse, error)
 	SetLocationActive func(ctx context.Context, id string, active bool) error
+	Routes            entydad.LocationRoutes
 }
 
 func formLabels(t func(string) string) FormLabels {
@@ -62,7 +64,7 @@ func NewAddAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		if viewCtx.Request.Method == http.MethodGet {
 			return view.OK("location-drawer-form", &FormData{
-				FormAction:   "/action/locations/add",
+				FormAction:   deps.Routes.AddURL,
 				Active:       true,
 				Labels:       formLabels(viewCtx.T),
 				CommonLabels: nil, // injected by ViewAdapter
@@ -112,7 +114,7 @@ func NewEditAction(deps *Deps) view.View {
 			loc := resp.GetData()[0]
 
 			return view.OK("location-drawer-form", &FormData{
-				FormAction:   "/action/locations/edit/" + id,
+				FormAction:   route.ResolveURL(deps.Routes.EditURL, "id", id),
 				IsEdit:       true,
 				ID:           id,
 				Name:         loc.GetName(),

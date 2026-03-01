@@ -2,10 +2,10 @@ package users
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 
+	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
 
@@ -35,6 +35,7 @@ type ActionDeps struct {
 	ListWorkspaceUsers      func(ctx context.Context, req *workspaceuserpb.ListWorkspaceUsersRequest) (*workspaceuserpb.ListWorkspaceUsersResponse, error)
 	CreateWorkspaceUserRole func(ctx context.Context, req *workspaceuserrolepb.CreateWorkspaceUserRoleRequest) (*workspaceuserrolepb.CreateWorkspaceUserRoleResponse, error)
 	DeleteWorkspaceUserRole func(ctx context.Context, req *workspaceuserrolepb.DeleteWorkspaceUserRoleRequest) (*workspaceuserrolepb.DeleteWorkspaceUserRoleResponse, error)
+	Routes                  entydad.RoleRoutes
 	Labels                  entydad.RoleUserLabels
 }
 
@@ -89,7 +90,7 @@ func NewAssignAction(deps *ActionDeps) view.View {
 			}
 
 			return view.OK("role-user-assign-form", &AssignFormData{
-				FormAction:   fmt.Sprintf("/action/roles/detail/%s/users/assign", roleID),
+				FormAction:   route.ResolveURL(deps.Routes.UsersAssignURL, "id", roleID),
 				RoleID:       roleID,
 				Labels:       AssignFormLabels{User: deps.Labels.Form.User},
 				UserOptions:  options,

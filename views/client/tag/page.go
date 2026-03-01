@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	pyeza "github.com/erniealice/pyeza-golang"
+	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
 
@@ -18,6 +19,7 @@ import (
 
 // Deps holds view dependencies.
 type Deps struct {
+	Routes               entydad.ClientTagRoutes
 	ListCategories       func(ctx context.Context, req *categorypb.ListCategoriesRequest) (*categorypb.ListCategoriesResponse, error)
 	ListClientCategories func(ctx context.Context, req *clientcategorypb.ListClientCategoriesRequest) (*clientcategorypb.ListClientCategoriesResponse, error)
 	RefreshURL           string
@@ -61,7 +63,7 @@ func NewView(deps *Deps) view.View {
 			{Key: "status", Label: "Status", Sortable: true, Width: "120px"},
 		}
 
-		rows := buildTableRows(resp.GetData(), customerCounts)
+		rows := buildTableRows(resp.GetData(), customerCounts, deps.Routes)
 		types.ApplyColumnStyles(columns, rows)
 
 		bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
@@ -71,7 +73,7 @@ func NewView(deps *Deps) view.View {
 				Label:          "Delete",
 				Icon:           "icon-trash-2",
 				Variant:        "danger",
-				Endpoint:       entydad.ClientTagBulkDeleteURL,
+				Endpoint:       deps.Routes.BulkDeleteURL,
 				ConfirmTitle:   "Delete Tags",
 				ConfirmMessage: "Are you sure you want to delete {{count}} tag(s)? This action cannot be undone.",
 			},
@@ -93,7 +95,7 @@ func NewView(deps *Deps) view.View {
 			},
 			PrimaryAction: &types.PrimaryAction{
 				Label:     "Add Tag",
-				ActionURL: entydad.ClientTagAddURL,
+				ActionURL: deps.Routes.AddURL,
 				Icon:      "icon-plus",
 			},
 			BulkActions: &bulkCfg,
@@ -120,7 +122,7 @@ func NewView(deps *Deps) view.View {
 	})
 }
 
-func buildTableRows(categories []*categorypb.Category, customerCounts map[string]int) []types.TableRow {
+func buildTableRows(categories []*categorypb.Category, customerCounts map[string]int, routes entydad.ClientTagRoutes) []types.TableRow {
 	rows := []types.TableRow{}
 	for _, cat := range categories {
 		// Only show client-module categories
@@ -152,8 +154,8 @@ func buildTableRows(categories []*categorypb.Category, customerCounts map[string
 				"status": status,
 			},
 			Actions: []types.TableAction{
-				{Type: "edit", Label: "Edit", Action: "edit", URL: "/action/clients/tags/edit/" + id, DrawerTitle: "Edit Tag"},
-				{Type: "delete", Label: "Delete", Action: "delete", URL: "/action/clients/tags/delete", ItemName: name},
+				{Type: "edit", Label: "Edit", Action: "edit", URL: route.ResolveURL(routes.EditURL, "id", id), DrawerTitle: "Edit Tag"},
+				{Type: "delete", Label: "Delete", Action: "delete", URL: routes.DeleteURL, ItemName: name},
 			},
 		})
 	}

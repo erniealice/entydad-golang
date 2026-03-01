@@ -6,6 +6,7 @@ import (
 	"log"
 
 	pyeza "github.com/erniealice/pyeza-golang"
+	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
 
@@ -28,6 +29,7 @@ type UserByRole struct {
 type Deps struct {
 	GetUsersByRoleID func(ctx context.Context, roleID string) ([]UserByRole, error)
 	ReadRole         func(ctx context.Context, req *rolepb.ReadRoleRequest) (*rolepb.ReadRoleResponse, error)
+	Routes           entydad.RoleRoutes
 	Labels           entydad.RoleUserLabels
 	CommonLabels     pyeza.CommonLabels
 	TableLabels      types.TableLabels
@@ -122,10 +124,10 @@ func buildTableConfig(ctx context.Context, deps *Deps, roleID string) (*types.Ta
 
 	l := deps.Labels
 	columns := userColumns(l)
-	rows := buildTableRows(users, roleID, l)
+	rows := buildTableRows(users, roleID, l, deps.Routes)
 	types.ApplyColumnStyles(columns, rows)
 
-	refreshURL := fmt.Sprintf("/action/roles/detail/%s/users/table", roleID)
+	refreshURL := route.ResolveURL(deps.Routes.UsersTableURL, "id", roleID)
 
 	tableConfig := &types.TableConfig{
 		ID:                   "role-users-table",
@@ -149,7 +151,7 @@ func buildTableConfig(ctx context.Context, deps *Deps, roleID string) (*types.Ta
 		},
 		PrimaryAction: &types.PrimaryAction{
 			Label:     l.Buttons.AssignUser,
-			ActionURL: fmt.Sprintf("/action/roles/detail/%s/users/assign", roleID),
+			ActionURL: route.ResolveURL(deps.Routes.UsersAssignURL, "id", roleID),
 			Icon:      "icon-plus",
 		},
 	}
@@ -166,14 +168,14 @@ func userColumns(l entydad.RoleUserLabels) []types.TableColumn {
 	}
 }
 
-func buildTableRows(users []UserByRole, roleID string, l entydad.RoleUserLabels) []types.TableRow {
+func buildTableRows(users []UserByRole, roleID string, l entydad.RoleUserLabels, routes entydad.RoleRoutes) []types.TableRow {
 	rows := []types.TableRow{}
 
 	for _, u := range users {
 		actions := []types.TableAction{
 			{
 				Type: "delete", Label: l.Actions.Remove, Action: "delete",
-				URL:            fmt.Sprintf("/action/roles/detail/%s/users/remove", roleID),
+				URL:            route.ResolveURL(routes.UsersRemoveURL, "id", roleID),
 				ItemName:       u.UserName,
 				ConfirmTitle:   l.Actions.Remove,
 				ConfirmMessage: fmt.Sprintf("Are you sure you want to remove %s from this role?", u.UserName),

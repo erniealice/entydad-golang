@@ -6,6 +6,7 @@ import (
 	"log"
 
 	pyeza "github.com/erniealice/pyeza-golang"
+	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
 
@@ -19,6 +20,7 @@ import (
 // Deps holds view dependencies.
 type Deps struct {
 	GetRoleItemPageData func(ctx context.Context, req *rolepb.GetRoleItemPageDataRequest) (*rolepb.GetRoleItemPageDataResponse, error)
+	Routes              entydad.RoleRoutes
 	Labels              entydad.RolePermissionLabels
 	CommonLabels        pyeza.CommonLabels
 	TableLabels         types.TableLabels
@@ -100,10 +102,10 @@ func buildTableConfig(ctx context.Context, deps *Deps, roleID string) (*types.Ta
 
 	l := deps.Labels
 	columns := permissionColumns(l)
-	rows := buildTableRows(role, l)
+	rows := buildTableRows(role, l, deps.Routes)
 	types.ApplyColumnStyles(columns, rows)
 
-	refreshURL := fmt.Sprintf("/action/roles/detail/%s/permissions/table", roleID)
+	refreshURL := route.ResolveURL(deps.Routes.DetailPermissionsTableURL, "id", roleID)
 
 	tableConfig := &types.TableConfig{
 		ID:                   "role-permissions-table",
@@ -127,7 +129,7 @@ func buildTableConfig(ctx context.Context, deps *Deps, roleID string) (*types.Ta
 		},
 		PrimaryAction: &types.PrimaryAction{
 			Label:     l.Buttons.AssignPermission,
-			ActionURL: fmt.Sprintf("/action/roles/detail/%s/permissions/assign", roleID),
+			ActionURL: route.ResolveURL(deps.Routes.DetailPermissionsAssignURL, "id", roleID),
 			Icon:      "icon-plus",
 		},
 	}
@@ -145,7 +147,7 @@ func permissionColumns(l entydad.RolePermissionLabels) []types.TableColumn {
 	}
 }
 
-func buildTableRows(role *rolepb.Role, l entydad.RolePermissionLabels) []types.TableRow {
+func buildTableRows(role *rolepb.Role, l entydad.RolePermissionLabels, routes entydad.RoleRoutes) []types.TableRow {
 	rows := []types.TableRow{}
 
 	for _, rp := range role.GetRolePermissions() {
@@ -173,7 +175,7 @@ func buildTableRows(role *rolepb.Role, l entydad.RolePermissionLabels) []types.T
 		actions := []types.TableAction{
 			{
 				Type: "delete", Label: l.Actions.Remove, Action: "delete",
-				URL:            fmt.Sprintf("/action/roles/detail/%s/permissions/remove", role.GetId()),
+				URL:            route.ResolveURL(routes.DetailPermissionsRemoveURL, "id", role.GetId()),
 				ItemName:       permName,
 				ConfirmTitle:   l.Actions.Remove,
 				ConfirmMessage: fmt.Sprintf("Are you sure you want to remove %s from this role?", permName),
