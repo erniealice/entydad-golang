@@ -90,7 +90,7 @@ func NewAddAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to create location: %v", err)
-			return entydad.HTMXError("Failed to create location")
+			return entydad.HTMXError(err.Error())
 		}
 
 		return entydad.HTMXSuccess("locations-table")
@@ -146,7 +146,7 @@ func NewEditAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to update location %s: %v", id, err)
-			return entydad.HTMXError("Failed to update location")
+			return entydad.HTMXError(err.Error())
 		}
 
 		return entydad.HTMXSuccess("locations-table")
@@ -171,7 +171,7 @@ func NewDeleteAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to delete location %s: %v", id, err)
-			return entydad.HTMXError("Failed to delete location")
+			return entydad.HTMXError(err.Error())
 		}
 
 		return entydad.HTMXSuccess("locations-table")
@@ -227,7 +227,7 @@ func NewSetStatusAction(deps *Deps) view.View {
 
 		if err := deps.SetLocationActive(ctx, id, targetStatus == "active"); err != nil {
 			log.Printf("Failed to update location status %s: %v", id, err)
-			return entydad.HTMXError("Failed to update location status")
+			return entydad.HTMXError(err.Error())
 		}
 
 		return entydad.HTMXSuccess("locations-table")

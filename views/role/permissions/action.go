@@ -53,7 +53,7 @@ func NewAssignAction(deps *ActionDeps) view.View {
 			permResp, err := deps.ListPermissions(ctx, &permissionpb.ListPermissionsRequest{})
 			if err != nil {
 				log.Printf("Failed to list permissions: %v", err)
-				return entydad.HTMXError("Failed to load permissions")
+				return entydad.HTMXError(err.Error())
 			}
 
 			// Load role with existing permissions to filter out already-assigned
@@ -62,7 +62,7 @@ func NewAssignAction(deps *ActionDeps) view.View {
 			})
 			if err != nil {
 				log.Printf("Failed to load role: %v", err)
-				return entydad.HTMXError("Failed to load role")
+				return entydad.HTMXError(err.Error())
 			}
 
 			// Build set of already-assigned permission IDs
@@ -119,7 +119,7 @@ func NewAssignAction(deps *ActionDeps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to assign permission to role %s: %v", roleID, err)
-			return entydad.HTMXError("Failed to assign permission")
+			return entydad.HTMXError(err.Error())
 		}
 
 		return entydad.HTMXSuccess("role-permissions-table")
@@ -148,7 +148,7 @@ func NewRemoveAction(deps *ActionDeps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to remove permission %s from role %s: %v", rpID, roleID, err)
-			return entydad.HTMXError("Failed to remove permission")
+			return entydad.HTMXError(err.Error())
 		}
 
 		return entydad.HTMXSuccess("role-permissions-table")

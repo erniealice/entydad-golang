@@ -52,7 +52,7 @@ func NewAssignAction(deps *ActionDeps) view.View {
 			wuResp, err := deps.ListWorkspaceUsers(ctx, &workspaceuserpb.ListWorkspaceUsersRequest{})
 			if err != nil {
 				log.Printf("Failed to list workspace users: %v", err)
-				return entydad.HTMXError("Failed to load users")
+				return entydad.HTMXError(err.Error())
 			}
 
 			// Get already-assigned users to filter them out
@@ -117,7 +117,7 @@ func NewAssignAction(deps *ActionDeps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to assign user to role %s: %v", roleID, err)
-			return entydad.HTMXError("Failed to assign user")
+			return entydad.HTMXError(err.Error())
 		}
 
 		return entydad.HTMXSuccess("role-users-table")
@@ -146,7 +146,7 @@ func NewRemoveAction(deps *ActionDeps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to remove user %s from role %s: %v", wurID, roleID, err)
-			return entydad.HTMXError("Failed to remove user")
+			return entydad.HTMXError(err.Error())
 		}
 
 		return entydad.HTMXSuccess("role-users-table")

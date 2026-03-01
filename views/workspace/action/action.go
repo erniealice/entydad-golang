@@ -88,7 +88,7 @@ func NewAddAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to create workspace: %v", err)
-			return entydad.HTMXError("Failed to create workspace")
+			return entydad.HTMXError(err.Error())
 		}
 
 		return entydad.HTMXSuccess("workspaces-table")
@@ -144,7 +144,7 @@ func NewEditAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to update workspace %s: %v", id, err)
-			return entydad.HTMXError("Failed to update workspace")
+			return entydad.HTMXError(err.Error())
 		}
 
 		return entydad.HTMXSuccess("workspaces-table")
@@ -168,7 +168,7 @@ func NewDeleteAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to delete workspace %s: %v", id, err)
-			return entydad.HTMXError("Failed to delete workspace")
+			return entydad.HTMXError(err.Error())
 		}
 
 		return entydad.HTMXSuccess("workspaces-table")
@@ -218,7 +218,7 @@ func NewSetStatusAction(deps *Deps) view.View {
 
 		if err := deps.SetWorkspaceActive(ctx, id, targetStatus == "active"); err != nil {
 			log.Printf("Failed to update workspace status %s: %v", id, err)
-			return entydad.HTMXError("Failed to update workspace status")
+			return entydad.HTMXError(err.Error())
 		}
 
 		return entydad.HTMXSuccess("workspaces-table")

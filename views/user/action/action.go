@@ -98,7 +98,7 @@ func NewAddAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to create user: %v", err)
-			return entydad.HTMXError("Failed to create user")
+			return entydad.HTMXError(err.Error())
 		}
 
 		// Auto-create WorkspaceUser for the default workspace
@@ -175,7 +175,7 @@ func NewEditAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to update user %s: %v", id, err)
-			return entydad.HTMXError("Failed to update user")
+			return entydad.HTMXError(err.Error())
 		}
 
 		return entydad.HTMXSuccess("users-table")
@@ -200,7 +200,7 @@ func NewDeleteAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to delete user %s: %v", id, err)
-			return entydad.HTMXError("Failed to delete user")
+			return entydad.HTMXError(err.Error())
 		}
 
 		return entydad.HTMXSuccess("users-table")
@@ -256,7 +256,7 @@ func NewSetStatusAction(deps *Deps) view.View {
 
 		if err := deps.SetUserActive(ctx, id, targetStatus == "active"); err != nil {
 			log.Printf("Failed to update user status %s: %v", id, err)
-			return entydad.HTMXError("Failed to update user status")
+			return entydad.HTMXError(err.Error())
 		}
 
 		return entydad.HTMXSuccess("users-table")

@@ -89,7 +89,7 @@ func NewAddAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to create role: %v", err)
-			return entydad.HTMXError("Failed to create role")
+			return entydad.HTMXError(err.Error())
 		}
 
 		return entydad.HTMXSuccess("roles-table")
@@ -144,7 +144,7 @@ func NewEditAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to update role %s: %v", id, err)
-			return entydad.HTMXError("Failed to update role")
+			return entydad.HTMXError(err.Error())
 		}
 
 		return entydad.HTMXSuccess("roles-table")
@@ -169,7 +169,7 @@ func NewDeleteAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to delete role %s: %v", id, err)
-			return entydad.HTMXError("Failed to delete role")
+			return entydad.HTMXError(err.Error())
 		}
 
 		return entydad.HTMXSuccess("roles-table")
@@ -225,7 +225,7 @@ func NewSetStatusAction(deps *Deps) view.View {
 
 		if err := deps.SetRoleActive(ctx, id, targetStatus == "active"); err != nil {
 			log.Printf("Failed to update role status %s: %v", id, err)
-			return entydad.HTMXError("Failed to update role status")
+			return entydad.HTMXError(err.Error())
 		}
 
 		return entydad.HTMXSuccess("roles-table")

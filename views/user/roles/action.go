@@ -55,7 +55,7 @@ func NewAssignAction(deps *ActionDeps) view.View {
 			roleResp, err := deps.ListRoles(ctx, &rolepb.ListRolesRequest{})
 			if err != nil {
 				log.Printf("Failed to list roles: %v", err)
-				return entydad.HTMXError("Failed to load roles")
+				return entydad.HTMXError(err.Error())
 			}
 
 			// Find workspace_user to get already-assigned roles
@@ -111,7 +111,7 @@ func NewAssignAction(deps *ActionDeps) view.View {
 		wu, err := findWorkspaceUserForAction(ctx, deps, userID)
 		if err != nil {
 			log.Printf("Failed to find workspace user for user %s: %v", userID, err)
-			return entydad.HTMXError("Failed to find workspace membership for this user")
+			return entydad.HTMXError(err.Error())
 		}
 
 		_, err = deps.CreateWorkspaceUserRole(ctx, &workspaceuserrolepb.CreateWorkspaceUserRoleRequest{
@@ -123,7 +123,7 @@ func NewAssignAction(deps *ActionDeps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to assign role to user %s: %v", userID, err)
-			return entydad.HTMXError("Failed to assign role")
+			return entydad.HTMXError(err.Error())
 		}
 
 		return entydad.HTMXSuccess("user-roles-table")
@@ -152,7 +152,7 @@ func NewRemoveAction(deps *ActionDeps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to remove role %s from user %s: %v", wurID, userID, err)
-			return entydad.HTMXError("Failed to remove role")
+			return entydad.HTMXError(err.Error())
 		}
 
 		return entydad.HTMXSuccess("user-roles-table")

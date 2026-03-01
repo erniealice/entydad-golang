@@ -124,7 +124,7 @@ func NewAddAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to create permission: %v", err)
-			return entydad.HTMXError("Failed to create permission")
+			return entydad.HTMXError(err.Error())
 		}
 
 		return entydad.HTMXSuccess("permissions-table")
@@ -182,7 +182,7 @@ func NewEditAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to update permission %s: %v", id, err)
-			return entydad.HTMXError("Failed to update permission")
+			return entydad.HTMXError(err.Error())
 		}
 
 		return entydad.HTMXSuccess("permissions-table")
@@ -206,7 +206,7 @@ func NewDeleteAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to delete permission %s: %v", id, err)
-			return entydad.HTMXError("Failed to delete permission")
+			return entydad.HTMXError(err.Error())
 		}
 
 		return entydad.HTMXSuccess("permissions-table")
@@ -256,7 +256,7 @@ func NewSetStatusAction(deps *Deps) view.View {
 
 		if err := deps.SetPermissionActive(ctx, id, targetStatus == "active"); err != nil {
 			log.Printf("Failed to update permission status %s: %v", id, err)
-			return entydad.HTMXError("Failed to update permission status")
+			return entydad.HTMXError(err.Error())
 		}
 
 		return entydad.HTMXSuccess("permissions-table")

@@ -401,7 +401,7 @@ func NewEditAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to update client %s: %v", id, err)
-			return entydad.HTMXError("Failed to update client")
+			return entydad.HTMXError(err.Error())
 		}
 
 		// Sync tags — multi-select sends comma-separated IDs in a single hidden input
@@ -429,7 +429,7 @@ func NewDeleteAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to delete client %s: %v", id, err)
-			return entydad.HTMXError("Failed to delete client")
+			return entydad.HTMXError(err.Error())
 		}
 
 		return entydad.HTMXSuccess("clients-table")
@@ -485,7 +485,7 @@ func NewSetStatusAction(deps *Deps) view.View {
 
 		if err := deps.SetClientActive(ctx, id, targetStatus == "active"); err != nil {
 			log.Printf("Failed to update client status %s: %v", id, err)
-			return entydad.HTMXError("Failed to update client status")
+			return entydad.HTMXError(err.Error())
 		}
 
 		return entydad.HTMXSuccess("clients-table")

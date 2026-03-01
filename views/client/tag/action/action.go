@@ -115,7 +115,7 @@ func NewAddAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to create client tag: %v", err)
-			return entydad.HTMXError("Failed to create tag")
+			return entydad.HTMXError(err.Error())
 		}
 
 		return entydad.HTMXSuccess("client-tags-table")
@@ -178,7 +178,7 @@ func NewEditAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to update client tag %s: %v", id, err)
-			return entydad.HTMXError("Failed to update tag")
+			return entydad.HTMXError(err.Error())
 		}
 
 		return entydad.HTMXSuccess("client-tags-table")
@@ -202,7 +202,7 @@ func NewDeleteAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to delete client tag %s: %v", id, err)
-			return entydad.HTMXError("Failed to delete tag")
+			return entydad.HTMXError(err.Error())
 		}
 
 		return entydad.HTMXSuccess("client-tags-table")
