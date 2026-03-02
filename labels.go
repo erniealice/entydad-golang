@@ -186,25 +186,52 @@ type UserActionLabels struct {
 
 // UserDetailLabels holds labels for the user detail page.
 type UserDetailLabels struct {
-	BasicInfo UserDetailBasicInfoLabels `json:"basicInfo"`
-	Tabs      UserDetailTabLabels      `json:"tabs"`
+	BasicInfo   UserDetailBasicInfoLabels       `json:"basicInfo"`
+	Tabs        UserDetailTabLabels             `json:"tabs"`
+	Security    UserDetailSecurityLabels        `json:"security"`
+	EmptyStates UserDetailEmptyStateLabels      `json:"emptyStates"`
+}
+
+// UserDetailSecurityLabels holds labels for the security tab.
+type UserDetailSecurityLabels struct {
+	Title           string `json:"title"`
+	LastLogin       string `json:"lastLogin"`
+	MfaStatus       string `json:"mfaStatus"`
+	MfaEnabled      string `json:"mfaEnabled"`
+	MfaDisabled     string `json:"mfaDisabled"`
+	PasswordSection string `json:"passwordSection"`
+	ResetPassword   string `json:"resetPassword"`
+}
+
+// UserDetailEmptyStateLabels holds empty-state labels for user detail tabs.
+type UserDetailEmptyStateLabels struct {
+	AuditTitle string `json:"auditTitle"`
+	AuditDesc  string `json:"auditDesc"`
 }
 
 type UserDetailBasicInfoLabels struct {
-	Title     string `json:"title"`
-	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
-	Email     string `json:"email"`
-	Username  string `json:"username"`
-	Division  string `json:"division"`
-	Status    string `json:"status"`
-	UserType  string `json:"userType"`
-	Mobile    string `json:"mobile"`
+	Title                string `json:"title"`
+	FirstName            string `json:"firstName"`
+	FirstNamePlaceholder string `json:"firstNamePlaceholder"`
+	LastName             string `json:"lastName"`
+	LastNamePlaceholder  string `json:"lastNamePlaceholder"`
+	Email                string `json:"email"`
+	EmailPlaceholder     string `json:"emailPlaceholder"`
+	Username             string `json:"username"`
+	Division             string `json:"division"`
+	Status               string `json:"status"`
+	UserType             string `json:"userType"`
+	Mobile               string `json:"mobile"`
+	MobilePlaceholder    string `json:"mobilePlaceholder"`
+	Active               string `json:"active"`
+	Save                 string `json:"save"`
 }
 
 type UserDetailTabLabels struct {
-	Info  string `json:"info"`
-	Roles string `json:"roles"`
+	Info       string `json:"info"`
+	Roles      string `json:"roles"`
+	Security   string `json:"security"`
+	AuditTrail string `json:"auditTrail"`
 }
 
 // ---------------------------------------------------------------------------
@@ -220,6 +247,7 @@ type LocationLabels struct {
 	Empty   LocationEmptyLabels   `json:"empty"`
 	Form    LocationFormLabels    `json:"form"`
 	Actions LocationActionLabels  `json:"actions"`
+	Detail  LocationDetailLabels  `json:"detail"`
 }
 
 type LocationPageLabels struct {
@@ -264,6 +292,40 @@ type LocationActionLabels struct {
 	Delete     string `json:"delete"`
 	Activate   string `json:"activate"`
 	Deactivate string `json:"deactivate"`
+}
+
+type LocationDetailLabels struct {
+	BasicInfo   LocationDetailBasicInfoLabels `json:"basicInfo"`
+	Tabs        LocationDetailTabLabels       `json:"tabs"`
+	EmptyStates LocationDetailEmptyLabels     `json:"emptyStates"`
+}
+
+type LocationDetailBasicInfoLabels struct {
+	Title                  string `json:"title"`
+	Name                   string `json:"name"`
+	NamePlaceholder        string `json:"namePlaceholder"`
+	Address                string `json:"address"`
+	AddressPlaceholder     string `json:"addressPlaceholder"`
+	Description            string `json:"description"`
+	DescriptionPlaceholder string `json:"descriptionPlaceholder"`
+	Active                 string `json:"active"`
+	Save                   string `json:"save"`
+}
+
+type LocationDetailTabLabels struct {
+	Info       string `json:"info"`
+	Users      string `json:"users"`
+	PriceLists string `json:"priceLists"`
+	AuditTrail string `json:"auditTrail"`
+}
+
+type LocationDetailEmptyLabels struct {
+	UsersTitle      string `json:"usersTitle"`
+	UsersDesc       string `json:"usersDesc"`
+	PriceListsTitle string `json:"priceListsTitle"`
+	PriceListsDesc  string `json:"priceListsDesc"`
+	AuditTitle      string `json:"auditTitle"`
+	AuditDesc       string `json:"auditDesc"`
 }
 
 // ---------------------------------------------------------------------------
@@ -633,6 +695,100 @@ type Login02Labels struct {
 	SignUpLink          string `json:"signUpLink"`
 	SocialDivider       string `json:"socialDivider"`
 	Error               string `json:"error"`
+}
+
+// ---------------------------------------------------------------------------
+// Supplier labels
+// ---------------------------------------------------------------------------
+
+// SupplierLabels holds all translatable strings for the supplier module.
+type SupplierLabels struct {
+	Page    SupplierPageLabels    `json:"page"`
+	Buttons SupplierButtonLabels  `json:"buttons"`
+	Columns SupplierColumnLabels  `json:"columns"`
+	Empty   SupplierEmptyLabels   `json:"empty"`
+	Form    SupplierFormLabels    `json:"form"`
+	Detail  SupplierDetailLabels  `json:"detail"`
+	Actions SupplierActionLabels  `json:"actions"`
+}
+
+type SupplierPageLabels struct {
+	Heading        string `json:"heading"`
+	HeadingActive  string `json:"headingActive"`
+	HeadingBlocked string `json:"headingBlocked"`
+	HeadingOnHold  string `json:"headingOnHold"`
+	Caption        string `json:"caption"`
+	CaptionActive  string `json:"captionActive"`
+	CaptionBlocked string `json:"captionBlocked"`
+	CaptionOnHold  string `json:"captionOnHold"`
+}
+
+type SupplierButtonLabels struct {
+	AddNew string `json:"addNew"`
+}
+
+type SupplierColumnLabels struct {
+	CompanyName  string `json:"companyName"`
+	SupplierType string `json:"supplierType"`
+	InternalID   string `json:"internalId"`
+	Status       string `json:"status"`
+	PaymentTerms string `json:"paymentTerms"`
+	ContactName  string `json:"contactName"`
+	DateCreated  string `json:"dateCreated"`
+}
+
+type SupplierEmptyLabels struct {
+	ActiveTitle     string `json:"activeTitle"`
+	ActiveMessage   string `json:"activeMessage"`
+	BlockedTitle    string `json:"blockedTitle"`
+	BlockedMessage  string `json:"blockedMessage"`
+	OnHoldTitle     string `json:"onHoldTitle"`
+	OnHoldMessage   string `json:"onHoldMessage"`
+}
+
+type SupplierFormLabels struct {
+	CompanyName        string `json:"companyName"`
+	SupplierType       string `json:"supplierType"`
+	TaxID              string `json:"taxId"`
+	RegistrationNumber string `json:"registrationNumber"`
+	StreetAddress      string `json:"streetAddress"`
+	City               string `json:"city"`
+	Province           string `json:"province"`
+	PostalCode         string `json:"postalCode"`
+	Country            string `json:"country"`
+	DefaultCurrency    string `json:"defaultCurrency"`
+	PaymentTerms       string `json:"paymentTerms"`
+	LeadTimeDays       string `json:"leadTimeDays"`
+	CreditLimit        string `json:"creditLimit"`
+	Status             string `json:"status"`
+	Website            string `json:"website"`
+	Notes              string `json:"notes"`
+	FirstName          string `json:"firstName"`
+	LastName           string `json:"lastName"`
+	Email              string `json:"email"`
+	Phone              string `json:"phone"`
+}
+
+type SupplierDetailLabels struct {
+	InfoTab       string                      `json:"infoTab"`
+	CompanyInfo   SupplierDetailSectionLabels `json:"companyInfo"`
+	ContactInfo   SupplierDetailSectionLabels `json:"contactInfo"`
+	FinancialInfo SupplierDetailSectionLabels `json:"financialInfo"`
+	AddressInfo   SupplierDetailSectionLabels `json:"addressInfo"`
+}
+
+// SupplierDetailSectionLabels holds a title for a detail page section.
+type SupplierDetailSectionLabels struct {
+	Title string `json:"title"`
+}
+
+type SupplierActionLabels struct {
+	View       string `json:"view"`
+	Edit       string `json:"edit"`
+	Delete     string `json:"delete"`
+	Activate   string `json:"activate"`
+	Block      string `json:"block"`
+	SetOnHold  string `json:"setOnHold"`
 }
 
 // ---------------------------------------------------------------------------

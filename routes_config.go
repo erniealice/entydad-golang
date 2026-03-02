@@ -92,8 +92,9 @@ type UserRoutes struct {
 	BulkDeleteURL    string `json:"bulk_delete_url"`
 	SetStatusURL     string `json:"set_status_url"`
 	BulkSetStatusURL string `json:"bulk_set_status_url"`
-	DetailURL        string `json:"detail_url"`
-	TabActionURL     string `json:"tab_action_url"`
+	DetailURL         string `json:"detail_url"`
+	TabActionURL      string `json:"tab_action_url"`
+	ResetPasswordURL  string `json:"reset_password_url"`
 
 	// Legacy /manage/ user-roles routes (kept for backward compatibility)
 	RolesURL       string `json:"roles_url"`
@@ -121,8 +122,9 @@ func DefaultUserRoutes() UserRoutes {
 		BulkDeleteURL:    UserBulkDeleteURL,
 		SetStatusURL:     UserSetStatusURL,
 		BulkSetStatusURL: UserBulkSetStatusURL,
-		DetailURL:        UserDetailURL,
-		TabActionURL:     UserTabActionURL,
+		DetailURL:         UserDetailURL,
+		TabActionURL:      UserTabActionURL,
+		ResetPasswordURL:  UserResetPasswordURL,
 
 		// Legacy /manage/ routes
 		RolesURL:       UserRolesURL,
@@ -288,6 +290,8 @@ type LocationRoutes struct {
 	BulkDeleteURL    string `json:"bulk_delete_url"`
 	SetStatusURL     string `json:"set_status_url"`
 	BulkSetStatusURL string `json:"bulk_set_status_url"`
+	TabActionURL     string `json:"tab_action_url"`
+	EditDetailURL    string `json:"edit_detail_url"`
 }
 
 // DefaultLocationRoutes returns a LocationRoutes populated from the
@@ -303,21 +307,25 @@ func DefaultLocationRoutes() LocationRoutes {
 		BulkDeleteURL:    LocationBulkDeleteURL,
 		SetStatusURL:     LocationSetStatusURL,
 		BulkSetStatusURL: LocationBulkSetStatusURL,
+		TabActionURL:     LocationTabActionURL,
+		EditDetailURL:    LocationEditDetailURL,
 	}
 }
 
 // RouteMap returns a map of dot-notation keys to route path values.
 func (r LocationRoutes) RouteMap() map[string]string {
 	return map[string]string{
-		"location.list":           r.ListURL,
-		"location.detail":         r.DetailURL,
-		"location.table":          r.TableURL,
-		"location.add":            r.AddURL,
-		"location.edit":           r.EditURL,
-		"location.delete":         r.DeleteURL,
-		"location.bulk_delete":    r.BulkDeleteURL,
-		"location.set_status":     r.SetStatusURL,
+		"location.list":            r.ListURL,
+		"location.detail":          r.DetailURL,
+		"location.table":           r.TableURL,
+		"location.add":             r.AddURL,
+		"location.edit":            r.EditURL,
+		"location.delete":          r.DeleteURL,
+		"location.bulk_delete":     r.BulkDeleteURL,
+		"location.set_status":      r.SetStatusURL,
 		"location.bulk_set_status": r.BulkSetStatusURL,
+		"location.tab_action":      r.TabActionURL,
+		"location.edit_detail":     r.EditDetailURL,
 	}
 }
 
@@ -408,6 +416,57 @@ func (r WorkspaceRoutes) RouteMap() map[string]string {
 		"workspace.bulk_delete":    r.BulkDeleteURL,
 		"workspace.set_status":     r.SetStatusURL,
 		"workspace.bulk_set_status": r.BulkSetStatusURL,
+	}
+}
+
+// ---------------------------------------------------------------------------
+// SupplierRoutes
+// ---------------------------------------------------------------------------
+
+// SupplierRoutes holds all route paths for supplier management.
+type SupplierRoutes struct {
+	ListURL          string `json:"list_url"`
+	TableURL         string `json:"table_url"`
+	AddURL           string `json:"add_url"`
+	EditURL          string `json:"edit_url"`
+	DeleteURL        string `json:"delete_url"`
+	BulkDeleteURL    string `json:"bulk_delete_url"`
+	DetailURL        string `json:"detail_url"`
+	TabActionURL     string `json:"tab_action_url"`
+	SetStatusURL     string `json:"set_status_url"`
+	BulkSetStatusURL string `json:"bulk_set_status_url"`
+}
+
+// DefaultSupplierRoutes returns a SupplierRoutes populated from the
+// package-level route constants.
+func DefaultSupplierRoutes() SupplierRoutes {
+	return SupplierRoutes{
+		ListURL:          SupplierListURL,
+		TableURL:         SupplierTableURL,
+		AddURL:           SupplierAddURL,
+		EditURL:          SupplierEditURL,
+		DeleteURL:        SupplierDeleteURL,
+		BulkDeleteURL:    SupplierBulkDeleteURL,
+		DetailURL:        SupplierDetailURL,
+		TabActionURL:     SupplierTabActionURL,
+		SetStatusURL:     SupplierSetStatusURL,
+		BulkSetStatusURL: SupplierBulkSetStatusURL,
+	}
+}
+
+// RouteMap returns a map of dot-notation keys to route path values.
+func (r SupplierRoutes) RouteMap() map[string]string {
+	return map[string]string{
+		"supplier.list":            r.ListURL,
+		"supplier.table":           r.TableURL,
+		"supplier.add":             r.AddURL,
+		"supplier.edit":            r.EditURL,
+		"supplier.delete":          r.DeleteURL,
+		"supplier.bulk_delete":     r.BulkDeleteURL,
+		"supplier.detail":          r.DetailURL,
+		"supplier.tab_action":      r.TabActionURL,
+		"supplier.set_status":      r.SetStatusURL,
+		"supplier.bulk_set_status": r.BulkSetStatusURL,
 	}
 }
 

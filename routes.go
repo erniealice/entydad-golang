@@ -34,9 +34,12 @@ const (
 	LocationBulkDeleteURL    = "/action/locations/bulk-delete"
 	LocationSetStatusURL     = "/action/locations/set-status"
 	LocationBulkSetStatusURL = "/action/locations/bulk-set-status"
+	LocationTabActionURL     = "/action/locations/{id}/tab/{tab}"
+	LocationEditDetailURL    = "/action/locations/edit-detail/{id}"
 
-	UserDetailURL      = "/app/users/detail/{id}"
-	UserTabActionURL   = "/action/users/{id}/tab/{tab}"
+	UserDetailURL         = "/app/users/detail/{id}"
+	UserTabActionURL      = "/action/users/{id}/tab/{tab}"
+	UserResetPasswordURL  = "/action/users/reset-password/{id}"
 
 	RoleDetailURL        = "/app/roles/detail/{id}"
 	RoleTabActionURL     = "/action/roles/{id}/tab/{tab}"
@@ -93,6 +96,18 @@ const (
 	WorkspaceBulkDeleteURL    = "/action/workspaces/bulk-delete"
 	WorkspaceSetStatusURL     = "/action/workspaces/set-status"
 	WorkspaceBulkSetStatusURL = "/action/workspaces/bulk-set-status"
+
+	// Supplier routes
+	SupplierListURL          = "/app/suppliers/list/{status}"
+	SupplierTableURL         = "/action/suppliers/table/{status}"
+	SupplierAddURL           = "/action/suppliers/add"
+	SupplierEditURL          = "/action/suppliers/edit/{id}"
+	SupplierDeleteURL        = "/action/suppliers/delete"
+	SupplierBulkDeleteURL    = "/action/suppliers/bulk-delete"
+	SupplierDetailURL        = "/app/suppliers/detail/{id}"
+	SupplierTabActionURL     = "/action/suppliers/{id}/tab/{tab}"
+	SupplierSetStatusURL     = "/action/suppliers/set-status"
+	SupplierBulkSetStatusURL = "/action/suppliers/bulk-set-status"
 
 	// Client Tag (Category) routes
 	ClientTagListURL       = "/app/clients/settings/tags/list"

@@ -301,6 +301,59 @@ func NewSetStatusAction(deps *Deps) view.View {
 	})
 }
 
+// NewResetPasswordAction creates the password reset action (POST only).
+// Expects path param {id} and form field "password".
+// Reads the existing user first so all required fields are present for the update.
+func NewResetPasswordAction(deps *Deps) view.View {
+	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		id := viewCtx.Request.PathValue("id")
+		if id == "" {
+			return entydad.HTMXError("User ID is required")
+		}
+
+		if err := viewCtx.Request.ParseForm(); err != nil {
+			return entydad.HTMXError("Invalid form data")
+		}
+
+		password := viewCtx.Request.FormValue("password")
+		if password == "" {
+			return entydad.HTMXError("Password is required")
+		}
+
+		// Read existing user to preserve all required fields
+		resp, err := deps.ReadUser(ctx, &userpb.ReadUserRequest{
+			Data: &userpb.User{Id: id},
+		})
+		if err != nil {
+			log.Printf("Failed to read user %s for password reset: %v", id, err)
+			return entydad.HTMXError("User not found")
+		}
+		data := resp.GetData()
+		if len(data) == 0 {
+			return entydad.HTMXError("User not found")
+		}
+		user := data[0]
+
+		pwHash, hashErr := hashPassword(deps, password)
+		if hashErr != nil {
+			log.Printf("Failed to hash password: %v", hashErr)
+			return entydad.HTMXError("Failed to process password")
+		}
+
+		user.PasswordHash = pwHash
+
+		_, updateErr := deps.UpdateUser(ctx, &userpb.UpdateUserRequest{
+			Data: user,
+		})
+		if updateErr != nil {
+			log.Printf("Failed to reset password for user %s: %v", id, updateErr)
+			return entydad.HTMXError(updateErr.Error())
+		}
+
+		return entydad.HTMXSuccess("")
+	})
+}
+
 // NewBulkSetStatusAction creates the user bulk activate/deactivate action (POST only).
 // Selected IDs come as multiple "id" form fields; target status from "target_status" field.
 func NewBulkSetStatusAction(deps *Deps) view.View {

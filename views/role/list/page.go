@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strconv"
 
 	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/pyeza-golang/route"
@@ -18,6 +19,7 @@ import (
 // Deps holds view dependencies.
 type Deps struct {
 	GetListPageData func(ctx context.Context, req *rolepb.GetRoleListPageDataRequest) (*rolepb.GetRoleListPageDataResponse, error)
+	GetInUseIDs     func(ctx context.Context, ids []string) (map[string]bool, error)
 	RefreshURL      string
 	Routes          entydad.RoleRoutes
 	Labels          entydad.RoleLabels
@@ -82,9 +84,19 @@ func buildTableConfig(ctx context.Context, deps *Deps) (*types.TableConfig, erro
 		return nil, fmt.Errorf("failed to load roles: %w", err)
 	}
 
+	// Check which items are in use
+	var inUseIDs map[string]bool
+	if deps.GetInUseIDs != nil {
+		var itemIDs []string
+		for _, item := range resp.GetRoleList() {
+			itemIDs = append(itemIDs, item.GetId())
+		}
+		inUseIDs, _ = deps.GetInUseIDs(ctx, itemIDs)
+	}
+
 	l := deps.Labels
 	columns := roleColumns(l)
-	rows := buildTableRows(resp.GetRoleList(), l, deps.Routes)
+	rows := buildTableRows(resp.GetRoleList(), l, deps.Routes, inUseIDs)
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
@@ -132,7 +144,7 @@ func roleColumns(l entydad.RoleLabels) []types.TableColumn {
 	}
 }
 
-func buildTableRows(roles []*rolepb.Role, l entydad.RoleLabels, routes entydad.RoleRoutes) []types.TableRow {
+func buildTableRows(roles []*rolepb.Role, l entydad.RoleLabels, routes entydad.RoleRoutes, inUseIDs map[string]bool) []types.TableRow {
 	rows := []types.TableRow{}
 	for _, r := range roles {
 		active := r.GetActive()
@@ -164,10 +176,19 @@ func buildTableRows(roles []*rolepb.Role, l entydad.RoleLabels, routes entydad.R
 				ConfirmMessage: fmt.Sprintf("Are you sure you want to activate %s?", name),
 			})
 		}
-		actions = append(actions, types.TableAction{
-			Type: "delete", Label: l.Actions.Delete, Action: "delete",
-			URL: routes.DeleteURL, ItemName: name,
-		})
+		isInUse := inUseIDs[id]
+		deleteAction := types.TableAction{
+			Type:     "delete",
+			Label:    l.Actions.Delete,
+			Action:   "delete",
+			URL:      routes.DeleteURL,
+			ItemName: name,
+		}
+		if isInUse {
+			deleteAction.Disabled = true
+			deleteAction.DisabledTooltip = "Cannot delete: role is assigned to users"
+		}
+		actions = append(actions, deleteAction)
 
 		permCount := len(r.GetRolePermissions())
 		permCountStr := fmt.Sprintf("%d", permCount)
@@ -187,6 +208,7 @@ func buildTableRows(roles []*rolepb.Role, l entydad.RoleLabels, routes entydad.R
 				"color":       color,
 				"permissions": permCountStr,
 				"status":      recordStatus,
+				"deletable":   strconv.FormatBool(!isInUse),
 			},
 			Actions: actions,
 		})
@@ -228,13 +250,14 @@ func buildBulkActions(l entydad.RoleLabels, common pyeza.CommonLabels, routes en
 			ExtraParamsJSON: `{"target_status":"inactive"}`,
 		},
 		{
-			Key:            "delete",
-			Label:          common.Bulk.Delete,
-			Icon:           "icon-trash-2",
-			Variant:        "danger",
-			Endpoint:       routes.BulkDeleteURL,
-			ConfirmTitle:   common.Bulk.Delete,
-			ConfirmMessage: "Are you sure you want to delete {{count}} role(s)? This action cannot be undone.",
+			Key:              "delete",
+			Label:            common.Bulk.Delete,
+			Icon:             "icon-trash-2",
+			Variant:          "danger",
+			Endpoint:         routes.BulkDeleteURL,
+			ConfirmTitle:     common.Bulk.Delete,
+			ConfirmMessage:   "Are you sure you want to delete {{count}} role(s)? This action cannot be undone.",
+			RequiresDataAttr: "deletable",
 		},
 	}
 }

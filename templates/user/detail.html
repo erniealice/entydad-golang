@@ -17,6 +17,10 @@
             {{template "user-tab-info" .}}
         {{else if eq .ActiveTab "roles"}}
             {{template "user-tab-roles" .}}
+        {{else if eq .ActiveTab "security"}}
+            {{template "user-tab-security" .}}
+        {{else if eq .ActiveTab "audit"}}
+            {{template "user-tab-audit" .}}
         {{end}}
     </div>
 </div>
@@ -30,33 +34,85 @@
 {{define "user-tab-info"}}
 <div class="tab-scroll">
     <h4 class="detail-section-title">{{.Labels.Detail.BasicInfo.Title}}</h4>
-    <div class="detail-info-grid">
-        <div class="detail-info-item">
-            <span class="detail-info-label">{{.Labels.Detail.BasicInfo.FirstName}}</span>
-            <span class="detail-info-value">{{.UserFirstName}}</span>
+    <div id="info-result" style="display:none;" class="form-result"></div>
+    <form id="info-edit-form"
+          hx-post="{{.EditURL}}"
+          hx-swap="none"
+          hx-on::after-request="handleInfoUpdate(event)">
+
+        <div class="form-row">
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "first_name"
+                "Label" .Labels.Detail.BasicInfo.FirstName
+                "Value" .UserFirstName
+                "Required" true
+                "Placeholder" .Labels.Detail.BasicInfo.FirstNamePlaceholder
+            )}}
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "last_name"
+                "Label" .Labels.Detail.BasicInfo.LastName
+                "Value" .UserLastName
+                "Required" true
+                "Placeholder" .Labels.Detail.BasicInfo.LastNamePlaceholder
+            )}}
         </div>
-        <div class="detail-info-item">
-            <span class="detail-info-label">{{.Labels.Detail.BasicInfo.LastName}}</span>
-            <span class="detail-info-value">{{.UserLastName}}</span>
+
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "email"
+                "Name" "email_address"
+                "Label" .Labels.Detail.BasicInfo.Email
+                "Value" .UserEmail
+                "Required" true
+                "Placeholder" .Labels.Detail.BasicInfo.EmailPlaceholder
+            )}}
         </div>
-        <div class="detail-info-item">
-            <span class="detail-info-label">{{.Labels.Detail.BasicInfo.Email}}</span>
-            <span class="detail-info-value">{{.UserEmail}}</span>
+
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "tel"
+                "Name" "mobile_number"
+                "Label" .Labels.Detail.BasicInfo.Mobile
+                "Value" .UserMobile
+                "Placeholder" .Labels.Detail.BasicInfo.MobilePlaceholder
+            )}}
         </div>
-        <div class="detail-info-item">
-            <span class="detail-info-label">{{.Labels.Detail.BasicInfo.Mobile}}</span>
-            <span class="detail-info-value">{{.UserMobile}}</span>
+
+        <div class="form-row single">
+            {{template "toggle" (dict
+                "Name" "active"
+                "Label" .Labels.Detail.BasicInfo.Active
+                "Checked" (eq .UserStatus "active")
+                "Value" "true"
+            )}}
         </div>
-        <div class="detail-info-item">
-            <span class="detail-info-label">{{.Labels.Detail.BasicInfo.Status}}</span>
-            <span>
-                <span class="badge badge--{{.StatusVariant}}">
-                    {{.UserStatus}}
-                </span>
-            </span>
+
+        <div style="margin-top: var(--space-4);">
+            <button type="submit" class="btn btn--primary btn--sm">
+                {{template "icon-save"}}
+                <span>{{.Labels.Detail.BasicInfo.Save}}</span>
+            </button>
         </div>
-    </div>
+    </form>
 </div>
+<script>
+function handleInfoUpdate(evt) {
+    var el = document.getElementById('info-result');
+    if (!el) return;
+    el.style.display = 'block';
+    if (evt.detail.successful) {
+        el.className = 'form-result form-result--success';
+        el.textContent = 'User updated successfully';
+    } else {
+        var msg = evt.detail.xhr.getResponseHeader('HX-Error-Message') || 'Failed to update user';
+        el.className = 'form-result form-result--error';
+        el.textContent = msg;
+    }
+    setTimeout(function() { el.style.display = 'none'; }, 5000);
+}
+</script>
 {{end}}
 
 {{/* =============================================
@@ -72,5 +128,150 @@
             <p class="coming-soon-text">Assign roles to this user to control their access.</p>
         </div>
     {{end}}
+</div>
+{{end}}
+
+{{/* =============================================
+     TAB PARTIAL: Security
+     ============================================= */}}
+{{define "user-tab-security"}}
+<div class="tab-scroll">
+    <h4 class="detail-section-title">{{.Labels.Detail.Security.Title}}</h4>
+    <div class="detail-info-grid">
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Detail.Security.LastLogin}}</span>
+            <span class="detail-info-value">—</span>
+        </div>
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Detail.Security.MfaStatus}}</span>
+            <span class="detail-info-value">{{.Labels.Detail.Security.MfaDisabled}}</span>
+        </div>
+    </div>
+
+    <h4 class="detail-section-title" style="margin-top: var(--space-6);">{{.Labels.Detail.Security.PasswordSection}}</h4>
+    <form id="reset-password-form"
+          hx-post="{{.ResetPasswordURL}}"
+          hx-swap="none"
+          hx-on::after-request="handlePasswordReset(event)">
+        <div id="password-result" style="display:none;" class="form-result"></div>
+        <div class="form-row single" style="max-width: 400px;">
+            <div class="form-group">
+                <div class="password-field-wrapper">
+                    <div class="input-icon-wrapper icon-both">
+                        <span class="input-icon">{{template "icon-lock"}}</span>
+                        <input type="password" id="security-password" name="password" class="form-input" placeholder="Enter new password" autocomplete="new-password" required>
+                        <button type="button" class="password-toggle-btn" data-target="security-password" aria-label="Toggle password visibility">
+                            <span class="eye-icon">{{template "icon-eye"}}</span>
+                            <span class="eye-off-icon" style="display: none;">{{template "icon-eye-off"}}</span>
+                        </button>
+                    </div>
+                    <div class="password-actions-row">
+                        <button type="button" class="btn-generate-password" id="securityGenerateBtn">
+                            <span class="btn-generate-icon">{{template "icon-dice"}}</span>
+                            Generate Password
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div style="margin-top: var(--space-3);">
+            <button type="submit" class="btn btn--primary btn--sm">
+                {{template "icon-save"}}
+                <span>{{.Labels.Detail.Security.ResetPassword}}</span>
+            </button>
+        </div>
+    </form>
+</div>
+<script>
+(function() {
+    // Password toggle
+    var toggleBtn = document.querySelector('#reset-password-form .password-toggle-btn');
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            var input = document.getElementById(this.dataset.target);
+            var eyeIcon = this.querySelector('.eye-icon');
+            var eyeOffIcon = this.querySelector('.eye-off-icon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                eyeIcon.style.display = 'none';
+                eyeOffIcon.style.display = 'block';
+            } else {
+                input.type = 'password';
+                eyeIcon.style.display = 'block';
+                eyeOffIcon.style.display = 'none';
+            }
+        });
+    }
+
+    // Generate password
+    var genBtn = document.getElementById('securityGenerateBtn');
+    var pwInput = document.getElementById('security-password');
+    if (genBtn && pwInput) {
+        genBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            var lower = 'abcdefghijklmnopqrstuvwxyz';
+            var upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            var nums = '0123456789';
+            var symbols = '!@#$%^&*_+-=';
+            var all = lower + upper + nums + symbols;
+            var pw = '';
+            pw += lower.charAt(Math.floor(Math.random() * lower.length));
+            pw += upper.charAt(Math.floor(Math.random() * upper.length));
+            pw += nums.charAt(Math.floor(Math.random() * nums.length));
+            pw += symbols.charAt(Math.floor(Math.random() * symbols.length));
+            for (var i = 4; i < 16; i++) {
+                pw += all.charAt(Math.floor(Math.random() * all.length));
+            }
+            pw = pw.split('').sort(function() { return Math.random() - 0.5; }).join('');
+            pwInput.value = pw;
+            pwInput.type = 'text';
+            var tBtn = document.querySelector('#reset-password-form .password-toggle-btn');
+            if (tBtn) {
+                var eye = tBtn.querySelector('.eye-icon');
+                var eyeOff = tBtn.querySelector('.eye-off-icon');
+                if (eye) eye.style.display = 'none';
+                if (eyeOff) eyeOff.style.display = 'block';
+            }
+            var dice = this.querySelector('.btn-generate-icon');
+            if (dice) {
+                dice.classList.remove('rolling');
+                void dice.offsetWidth;
+                dice.classList.add('rolling');
+                dice.addEventListener('animationend', function() {
+                    dice.classList.remove('rolling');
+                }, { once: true });
+            }
+        });
+    }
+})();
+
+function handlePasswordReset(evt) {
+    var el = document.getElementById('password-result');
+    if (!el) return;
+    el.style.display = 'block';
+    if (evt.detail.successful) {
+        el.className = 'form-result form-result--success';
+        el.textContent = 'Password updated successfully';
+        document.getElementById('security-password').value = '';
+    } else {
+        var msg = evt.detail.xhr.getResponseHeader('HX-Error-Message') || 'Failed to update password';
+        el.className = 'form-result form-result--error';
+        el.textContent = msg;
+    }
+    setTimeout(function() { el.style.display = 'none'; }, 5000);
+}
+</script>
+{{end}}
+
+{{/* =============================================
+     TAB PARTIAL: Audit Trail
+     ============================================= */}}
+{{define "user-tab-audit"}}
+<div class="tab-scroll">
+    <div class="coming-soon-panel">
+        <div class="coming-soon-title">{{.Labels.Detail.EmptyStates.AuditTitle}}</div>
+        <p class="coming-soon-text">{{.Labels.Detail.EmptyStates.AuditDesc}}</p>
+    </div>
 </div>
 {{end}}

@@ -181,7 +181,6 @@ func buildTableRows(users []*userpb.User, status string, l entydad.UserLabels, u
 		actions := []types.TableAction{
 			{Type: "view", Label: l.Actions.View, Action: "view", Href: route.ResolveURL(routes.DetailURL, "id", id)},
 			{Type: "edit", Label: l.Actions.Edit, Action: "edit", URL: route.ResolveURL(routes.EditURL, "id", id), DrawerTitle: l.Actions.Edit},
-			{Type: "manage", Label: l.Actions.ManageRoles, Action: "view", Href: route.ResolveURL(routes.DetailRolesURL, "id", id)},
 		}
 		if active {
 			actions = append(actions, types.TableAction{
@@ -198,11 +197,6 @@ func buildTableRows(users []*userpb.User, status string, l entydad.UserLabels, u
 				ConfirmMessage: fmt.Sprintf("Are you sure you want to activate %s?", name),
 			})
 		}
-		actions = append(actions, types.TableAction{
-			Type: "delete", Label: l.Actions.Delete, Action: "delete",
-			URL: routes.DeleteURL, ItemName: name,
-		})
-
 		rows = append(rows, types.TableRow{
 			ID: id,
 			Cells: []types.TableCell{
@@ -304,16 +298,6 @@ func buildBulkActions(l entydad.UserLabels, common pyeza.CommonLabels, status st
 			ExtraParamsJSON: `{"target_status":"active"}`,
 		})
 	}
-
-	actions = append(actions, types.BulkAction{
-		Key:            "delete",
-		Label:          common.Bulk.Delete,
-		Icon:           "icon-trash-2",
-		Variant:        "danger",
-		Endpoint:       routes.BulkDeleteURL,
-		ConfirmTitle:   common.Bulk.Delete,
-		ConfirmMessage: "Are you sure you want to delete {{count}} user(s)? This action cannot be undone.",
-	})
 
 	return actions
 }

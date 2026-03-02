@@ -1,0 +1,174 @@
+{{/* Full page -- for direct access / non-HTMX */}}
+{{define "supplier-detail"}}
+{{template "app-shell" .}}
+{{end}}
+
+{{/* Content-only partial -- for HTMX navigation */}}
+{{define "supplier-detail-content"}}
+<div class="page-content supplier-detail-layout" data-page-css="/assets/css/entydad/entydad-supplier-detail.css?v={{.CacheVersion}}">
+    {{/* --- Tabs --- */}}
+    <div class="detail-tabs">
+        {{template "tabs" (dict "Items" .TabItems "ActiveTab" .ActiveTab "Variant" "default" "ID" "supplier-tabs")}}
+    </div>
+
+    {{/* --- Tab Body --- */}}
+    <div id="tabContent" class="detail-body">
+        {{if eq .ActiveTab "info"}}
+        {{template "supplier-tab-info" .}}
+        {{end}}
+    </div>
+</div>
+{{end}}
+
+{{/* Supplier Information Tab */}}
+{{define "supplier-tab-info"}}
+<div class="tab-scroll">
+    {{/* --- Company Info Section --- */}}
+    <h4 class="detail-section-title">{{.Labels.Detail.CompanyInfo.Title}}</h4>
+    <div class="detail-info-grid">
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Form.CompanyName}}</span>
+            <span class="detail-info-value">{{if .CompanyName}}{{.CompanyName}}{{else}}&mdash;{{end}}</span>
+        </div>
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Form.SupplierType}}</span>
+            <span class="detail-info-value">{{if .SupplierType}}{{.SupplierType}}{{else}}&mdash;{{end}}</span>
+        </div>
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Columns.InternalID}}</span>
+            <span class="detail-info-value">{{if .InternalID}}{{.InternalID}}{{else}}&mdash;{{end}}</span>
+        </div>
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Columns.Status}}</span>
+            <span>
+                <span class="badge badge--{{.StatusVariant}}">
+                    {{.Status}}
+                </span>
+            </span>
+        </div>
+    </div>
+
+    {{/* --- Contact Info Section --- */}}
+    {{if .HasContact}}
+    <h4 class="detail-section-title" style="margin-top: 2rem;">{{.Labels.Detail.ContactInfo.Title}}</h4>
+    <div class="detail-info-grid">
+        {{if .ContactName}}
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Form.FirstName}} / {{.Labels.Form.LastName}}</span>
+            <span class="detail-info-value">{{.ContactName}}</span>
+        </div>
+        {{end}}
+        {{if .ContactEmail}}
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Form.Email}}</span>
+            <span class="detail-info-value">{{.ContactEmail}}</span>
+        </div>
+        {{end}}
+        {{if .ContactPhone}}
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Form.Phone}}</span>
+            <span class="detail-info-value">{{.ContactPhone}}</span>
+        </div>
+        {{end}}
+    </div>
+    {{end}}
+
+    {{/* --- Financial Info Section --- */}}
+    {{if .HasFinancial}}
+    <h4 class="detail-section-title" style="margin-top: 2rem;">{{.Labels.Detail.FinancialInfo.Title}}</h4>
+    <div class="detail-info-grid">
+        {{if .PaymentTerms}}
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Form.PaymentTerms}}</span>
+            <span class="detail-info-value">{{.PaymentTerms}}</span>
+        </div>
+        {{end}}
+        {{if .CreditLimit}}
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Form.CreditLimit}}</span>
+            <span class="detail-info-value">{{.CreditLimit}}</span>
+        </div>
+        {{end}}
+        {{if .DefaultCurrency}}
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Form.DefaultCurrency}}</span>
+            <span class="detail-info-value">{{.DefaultCurrency}}</span>
+        </div>
+        {{end}}
+        {{if .LeadTimeDays}}
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Form.LeadTimeDays}}</span>
+            <span class="detail-info-value">{{.LeadTimeDays}} days</span>
+        </div>
+        {{end}}
+        {{if .TaxID}}
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Form.TaxID}}</span>
+            <span class="detail-info-value">{{.TaxID}}</span>
+        </div>
+        {{end}}
+        {{if .RegistrationNumber}}
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Form.RegistrationNumber}}</span>
+            <span class="detail-info-value">{{.RegistrationNumber}}</span>
+        </div>
+        {{end}}
+    </div>
+    {{end}}
+
+    {{/* --- Address Info Section --- */}}
+    {{if .HasAddress}}
+    <h4 class="detail-section-title" style="margin-top: 2rem;">{{.Labels.Detail.AddressInfo.Title}}</h4>
+    <div class="detail-info-grid">
+        {{if .StreetAddress}}
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Form.StreetAddress}}</span>
+            <span class="detail-info-value">{{.StreetAddress}}</span>
+        </div>
+        {{end}}
+        {{if .City}}
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Form.City}}</span>
+            <span class="detail-info-value">{{.City}}</span>
+        </div>
+        {{end}}
+        {{if .Province}}
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Form.Province}}</span>
+            <span class="detail-info-value">{{.Province}}</span>
+        </div>
+        {{end}}
+        {{if .PostalCode}}
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Form.PostalCode}}</span>
+            <span class="detail-info-value">{{.PostalCode}}</span>
+        </div>
+        {{end}}
+        {{if .Country}}
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Form.Country}}</span>
+            <span class="detail-info-value">{{.Country}}</span>
+        </div>
+        {{end}}
+    </div>
+    {{end}}
+
+    {{/* --- Website --- */}}
+    {{if .Website}}
+    <h4 class="detail-section-title" style="margin-top: 2rem;">Website</h4>
+    <div class="detail-info-grid">
+        <div class="detail-info-item">
+            <span class="detail-info-value"><a href="{{.Website}}" target="_blank" rel="noopener">{{.Website}}</a></span>
+        </div>
+    </div>
+    {{end}}
+
+    {{/* --- Notes Section --- */}}
+    {{if .HasNotes}}
+    <h4 class="detail-section-title" style="margin-top: 2rem;">{{.Labels.Form.Notes}}</h4>
+    <div class="supplier-notes-content">
+        {{.Notes}}
+    </div>
+    {{end}}
+</div>
+{{end}}

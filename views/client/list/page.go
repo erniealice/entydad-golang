@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strconv"
 
 	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/pyeza-golang/route"
@@ -19,6 +20,7 @@ import (
 type Deps struct {
 	Routes          entydad.ClientRoutes
 	GetListPageData func(ctx context.Context, req *clientpb.GetClientListPageDataRequest) (*clientpb.GetClientListPageDataResponse, error)
+	GetInUseIDs     func(ctx context.Context, ids []string) (map[string]bool, error)
 	Labels          entydad.ClientLabels
 	CommonLabels    pyeza.CommonLabels
 	TableLabels     types.TableLabels
@@ -91,9 +93,19 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 		return nil, fmt.Errorf("failed to load clients: %w", err)
 	}
 
+	// Check which items are in use
+	var inUseIDs map[string]bool
+	if deps.GetInUseIDs != nil {
+		var itemIDs []string
+		for _, item := range resp.GetClientList() {
+			itemIDs = append(itemIDs, item.GetId())
+		}
+		inUseIDs, _ = deps.GetInUseIDs(ctx, itemIDs)
+	}
+
 	l := deps.Labels
 	columns := clientColumns(l)
-	rows := buildTableRows(resp.GetClientList(), status, l, deps.Routes)
+	rows := buildTableRows(resp.GetClientList(), status, l, deps.Routes, inUseIDs)
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
@@ -142,7 +154,7 @@ func clientColumns(l entydad.ClientLabels) []types.TableColumn {
 	}
 }
 
-func buildTableRows(clients []*clientpb.Client, status string, l entydad.ClientLabels, routes entydad.ClientRoutes) []types.TableRow {
+func buildTableRows(clients []*clientpb.Client, status string, l entydad.ClientLabels, routes entydad.ClientRoutes, inUseIDs map[string]bool) []types.TableRow {
 	rows := []types.TableRow{}
 	for _, c := range clients {
 		active := c.GetActive()
@@ -159,6 +171,7 @@ func buildTableRows(clients []*clientpb.Client, status string, l entydad.ClientL
 		name := u.GetFirstName() + " " + u.GetLastName()
 		email := u.GetEmailAddress()
 		phone := u.GetMobileNumber()
+		isInUse := inUseIDs[id]
 
 		rows = append(rows, types.TableRow{
 			ID: id,
@@ -169,11 +182,12 @@ func buildTableRows(clients []*clientpb.Client, status string, l entydad.ClientL
 				{Type: "badge", Value: recordStatus, Variant: statusVariant(recordStatus)},
 			},
 			DataAttrs: map[string]string{
-				"name":   name,
-				"email":  email,
-				"status": recordStatus,
+				"name":      name,
+				"email":     email,
+				"status":    recordStatus,
+				"deletable": strconv.FormatBool(!isInUse),
 			},
-			Actions: buildRowActions(id, name, active, l, routes),
+			Actions: buildRowActions(id, name, active, isInUse, l, routes),
 		})
 	}
 	return rows
@@ -242,7 +256,7 @@ func statusVariant(status string) string {
 	}
 }
 
-func buildRowActions(id, name string, active bool, l entydad.ClientLabels, routes entydad.ClientRoutes) []types.TableAction {
+func buildRowActions(id, name string, active, isInUse bool, l entydad.ClientLabels, routes entydad.ClientRoutes) []types.TableAction {
 	actions := []types.TableAction{
 		{Type: "view", Label: l.Detail.Actions.ViewClient, Action: "view", Href: route.ResolveURL(routes.DetailURL, "id", id)},
 		{Type: "edit", Label: l.Detail.Actions.EditClient, Action: "edit", URL: route.ResolveURL(routes.EditURL, "id", id), DrawerTitle: l.Detail.Actions.EditClient},
@@ -262,9 +276,18 @@ func buildRowActions(id, name string, active bool, l entydad.ClientLabels, route
 			ConfirmMessage: fmt.Sprintf("Are you sure you want to activate %s?", name),
 		})
 	}
-	actions = append(actions, types.TableAction{
-		Type: "delete", Label: l.Detail.Actions.DeleteClient, Action: "delete", URL: routes.DeleteURL, ItemName: name,
-	})
+	deleteAction := types.TableAction{
+		Type:     "delete",
+		Label:    l.Detail.Actions.DeleteClient,
+		Action:   "delete",
+		URL:      routes.DeleteURL,
+		ItemName: name,
+	}
+	if isInUse {
+		deleteAction.Disabled = true
+		deleteAction.DisabledTooltip = "Cannot delete: customer has sales records"
+	}
+	actions = append(actions, deleteAction)
 	return actions
 }
 
@@ -297,13 +320,14 @@ func buildBulkActions(l entydad.ClientLabels, cl pyeza.CommonLabels, status stri
 	}
 
 	actions = append(actions, types.BulkAction{
-		Key:            "delete",
-		Label:          cl.Bulk.Delete,
-		Icon:           "icon-trash-2",
-		Variant:        "danger",
-		Endpoint:       routes.BulkDeleteURL,
-		ConfirmTitle:   cl.Bulk.Delete,
-		ConfirmMessage: "Are you sure you want to delete {{count}} customer(s)? This action cannot be undone.",
+		Key:              "delete",
+		Label:            cl.Bulk.Delete,
+		Icon:             "icon-trash-2",
+		Variant:          "danger",
+		Endpoint:         routes.BulkDeleteURL,
+		ConfirmTitle:     cl.Bulk.Delete,
+		ConfirmMessage:   "Are you sure you want to delete {{count}} customer(s)? This action cannot be undone.",
+		RequiresDataAttr: "deletable",
 	})
 
 	return actions

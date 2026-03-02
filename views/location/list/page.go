@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strconv"
 
 	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/pyeza-golang/route"
@@ -18,6 +19,7 @@ import (
 // Deps holds view dependencies.
 type Deps struct {
 	GetListPageData func(ctx context.Context, req *locationpb.GetLocationListPageDataRequest) (*locationpb.GetLocationListPageDataResponse, error)
+	GetInUseIDs     func(ctx context.Context, ids []string) (map[string]bool, error)
 	RefreshURL      string
 	Routes          entydad.LocationRoutes
 	Labels          entydad.LocationLabels
@@ -92,9 +94,19 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 		return nil, fmt.Errorf("failed to load locations: %w", err)
 	}
 
+	// Check which items are in use
+	var inUseIDs map[string]bool
+	if deps.GetInUseIDs != nil {
+		var itemIDs []string
+		for _, item := range resp.GetLocationList() {
+			itemIDs = append(itemIDs, item.GetId())
+		}
+		inUseIDs, _ = deps.GetInUseIDs(ctx, itemIDs)
+	}
+
 	l := deps.Labels
 	columns := locationColumns(l)
-	rows := buildTableRows(resp.GetLocationList(), status, l, deps.Routes)
+	rows := buildTableRows(resp.GetLocationList(), status, l, deps.Routes, inUseIDs)
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
@@ -142,7 +154,7 @@ func locationColumns(l entydad.LocationLabels) []types.TableColumn {
 	}
 }
 
-func buildTableRows(locations []*locationpb.Location, status string, l entydad.LocationLabels, routes entydad.LocationRoutes) []types.TableRow {
+func buildTableRows(locations []*locationpb.Location, status string, l entydad.LocationLabels, routes entydad.LocationRoutes, inUseIDs map[string]bool) []types.TableRow {
 	rows := []types.TableRow{}
 	for _, loc := range locations {
 		active := loc.GetActive()
@@ -177,10 +189,19 @@ func buildTableRows(locations []*locationpb.Location, status string, l entydad.L
 				ConfirmMessage: fmt.Sprintf("Are you sure you want to activate %s?", name),
 			})
 		}
-		actions = append(actions, types.TableAction{
-			Type: "delete", Label: l.Actions.Delete, Action: "delete",
-			URL: routes.DeleteURL, ItemName: name,
-		})
+		isInUse := inUseIDs[id]
+		deleteAction := types.TableAction{
+			Type:     "delete",
+			Label:    l.Actions.Delete,
+			Action:   "delete",
+			URL:      routes.DeleteURL,
+			ItemName: name,
+		}
+		if isInUse {
+			deleteAction.Disabled = true
+			deleteAction.DisabledTooltip = "Cannot delete: location is in use"
+		}
+		actions = append(actions, deleteAction)
 
 		rows = append(rows, types.TableRow{
 			ID: id,
@@ -190,9 +211,10 @@ func buildTableRows(locations []*locationpb.Location, status string, l entydad.L
 				{Type: "badge", Value: recordStatus, Variant: statusVariant(recordStatus)},
 			},
 			DataAttrs: map[string]string{
-				"name":    name,
-				"address": address,
-				"status":  recordStatus,
+				"name":      name,
+				"address":   address,
+				"status":    recordStatus,
+				"deletable": strconv.FormatBool(!isInUse),
 			},
 			Actions: actions,
 		})
@@ -284,13 +306,14 @@ func buildBulkActions(l entydad.LocationLabels, common pyeza.CommonLabels, statu
 	}
 
 	actions = append(actions, types.BulkAction{
-		Key:            "delete",
-		Label:          common.Bulk.Delete,
-		Icon:           "icon-trash-2",
-		Variant:        "danger",
-		Endpoint:       routes.BulkDeleteURL,
-		ConfirmTitle:   common.Bulk.Delete,
-		ConfirmMessage: "Are you sure you want to delete {{count}} location(s)? This action cannot be undone.",
+		Key:              "delete",
+		Label:            common.Bulk.Delete,
+		Icon:             "icon-trash-2",
+		Variant:          "danger",
+		Endpoint:         routes.BulkDeleteURL,
+		ConfirmTitle:     common.Bulk.Delete,
+		ConfirmMessage:   "Are you sure you want to delete {{count}} location(s)? This action cannot be undone.",
+		RequiresDataAttr: "deletable",
 	})
 
 	return actions

@@ -44,6 +44,7 @@ type Deps struct {
 	UpdateLocation    func(ctx context.Context, req *locationpb.UpdateLocationRequest) (*locationpb.UpdateLocationResponse, error)
 	DeleteLocation    func(ctx context.Context, req *locationpb.DeleteLocationRequest) (*locationpb.DeleteLocationResponse, error)
 	SetLocationActive func(ctx context.Context, id string, active bool) error
+	GetInUseIDs       func(ctx context.Context, ids []string) (map[string]bool, error)
 	Routes            entydad.LocationRoutes
 }
 
@@ -166,6 +167,18 @@ func NewDeleteAction(deps *Deps) view.View {
 			return entydad.HTMXError("Location ID is required")
 		}
 
+		// Server-side re-check: ensure location is not in use
+		if deps.GetInUseIDs != nil {
+			inUse, err := deps.GetInUseIDs(ctx, []string{id})
+			if err != nil {
+				log.Printf("Failed to check location in-use status: %v", err)
+				return entydad.HTMXError("Failed to verify location status")
+			}
+			if inUse[id] {
+				return entydad.HTMXError("Cannot delete: location is in use")
+			}
+		}
+
 		_, err := deps.DeleteLocation(ctx, &locationpb.DeleteLocationRequest{
 			Data: &locationpb.Location{Id: id},
 		})
@@ -187,6 +200,20 @@ func NewBulkDeleteAction(deps *Deps) view.View {
 		ids := viewCtx.Request.Form["id"]
 		if len(ids) == 0 {
 			return entydad.HTMXError("No location IDs provided")
+		}
+
+		// Server-side re-check: ensure none of the locations are in use
+		if deps.GetInUseIDs != nil {
+			inUse, err := deps.GetInUseIDs(ctx, ids)
+			if err != nil {
+				log.Printf("Failed to check locations in-use status: %v", err)
+				return entydad.HTMXError("Failed to verify location status")
+			}
+			for _, id := range ids {
+				if inUse[id] {
+					return entydad.HTMXError("Cannot delete: one or more locations are in use")
+				}
+			}
 		}
 
 		for _, id := range ids {

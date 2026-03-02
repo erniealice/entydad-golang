@@ -1,0 +1,239 @@
+{{/*
+Supplier drawer form -- loaded into #sheetContent via HTMX.
+Used by both Add and Edit actions.
+Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
+      .StreetAddress, .City, .Province, .PostalCode, .Country,
+      .DefaultCurrency, .PaymentTerms, .LeadTimeDays, .CreditLimit,
+      .Status, .Website, .Notes, .FirstName, .LastName, .Email, .Phone,
+      .Active, .ID, .FormAction, .IsEdit, .Labels, .CommonLabels
+*/}}
+{{define "supplier-drawer-form"}}
+<form hx-post="{{.FormAction}}" hx-swap="none" hx-on::after-request="Sheet.handleResponse(event)">
+    {{if .ID}}<input type="hidden" name="id" value="{{.ID}}">{{end}}
+
+    <div class="sheet-body">
+        {{/* --- Company Section --- */}}
+        {{template "form-section" (dict "Title" .Labels.CompanyName)}}
+
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "company_name"
+                "Label" .Labels.CompanyName
+                "Value" .CompanyName
+                "Required" true
+                "Placeholder" "Enter company name"
+            )}}
+        </div>
+
+        <div class="form-row">
+            {{template "form-group" (dict
+                "Type" "select"
+                "Name" "supplier_type"
+                "Label" .Labels.SupplierType
+                "Value" .SupplierType
+                "Placeholder" "Select type"
+                "Options" (list
+                    (dict "Value" "company" "Label" "Company" "Selected" (eq .SupplierType "company"))
+                    (dict "Value" "individual" "Label" "Individual" "Selected" (eq .SupplierType "individual"))
+                )
+            )}}
+            {{template "form-group" (dict
+                "Type" "select"
+                "Name" "status"
+                "Label" .Labels.Status
+                "Value" .Status
+                "Placeholder" "Select status"
+                "Options" (list
+                    (dict "Value" "active" "Label" "Active" "Selected" (eq .Status "active"))
+                    (dict "Value" "blocked" "Label" "Blocked" "Selected" (eq .Status "blocked"))
+                    (dict "Value" "on_hold" "Label" "On Hold" "Selected" (eq .Status "on_hold"))
+                )
+            )}}
+        </div>
+
+        {{/* --- Contact Section --- */}}
+        {{template "form-section" (dict "Title" .Labels.FirstName)}}
+
+        <div class="form-row">
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "first_name"
+                "Label" .Labels.FirstName
+                "Value" .FirstName
+                "Required" true
+                "Placeholder" "Enter first name"
+            )}}
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "last_name"
+                "Label" .Labels.LastName
+                "Value" .LastName
+                "Required" true
+                "Placeholder" "Enter last name"
+            )}}
+        </div>
+
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "email"
+                "Name" "email_address"
+                "Label" .Labels.Email
+                "Value" .Email
+                "Placeholder" "Enter email address"
+            )}}
+        </div>
+
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "tel"
+                "Name" "mobile_number"
+                "Label" .Labels.Phone
+                "Value" .Phone
+                "Placeholder" "Enter phone number"
+            )}}
+        </div>
+
+        {{/* --- Financial Section --- */}}
+        {{template "form-section" (dict "Title" .Labels.PaymentTerms)}}
+
+        <div class="form-row">
+            {{template "form-group" (dict
+                "Type" "select"
+                "Name" "payment_terms"
+                "Label" .Labels.PaymentTerms
+                "Value" .PaymentTerms
+                "Placeholder" "Select terms"
+                "Options" (list
+                    (dict "Value" "immediate" "Label" "Immediate" "Selected" (eq .PaymentTerms "immediate"))
+                    (dict "Value" "net_30" "Label" "Net 30" "Selected" (eq .PaymentTerms "net_30"))
+                    (dict "Value" "net_60" "Label" "Net 60" "Selected" (eq .PaymentTerms "net_60"))
+                    (dict "Value" "2_10_net_30" "Label" "2/10 Net 30" "Selected" (eq .PaymentTerms "2_10_net_30"))
+                )
+            )}}
+            {{template "form-group" (dict
+                "Type" "number"
+                "Name" "credit_limit"
+                "Label" .Labels.CreditLimit
+                "Value" .CreditLimit
+                "Placeholder" "0.00"
+            )}}
+        </div>
+
+        <div class="form-row">
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "default_currency"
+                "Label" .Labels.DefaultCurrency
+                "Value" .DefaultCurrency
+                "Placeholder" "PHP"
+            )}}
+            {{template "form-group" (dict
+                "Type" "number"
+                "Name" "lead_time_days"
+                "Label" .Labels.LeadTimeDays
+                "Value" .LeadTimeDays
+                "Placeholder" "0"
+            )}}
+        </div>
+
+        <div class="form-row">
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "tax_id"
+                "Label" .Labels.TaxID
+                "Value" .TaxID
+                "Placeholder" "Enter TIN/VAT/EIN"
+            )}}
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "registration_number"
+                "Label" .Labels.RegistrationNumber
+                "Value" .RegistrationNumber
+                "Placeholder" "Enter registration number"
+            )}}
+        </div>
+
+        {{/* --- Address Section --- */}}
+        {{template "form-section" (dict "Title" .Labels.StreetAddress)}}
+
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "street_address"
+                "Label" .Labels.StreetAddress
+                "Value" .StreetAddress
+                "Placeholder" "Enter street address"
+            )}}
+        </div>
+
+        <div class="form-row">
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "city"
+                "Label" .Labels.City
+                "Value" .City
+                "Placeholder" "Enter city"
+            )}}
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "province"
+                "Label" .Labels.Province
+                "Value" .Province
+                "Placeholder" "Enter province"
+            )}}
+        </div>
+
+        <div class="form-row">
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "postal_code"
+                "Label" .Labels.PostalCode
+                "Value" .PostalCode
+                "Placeholder" "Enter postal code"
+            )}}
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "country"
+                "Label" .Labels.Country
+                "Value" .Country
+                "Placeholder" "PH"
+            )}}
+        </div>
+
+        {{/* --- Other Section --- */}}
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "url"
+                "Name" "website"
+                "Label" .Labels.Website
+                "Value" .Website
+                "Placeholder" "https://example.com"
+            )}}
+        </div>
+
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "textarea"
+                "Name" "notes"
+                "Label" .Labels.Notes
+                "Value" .Notes
+                "Placeholder" "Add notes about this supplier"
+                "Rows" 3
+            )}}
+        </div>
+
+        {{/* --- Active Toggle --- */}}
+        <div class="form-row single">
+            {{template "toggle" (dict
+                "Name" "active"
+                "Label" "Active"
+                "Checked" .Active
+                "Value" "true"
+            )}}
+        </div>
+    </div>
+
+    {{template "sheet-form-footer" (dict "CommonLabels" .CommonLabels "ShowCancel" true "IsEdit" .IsEdit)}}
+</form>
+{{end}}

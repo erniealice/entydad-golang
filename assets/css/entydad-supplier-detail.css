@@ -1,0 +1,9 @@
+/* entydad - supplier detail page layout */
+@import url("entydad-user-detail.css");
+
+.supplier-notes-content {
+    font-size: 0.9375rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    white-space: pre-wrap;
+}

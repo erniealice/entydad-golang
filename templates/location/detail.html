@@ -1,0 +1,141 @@
+{{/* Full page -- for direct access / non-HTMX */}}
+{{define "location-detail"}}
+{{template "app-shell" .}}
+{{end}}
+
+{{/* Content-only partial -- for HTMX navigation */}}
+{{define "location-detail-content"}}
+<div class="page-content detail-layout" data-page-css="/assets/css/entydad/entydad-location-detail.css?v={{.CacheVersion}}">
+    {{/* --- HTMX Tab Buttons --- */}}
+    <div class="detail-tabs">
+        {{template "tabs" (dict "Items" .TabItems "ActiveTab" .ActiveTab "Variant" "default" "ID" "location-detail-tabs")}}
+    </div>
+
+    {{/* --- Tab Content Area --- */}}
+    <div id="tabContent" class="detail-body">
+        {{if eq .ActiveTab "info"}}
+            {{template "location-tab-info" .}}
+        {{else if eq .ActiveTab "users"}}
+            {{template "location-tab-users" .}}
+        {{else if eq .ActiveTab "pricelists"}}
+            {{template "location-tab-pricelists" .}}
+        {{else if eq .ActiveTab "audit"}}
+            {{template "location-tab-audit" .}}
+        {{end}}
+    </div>
+</div>
+{{end}}
+
+{{/* =============================================
+     TAB PARTIAL: Info (editable form)
+     ============================================= */}}
+{{define "location-tab-info"}}
+<div class="tab-scroll">
+    <h4 class="detail-section-title">{{.Labels.Detail.BasicInfo.Title}}</h4>
+    <div id="info-result" style="display:none;" class="form-result"></div>
+    <form id="info-edit-form"
+          hx-post="{{.EditDetailURL}}"
+          hx-swap="none"
+          hx-on::after-request="handleInfoUpdate(event)">
+
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "name"
+                "Label" .Labels.Detail.BasicInfo.Name
+                "Value" .LocationName
+                "Required" true
+                "Placeholder" .Labels.Detail.BasicInfo.NamePlaceholder
+            )}}
+        </div>
+
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "address"
+                "Label" .Labels.Detail.BasicInfo.Address
+                "Value" .LocationAddress
+                "Placeholder" .Labels.Detail.BasicInfo.AddressPlaceholder
+            )}}
+        </div>
+
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "textarea"
+                "Name" "description"
+                "Label" .Labels.Detail.BasicInfo.Description
+                "Value" .LocationDesc
+                "Placeholder" .Labels.Detail.BasicInfo.DescriptionPlaceholder
+            )}}
+        </div>
+
+        <div class="form-row single">
+            {{template "toggle" (dict
+                "Name" "active"
+                "Label" .Labels.Detail.BasicInfo.Active
+                "Checked" (eq .LocationStatus "active")
+                "Value" "true"
+            )}}
+        </div>
+
+        <div style="margin-top: var(--space-4);">
+            <button type="submit" class="btn btn--primary btn--sm">
+                {{template "icon-save"}}
+                <span>{{.Labels.Detail.BasicInfo.Save}}</span>
+            </button>
+        </div>
+    </form>
+</div>
+<script>
+function handleInfoUpdate(evt) {
+    var el = document.getElementById('info-result');
+    if (!el) return;
+    el.style.display = 'block';
+    if (evt.detail.successful) {
+        el.className = 'form-result form-result--success';
+        el.textContent = 'Location updated successfully';
+    } else {
+        var msg = evt.detail.xhr.getResponseHeader('HX-Error-Message') || 'Failed to update location';
+        el.className = 'form-result form-result--error';
+        el.textContent = msg;
+    }
+    setTimeout(function() { el.style.display = 'none'; }, 5000);
+}
+</script>
+{{end}}
+
+{{/* =============================================
+     TAB PARTIAL: Users (coming soon)
+     ============================================= */}}
+{{define "location-tab-users"}}
+<div class="tab-scroll">
+    <div class="coming-soon-panel">
+        <div class="coming-soon-title">{{.Labels.Detail.EmptyStates.UsersTitle}}</div>
+        <p class="coming-soon-text">{{.Labels.Detail.EmptyStates.UsersDesc}}</p>
+    </div>
+</div>
+{{end}}
+
+{{/* =============================================
+     TAB PARTIAL: Price Lists (coming soon)
+     ============================================= */}}
+{{define "location-tab-pricelists"}}
+<div class="tab-scroll">
+    <div class="coming-soon-panel">
+        <div class="coming-soon-title">{{.Labels.Detail.EmptyStates.PriceListsTitle}}</div>
+        <p class="coming-soon-text">{{.Labels.Detail.EmptyStates.PriceListsDesc}}</p>
+    </div>
+</div>
+{{end}}
+
+{{/* =============================================
+     TAB PARTIAL: Audit Trail (coming soon)
+     ============================================= */}}
+{{define "location-tab-audit"}}
+<div class="tab-scroll">
+    <div class="coming-soon-panel">
+        <div class="coming-soon-title">{{.Labels.Detail.EmptyStates.AuditTitle}}</div>
+        <p class="coming-soon-text">{{.Labels.Detail.EmptyStates.AuditDesc}}</p>
+    </div>
+</div>
+{{end}}

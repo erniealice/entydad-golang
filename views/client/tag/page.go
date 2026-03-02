@@ -22,6 +22,7 @@ type Deps struct {
 	Routes               entydad.ClientTagRoutes
 	ListCategories       func(ctx context.Context, req *categorypb.ListCategoriesRequest) (*categorypb.ListCategoriesResponse, error)
 	ListClientCategories func(ctx context.Context, req *clientcategorypb.ListClientCategoriesRequest) (*clientcategorypb.ListClientCategoriesResponse, error)
+	GetInUseIDs          func(ctx context.Context, ids []string) (map[string]bool, error)
 	RefreshURL           string
 	CommonLabels         pyeza.CommonLabels
 	TableLabels          types.TableLabels
@@ -56,6 +57,18 @@ func NewView(deps *Deps) view.View {
 			}
 		}
 
+		// Check which items are in use (only for client-module categories)
+		var inUseIDs map[string]bool
+		if deps.GetInUseIDs != nil {
+			var itemIDs []string
+			for _, cat := range resp.GetData() {
+				if cat.GetModule() == "client" {
+					itemIDs = append(itemIDs, cat.GetId())
+				}
+			}
+			inUseIDs, _ = deps.GetInUseIDs(ctx, itemIDs)
+		}
+
 		columns := []types.TableColumn{
 			{Key: "name", Label: "Tag Name", Sortable: true},
 			{Key: "customers", Label: "Customers", Sortable: false, Width: "120px"},
@@ -63,19 +76,20 @@ func NewView(deps *Deps) view.View {
 			{Key: "status", Label: "Status", Sortable: true, Width: "120px"},
 		}
 
-		rows := buildTableRows(resp.GetData(), customerCounts, deps.Routes)
+		rows := buildTableRows(resp.GetData(), customerCounts, deps.Routes, inUseIDs)
 		types.ApplyColumnStyles(columns, rows)
 
 		bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
 		bulkCfg.Actions = []types.BulkAction{
 			{
-				Key:            "delete",
-				Label:          "Delete",
-				Icon:           "icon-trash-2",
-				Variant:        "danger",
-				Endpoint:       deps.Routes.BulkDeleteURL,
-				ConfirmTitle:   "Delete Tags",
-				ConfirmMessage: "Are you sure you want to delete {{count}} tag(s)? This action cannot be undone.",
+				Key:              "delete",
+				Label:            "Delete",
+				Icon:             "icon-trash-2",
+				Variant:          "danger",
+				Endpoint:         deps.Routes.BulkDeleteURL,
+				ConfirmTitle:     "Delete Tags",
+				ConfirmMessage:   "Are you sure you want to delete {{count}} tag(s)? This action cannot be undone.",
+				RequiresDataAttr: "deletable",
 			},
 		}
 
@@ -122,7 +136,7 @@ func NewView(deps *Deps) view.View {
 	})
 }
 
-func buildTableRows(categories []*categorypb.Category, customerCounts map[string]int, routes entydad.ClientTagRoutes) []types.TableRow {
+func buildTableRows(categories []*categorypb.Category, customerCounts map[string]int, routes entydad.ClientTagRoutes, inUseIDs map[string]bool) []types.TableRow {
 	rows := []types.TableRow{}
 	for _, cat := range categories {
 		// Only show client-module categories
@@ -141,6 +155,19 @@ func buildTableRows(categories []*categorypb.Category, customerCounts map[string
 			variant = "warning"
 		}
 
+		isInUse := inUseIDs[id]
+		deleteAction := types.TableAction{
+			Type:     "delete",
+			Label:    "Delete",
+			Action:   "delete",
+			URL:      routes.DeleteURL,
+			ItemName: name,
+		}
+		if isInUse {
+			deleteAction.Disabled = true
+			deleteAction.DisabledTooltip = "Cannot delete: tag is assigned to customers"
+		}
+
 		rows = append(rows, types.TableRow{
 			ID: id,
 			Cells: []types.TableCell{
@@ -150,12 +177,13 @@ func buildTableRows(categories []*categorypb.Category, customerCounts map[string
 				{Type: "badge", Value: status, Variant: variant},
 			},
 			DataAttrs: map[string]string{
-				"name":   name,
-				"status": status,
+				"name":      name,
+				"status":    status,
+				"deletable": strconv.FormatBool(!isInUse),
 			},
 			Actions: []types.TableAction{
 				{Type: "edit", Label: "Edit", Action: "edit", URL: route.ResolveURL(routes.EditURL, "id", id), DrawerTitle: "Edit Tag"},
-				{Type: "delete", Label: "Delete", Action: "delete", URL: routes.DeleteURL, ItemName: name},
+				deleteAction,
 			},
 		})
 	}

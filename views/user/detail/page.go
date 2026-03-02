@@ -42,8 +42,10 @@ type PageData struct {
 	UserMobile      string
 	UserStatus      string
 	StatusVariant   string
-	RoleNames       []string
-	RolesTable      *types.TableConfig
+	RoleNames        []string
+	RolesTable       *types.TableConfig
+	ResetPasswordURL string
+	EditURL          string
 }
 
 // NewView creates the user detail view (full page).
@@ -148,7 +150,9 @@ func buildPageData(ctx context.Context, deps *Deps, id, activeTab string, viewCt
 		UserMobile:      mobile,
 		UserStatus:      userStatus,
 		StatusVariant:   statusVariant,
-		RoleNames:       roleNames,
+		RoleNames:        roleNames,
+		ResetPasswordURL: route.ResolveURL(deps.Routes.ResetPasswordURL, "id", id),
+		EditURL:          route.ResolveURL(deps.Routes.EditURL, "id", id),
 	}
 
 	// Load tab-specific data
@@ -171,6 +175,8 @@ func buildTabItems(id string, labels entydad.UserLabels, roleCount int, routes e
 	return []pyeza.TabItem{
 		{Key: "info", Label: labels.Detail.Tabs.Info, Href: base + "?tab=info", HxGet: action + "info", Icon: "icon-info", Count: 0, Disabled: false},
 		{Key: "roles", Label: labels.Detail.Tabs.Roles, Href: base + "?tab=roles", HxGet: action + "roles", Icon: "icon-shield", Count: roleCount, Disabled: false},
+		{Key: "security", Label: labels.Detail.Tabs.Security, Href: base + "?tab=security", HxGet: action + "security", Icon: "icon-shield-check", Count: 0, Disabled: false},
+		{Key: "audit", Label: labels.Detail.Tabs.AuditTrail, Href: base + "?tab=audit", HxGet: action + "audit", Icon: "icon-clock", Count: 0, Disabled: false},
 	}
 }
 
