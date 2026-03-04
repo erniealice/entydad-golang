@@ -87,6 +87,8 @@ func NewTableView(deps *Deps) view.View {
 
 // buildTableConfig fetches user data and builds the table configuration.
 func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.TableConfig, error) {
+	perms := view.GetUserPermissions(ctx)
+
 	resp, err := deps.GetListPageData(ctx, &userpb.GetUserListPageDataRequest{})
 	if err != nil {
 		log.Printf("Failed to list users: %v", err)
@@ -104,7 +106,7 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 
 	l := deps.Labels
 	columns := userColumns(l)
-	rows := buildTableRows(resp.GetUserList(), status, l, userRolesMap, deps.Routes)
+	rows := buildTableRows(resp.GetUserList(), status, l, userRolesMap, deps.Routes, perms)
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
@@ -133,9 +135,11 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 			Message: statusEmptyMessage(l, status),
 		},
 		PrimaryAction: &types.PrimaryAction{
-			Label:     l.Buttons.AddUser,
-			ActionURL: deps.Routes.AddURL,
-			Icon:      "icon-plus",
+			Label:           l.Buttons.AddUser,
+			ActionURL:       deps.Routes.AddURL,
+			Icon:            "icon-plus",
+			Disabled:        !perms.Can("user", "create"),
+			DisabledTooltip: "No permission",
 		},
 		BulkActions: &bulkCfg,
 	}
@@ -153,7 +157,7 @@ func userColumns(l entydad.UserLabels) []types.TableColumn {
 	}
 }
 
-func buildTableRows(users []*userpb.User, status string, l entydad.UserLabels, userRolesMap map[string][]entydad.RoleBadge, routes entydad.UserRoutes) []types.TableRow {
+func buildTableRows(users []*userpb.User, status string, l entydad.UserLabels, userRolesMap map[string][]entydad.RoleBadge, routes entydad.UserRoutes, perms *types.UserPermissions) []types.TableRow {
 	rows := []types.TableRow{}
 	for _, u := range users {
 		active := u.GetActive()
@@ -180,7 +184,8 @@ func buildTableRows(users []*userpb.User, status string, l entydad.UserLabels, u
 
 		actions := []types.TableAction{
 			{Type: "view", Label: l.Actions.View, Action: "view", Href: route.ResolveURL(routes.DetailURL, "id", id)},
-			{Type: "edit", Label: l.Actions.Edit, Action: "edit", URL: route.ResolveURL(routes.EditURL, "id", id), DrawerTitle: l.Actions.Edit},
+			{Type: "edit", Label: l.Actions.Edit, Action: "edit", URL: route.ResolveURL(routes.EditURL, "id", id), DrawerTitle: l.Actions.Edit,
+				Disabled: !perms.Can("user", "update"), DisabledTooltip: "No permission"},
 		}
 		if active {
 			actions = append(actions, types.TableAction{
@@ -188,6 +193,7 @@ func buildTableRows(users []*userpb.User, status string, l entydad.UserLabels, u
 				URL: routes.SetStatusURL + "?status=inactive", ItemName: name,
 				ConfirmTitle:   l.Actions.Deactivate,
 				ConfirmMessage: fmt.Sprintf("Are you sure you want to deactivate %s?", name),
+				Disabled: !perms.Can("user", "update"), DisabledTooltip: "No permission",
 			})
 		} else {
 			actions = append(actions, types.TableAction{
@@ -195,6 +201,7 @@ func buildTableRows(users []*userpb.User, status string, l entydad.UserLabels, u
 				URL: routes.SetStatusURL + "?status=active", ItemName: name,
 				ConfirmTitle:   l.Actions.Activate,
 				ConfirmMessage: fmt.Sprintf("Are you sure you want to activate %s?", name),
+				Disabled: !perms.Can("user", "update"), DisabledTooltip: "No permission",
 			})
 		}
 		rows = append(rows, types.TableRow{

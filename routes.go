@@ -97,6 +97,9 @@ const (
 	WorkspaceSetStatusURL     = "/action/workspaces/set-status"
 	WorkspaceBulkSetStatusURL = "/action/workspaces/bulk-set-status"
 
+	// Client report routes
+	ReceivablesAgingURL = "/app/clients/reports/receivables-aging"
+
 	// Supplier routes
 	SupplierListURL          = "/app/suppliers/list/{status}"
 	SupplierTableURL         = "/action/suppliers/table/{status}"
@@ -108,6 +111,9 @@ const (
 	SupplierTabActionURL     = "/action/suppliers/{id}/tab/{tab}"
 	SupplierSetStatusURL     = "/action/suppliers/set-status"
 	SupplierBulkSetStatusURL = "/action/suppliers/bulk-set-status"
+
+	// Supplier report routes
+	PayablesAgingURL = "/app/suppliers/reports/payables-aging"
 
 	// Client Tag (Category) routes
 	ClientTagListURL       = "/app/clients/settings/tags/list"

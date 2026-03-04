@@ -45,6 +45,10 @@ type ActionDeps struct {
 // NewAssignAction creates the assign role action (GET = form, POST = create).
 func NewAssignAction(deps *ActionDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("user", "update") {
+			return entydad.HTMXError("Permission denied")
+		}
 		userID := viewCtx.Request.PathValue("id")
 		if userID == "" {
 			return entydad.HTMXError("User ID is required")
@@ -133,6 +137,10 @@ func NewAssignAction(deps *ActionDeps) view.View {
 // NewRemoveAction creates the remove role action (POST only).
 func NewRemoveAction(deps *ActionDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("user", "update") {
+			return entydad.HTMXError("Permission denied")
+		}
 		userID := viewCtx.Request.PathValue("id")
 		if userID == "" {
 			return entydad.HTMXError("User ID is required")

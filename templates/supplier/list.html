@@ -8,6 +8,6 @@
 <div class="page-content page-content--table">
     {{template "table-card" .Table}}
 </div>
-{{template "sheet-form" .}}
+{{template "sheet-form" (dict "CommonLabels" .CommonLabels "Title" .Title)}}
 <script src="/assets/js/components/sheet.js?v={{.CacheVersion}}"></script>
 {{end}}

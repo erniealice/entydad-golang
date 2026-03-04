@@ -78,6 +78,8 @@ func NewTableView(deps *Deps) view.View {
 
 // buildTableConfig fetches role data and builds the table configuration.
 func buildTableConfig(ctx context.Context, deps *Deps) (*types.TableConfig, error) {
+	perms := view.GetUserPermissions(ctx)
+
 	resp, err := deps.GetListPageData(ctx, &rolepb.GetRoleListPageDataRequest{})
 	if err != nil {
 		log.Printf("Failed to list roles: %v", err)
@@ -96,7 +98,7 @@ func buildTableConfig(ctx context.Context, deps *Deps) (*types.TableConfig, erro
 
 	l := deps.Labels
 	columns := roleColumns(l)
-	rows := buildTableRows(resp.GetRoleList(), l, deps.Routes, inUseIDs)
+	rows := buildTableRows(resp.GetRoleList(), l, deps.Routes, inUseIDs, perms)
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
@@ -123,9 +125,11 @@ func buildTableConfig(ctx context.Context, deps *Deps) (*types.TableConfig, erro
 			Message: l.Empty.ActiveMessage,
 		},
 		PrimaryAction: &types.PrimaryAction{
-			Label:     l.Buttons.AddRole,
-			ActionURL: deps.Routes.AddURL,
-			Icon:      "icon-plus",
+			Label:           l.Buttons.AddRole,
+			ActionURL:       deps.Routes.AddURL,
+			Icon:            "icon-plus",
+			Disabled:        !perms.Can("role", "create"),
+			DisabledTooltip: "No permission",
 		},
 		BulkActions: &bulkCfg,
 	}
@@ -144,7 +148,7 @@ func roleColumns(l entydad.RoleLabels) []types.TableColumn {
 	}
 }
 
-func buildTableRows(roles []*rolepb.Role, l entydad.RoleLabels, routes entydad.RoleRoutes, inUseIDs map[string]bool) []types.TableRow {
+func buildTableRows(roles []*rolepb.Role, l entydad.RoleLabels, routes entydad.RoleRoutes, inUseIDs map[string]bool, perms *types.UserPermissions) []types.TableRow {
 	rows := []types.TableRow{}
 	for _, r := range roles {
 		active := r.GetActive()
@@ -167,6 +171,7 @@ func buildTableRows(roles []*rolepb.Role, l entydad.RoleLabels, routes entydad.R
 				URL: routes.SetStatusURL + "?status=inactive", ItemName: name,
 				ConfirmTitle:   l.Actions.Deactivate,
 				ConfirmMessage: fmt.Sprintf("Are you sure you want to deactivate %s?", name),
+				Disabled: !perms.Can("role", "update"), DisabledTooltip: "No permission",
 			})
 		} else {
 			actions = append(actions, types.TableAction{
@@ -174,6 +179,7 @@ func buildTableRows(roles []*rolepb.Role, l entydad.RoleLabels, routes entydad.R
 				URL: routes.SetStatusURL + "?status=active", ItemName: name,
 				ConfirmTitle:   l.Actions.Activate,
 				ConfirmMessage: fmt.Sprintf("Are you sure you want to activate %s?", name),
+				Disabled: !perms.Can("role", "update"), DisabledTooltip: "No permission",
 			})
 		}
 		isInUse := inUseIDs[id]
@@ -187,6 +193,9 @@ func buildTableRows(roles []*rolepb.Role, l entydad.RoleLabels, routes entydad.R
 		if isInUse {
 			deleteAction.Disabled = true
 			deleteAction.DisabledTooltip = "Cannot delete: role is assigned to users"
+		} else if !perms.Can("role", "delete") {
+			deleteAction.Disabled = true
+			deleteAction.DisabledTooltip = "No permission"
 		}
 		actions = append(actions, deleteAction)
 

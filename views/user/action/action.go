@@ -85,6 +85,10 @@ func hashPassword(deps *Deps, password string) (string, error) {
 // NewAddAction creates the user add action (GET = form, POST = create).
 func NewAddAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("user", "create") {
+			return entydad.HTMXError("Permission denied")
+		}
 		if viewCtx.Request.Method == http.MethodGet {
 			return view.OK("user-drawer-form", &FormData{
 				FormAction:   deps.Routes.AddURL,
@@ -154,6 +158,10 @@ func NewAddAction(deps *Deps) view.View {
 // NewEditAction creates the user edit action (GET = form, POST = update).
 func NewEditAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("user", "update") {
+			return entydad.HTMXError("Permission denied")
+		}
 		id := viewCtx.Request.PathValue("id")
 
 		if viewCtx.Request.Method == http.MethodGet {
@@ -224,6 +232,10 @@ func NewEditAction(deps *Deps) view.View {
 // The row ID comes via query param (?id=xxx) appended by table-actions.js.
 func NewDeleteAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("user", "delete") {
+			return entydad.HTMXError("Permission denied")
+		}
 		id := viewCtx.Request.URL.Query().Get("id")
 		if id == "" {
 			_ = viewCtx.Request.ParseForm()
@@ -249,6 +261,10 @@ func NewDeleteAction(deps *Deps) view.View {
 // Selected IDs come as multiple "id" form fields from bulk-action.js.
 func NewBulkDeleteAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("user", "delete") {
+			return entydad.HTMXError("Permission denied")
+		}
 		_ = viewCtx.Request.ParseMultipartForm(32 << 20)
 
 		ids := viewCtx.Request.Form["id"]
@@ -277,6 +293,10 @@ func NewBulkDeleteAction(deps *Deps) view.View {
 // deactivation (active=false) would silently be skipped.
 func NewSetStatusAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("user", "update") {
+			return entydad.HTMXError("Permission denied")
+		}
 		id := viewCtx.Request.URL.Query().Get("id")
 		targetStatus := viewCtx.Request.URL.Query().Get("status")
 
@@ -358,6 +378,10 @@ func NewResetPasswordAction(deps *Deps) view.View {
 // Selected IDs come as multiple "id" form fields; target status from "target_status" field.
 func NewBulkSetStatusAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("user", "update") {
+			return entydad.HTMXError("Permission denied")
+		}
 		_ = viewCtx.Request.ParseMultipartForm(32 << 20)
 
 		ids := viewCtx.Request.Form["id"]

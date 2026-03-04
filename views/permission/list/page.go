@@ -86,6 +86,8 @@ func NewTableView(deps *Deps) view.View {
 
 // buildTableConfig fetches permission data and builds the table configuration.
 func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.TableConfig, error) {
+	perms := view.GetUserPermissions(ctx)
+
 	resp, err := deps.GetListPageData(ctx, &permissionpb.GetPermissionListPageDataRequest{})
 	if err != nil {
 		log.Printf("Failed to list permissions: %v", err)
@@ -94,7 +96,7 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 
 	l := deps.Labels
 	columns := permissionColumns(l)
-	rows := buildTableRows(resp.GetPermissionList(), status, l, deps.Routes)
+	rows := buildTableRows(resp.GetPermissionList(), status, l, deps.Routes, perms)
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
@@ -123,9 +125,11 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 			Message: statusEmptyMessage(l, status),
 		},
 		PrimaryAction: &types.PrimaryAction{
-			Label:     l.Buttons.AddPermission,
-			ActionURL: deps.Routes.AddURL,
-			Icon:      "icon-plus",
+			Label:           l.Buttons.AddPermission,
+			ActionURL:       deps.Routes.AddURL,
+			Icon:            "icon-plus",
+			Disabled:        !perms.Can("permission", "create"),
+			DisabledTooltip: "No permission",
 		},
 		BulkActions: &bulkCfg,
 	}
@@ -153,7 +157,7 @@ func extractEntity(code string) string {
 	return code
 }
 
-func buildTableRows(permissions []*permissionpb.Permission, status string, l entydad.PermissionLabels, routes entydad.PermissionRoutes) []types.TableRow {
+func buildTableRows(permissions []*permissionpb.Permission, status string, l entydad.PermissionLabels, routes entydad.PermissionRoutes, perms *types.UserPermissions) []types.TableRow {
 	// Filter permissions by status first
 	filtered := make([]*permissionpb.Permission, 0, len(permissions))
 	for _, p := range permissions {
@@ -194,7 +198,8 @@ func buildTableRows(permissions []*permissionpb.Permission, status string, l ent
 		permType := formatPermissionType(p.GetPermissionType())
 
 		actions := []types.TableAction{
-			{Type: "edit", Label: l.Actions.Edit, Action: "edit", URL: route.ResolveURL(routes.EditURL, "id", id), DrawerTitle: l.Actions.Edit},
+			{Type: "edit", Label: l.Actions.Edit, Action: "edit", URL: route.ResolveURL(routes.EditURL, "id", id), DrawerTitle: l.Actions.Edit,
+				Disabled: !perms.Can("permission", "update"), DisabledTooltip: "No permission"},
 		}
 		if active {
 			actions = append(actions, types.TableAction{
@@ -202,6 +207,7 @@ func buildTableRows(permissions []*permissionpb.Permission, status string, l ent
 				URL: routes.SetStatusURL + "?status=inactive", ItemName: name,
 				ConfirmTitle:   l.Actions.Deactivate,
 				ConfirmMessage: fmt.Sprintf("Are you sure you want to deactivate %s?", name),
+				Disabled: !perms.Can("permission", "update"), DisabledTooltip: "No permission",
 			})
 		} else {
 			actions = append(actions, types.TableAction{
@@ -209,12 +215,18 @@ func buildTableRows(permissions []*permissionpb.Permission, status string, l ent
 				URL: routes.SetStatusURL + "?status=active", ItemName: name,
 				ConfirmTitle:   l.Actions.Activate,
 				ConfirmMessage: fmt.Sprintf("Are you sure you want to activate %s?", name),
+				Disabled: !perms.Can("permission", "update"), DisabledTooltip: "No permission",
 			})
 		}
-		actions = append(actions, types.TableAction{
+		deleteAction := types.TableAction{
 			Type: "delete", Label: l.Actions.Delete, Action: "delete",
 			URL: routes.DeleteURL, ItemName: name,
-		})
+		}
+		if !perms.Can("permission", "delete") {
+			deleteAction.Disabled = true
+			deleteAction.DisabledTooltip = "No permission"
+		}
+		actions = append(actions, deleteAction)
 
 		rows = append(rows, types.TableRow{
 			ID: id,

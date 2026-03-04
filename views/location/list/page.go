@@ -88,6 +88,8 @@ func NewTableView(deps *Deps) view.View {
 
 // buildTableConfig fetches location data and builds the table configuration.
 func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.TableConfig, error) {
+	perms := view.GetUserPermissions(ctx)
+
 	resp, err := deps.GetListPageData(ctx, &locationpb.GetLocationListPageDataRequest{})
 	if err != nil {
 		log.Printf("Failed to list locations: %v", err)
@@ -106,7 +108,7 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 
 	l := deps.Labels
 	columns := locationColumns(l)
-	rows := buildTableRows(resp.GetLocationList(), status, l, deps.Routes, inUseIDs)
+	rows := buildTableRows(resp.GetLocationList(), status, l, deps.Routes, inUseIDs, perms)
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
@@ -135,9 +137,11 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 			Message: statusEmptyMessage(l, status),
 		},
 		PrimaryAction: &types.PrimaryAction{
-			Label:     l.Buttons.AddLocation,
-			ActionURL: deps.Routes.AddURL,
-			Icon:      "icon-plus",
+			Label:           l.Buttons.AddLocation,
+			ActionURL:       deps.Routes.AddURL,
+			Icon:            "icon-plus",
+			Disabled:        !perms.Can("location", "create"),
+			DisabledTooltip: "No permission",
 		},
 		BulkActions: &bulkCfg,
 	}
@@ -154,7 +158,7 @@ func locationColumns(l entydad.LocationLabels) []types.TableColumn {
 	}
 }
 
-func buildTableRows(locations []*locationpb.Location, status string, l entydad.LocationLabels, routes entydad.LocationRoutes, inUseIDs map[string]bool) []types.TableRow {
+func buildTableRows(locations []*locationpb.Location, status string, l entydad.LocationLabels, routes entydad.LocationRoutes, inUseIDs map[string]bool, perms *types.UserPermissions) []types.TableRow {
 	rows := []types.TableRow{}
 	for _, loc := range locations {
 		active := loc.GetActive()
@@ -172,7 +176,8 @@ func buildTableRows(locations []*locationpb.Location, status string, l entydad.L
 
 		actions := []types.TableAction{
 			{Type: "view", Label: l.Actions.View, Action: "view", Href: route.ResolveURL(routes.DetailURL, "id", id)},
-			{Type: "edit", Label: l.Actions.Edit, Action: "edit", URL: route.ResolveURL(routes.EditURL, "id", id), DrawerTitle: l.Actions.Edit},
+			{Type: "edit", Label: l.Actions.Edit, Action: "edit", URL: route.ResolveURL(routes.EditURL, "id", id), DrawerTitle: l.Actions.Edit,
+				Disabled: !perms.Can("location", "update"), DisabledTooltip: "No permission"},
 		}
 		if active {
 			actions = append(actions, types.TableAction{
@@ -180,6 +185,7 @@ func buildTableRows(locations []*locationpb.Location, status string, l entydad.L
 				URL: routes.SetStatusURL + "?status=inactive", ItemName: name,
 				ConfirmTitle:   l.Actions.Deactivate,
 				ConfirmMessage: fmt.Sprintf("Are you sure you want to deactivate %s?", name),
+				Disabled: !perms.Can("location", "update"), DisabledTooltip: "No permission",
 			})
 		} else {
 			actions = append(actions, types.TableAction{
@@ -187,6 +193,7 @@ func buildTableRows(locations []*locationpb.Location, status string, l entydad.L
 				URL: routes.SetStatusURL + "?status=active", ItemName: name,
 				ConfirmTitle:   l.Actions.Activate,
 				ConfirmMessage: fmt.Sprintf("Are you sure you want to activate %s?", name),
+				Disabled: !perms.Can("location", "update"), DisabledTooltip: "No permission",
 			})
 		}
 		isInUse := inUseIDs[id]
@@ -200,6 +207,9 @@ func buildTableRows(locations []*locationpb.Location, status string, l entydad.L
 		if isInUse {
 			deleteAction.Disabled = true
 			deleteAction.DisabledTooltip = "Cannot delete: location is in use"
+		} else if !perms.Can("location", "delete") {
+			deleteAction.Disabled = true
+			deleteAction.DisabledTooltip = "No permission"
 		}
 		actions = append(actions, deleteAction)
 

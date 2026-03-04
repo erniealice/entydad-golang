@@ -94,6 +94,10 @@ func formatPermissionType(pt permissionpb.PermissionType) string {
 // NewAddAction creates the permission add action (GET = form, POST = create).
 func NewAddAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("permission", "create") {
+			return entydad.HTMXError("Permission denied")
+		}
 		if viewCtx.Request.Method == http.MethodGet {
 			return view.OK("permission-drawer-form", &FormData{
 				FormAction:            deps.Routes.AddURL,
@@ -134,6 +138,10 @@ func NewAddAction(deps *Deps) view.View {
 // NewEditAction creates the permission edit action (GET = form, POST = update).
 func NewEditAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("permission", "update") {
+			return entydad.HTMXError("Permission denied")
+		}
 		id := viewCtx.Request.PathValue("id")
 
 		if viewCtx.Request.Method == http.MethodGet {
@@ -192,6 +200,10 @@ func NewEditAction(deps *Deps) view.View {
 // NewDeleteAction creates the permission delete action (POST only).
 func NewDeleteAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("permission", "delete") {
+			return entydad.HTMXError("Permission denied")
+		}
 		id := viewCtx.Request.URL.Query().Get("id")
 		if id == "" {
 			_ = viewCtx.Request.ParseForm()
@@ -216,6 +228,10 @@ func NewDeleteAction(deps *Deps) view.View {
 // NewBulkDeleteAction creates the permission bulk delete action (POST only).
 func NewBulkDeleteAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("permission", "delete") {
+			return entydad.HTMXError("Permission denied")
+		}
 		_ = viewCtx.Request.ParseMultipartForm(32 << 20)
 
 		ids := viewCtx.Request.Form["id"]
@@ -239,6 +255,10 @@ func NewBulkDeleteAction(deps *Deps) view.View {
 // NewSetStatusAction creates the permission activate/deactivate action (POST only).
 func NewSetStatusAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("permission", "update") {
+			return entydad.HTMXError("Permission denied")
+		}
 		id := viewCtx.Request.URL.Query().Get("id")
 		targetStatus := viewCtx.Request.URL.Query().Get("status")
 
@@ -266,6 +286,10 @@ func NewSetStatusAction(deps *Deps) view.View {
 // NewBulkSetStatusAction creates the permission bulk activate/deactivate action (POST only).
 func NewBulkSetStatusAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("permission", "update") {
+			return entydad.HTMXError("Permission denied")
+		}
 		_ = viewCtx.Request.ParseMultipartForm(32 << 20)
 
 		ids := viewCtx.Request.Form["id"]

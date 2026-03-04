@@ -87,6 +87,7 @@ func NewTableView(deps *Deps) view.View {
 
 // buildTableConfig fetches client data and builds the table configuration.
 func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.TableConfig, error) {
+	perms := view.GetUserPermissions(ctx)
 	resp, err := deps.GetListPageData(ctx, &clientpb.GetClientListPageDataRequest{})
 	if err != nil {
 		log.Printf("Failed to list clients: %v", err)
@@ -105,7 +106,7 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 
 	l := deps.Labels
 	columns := clientColumns(l)
-	rows := buildTableRows(resp.GetClientList(), status, l, deps.Routes, inUseIDs)
+	rows := buildTableRows(resp.GetClientList(), status, l, deps.Routes, inUseIDs, perms)
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
@@ -134,9 +135,11 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 			Message: statusEmptyMessage(l, status),
 		},
 		PrimaryAction: &types.PrimaryAction{
-			Label:     l.Buttons.AddNew,
-			ActionURL: deps.Routes.AddURL,
-			Icon:      "icon-plus",
+			Label:           l.Buttons.AddNew,
+			ActionURL:       deps.Routes.AddURL,
+			Icon:            "icon-plus",
+			Disabled:        !perms.Can("client", "create"),
+			DisabledTooltip: "No permission",
 		},
 		BulkActions: &bulkCfg,
 	}
@@ -154,7 +157,7 @@ func clientColumns(l entydad.ClientLabels) []types.TableColumn {
 	}
 }
 
-func buildTableRows(clients []*clientpb.Client, status string, l entydad.ClientLabels, routes entydad.ClientRoutes, inUseIDs map[string]bool) []types.TableRow {
+func buildTableRows(clients []*clientpb.Client, status string, l entydad.ClientLabels, routes entydad.ClientRoutes, inUseIDs map[string]bool, perms *types.UserPermissions) []types.TableRow {
 	rows := []types.TableRow{}
 	for _, c := range clients {
 		active := c.GetActive()
@@ -187,7 +190,7 @@ func buildTableRows(clients []*clientpb.Client, status string, l entydad.ClientL
 				"status":    recordStatus,
 				"deletable": strconv.FormatBool(!isInUse),
 			},
-			Actions: buildRowActions(id, name, active, isInUse, l, routes),
+			Actions: buildRowActions(id, name, active, isInUse, l, routes, perms),
 		})
 	}
 	return rows
@@ -256,10 +259,11 @@ func statusVariant(status string) string {
 	}
 }
 
-func buildRowActions(id, name string, active, isInUse bool, l entydad.ClientLabels, routes entydad.ClientRoutes) []types.TableAction {
+func buildRowActions(id, name string, active, isInUse bool, l entydad.ClientLabels, routes entydad.ClientRoutes, perms *types.UserPermissions) []types.TableAction {
 	actions := []types.TableAction{
 		{Type: "view", Label: l.Detail.Actions.ViewClient, Action: "view", Href: route.ResolveURL(routes.DetailURL, "id", id)},
-		{Type: "edit", Label: l.Detail.Actions.EditClient, Action: "edit", URL: route.ResolveURL(routes.EditURL, "id", id), DrawerTitle: l.Detail.Actions.EditClient},
+		{Type: "edit", Label: l.Detail.Actions.EditClient, Action: "edit", URL: route.ResolveURL(routes.EditURL, "id", id), DrawerTitle: l.Detail.Actions.EditClient,
+			Disabled: !perms.Can("client", "update"), DisabledTooltip: "No permission"},
 	}
 	if active {
 		actions = append(actions, types.TableAction{
@@ -267,6 +271,7 @@ func buildRowActions(id, name string, active, isInUse bool, l entydad.ClientLabe
 			URL: routes.SetStatusURL + "?status=inactive", ItemName: name,
 			ConfirmTitle:   l.Detail.Actions.DeactivateClient,
 			ConfirmMessage: fmt.Sprintf("Are you sure you want to deactivate %s?", name),
+			Disabled: !perms.Can("client", "update"), DisabledTooltip: "No permission",
 		})
 	} else {
 		actions = append(actions, types.TableAction{
@@ -274,6 +279,7 @@ func buildRowActions(id, name string, active, isInUse bool, l entydad.ClientLabe
 			URL: routes.SetStatusURL + "?status=active", ItemName: name,
 			ConfirmTitle:   l.Detail.Actions.ActivateClient,
 			ConfirmMessage: fmt.Sprintf("Are you sure you want to activate %s?", name),
+			Disabled: !perms.Can("client", "update"), DisabledTooltip: "No permission",
 		})
 	}
 	deleteAction := types.TableAction{
@@ -286,6 +292,9 @@ func buildRowActions(id, name string, active, isInUse bool, l entydad.ClientLabe
 	if isInUse {
 		deleteAction.Disabled = true
 		deleteAction.DisabledTooltip = "Cannot delete: customer has sales records"
+	} else if !perms.Can("client", "delete") {
+		deleteAction.Disabled = true
+		deleteAction.DisabledTooltip = "No permission"
 	}
 	actions = append(actions, deleteAction)
 	return actions

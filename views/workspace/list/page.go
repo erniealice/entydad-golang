@@ -84,6 +84,8 @@ func NewTableView(deps *Deps) view.View {
 
 // buildTableConfig fetches workspace data and builds the table configuration.
 func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.TableConfig, error) {
+	perms := view.GetUserPermissions(ctx)
+
 	resp, err := deps.GetListPageData(ctx, &workspacepb.GetWorkspaceListPageDataRequest{})
 	if err != nil {
 		log.Printf("Failed to list workspaces: %v", err)
@@ -92,7 +94,7 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 
 	l := deps.Labels
 	columns := workspaceColumns(l)
-	rows := buildTableRows(resp.GetWorkspaceList(), status, l, deps.Routes)
+	rows := buildTableRows(resp.GetWorkspaceList(), status, l, deps.Routes, perms)
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
@@ -121,9 +123,11 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 			Message: statusEmptyMessage(l, status),
 		},
 		PrimaryAction: &types.PrimaryAction{
-			Label:     l.Buttons.AddWorkspace,
-			ActionURL: deps.Routes.AddURL,
-			Icon:      "icon-plus",
+			Label:           l.Buttons.AddWorkspace,
+			ActionURL:       deps.Routes.AddURL,
+			Icon:            "icon-plus",
+			Disabled:        !perms.Can("workspace", "create"),
+			DisabledTooltip: "No permission",
 		},
 		BulkActions: &bulkCfg,
 	}
@@ -141,7 +145,7 @@ func workspaceColumns(l entydad.WorkspaceLabels) []types.TableColumn {
 	}
 }
 
-func buildTableRows(workspaces []*workspacepb.Workspace, status string, l entydad.WorkspaceLabels, routes entydad.WorkspaceRoutes) []types.TableRow {
+func buildTableRows(workspaces []*workspacepb.Workspace, status string, l entydad.WorkspaceLabels, routes entydad.WorkspaceRoutes, perms *types.UserPermissions) []types.TableRow {
 	rows := []types.TableRow{}
 	for _, w := range workspaces {
 		active := w.GetActive()
@@ -166,7 +170,8 @@ func buildTableRows(workspaces []*workspacepb.Workspace, status string, l entyda
 		}
 
 		actions := []types.TableAction{
-			{Type: "edit", Label: l.Actions.Edit, Action: "edit", URL: route.ResolveURL(routes.EditURL, "id", id), DrawerTitle: l.Actions.Edit},
+			{Type: "edit", Label: l.Actions.Edit, Action: "edit", URL: route.ResolveURL(routes.EditURL, "id", id), DrawerTitle: l.Actions.Edit,
+				Disabled: !perms.Can("workspace", "update"), DisabledTooltip: "No permission"},
 		}
 		if active {
 			actions = append(actions, types.TableAction{
@@ -174,6 +179,7 @@ func buildTableRows(workspaces []*workspacepb.Workspace, status string, l entyda
 				URL: routes.SetStatusURL + "?status=inactive", ItemName: name,
 				ConfirmTitle:   l.Actions.Deactivate,
 				ConfirmMessage: fmt.Sprintf("Are you sure you want to deactivate %s?", name),
+				Disabled: !perms.Can("workspace", "update"), DisabledTooltip: "No permission",
 			})
 		} else {
 			actions = append(actions, types.TableAction{
@@ -181,12 +187,18 @@ func buildTableRows(workspaces []*workspacepb.Workspace, status string, l entyda
 				URL: routes.SetStatusURL + "?status=active", ItemName: name,
 				ConfirmTitle:   l.Actions.Activate,
 				ConfirmMessage: fmt.Sprintf("Are you sure you want to activate %s?", name),
+				Disabled: !perms.Can("workspace", "update"), DisabledTooltip: "No permission",
 			})
 		}
-		actions = append(actions, types.TableAction{
+		deleteAction := types.TableAction{
 			Type: "delete", Label: l.Actions.Delete, Action: "delete",
 			URL: routes.DeleteURL, ItemName: name,
-		})
+		}
+		if !perms.Can("workspace", "delete") {
+			deleteAction.Disabled = true
+			deleteAction.DisabledTooltip = "No permission"
+		}
+		actions = append(actions, deleteAction)
 
 		rows = append(rows, types.TableRow{
 			ID: id,

@@ -90,6 +90,7 @@ func NewTabAction(deps *Deps) view.View {
 
 // buildPageData loads user data and builds the PageData for the given active tab.
 func buildPageData(ctx context.Context, deps *Deps, id, activeTab string, viewCtx *view.ViewContext) (*PageData, error) {
+	perms := view.GetUserPermissions(ctx)
 	resp, err := deps.ReadUser(ctx, &userpb.ReadUserRequest{
 		Data: &userpb.User{Id: id},
 	})
@@ -158,7 +159,7 @@ func buildPageData(ctx context.Context, deps *Deps, id, activeTab string, viewCt
 	// Load tab-specific data
 	switch activeTab {
 	case "roles":
-		tableConfig, err := buildRolesTable(ctx, deps, id)
+		tableConfig, err := buildRolesTable(ctx, deps, id, perms)
 		if err != nil {
 			log.Printf("Failed to build roles table for user %s: %v", id, err)
 		} else {
@@ -225,7 +226,7 @@ func getUserRoles(ctx context.Context, deps *Deps, userID string) (int, []string
 // Roles tab table
 // ---------------------------------------------------------------------------
 
-func buildRolesTable(ctx context.Context, deps *Deps, userID string) (*types.TableConfig, error) {
+func buildRolesTable(ctx context.Context, deps *Deps, userID string, perms *types.UserPermissions) (*types.TableConfig, error) {
 	if deps.ListWorkspaceUsers == nil || deps.GetWorkspaceUserItemPageData == nil {
 		return nil, fmt.Errorf("workspace user dependencies not available")
 	}
@@ -291,6 +292,7 @@ func buildRolesTable(ctx context.Context, deps *Deps, userID string) (*types.Tab
 				ItemName:       roleName,
 				ConfirmTitle:   l.Actions.Remove,
 				ConfirmMessage: fmt.Sprintf("Are you sure you want to remove %s from this user?", roleName),
+				Disabled: !perms.Can("user", "update"), DisabledTooltip: "No permission",
 			},
 		}
 
@@ -334,9 +336,11 @@ func buildRolesTable(ctx context.Context, deps *Deps, userID string) (*types.Tab
 			Message: l.Empty.Message,
 		},
 		PrimaryAction: &types.PrimaryAction{
-			Label:     l.Buttons.AssignRole,
-			ActionURL: route.ResolveURL(deps.Routes.DetailRolesAssignURL, "id", userID),
-			Icon:      "icon-plus",
+			Label:           l.Buttons.AssignRole,
+			ActionURL:       route.ResolveURL(deps.Routes.DetailRolesAssignURL, "id", userID),
+			Icon:            "icon-plus",
+			Disabled:        !perms.Can("user", "update"),
+			DisabledTooltip: "No permission",
 		},
 	}
 	types.ApplyTableSettings(tableConfig)

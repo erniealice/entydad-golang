@@ -39,6 +39,9 @@ type ClientRoutes struct {
 	TabActionURL     string `json:"tab_action_url"`
 	SetStatusURL     string `json:"set_status_url"`
 	BulkSetStatusURL string `json:"bulk_set_status_url"`
+
+	// Report routes
+	ReceivablesAgingURL string `json:"receivables_aging_url"`
 }
 
 // DefaultClientRoutes returns a ClientRoutes populated from the package-level
@@ -56,6 +59,8 @@ func DefaultClientRoutes() ClientRoutes {
 		TabActionURL:     ClientTabActionURL,
 		SetStatusURL:     ClientSetStatusURL,
 		BulkSetStatusURL: ClientBulkSetStatusURL,
+
+		ReceivablesAgingURL: ReceivablesAgingURL,
 	}
 }
 
@@ -73,6 +78,8 @@ func (r ClientRoutes) RouteMap() map[string]string {
 		"client.tab_action":     r.TabActionURL,
 		"client.set_status":     r.SetStatusURL,
 		"client.bulk_set_status": r.BulkSetStatusURL,
+
+		"client.receivables_aging": r.ReceivablesAgingURL,
 	}
 }
 
@@ -435,6 +442,9 @@ type SupplierRoutes struct {
 	TabActionURL     string `json:"tab_action_url"`
 	SetStatusURL     string `json:"set_status_url"`
 	BulkSetStatusURL string `json:"bulk_set_status_url"`
+
+	// Report routes
+	PayablesAgingURL string `json:"payables_aging_url"`
 }
 
 // DefaultSupplierRoutes returns a SupplierRoutes populated from the
@@ -451,6 +461,8 @@ func DefaultSupplierRoutes() SupplierRoutes {
 		TabActionURL:     SupplierTabActionURL,
 		SetStatusURL:     SupplierSetStatusURL,
 		BulkSetStatusURL: SupplierBulkSetStatusURL,
+
+		PayablesAgingURL: PayablesAgingURL,
 	}
 }
 
@@ -467,6 +479,8 @@ func (r SupplierRoutes) RouteMap() map[string]string {
 		"supplier.tab_action":      r.TabActionURL,
 		"supplier.set_status":      r.SetStatusURL,
 		"supplier.bulk_set_status": r.BulkSetStatusURL,
+
+		"supplier.payables_aging": r.PayablesAgingURL,
 	}
 }
 

@@ -87,6 +87,8 @@ func NewTableView(deps *Deps) view.View {
 
 // buildTableConfig fetches supplier data and builds the table configuration.
 func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.TableConfig, error) {
+	perms := view.GetUserPermissions(ctx)
+
 	resp, err := deps.GetListPageData(ctx, &supplierpb.GetSupplierListPageDataRequest{})
 	if err != nil {
 		log.Printf("Failed to list suppliers: %v", err)
@@ -105,7 +107,7 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 
 	l := deps.Labels
 	columns := supplierColumns(l)
-	rows := buildTableRows(resp.GetSupplierList(), status, l, deps.Routes, inUseIDs)
+	rows := buildTableRows(resp.GetSupplierList(), status, l, deps.Routes, inUseIDs, perms)
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
@@ -134,9 +136,11 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 			Message: statusEmptyMessage(l, status),
 		},
 		PrimaryAction: &types.PrimaryAction{
-			Label:     l.Buttons.AddNew,
-			ActionURL: deps.Routes.AddURL,
-			Icon:      "icon-plus",
+			Label:           l.Buttons.AddNew,
+			ActionURL:       deps.Routes.AddURL,
+			Icon:            "icon-plus",
+			Disabled:        !perms.Can("supplier", "create"),
+			DisabledTooltip: "No permission",
 		},
 		BulkActions: &bulkCfg,
 	}
@@ -157,7 +161,7 @@ func supplierColumns(l entydad.SupplierLabels) []types.TableColumn {
 	}
 }
 
-func buildTableRows(suppliers []*supplierpb.Supplier, status string, l entydad.SupplierLabels, routes entydad.SupplierRoutes, inUseIDs map[string]bool) []types.TableRow {
+func buildTableRows(suppliers []*supplierpb.Supplier, status string, l entydad.SupplierLabels, routes entydad.SupplierRoutes, inUseIDs map[string]bool, perms *types.UserPermissions) []types.TableRow {
 	rows := []types.TableRow{}
 	for _, s := range suppliers {
 		recordStatus := supplierStatus(s)
@@ -194,7 +198,7 @@ func buildTableRows(suppliers []*supplierpb.Supplier, status string, l entydad.S
 				"status":       recordStatus,
 				"deletable":    strconv.FormatBool(!isInUse),
 			},
-			Actions: buildRowActions(id, companyName, recordStatus, isInUse, l, routes),
+			Actions: buildRowActions(id, companyName, recordStatus, isInUse, l, routes, perms),
 		})
 	}
 	return rows
@@ -277,10 +281,11 @@ func statusVariant(status string) string {
 	}
 }
 
-func buildRowActions(id, companyName, status string, isInUse bool, l entydad.SupplierLabels, routes entydad.SupplierRoutes) []types.TableAction {
+func buildRowActions(id, companyName, status string, isInUse bool, l entydad.SupplierLabels, routes entydad.SupplierRoutes, perms *types.UserPermissions) []types.TableAction {
 	actions := []types.TableAction{
 		{Type: "view", Label: l.Actions.View, Action: "view", Href: route.ResolveURL(routes.DetailURL, "id", id)},
-		{Type: "edit", Label: l.Actions.Edit, Action: "edit", URL: route.ResolveURL(routes.EditURL, "id", id), DrawerTitle: l.Actions.Edit},
+		{Type: "edit", Label: l.Actions.Edit, Action: "edit", URL: route.ResolveURL(routes.EditURL, "id", id), DrawerTitle: l.Actions.Edit,
+			Disabled: !perms.Can("supplier", "update"), DisabledTooltip: "No permission"},
 	}
 
 	switch status {
@@ -290,6 +295,7 @@ func buildRowActions(id, companyName, status string, isInUse bool, l entydad.Sup
 			URL: routes.SetStatusURL + "?status=blocked", ItemName: companyName,
 			ConfirmTitle:   l.Actions.Block,
 			ConfirmMessage: fmt.Sprintf("Are you sure you want to block %s?", companyName),
+			Disabled: !perms.Can("supplier", "update"), DisabledTooltip: "No permission",
 		})
 	case "blocked":
 		actions = append(actions, types.TableAction{
@@ -297,6 +303,7 @@ func buildRowActions(id, companyName, status string, isInUse bool, l entydad.Sup
 			URL: routes.SetStatusURL + "?status=active", ItemName: companyName,
 			ConfirmTitle:   l.Actions.Activate,
 			ConfirmMessage: fmt.Sprintf("Are you sure you want to activate %s?", companyName),
+			Disabled: !perms.Can("supplier", "update"), DisabledTooltip: "No permission",
 		})
 	case "on_hold":
 		actions = append(actions, types.TableAction{
@@ -304,6 +311,7 @@ func buildRowActions(id, companyName, status string, isInUse bool, l entydad.Sup
 			URL: routes.SetStatusURL + "?status=active", ItemName: companyName,
 			ConfirmTitle:   l.Actions.Activate,
 			ConfirmMessage: fmt.Sprintf("Are you sure you want to activate %s?", companyName),
+			Disabled: !perms.Can("supplier", "update"), DisabledTooltip: "No permission",
 		})
 	}
 
@@ -317,6 +325,9 @@ func buildRowActions(id, companyName, status string, isInUse bool, l entydad.Sup
 	if isInUse {
 		deleteAction.Disabled = true
 		deleteAction.DisabledTooltip = "Cannot delete: supplier has linked records"
+	} else if !perms.Can("supplier", "delete") {
+		deleteAction.Disabled = true
+		deleteAction.DisabledTooltip = "No permission"
 	}
 	actions = append(actions, deleteAction)
 	return actions

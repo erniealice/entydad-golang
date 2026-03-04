@@ -89,6 +89,7 @@ func NewTabAction(deps *Deps) view.View {
 
 // buildPageData loads role data and builds the PageData for the given active tab.
 func buildPageData(ctx context.Context, deps *Deps, id, activeTab string, viewCtx *view.ViewContext) (*PageData, error) {
+	perms := view.GetUserPermissions(ctx)
 	resp, err := deps.ReadRole(ctx, &rolepb.ReadRoleRequest{
 		Data: &rolepb.Role{Id: id},
 	})
@@ -169,14 +170,14 @@ func buildPageData(ctx context.Context, deps *Deps, id, activeTab string, viewCt
 	// Load tab-specific data
 	switch activeTab {
 	case "permissions":
-		tableConfig, err := buildPermissionsTable(ctx, deps, id)
+		tableConfig, err := buildPermissionsTable(ctx, deps, id, perms)
 		if err != nil {
 			log.Printf("Failed to build permissions table for role %s: %v", id, err)
 		} else {
 			pageData.PermissionsTable = tableConfig
 		}
 	case "users":
-		tableConfig, err := buildUsersTable(ctx, deps, id)
+		tableConfig, err := buildUsersTable(ctx, deps, id, perms)
 		if err != nil {
 			log.Printf("Failed to build users table for role %s: %v", id, err)
 		} else {
@@ -201,7 +202,7 @@ func buildTabItems(id string, labels entydad.RoleLabels, routes entydad.RoleRout
 // Permissions tab table
 // ---------------------------------------------------------------------------
 
-func buildPermissionsTable(ctx context.Context, deps *Deps, roleID string) (*types.TableConfig, error) {
+func buildPermissionsTable(ctx context.Context, deps *Deps, roleID string, perms *types.UserPermissions) (*types.TableConfig, error) {
 	if deps.RoleGetItemPageData == nil {
 		return nil, fmt.Errorf("RoleGetItemPageData not available")
 	}
@@ -252,6 +253,7 @@ func buildPermissionsTable(ctx context.Context, deps *Deps, roleID string) (*typ
 				ItemName:       permName,
 				ConfirmTitle:   l.Actions.Remove,
 				ConfirmMessage: fmt.Sprintf("Are you sure you want to remove %s from this role?", permName),
+				Disabled: !perms.Can("role", "update"), DisabledTooltip: "No permission",
 			},
 		}
 
@@ -295,9 +297,11 @@ func buildPermissionsTable(ctx context.Context, deps *Deps, roleID string) (*typ
 			Message: l.Empty.Message,
 		},
 		PrimaryAction: &types.PrimaryAction{
-			Label:     l.Buttons.AssignPermission,
-			ActionURL: route.ResolveURL(deps.Routes.DetailPermissionsAssignURL, "id", roleID),
-			Icon:      "icon-plus",
+			Label:           l.Buttons.AssignPermission,
+			ActionURL:       route.ResolveURL(deps.Routes.DetailPermissionsAssignURL, "id", roleID),
+			Icon:            "icon-plus",
+			Disabled:        !perms.Can("role", "update"),
+			DisabledTooltip: "No permission",
 		},
 	}
 	types.ApplyTableSettings(tableConfig)
@@ -309,7 +313,7 @@ func buildPermissionsTable(ctx context.Context, deps *Deps, roleID string) (*typ
 // Users tab table
 // ---------------------------------------------------------------------------
 
-func buildUsersTable(ctx context.Context, deps *Deps, roleID string) (*types.TableConfig, error) {
+func buildUsersTable(ctx context.Context, deps *Deps, roleID string, perms *types.UserPermissions) (*types.TableConfig, error) {
 	var users []roleusers.UserByRole
 	if deps.GetUsersByRoleID != nil {
 		var err error
@@ -337,6 +341,7 @@ func buildUsersTable(ctx context.Context, deps *Deps, roleID string) (*types.Tab
 				ItemName:       u.UserName,
 				ConfirmTitle:   l.Actions.Remove,
 				ConfirmMessage: fmt.Sprintf("Are you sure you want to remove %s from this role?", u.UserName),
+				Disabled: !perms.Can("role", "update"), DisabledTooltip: "No permission",
 			},
 		}
 
@@ -378,9 +383,11 @@ func buildUsersTable(ctx context.Context, deps *Deps, roleID string) (*types.Tab
 			Message: l.Empty.Message,
 		},
 		PrimaryAction: &types.PrimaryAction{
-			Label:     l.Buttons.AssignUser,
-			ActionURL: route.ResolveURL(deps.Routes.UsersAssignURL, "id", roleID),
-			Icon:      "icon-plus",
+			Label:           l.Buttons.AssignUser,
+			ActionURL:       route.ResolveURL(deps.Routes.UsersAssignURL, "id", roleID),
+			Icon:            "icon-plus",
+			Disabled:        !perms.Can("role", "update"),
+			DisabledTooltip: "No permission",
 		},
 	}
 	types.ApplyTableSettings(tableConfig)
