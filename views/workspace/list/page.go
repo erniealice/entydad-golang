@@ -21,6 +21,7 @@ type Deps struct {
 	RefreshURL      string
 	Routes          entydad.WorkspaceRoutes
 	Labels          entydad.WorkspaceLabels
+	SharedLabels    entydad.SharedLabels
 	CommonLabels    pyeza.CommonLabels
 	TableLabels     types.TableLabels
 }
@@ -94,11 +95,11 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 
 	l := deps.Labels
 	columns := workspaceColumns(l)
-	rows := buildTableRows(resp.GetWorkspaceList(), status, l, deps.Routes, perms)
+	rows := buildTableRows(resp.GetWorkspaceList(), status, l, deps.SharedLabels, deps.Routes, perms)
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
-	bulkCfg.Actions = buildBulkActions(l, deps.CommonLabels, status, deps.Routes)
+	bulkCfg.Actions = buildBulkActions(l, deps.SharedLabels, deps.CommonLabels, status, deps.Routes)
 
 	refreshURL := route.ResolveURL(deps.Routes.TableURL, "status", status)
 
@@ -127,7 +128,7 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 			ActionURL:       deps.Routes.AddURL,
 			Icon:            "icon-plus",
 			Disabled:        !perms.Can("workspace", "create"),
-			DisabledTooltip: "No permission",
+			DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
 		},
 		BulkActions: &bulkCfg,
 	}
@@ -145,7 +146,7 @@ func workspaceColumns(l entydad.WorkspaceLabels) []types.TableColumn {
 	}
 }
 
-func buildTableRows(workspaces []*workspacepb.Workspace, status string, l entydad.WorkspaceLabels, routes entydad.WorkspaceRoutes, perms *types.UserPermissions) []types.TableRow {
+func buildTableRows(workspaces []*workspacepb.Workspace, status string, l entydad.WorkspaceLabels, sl entydad.SharedLabels, routes entydad.WorkspaceRoutes, perms *types.UserPermissions) []types.TableRow {
 	rows := []types.TableRow{}
 	for _, w := range workspaces {
 		active := w.GetActive()
@@ -162,32 +163,32 @@ func buildTableRows(workspaces []*workspacepb.Workspace, status string, l entyda
 		description := w.GetDescription()
 		private := w.GetPrivate()
 
-		privateLabel := "No"
+		privateLabel := sl.Badges.No
 		privateVariant := "default"
 		if private {
-			privateLabel = "Yes"
+			privateLabel = sl.Badges.Yes
 			privateVariant = "info"
 		}
 
 		actions := []types.TableAction{
 			{Type: "edit", Label: l.Actions.Edit, Action: "edit", URL: route.ResolveURL(routes.EditURL, "id", id), DrawerTitle: l.Actions.Edit,
-				Disabled: !perms.Can("workspace", "update"), DisabledTooltip: "No permission"},
+				Disabled: !perms.Can("workspace", "update"), DisabledTooltip: sl.Badges.NoPermission},
 		}
 		if active {
 			actions = append(actions, types.TableAction{
 				Type: "deactivate", Label: l.Actions.Deactivate, Action: "deactivate",
 				URL: routes.SetStatusURL + "?status=inactive", ItemName: name,
 				ConfirmTitle:   l.Actions.Deactivate,
-				ConfirmMessage: fmt.Sprintf("Are you sure you want to deactivate %s?", name),
-				Disabled: !perms.Can("workspace", "update"), DisabledTooltip: "No permission",
+				ConfirmMessage: fmt.Sprintf(sl.Confirm.Deactivate, name),
+				Disabled: !perms.Can("workspace", "update"), DisabledTooltip: sl.Badges.NoPermission,
 			})
 		} else {
 			actions = append(actions, types.TableAction{
 				Type: "activate", Label: l.Actions.Activate, Action: "activate",
 				URL: routes.SetStatusURL + "?status=active", ItemName: name,
 				ConfirmTitle:   l.Actions.Activate,
-				ConfirmMessage: fmt.Sprintf("Are you sure you want to activate %s?", name),
-				Disabled: !perms.Can("workspace", "update"), DisabledTooltip: "No permission",
+				ConfirmMessage: fmt.Sprintf(sl.Confirm.Activate, name),
+				Disabled: !perms.Can("workspace", "update"), DisabledTooltip: sl.Badges.NoPermission,
 			})
 		}
 		deleteAction := types.TableAction{
@@ -275,7 +276,7 @@ func statusVariant(status string) string {
 	}
 }
 
-func buildBulkActions(l entydad.WorkspaceLabels, common pyeza.CommonLabels, status string, routes entydad.WorkspaceRoutes) []types.BulkAction {
+func buildBulkActions(l entydad.WorkspaceLabels, sl entydad.SharedLabels, common pyeza.CommonLabels, status string, routes entydad.WorkspaceRoutes) []types.BulkAction {
 	actions := []types.BulkAction{}
 
 	switch status {
@@ -287,7 +288,7 @@ func buildBulkActions(l entydad.WorkspaceLabels, common pyeza.CommonLabels, stat
 			Variant:         "warning",
 			Endpoint:        routes.BulkSetStatusURL,
 			ConfirmTitle:    l.Actions.Deactivate,
-			ConfirmMessage:  "Are you sure you want to deactivate {{count}} workspace(s)?",
+			ConfirmMessage:  sl.Confirm.BulkDeactivate,
 			ExtraParamsJSON: `{"target_status":"inactive"}`,
 		})
 	case "inactive":
@@ -298,7 +299,7 @@ func buildBulkActions(l entydad.WorkspaceLabels, common pyeza.CommonLabels, stat
 			Variant:         "primary",
 			Endpoint:        routes.BulkSetStatusURL,
 			ConfirmTitle:    l.Actions.Activate,
-			ConfirmMessage:  "Are you sure you want to activate {{count}} workspace(s)?",
+			ConfirmMessage:  sl.Confirm.BulkActivate,
 			ExtraParamsJSON: `{"target_status":"active"}`,
 		})
 	}
@@ -310,7 +311,7 @@ func buildBulkActions(l entydad.WorkspaceLabels, common pyeza.CommonLabels, stat
 		Variant:        "danger",
 		Endpoint:       routes.BulkDeleteURL,
 		ConfirmTitle:   common.Bulk.Delete,
-		ConfirmMessage: "Are you sure you want to delete {{count}} workspace(s)? This action cannot be undone.",
+		ConfirmMessage: sl.Confirm.BulkDelete,
 	})
 
 	return actions

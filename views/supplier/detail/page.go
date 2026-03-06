@@ -193,7 +193,7 @@ func buildPageData(supplier *supplierpb.Supplier, id, activeTab string, viewCtx 
 		displayName = id
 	}
 
-	tabItems := buildTabItems(id, deps.Routes)
+	tabItems := buildTabItems(id, deps)
 
 	return &PageData{
 		PageData: types.PageData{
@@ -240,11 +240,12 @@ func buildPageData(supplier *supplierpb.Supplier, id, activeTab string, viewCtx 
 	}
 }
 
-func buildTabItems(id string, routes entydad.SupplierRoutes) []pyeza.TabItem {
+func buildTabItems(id string, deps *Deps) []pyeza.TabItem {
+	routes := deps.Routes
 	base := route.ResolveURL(routes.DetailURL, "id", id)
 	action := route.ResolveURL(routes.TabActionURL, "id", id, "tab", "")
 	return []pyeza.TabItem{
-		{Key: "info", Label: "Supplier Information", Href: base + "?tab=info", HxGet: action + "info", Icon: "icon-info"},
+		{Key: "info", Label: deps.Labels.Detail.InfoTab, Href: base + "?tab=info", HxGet: action + "info", Icon: "icon-info"},
 	}
 }
 

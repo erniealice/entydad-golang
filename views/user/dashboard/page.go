@@ -9,6 +9,8 @@ import (
 	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
+
+	"github.com/erniealice/entydad-golang"
 )
 
 // DashboardStats holds count values for stat cards.
@@ -43,6 +45,7 @@ type DashboardData struct {
 
 // Deps holds view dependencies.
 type Deps struct {
+	DashboardLabels  entydad.DashboardLabels
 	CommonLabels     pyeza.CommonLabels
 	GetDashboardData func(ctx context.Context) (*DashboardData, error)
 }
@@ -87,11 +90,11 @@ func NewView(deps *Deps) view.View {
 		pageData := &PageData{
 			PageData: types.PageData{
 				CacheVersion: viewCtx.CacheVersion,
-				Title:        "Users Dashboard",
+				Title:        deps.DashboardLabels.UserTitle,
 				CurrentPath:  viewCtx.CurrentPath,
 				ActiveNav:    "users",
 				ActiveSubNav: "dashboard",
-				HeaderTitle:  "Users Dashboard",
+				HeaderTitle:  deps.DashboardLabels.UserTitle,
 				HeaderIcon:   "icon-shield",
 				CommonLabels: deps.CommonLabels,
 			},

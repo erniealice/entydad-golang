@@ -22,6 +22,7 @@ type Deps struct {
 	GetUserRolesMap func(ctx context.Context) (map[string][]entydad.RoleBadge, error)
 	RefreshURL      string
 	Labels          entydad.UserLabels
+	SharedLabels    entydad.SharedLabels
 	CommonLabels    pyeza.CommonLabels
 	TableLabels     types.TableLabels
 }
@@ -106,11 +107,11 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 
 	l := deps.Labels
 	columns := userColumns(l)
-	rows := buildTableRows(resp.GetUserList(), status, l, userRolesMap, deps.Routes, perms)
+	rows := buildTableRows(resp.GetUserList(), status, l, deps.SharedLabels, userRolesMap, deps.Routes, perms)
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
-	bulkCfg.Actions = buildBulkActions(l, deps.CommonLabels, status, deps.Routes)
+	bulkCfg.Actions = buildBulkActions(l, deps.SharedLabels, deps.CommonLabels, status, deps.Routes)
 
 	refreshURL := route.ResolveURL(deps.Routes.TableURL, "status", status)
 
@@ -139,7 +140,7 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 			ActionURL:       deps.Routes.AddURL,
 			Icon:            "icon-plus",
 			Disabled:        !perms.Can("user", "create"),
-			DisabledTooltip: "No permission",
+			DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
 		},
 		BulkActions: &bulkCfg,
 	}
@@ -157,7 +158,7 @@ func userColumns(l entydad.UserLabels) []types.TableColumn {
 	}
 }
 
-func buildTableRows(users []*userpb.User, status string, l entydad.UserLabels, userRolesMap map[string][]entydad.RoleBadge, routes entydad.UserRoutes, perms *types.UserPermissions) []types.TableRow {
+func buildTableRows(users []*userpb.User, status string, l entydad.UserLabels, sl entydad.SharedLabels, userRolesMap map[string][]entydad.RoleBadge, routes entydad.UserRoutes, perms *types.UserPermissions) []types.TableRow {
 	rows := []types.TableRow{}
 	for _, u := range users {
 		active := u.GetActive()
@@ -185,23 +186,23 @@ func buildTableRows(users []*userpb.User, status string, l entydad.UserLabels, u
 		actions := []types.TableAction{
 			{Type: "view", Label: l.Actions.View, Action: "view", Href: route.ResolveURL(routes.DetailURL, "id", id)},
 			{Type: "edit", Label: l.Actions.Edit, Action: "edit", URL: route.ResolveURL(routes.EditURL, "id", id), DrawerTitle: l.Actions.Edit,
-				Disabled: !perms.Can("user", "update"), DisabledTooltip: "No permission"},
+				Disabled: !perms.Can("user", "update"), DisabledTooltip: sl.Badges.NoPermission},
 		}
 		if active {
 			actions = append(actions, types.TableAction{
 				Type: "deactivate", Label: l.Actions.Deactivate, Action: "deactivate",
 				URL: routes.SetStatusURL + "?status=inactive", ItemName: name,
 				ConfirmTitle:   l.Actions.Deactivate,
-				ConfirmMessage: fmt.Sprintf("Are you sure you want to deactivate %s?", name),
-				Disabled: !perms.Can("user", "update"), DisabledTooltip: "No permission",
+				ConfirmMessage: fmt.Sprintf(sl.Confirm.Deactivate, name),
+				Disabled: !perms.Can("user", "update"), DisabledTooltip: sl.Badges.NoPermission,
 			})
 		} else {
 			actions = append(actions, types.TableAction{
 				Type: "activate", Label: l.Actions.Activate, Action: "activate",
 				URL: routes.SetStatusURL + "?status=active", ItemName: name,
 				ConfirmTitle:   l.Actions.Activate,
-				ConfirmMessage: fmt.Sprintf("Are you sure you want to activate %s?", name),
-				Disabled: !perms.Can("user", "update"), DisabledTooltip: "No permission",
+				ConfirmMessage: fmt.Sprintf(sl.Confirm.Activate, name),
+				Disabled: !perms.Can("user", "update"), DisabledTooltip: sl.Badges.NoPermission,
 			})
 		}
 		rows = append(rows, types.TableRow{
@@ -278,7 +279,7 @@ func statusVariant(status string) string {
 	}
 }
 
-func buildBulkActions(l entydad.UserLabels, common pyeza.CommonLabels, status string, routes entydad.UserRoutes) []types.BulkAction {
+func buildBulkActions(l entydad.UserLabels, sl entydad.SharedLabels, common pyeza.CommonLabels, status string, routes entydad.UserRoutes) []types.BulkAction {
 	actions := []types.BulkAction{}
 
 	switch status {
@@ -290,7 +291,7 @@ func buildBulkActions(l entydad.UserLabels, common pyeza.CommonLabels, status st
 			Variant:         "warning",
 			Endpoint:        routes.BulkSetStatusURL,
 			ConfirmTitle:    l.Actions.Deactivate,
-			ConfirmMessage:  "Are you sure you want to deactivate {{count}} user(s)?",
+			ConfirmMessage:  sl.Confirm.BulkDeactivate,
 			ExtraParamsJSON: `{"target_status":"inactive"}`,
 		})
 	case "inactive":
@@ -301,7 +302,7 @@ func buildBulkActions(l entydad.UserLabels, common pyeza.CommonLabels, status st
 			Variant:         "primary",
 			Endpoint:        routes.BulkSetStatusURL,
 			ConfirmTitle:    l.Actions.Activate,
-			ConfirmMessage:  "Are you sure you want to activate {{count}} user(s)?",
+			ConfirmMessage:  sl.Confirm.BulkActivate,
 			ExtraParamsJSON: `{"target_status":"active"}`,
 		})
 	}

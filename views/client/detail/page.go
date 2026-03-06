@@ -132,7 +132,7 @@ func NewView(deps *Deps) view.View {
 			statusVariant = "warning"
 		}
 
-		tabItems := buildTabItems(id, deps.Routes)
+		tabItems := buildTabItems(id, deps)
 
 		// CRM fields
 		companyName := client.GetCompanyName()
@@ -203,12 +203,13 @@ func NewView(deps *Deps) view.View {
 	})
 }
 
-func buildTabItems(id string, routes entydad.ClientRoutes) []pyeza.TabItem {
+func buildTabItems(id string, deps *Deps) []pyeza.TabItem {
+	routes := deps.Routes
 	base := route.ResolveURL(routes.DetailURL, "id", id)
 	action := route.ResolveURL(routes.TabActionURL, "id", id, "tab", "")
 	return []pyeza.TabItem{
-		{Key: "basic", Label: "Basic Information", Href: base + "?tab=basic", HxGet: action + "basic", Icon: "icon-info"},
-		{Key: "history", Label: "Purchase History", Href: base + "?tab=history", HxGet: action + "history", Icon: "icon-shopping-bag"},
+		{Key: "basic", Label: deps.Labels.Detail.Tabs.Info, Href: base + "?tab=basic", HxGet: action + "basic", Icon: "icon-info"},
+		{Key: "history", Label: deps.Labels.Detail.Tabs.PurchaseHistory, Href: base + "?tab=history", HxGet: action + "history", Icon: "icon-shopping-bag"},
 	}
 }
 
@@ -261,7 +262,7 @@ func NewTabAction(deps *Deps) view.View {
 			Client:        client,
 			Labels:        deps.Labels,
 			ActiveTab:     tab,
-			TabItems:      buildTabItems(id, deps.Routes),
+			TabItems:      buildTabItems(id, deps),
 			ClientName:    clientName,
 			ClientEmail:   clientEmail,
 			ClientPhone:   clientPhone,

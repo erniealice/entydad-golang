@@ -44,11 +44,11 @@ func NewAssignAction(deps *ActionDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("role", "update") {
-			return entydad.HTMXError("Permission denied")
+			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		roleID := viewCtx.Request.PathValue("id")
 		if roleID == "" {
-			return entydad.HTMXError("Role ID is required")
+			return entydad.HTMXError(viewCtx.T("shared.errors.idRequired"))
 		}
 
 		if viewCtx.Request.Method == http.MethodGet {
@@ -104,12 +104,12 @@ func NewAssignAction(deps *ActionDeps) view.View {
 
 		// POST -- assign user to role
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return entydad.HTMXError("Invalid form data")
+			return entydad.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
 		}
 
 		workspaceUserID := viewCtx.Request.FormValue("workspace_user_id")
 		if workspaceUserID == "" {
-			return entydad.HTMXError("User is required")
+			return entydad.HTMXError(viewCtx.T("shared.errors.userRequired"))
 		}
 
 		_, err := deps.CreateWorkspaceUserRole(ctx, &workspaceuserrolepb.CreateWorkspaceUserRoleRequest{
@@ -133,11 +133,11 @@ func NewRemoveAction(deps *ActionDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("role", "update") {
-			return entydad.HTMXError("Permission denied")
+			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		roleID := viewCtx.Request.PathValue("id")
 		if roleID == "" {
-			return entydad.HTMXError("Role ID is required")
+			return entydad.HTMXError(viewCtx.T("shared.errors.idRequired"))
 		}
 
 		wurID := viewCtx.Request.URL.Query().Get("id")
@@ -146,7 +146,7 @@ func NewRemoveAction(deps *ActionDeps) view.View {
 			wurID = viewCtx.Request.FormValue("id")
 		}
 		if wurID == "" {
-			return entydad.HTMXError("Workspace-User-Role ID is required")
+			return entydad.HTMXError(viewCtx.T("shared.errors.idRequired"))
 		}
 
 		_, err := deps.DeleteWorkspaceUserRole(ctx, &workspaceuserrolepb.DeleteWorkspaceUserRoleRequest{

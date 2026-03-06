@@ -93,7 +93,7 @@ func NewAddAction(deps *Deps) view.View {
 		}
 
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return entydad.HTMXError("Invalid form data")
+			return entydad.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
 		}
 
 		r := viewCtx.Request
@@ -101,7 +101,7 @@ func NewAddAction(deps *Deps) view.View {
 		active := r.FormValue("active") == "true"
 
 		if isDuplicateTagName(ctx, deps.ListCategories, name, "") {
-			return entydad.HTMXError("Tag name already exists")
+			return entydad.HTMXError(viewCtx.T("shared.errors.tagNameExists"))
 		}
 
 		_, err := deps.CreateCategory(ctx, &categorypb.CreateCategoryRequest{
@@ -133,12 +133,12 @@ func NewEditAction(deps *Deps) view.View {
 			})
 			if err != nil {
 				log.Printf("Failed to read client tag %s: %v", id, err)
-				return entydad.HTMXError("Tag not found")
+				return entydad.HTMXError(viewCtx.T("shared.errors.notFound"))
 			}
 
 			data := resp.GetData()
 			if len(data) == 0 {
-				return entydad.HTMXError("Tag not found")
+				return entydad.HTMXError(viewCtx.T("shared.errors.notFound"))
 			}
 			cat := data[0]
 
@@ -155,7 +155,7 @@ func NewEditAction(deps *Deps) view.View {
 		}
 
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return entydad.HTMXError("Invalid form data")
+			return entydad.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
 		}
 
 		r := viewCtx.Request
@@ -163,7 +163,7 @@ func NewEditAction(deps *Deps) view.View {
 		active := r.FormValue("active") == "true"
 
 		if isDuplicateTagName(ctx, deps.ListCategories, name, id) {
-			return entydad.HTMXError("Tag name already exists")
+			return entydad.HTMXError(viewCtx.T("shared.errors.tagNameExists"))
 		}
 
 		_, err := deps.UpdateCategory(ctx, &categorypb.UpdateCategoryRequest{
@@ -194,7 +194,7 @@ func NewDeleteAction(deps *Deps) view.View {
 			id = viewCtx.Request.FormValue("id")
 		}
 		if id == "" {
-			return entydad.HTMXError("Tag ID is required")
+			return entydad.HTMXError(viewCtx.T("shared.errors.idRequired"))
 		}
 
 		_, err := deps.DeleteCategory(ctx, &categorypb.DeleteCategoryRequest{
@@ -216,7 +216,7 @@ func NewBulkDeleteAction(deps *Deps) view.View {
 
 		ids := viewCtx.Request.Form["id"]
 		if len(ids) == 0 {
-			return entydad.HTMXError("No tag IDs provided")
+			return entydad.HTMXError(viewCtx.T("shared.errors.noIdsProvided"))
 		}
 
 		for _, id := range ids {

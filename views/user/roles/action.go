@@ -47,11 +47,11 @@ func NewAssignAction(deps *ActionDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("user", "update") {
-			return entydad.HTMXError("Permission denied")
+			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		userID := viewCtx.Request.PathValue("id")
 		if userID == "" {
-			return entydad.HTMXError("User ID is required")
+			return entydad.HTMXError(viewCtx.T("shared.errors.idRequired"))
 		}
 
 		if viewCtx.Request.Method == http.MethodGet {
@@ -103,12 +103,12 @@ func NewAssignAction(deps *ActionDeps) view.View {
 
 		// POST -- assign role to user
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return entydad.HTMXError("Invalid form data")
+			return entydad.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
 		}
 
 		roleID := viewCtx.Request.FormValue("role_id")
 		if roleID == "" {
-			return entydad.HTMXError("Role is required")
+			return entydad.HTMXError(viewCtx.T("shared.errors.roleRequired"))
 		}
 
 		// Find workspace_user for this user
@@ -139,11 +139,11 @@ func NewRemoveAction(deps *ActionDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("user", "update") {
-			return entydad.HTMXError("Permission denied")
+			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		userID := viewCtx.Request.PathValue("id")
 		if userID == "" {
-			return entydad.HTMXError("User ID is required")
+			return entydad.HTMXError(viewCtx.T("shared.errors.idRequired"))
 		}
 
 		wurID := viewCtx.Request.URL.Query().Get("id")
@@ -152,7 +152,7 @@ func NewRemoveAction(deps *ActionDeps) view.View {
 			wurID = viewCtx.Request.FormValue("id")
 		}
 		if wurID == "" {
-			return entydad.HTMXError("Workspace-User-Role ID is required")
+			return entydad.HTMXError(viewCtx.T("shared.errors.idRequired"))
 		}
 
 		_, err := deps.DeleteWorkspaceUserRole(ctx, &workspaceuserrolepb.DeleteWorkspaceUserRoleRequest{

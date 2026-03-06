@@ -31,6 +31,7 @@ type Deps struct {
 	ReadRole         func(ctx context.Context, req *rolepb.ReadRoleRequest) (*rolepb.ReadRoleResponse, error)
 	Routes           entydad.RoleRoutes
 	Labels           entydad.RoleUserLabels
+	SharedLabels     entydad.SharedLabels
 	CommonLabels     pyeza.CommonLabels
 	TableLabels      types.TableLabels
 }
@@ -124,7 +125,7 @@ func buildTableConfig(ctx context.Context, deps *Deps, roleID string) (*types.Ta
 
 	l := deps.Labels
 	columns := userColumns(l)
-	rows := buildTableRows(users, roleID, l, deps.Routes)
+	rows := buildTableRows(users, roleID, l, deps.SharedLabels, deps.Routes)
 	types.ApplyColumnStyles(columns, rows)
 
 	refreshURL := route.ResolveURL(deps.Routes.UsersTableURL, "id", roleID)
@@ -168,7 +169,7 @@ func userColumns(l entydad.RoleUserLabels) []types.TableColumn {
 	}
 }
 
-func buildTableRows(users []UserByRole, roleID string, l entydad.RoleUserLabels, routes entydad.RoleRoutes) []types.TableRow {
+func buildTableRows(users []UserByRole, roleID string, l entydad.RoleUserLabels, sl entydad.SharedLabels, routes entydad.RoleRoutes) []types.TableRow {
 	rows := []types.TableRow{}
 
 	for _, u := range users {
@@ -178,7 +179,7 @@ func buildTableRows(users []UserByRole, roleID string, l entydad.RoleUserLabels,
 				URL:            route.ResolveURL(routes.UsersRemoveURL, "id", roleID),
 				ItemName:       u.UserName,
 				ConfirmTitle:   l.Actions.Remove,
-				ConfirmMessage: fmt.Sprintf("Are you sure you want to remove %s from this role?", u.UserName),
+				ConfirmMessage: fmt.Sprintf(sl.Confirm.Remove, u.UserName),
 			},
 		}
 

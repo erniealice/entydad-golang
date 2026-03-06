@@ -22,6 +22,7 @@ type Deps struct {
 	GetListPageData func(ctx context.Context, req *supplierpb.GetSupplierListPageDataRequest) (*supplierpb.GetSupplierListPageDataResponse, error)
 	GetInUseIDs     func(ctx context.Context, ids []string) (map[string]bool, error)
 	Labels          entydad.SupplierLabels
+	SharedLabels    entydad.SharedLabels
 	CommonLabels    pyeza.CommonLabels
 	TableLabels     types.TableLabels
 }
@@ -107,11 +108,11 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 
 	l := deps.Labels
 	columns := supplierColumns(l)
-	rows := buildTableRows(resp.GetSupplierList(), status, l, deps.Routes, inUseIDs, perms)
+	rows := buildTableRows(resp.GetSupplierList(), status, l, deps.SharedLabels, deps.Routes, inUseIDs, perms)
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
-	bulkCfg.Actions = buildBulkActions(l, deps.CommonLabels, status, deps.Routes)
+	bulkCfg.Actions = buildBulkActions(l, deps.SharedLabels, deps.CommonLabels, status, deps.Routes)
 
 	refreshURL := route.ResolveURL(deps.Routes.TableURL, "status", status)
 
@@ -140,7 +141,7 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 			ActionURL:       deps.Routes.AddURL,
 			Icon:            "icon-plus",
 			Disabled:        !perms.Can("supplier", "create"),
-			DisabledTooltip: "No permission",
+			DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
 		},
 		BulkActions: &bulkCfg,
 	}
@@ -161,7 +162,7 @@ func supplierColumns(l entydad.SupplierLabels) []types.TableColumn {
 	}
 }
 
-func buildTableRows(suppliers []*supplierpb.Supplier, status string, l entydad.SupplierLabels, routes entydad.SupplierRoutes, inUseIDs map[string]bool, perms *types.UserPermissions) []types.TableRow {
+func buildTableRows(suppliers []*supplierpb.Supplier, status string, l entydad.SupplierLabels, sl entydad.SharedLabels, routes entydad.SupplierRoutes, inUseIDs map[string]bool, perms *types.UserPermissions) []types.TableRow {
 	rows := []types.TableRow{}
 	for _, s := range suppliers {
 		recordStatus := supplierStatus(s)
@@ -198,7 +199,7 @@ func buildTableRows(suppliers []*supplierpb.Supplier, status string, l entydad.S
 				"status":       recordStatus,
 				"deletable":    strconv.FormatBool(!isInUse),
 			},
-			Actions: buildRowActions(id, companyName, recordStatus, isInUse, l, routes, perms),
+			Actions: buildRowActions(id, companyName, recordStatus, isInUse, l, sl, routes, perms),
 		})
 	}
 	return rows
@@ -281,11 +282,11 @@ func statusVariant(status string) string {
 	}
 }
 
-func buildRowActions(id, companyName, status string, isInUse bool, l entydad.SupplierLabels, routes entydad.SupplierRoutes, perms *types.UserPermissions) []types.TableAction {
+func buildRowActions(id, companyName, status string, isInUse bool, l entydad.SupplierLabels, sl entydad.SharedLabels, routes entydad.SupplierRoutes, perms *types.UserPermissions) []types.TableAction {
 	actions := []types.TableAction{
 		{Type: "view", Label: l.Actions.View, Action: "view", Href: route.ResolveURL(routes.DetailURL, "id", id)},
 		{Type: "edit", Label: l.Actions.Edit, Action: "edit", URL: route.ResolveURL(routes.EditURL, "id", id), DrawerTitle: l.Actions.Edit,
-			Disabled: !perms.Can("supplier", "update"), DisabledTooltip: "No permission"},
+			Disabled: !perms.Can("supplier", "update"), DisabledTooltip: sl.Badges.NoPermission},
 	}
 
 	switch status {
@@ -294,24 +295,24 @@ func buildRowActions(id, companyName, status string, isInUse bool, l entydad.Sup
 			Type: "deactivate", Label: l.Actions.Block, Action: "block",
 			URL: routes.SetStatusURL + "?status=blocked", ItemName: companyName,
 			ConfirmTitle:   l.Actions.Block,
-			ConfirmMessage: fmt.Sprintf("Are you sure you want to block %s?", companyName),
-			Disabled: !perms.Can("supplier", "update"), DisabledTooltip: "No permission",
+			ConfirmMessage: fmt.Sprintf(sl.Confirm.Block, companyName),
+			Disabled: !perms.Can("supplier", "update"), DisabledTooltip: sl.Badges.NoPermission,
 		})
 	case "blocked":
 		actions = append(actions, types.TableAction{
 			Type: "activate", Label: l.Actions.Activate, Action: "activate",
 			URL: routes.SetStatusURL + "?status=active", ItemName: companyName,
 			ConfirmTitle:   l.Actions.Activate,
-			ConfirmMessage: fmt.Sprintf("Are you sure you want to activate %s?", companyName),
-			Disabled: !perms.Can("supplier", "update"), DisabledTooltip: "No permission",
+			ConfirmMessage: fmt.Sprintf(sl.Confirm.Activate, companyName),
+			Disabled: !perms.Can("supplier", "update"), DisabledTooltip: sl.Badges.NoPermission,
 		})
 	case "on_hold":
 		actions = append(actions, types.TableAction{
 			Type: "activate", Label: l.Actions.Activate, Action: "activate",
 			URL: routes.SetStatusURL + "?status=active", ItemName: companyName,
 			ConfirmTitle:   l.Actions.Activate,
-			ConfirmMessage: fmt.Sprintf("Are you sure you want to activate %s?", companyName),
-			Disabled: !perms.Can("supplier", "update"), DisabledTooltip: "No permission",
+			ConfirmMessage: fmt.Sprintf(sl.Confirm.Activate, companyName),
+			Disabled: !perms.Can("supplier", "update"), DisabledTooltip: sl.Badges.NoPermission,
 		})
 	}
 
@@ -324,7 +325,7 @@ func buildRowActions(id, companyName, status string, isInUse bool, l entydad.Sup
 	}
 	if isInUse {
 		deleteAction.Disabled = true
-		deleteAction.DisabledTooltip = "Cannot delete: supplier has linked records"
+		deleteAction.DisabledTooltip = sl.Errors.CannotDeleteInUse
 	} else if !perms.Can("supplier", "delete") {
 		deleteAction.Disabled = true
 		deleteAction.DisabledTooltip = "No permission"
@@ -333,7 +334,7 @@ func buildRowActions(id, companyName, status string, isInUse bool, l entydad.Sup
 	return actions
 }
 
-func buildBulkActions(l entydad.SupplierLabels, cl pyeza.CommonLabels, status string, routes entydad.SupplierRoutes) []types.BulkAction {
+func buildBulkActions(l entydad.SupplierLabels, sl entydad.SharedLabels, cl pyeza.CommonLabels, status string, routes entydad.SupplierRoutes) []types.BulkAction {
 	actions := []types.BulkAction{}
 
 	switch status {
@@ -345,7 +346,7 @@ func buildBulkActions(l entydad.SupplierLabels, cl pyeza.CommonLabels, status st
 			Variant:         "warning",
 			Endpoint:        routes.BulkSetStatusURL,
 			ConfirmTitle:    l.Actions.Block,
-			ConfirmMessage:  "Are you sure you want to block {{count}} supplier(s)?",
+			ConfirmMessage:  sl.Confirm.BulkBlock,
 			ExtraParamsJSON: `{"target_status":"blocked"}`,
 		})
 	case "blocked", "on_hold":
@@ -356,7 +357,7 @@ func buildBulkActions(l entydad.SupplierLabels, cl pyeza.CommonLabels, status st
 			Variant:         "primary",
 			Endpoint:        routes.BulkSetStatusURL,
 			ConfirmTitle:    cl.Bulk.Activate,
-			ConfirmMessage:  "Are you sure you want to activate {{count}} supplier(s)?",
+			ConfirmMessage:  sl.Confirm.BulkActivate,
 			ExtraParamsJSON: `{"target_status":"active"}`,
 		})
 	}
@@ -368,7 +369,7 @@ func buildBulkActions(l entydad.SupplierLabels, cl pyeza.CommonLabels, status st
 		Variant:          "danger",
 		Endpoint:         routes.BulkDeleteURL,
 		ConfirmTitle:     cl.Bulk.Delete,
-		ConfirmMessage:   "Are you sure you want to delete {{count}} supplier(s)? This action cannot be undone.",
+		ConfirmMessage:   sl.Confirm.BulkDelete,
 		RequiresDataAttr: "deletable",
 	})
 

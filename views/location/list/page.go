@@ -23,6 +23,7 @@ type Deps struct {
 	RefreshURL      string
 	Routes          entydad.LocationRoutes
 	Labels          entydad.LocationLabels
+	SharedLabels    entydad.SharedLabels
 	CommonLabels    pyeza.CommonLabels
 	TableLabels     types.TableLabels
 }
@@ -108,11 +109,11 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 
 	l := deps.Labels
 	columns := locationColumns(l)
-	rows := buildTableRows(resp.GetLocationList(), status, l, deps.Routes, inUseIDs, perms)
+	rows := buildTableRows(resp.GetLocationList(), status, l, deps.SharedLabels, deps.Routes, inUseIDs, perms)
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
-	bulkCfg.Actions = buildBulkActions(l, deps.CommonLabels, status, deps.Routes)
+	bulkCfg.Actions = buildBulkActions(l, deps.SharedLabels, deps.CommonLabels, status, deps.Routes)
 
 	refreshURL := route.ResolveURL(deps.Routes.TableURL, "status", status)
 
@@ -141,7 +142,7 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 			ActionURL:       deps.Routes.AddURL,
 			Icon:            "icon-plus",
 			Disabled:        !perms.Can("location", "create"),
-			DisabledTooltip: "No permission",
+			DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
 		},
 		BulkActions: &bulkCfg,
 	}
@@ -158,7 +159,7 @@ func locationColumns(l entydad.LocationLabels) []types.TableColumn {
 	}
 }
 
-func buildTableRows(locations []*locationpb.Location, status string, l entydad.LocationLabels, routes entydad.LocationRoutes, inUseIDs map[string]bool, perms *types.UserPermissions) []types.TableRow {
+func buildTableRows(locations []*locationpb.Location, status string, l entydad.LocationLabels, sl entydad.SharedLabels, routes entydad.LocationRoutes, inUseIDs map[string]bool, perms *types.UserPermissions) []types.TableRow {
 	rows := []types.TableRow{}
 	for _, loc := range locations {
 		active := loc.GetActive()
@@ -177,23 +178,23 @@ func buildTableRows(locations []*locationpb.Location, status string, l entydad.L
 		actions := []types.TableAction{
 			{Type: "view", Label: l.Actions.View, Action: "view", Href: route.ResolveURL(routes.DetailURL, "id", id)},
 			{Type: "edit", Label: l.Actions.Edit, Action: "edit", URL: route.ResolveURL(routes.EditURL, "id", id), DrawerTitle: l.Actions.Edit,
-				Disabled: !perms.Can("location", "update"), DisabledTooltip: "No permission"},
+				Disabled: !perms.Can("location", "update"), DisabledTooltip: sl.Badges.NoPermission},
 		}
 		if active {
 			actions = append(actions, types.TableAction{
 				Type: "deactivate", Label: l.Actions.Deactivate, Action: "deactivate",
 				URL: routes.SetStatusURL + "?status=inactive", ItemName: name,
 				ConfirmTitle:   l.Actions.Deactivate,
-				ConfirmMessage: fmt.Sprintf("Are you sure you want to deactivate %s?", name),
-				Disabled: !perms.Can("location", "update"), DisabledTooltip: "No permission",
+				ConfirmMessage: fmt.Sprintf(sl.Confirm.Deactivate, name),
+				Disabled: !perms.Can("location", "update"), DisabledTooltip: sl.Badges.NoPermission,
 			})
 		} else {
 			actions = append(actions, types.TableAction{
 				Type: "activate", Label: l.Actions.Activate, Action: "activate",
 				URL: routes.SetStatusURL + "?status=active", ItemName: name,
 				ConfirmTitle:   l.Actions.Activate,
-				ConfirmMessage: fmt.Sprintf("Are you sure you want to activate %s?", name),
-				Disabled: !perms.Can("location", "update"), DisabledTooltip: "No permission",
+				ConfirmMessage: fmt.Sprintf(sl.Confirm.Activate, name),
+				Disabled: !perms.Can("location", "update"), DisabledTooltip: sl.Badges.NoPermission,
 			})
 		}
 		isInUse := inUseIDs[id]
@@ -206,7 +207,7 @@ func buildTableRows(locations []*locationpb.Location, status string, l entydad.L
 		}
 		if isInUse {
 			deleteAction.Disabled = true
-			deleteAction.DisabledTooltip = "Cannot delete: location is in use"
+			deleteAction.DisabledTooltip = sl.Errors.CannotDeleteInUse
 		} else if !perms.Can("location", "delete") {
 			deleteAction.Disabled = true
 			deleteAction.DisabledTooltip = "No permission"
@@ -287,7 +288,7 @@ func statusVariant(status string) string {
 	}
 }
 
-func buildBulkActions(l entydad.LocationLabels, common pyeza.CommonLabels, status string, routes entydad.LocationRoutes) []types.BulkAction {
+func buildBulkActions(l entydad.LocationLabels, sl entydad.SharedLabels, common pyeza.CommonLabels, status string, routes entydad.LocationRoutes) []types.BulkAction {
 	actions := []types.BulkAction{}
 
 	switch status {
@@ -299,7 +300,7 @@ func buildBulkActions(l entydad.LocationLabels, common pyeza.CommonLabels, statu
 			Variant:         "warning",
 			Endpoint:        routes.BulkSetStatusURL,
 			ConfirmTitle:    l.Actions.Deactivate,
-			ConfirmMessage:  "Are you sure you want to deactivate {{count}} location(s)?",
+			ConfirmMessage:  sl.Confirm.BulkDeactivate,
 			ExtraParamsJSON: `{"target_status":"inactive"}`,
 		})
 	case "inactive":
@@ -310,7 +311,7 @@ func buildBulkActions(l entydad.LocationLabels, common pyeza.CommonLabels, statu
 			Variant:         "primary",
 			Endpoint:        routes.BulkSetStatusURL,
 			ConfirmTitle:    l.Actions.Activate,
-			ConfirmMessage:  "Are you sure you want to activate {{count}} location(s)?",
+			ConfirmMessage:  sl.Confirm.BulkActivate,
 			ExtraParamsJSON: `{"target_status":"active"}`,
 		})
 	}
@@ -322,7 +323,7 @@ func buildBulkActions(l entydad.LocationLabels, common pyeza.CommonLabels, statu
 		Variant:          "danger",
 		Endpoint:         routes.BulkDeleteURL,
 		ConfirmTitle:     common.Bulk.Delete,
-		ConfirmMessage:   "Are you sure you want to delete {{count}} location(s)? This action cannot be undone.",
+		ConfirmMessage:   sl.Confirm.BulkDelete,
 		RequiresDataAttr: "deletable",
 	})
 

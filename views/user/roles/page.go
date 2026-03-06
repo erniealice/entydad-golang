@@ -23,6 +23,7 @@ type Deps struct {
 	GetWorkspaceUserItemPageData func(ctx context.Context, req *workspaceuserpb.GetWorkspaceUserItemPageDataRequest) (*workspaceuserpb.GetWorkspaceUserItemPageDataResponse, error)
 	ReadUser                     func(ctx context.Context, req *userpb.ReadUserRequest) (*userpb.ReadUserResponse, error)
 	Labels                       entydad.UserRoleLabels
+	SharedLabels                 entydad.SharedLabels
 	CommonLabels                 pyeza.CommonLabels
 	TableLabels                  types.TableLabels
 }
@@ -138,7 +139,7 @@ func buildTableConfig(ctx context.Context, deps *Deps, userID string) (*types.Ta
 
 	l := deps.Labels
 	columns := roleColumns(l)
-	rows := buildTableRows(workspaceUser, userID, l, deps.Routes)
+	rows := buildTableRows(workspaceUser, userID, l, deps.SharedLabels, deps.Routes)
 	types.ApplyColumnStyles(columns, rows)
 
 	refreshURL := route.ResolveURL(deps.Routes.DetailRolesTableURL, "id", userID)
@@ -220,7 +221,7 @@ func roleColumns(l entydad.UserRoleLabels) []types.TableColumn {
 	}
 }
 
-func buildTableRows(workspaceUser *workspaceuserpb.WorkspaceUser, userID string, l entydad.UserRoleLabels, routes entydad.UserRoutes) []types.TableRow {
+func buildTableRows(workspaceUser *workspaceuserpb.WorkspaceUser, userID string, l entydad.UserRoleLabels, sl entydad.SharedLabels, routes entydad.UserRoutes) []types.TableRow {
 	rows := []types.TableRow{}
 
 	for _, wur := range workspaceUser.GetWorkspaceUserRoles() {
@@ -247,7 +248,7 @@ func buildTableRows(workspaceUser *workspaceuserpb.WorkspaceUser, userID string,
 				URL:            route.ResolveURL(routes.DetailRolesRemoveURL, "id", userID),
 				ItemName:       roleName,
 				ConfirmTitle:   l.Actions.Remove,
-				ConfirmMessage: fmt.Sprintf("Are you sure you want to remove %s from this user?", roleName),
+				ConfirmMessage: fmt.Sprintf(sl.Confirm.Remove, roleName),
 			},
 		}
 

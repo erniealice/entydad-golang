@@ -671,12 +671,18 @@ type WorkspaceActionLabels struct {
 
 // LoginLabels holds i18n strings for the login page.
 type LoginLabels struct {
-	Title      string `json:"title"`
-	Email      string `json:"email"`
-	Password   string `json:"password"`
-	Submit     string `json:"submit"`
-	ForgotLink string `json:"forgotLink"`
-	Error      string `json:"error"`
+	Title               string `json:"title"`
+	Email               string `json:"email"`
+	Password            string `json:"password"`
+	Submit              string `json:"submit"`
+	ForgotLink          string `json:"forgotLink"`
+	Error               string `json:"error"`
+	AdminTitle          string `json:"adminTitle"`
+	AdminDescription    string `json:"adminDescription"`
+	EmailPlaceholder    string `json:"emailPlaceholder"`
+	StaffTitle          string `json:"staffTitle"`
+	StaffDescription    string `json:"staffDescription"`
+	StaffPinComingSoon  string `json:"staffPinComingSoon"`
 }
 
 // Login02Labels holds i18n strings for the login02 split-screen page.
@@ -789,6 +795,111 @@ type SupplierActionLabels struct {
 	Activate   string `json:"activate"`
 	Block      string `json:"block"`
 	SetOnHold  string `json:"setOnHold"`
+}
+
+// ---------------------------------------------------------------------------
+// Client Tag labels
+// ---------------------------------------------------------------------------
+
+// ClientTagLabels holds all translatable strings for the client tag module.
+type ClientTagLabels struct {
+	Page    ClientTagPageLabels    `json:"page"`
+	Buttons ClientTagButtonLabels  `json:"buttons"`
+	Columns ClientTagColumnLabels  `json:"columns"`
+	Empty   ClientTagEmptyLabels   `json:"empty"`
+	Actions ClientTagActionLabels  `json:"actions"`
+	Confirm ClientTagConfirmLabels `json:"confirm"`
+}
+
+type ClientTagPageLabels struct {
+	Heading  string `json:"heading"`
+	Subtitle string `json:"subtitle"`
+}
+
+type ClientTagButtonLabels struct {
+	AddTag string `json:"addTag"`
+}
+
+type ClientTagColumnLabels struct {
+	TagName     string `json:"tagName"`
+	Customers   string `json:"customers"`
+	Description string `json:"description"`
+	Status      string `json:"status"`
+}
+
+type ClientTagEmptyLabels struct {
+	Title   string `json:"title"`
+	Message string `json:"message"`
+}
+
+type ClientTagActionLabels struct {
+	Edit   string `json:"edit"`
+	Delete string `json:"delete"`
+}
+
+type ClientTagConfirmLabels struct {
+	DeleteTitle   string `json:"deleteTitle"`
+	DeleteMessage string `json:"deleteMessage"`
+	CannotDelete  string `json:"cannotDelete"`
+}
+
+// ---------------------------------------------------------------------------
+// Shared labels (used across all modules)
+// ---------------------------------------------------------------------------
+
+// SharedLabels holds translatable strings shared across all entydad modules.
+type SharedLabels struct {
+	Errors  SharedErrorLabels  `json:"errors"`
+	Confirm SharedConfirmLabels `json:"confirm"`
+	Badges  SharedBadgeLabels  `json:"badges"`
+}
+
+// SharedErrorLabels holds HTMXError messages used across all action handlers.
+type SharedErrorLabels struct {
+	PermissionDenied  string `json:"permissionDenied"`
+	InvalidFormData   string `json:"invalidFormData"`
+	InvalidStatus     string `json:"invalidStatus"`
+	InvalidTargetStatus string `json:"invalidTargetStatus"`
+	NotFound          string `json:"notFound"`
+	IDRequired        string `json:"idRequired"`
+	NoIDsProvided     string `json:"noIdsProvided"`
+	PasswordRequired  string `json:"passwordRequired"`
+	PasswordFailed    string `json:"passwordFailed"`
+	RoleRequired      string `json:"roleRequired"`
+	PermissionRequired string `json:"permissionRequired"`
+	UserRequired      string `json:"userRequired"`
+	TagNotFound       string `json:"tagNotFound"`
+	TagNameExists     string `json:"tagNameExists"`
+	VerifyFailed      string `json:"verifyFailed"`
+	CannotDeleteInUse string `json:"cannotDeleteInUse"`
+}
+
+// SharedConfirmLabels holds confirm dialog message templates used across modules.
+type SharedConfirmLabels struct {
+	Activate         string `json:"activate"`
+	Deactivate       string `json:"deactivate"`
+	Delete           string `json:"delete"`
+	Block            string `json:"block"`
+	Remove           string `json:"remove"`
+	BulkActivate     string `json:"bulkActivate"`
+	BulkDeactivate   string `json:"bulkDeactivate"`
+	BulkDelete       string `json:"bulkDelete"`
+	BulkBlock        string `json:"bulkBlock"`
+}
+
+// SharedBadgeLabels holds translatable badge values.
+type SharedBadgeLabels struct {
+	Allow       string `json:"allow"`
+	Deny        string `json:"deny"`
+	Yes         string `json:"yes"`
+	No          string `json:"no"`
+	NoPermission string `json:"noPermission"`
+}
+
+// DashboardLabels holds translatable strings for dashboard pages.
+type DashboardLabels struct {
+	ClientTitle string `json:"clientTitle"`
+	UserTitle   string `json:"userTitle"`
 }
 
 // ---------------------------------------------------------------------------

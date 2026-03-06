@@ -87,7 +87,7 @@ func NewAddAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("user", "create") {
-			return entydad.HTMXError("Permission denied")
+			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		if viewCtx.Request.Method == http.MethodGet {
 			return view.OK("user-drawer-form", &FormData{
@@ -100,7 +100,7 @@ func NewAddAction(deps *Deps) view.View {
 
 		// POST — create user
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return entydad.HTMXError("Invalid form data")
+			return entydad.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
 		}
 
 		r := viewCtx.Request
@@ -111,7 +111,7 @@ func NewAddAction(deps *Deps) view.View {
 			h, hashErr := hashPassword(deps, pw)
 			if hashErr != nil {
 				log.Printf("Failed to hash password: %v", hashErr)
-				return entydad.HTMXError("Failed to process password")
+				return entydad.HTMXError(viewCtx.T("shared.errors.passwordFailed"))
 			}
 			pwHash = h
 		}
@@ -160,7 +160,7 @@ func NewEditAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("user", "update") {
-			return entydad.HTMXError("Permission denied")
+			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		id := viewCtx.Request.PathValue("id")
 
@@ -170,7 +170,7 @@ func NewEditAction(deps *Deps) view.View {
 			})
 			if err != nil {
 				log.Printf("Failed to read user %s: %v", id, err)
-				return entydad.HTMXError("User not found")
+				return entydad.HTMXError(viewCtx.T("shared.errors.notFound"))
 			}
 
 			u := resp.GetData()[0]
@@ -191,7 +191,7 @@ func NewEditAction(deps *Deps) view.View {
 
 		// POST — update user
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return entydad.HTMXError("Invalid form data")
+			return entydad.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
 		}
 
 		r := viewCtx.Request
@@ -211,7 +211,7 @@ func NewEditAction(deps *Deps) view.View {
 			pwHash, hashErr := hashPassword(deps, pw)
 			if hashErr != nil {
 				log.Printf("Failed to hash password: %v", hashErr)
-				return entydad.HTMXError("Failed to process password")
+				return entydad.HTMXError(viewCtx.T("shared.errors.passwordFailed"))
 			}
 			userData.PasswordHash = pwHash
 		}
@@ -234,7 +234,7 @@ func NewDeleteAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("user", "delete") {
-			return entydad.HTMXError("Permission denied")
+			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		id := viewCtx.Request.URL.Query().Get("id")
 		if id == "" {
@@ -242,7 +242,7 @@ func NewDeleteAction(deps *Deps) view.View {
 			id = viewCtx.Request.FormValue("id")
 		}
 		if id == "" {
-			return entydad.HTMXError("User ID is required")
+			return entydad.HTMXError(viewCtx.T("shared.errors.idRequired"))
 		}
 
 		_, err := deps.DeleteUser(ctx, &userpb.DeleteUserRequest{
@@ -263,13 +263,13 @@ func NewBulkDeleteAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("user", "delete") {
-			return entydad.HTMXError("Permission denied")
+			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		_ = viewCtx.Request.ParseMultipartForm(32 << 20)
 
 		ids := viewCtx.Request.Form["id"]
 		if len(ids) == 0 {
-			return entydad.HTMXError("No user IDs provided")
+			return entydad.HTMXError(viewCtx.T("shared.errors.noIdsProvided"))
 		}
 
 		for _, id := range ids {
@@ -295,7 +295,7 @@ func NewSetStatusAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("user", "update") {
-			return entydad.HTMXError("Permission denied")
+			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		id := viewCtx.Request.URL.Query().Get("id")
 		targetStatus := viewCtx.Request.URL.Query().Get("status")
@@ -306,10 +306,10 @@ func NewSetStatusAction(deps *Deps) view.View {
 			targetStatus = viewCtx.Request.FormValue("status")
 		}
 		if id == "" {
-			return entydad.HTMXError("User ID is required")
+			return entydad.HTMXError(viewCtx.T("shared.errors.idRequired"))
 		}
 		if targetStatus != "active" && targetStatus != "inactive" {
-			return entydad.HTMXError("Invalid status")
+			return entydad.HTMXError(viewCtx.T("shared.errors.invalidStatus"))
 		}
 
 		if err := deps.SetUserActive(ctx, id, targetStatus == "active"); err != nil {
@@ -328,16 +328,16 @@ func NewResetPasswordAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		id := viewCtx.Request.PathValue("id")
 		if id == "" {
-			return entydad.HTMXError("User ID is required")
+			return entydad.HTMXError(viewCtx.T("shared.errors.idRequired"))
 		}
 
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return entydad.HTMXError("Invalid form data")
+			return entydad.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
 		}
 
 		password := viewCtx.Request.FormValue("password")
 		if password == "" {
-			return entydad.HTMXError("Password is required")
+			return entydad.HTMXError(viewCtx.T("shared.errors.passwordRequired"))
 		}
 
 		// Read existing user to preserve all required fields
@@ -346,18 +346,18 @@ func NewResetPasswordAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to read user %s for password reset: %v", id, err)
-			return entydad.HTMXError("User not found")
+			return entydad.HTMXError(viewCtx.T("shared.errors.notFound"))
 		}
 		data := resp.GetData()
 		if len(data) == 0 {
-			return entydad.HTMXError("User not found")
+			return entydad.HTMXError(viewCtx.T("shared.errors.notFound"))
 		}
 		user := data[0]
 
 		pwHash, hashErr := hashPassword(deps, password)
 		if hashErr != nil {
 			log.Printf("Failed to hash password: %v", hashErr)
-			return entydad.HTMXError("Failed to process password")
+			return entydad.HTMXError(viewCtx.T("shared.errors.passwordFailed"))
 		}
 
 		user.PasswordHash = pwHash
@@ -380,7 +380,7 @@ func NewBulkSetStatusAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("user", "update") {
-			return entydad.HTMXError("Permission denied")
+			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		_ = viewCtx.Request.ParseMultipartForm(32 << 20)
 
@@ -388,10 +388,10 @@ func NewBulkSetStatusAction(deps *Deps) view.View {
 		targetStatus := viewCtx.Request.FormValue("target_status")
 
 		if len(ids) == 0 {
-			return entydad.HTMXError("No user IDs provided")
+			return entydad.HTMXError(viewCtx.T("shared.errors.noIdsProvided"))
 		}
 		if targetStatus != "active" && targetStatus != "inactive" {
-			return entydad.HTMXError("Invalid target status")
+			return entydad.HTMXError(viewCtx.T("shared.errors.invalidTargetStatus"))
 		}
 
 		active := targetStatus == "active"

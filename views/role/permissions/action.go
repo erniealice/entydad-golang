@@ -45,11 +45,11 @@ func NewAssignAction(deps *ActionDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("role", "update") {
-			return entydad.HTMXError("Permission denied")
+			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		roleID := viewCtx.Request.PathValue("id")
 		if roleID == "" {
-			return entydad.HTMXError("Role ID is required")
+			return entydad.HTMXError(viewCtx.T("shared.errors.idRequired"))
 		}
 
 		if viewCtx.Request.Method == http.MethodGet {
@@ -106,12 +106,12 @@ func NewAssignAction(deps *ActionDeps) view.View {
 
 		// POST -- assign permission to role
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return entydad.HTMXError("Invalid form data")
+			return entydad.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
 		}
 
 		permissionID := viewCtx.Request.FormValue("permission_id")
 		if permissionID == "" {
-			return entydad.HTMXError("Permission is required")
+			return entydad.HTMXError(viewCtx.T("shared.errors.permissionRequired"))
 		}
 
 		_, err := deps.CreateRolePermission(ctx, &rolepermissionpb.CreateRolePermissionRequest{
@@ -135,11 +135,11 @@ func NewRemoveAction(deps *ActionDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("role", "update") {
-			return entydad.HTMXError("Permission denied")
+			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		roleID := viewCtx.Request.PathValue("id")
 		if roleID == "" {
-			return entydad.HTMXError("Role ID is required")
+			return entydad.HTMXError(viewCtx.T("shared.errors.idRequired"))
 		}
 
 		rpID := viewCtx.Request.URL.Query().Get("id")
@@ -148,7 +148,7 @@ func NewRemoveAction(deps *ActionDeps) view.View {
 			rpID = viewCtx.Request.FormValue("id")
 		}
 		if rpID == "" {
-			return entydad.HTMXError("Role-Permission ID is required")
+			return entydad.HTMXError(viewCtx.T("shared.errors.idRequired"))
 		}
 
 		_, err := deps.DeleteRolePermission(ctx, &rolepermissionpb.DeleteRolePermissionRequest{

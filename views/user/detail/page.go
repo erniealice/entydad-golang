@@ -23,6 +23,7 @@ type Deps struct {
 	GetWorkspaceUserItemPageData func(ctx context.Context, req *workspaceuserpb.GetWorkspaceUserItemPageDataRequest) (*workspaceuserpb.GetWorkspaceUserItemPageDataResponse, error)
 	ListWorkspaceUsers           func(ctx context.Context, req *workspaceuserpb.ListWorkspaceUsersRequest) (*workspaceuserpb.ListWorkspaceUsersResponse, error)
 	Labels                       entydad.UserLabels
+	SharedLabels                 entydad.SharedLabels
 	UserRoleLabels               entydad.UserRoleLabels
 	CommonLabels                 pyeza.CommonLabels
 	TableLabels                  types.TableLabels
@@ -291,8 +292,8 @@ func buildRolesTable(ctx context.Context, deps *Deps, userID string, perms *type
 				URL:            route.ResolveURL(deps.Routes.DetailRolesRemoveURL, "id", userID),
 				ItemName:       roleName,
 				ConfirmTitle:   l.Actions.Remove,
-				ConfirmMessage: fmt.Sprintf("Are you sure you want to remove %s from this user?", roleName),
-				Disabled: !perms.Can("user", "update"), DisabledTooltip: "No permission",
+				ConfirmMessage: fmt.Sprintf(deps.SharedLabels.Confirm.Remove, roleName),
+				Disabled: !perms.Can("user", "update"), DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
 			},
 		}
 
@@ -340,7 +341,7 @@ func buildRolesTable(ctx context.Context, deps *Deps, userID string, perms *type
 			ActionURL:       route.ResolveURL(deps.Routes.DetailRolesAssignURL, "id", userID),
 			Icon:            "icon-plus",
 			Disabled:        !perms.Can("user", "update"),
-			DisabledTooltip: "No permission",
+			DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
 		},
 	}
 	types.ApplyTableSettings(tableConfig)

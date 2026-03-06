@@ -6,11 +6,14 @@ import (
 	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
+
+	"github.com/erniealice/entydad-golang"
 )
 
 // Deps holds view dependencies.
 type Deps struct {
-	CommonLabels pyeza.CommonLabels
+	DashboardLabels entydad.DashboardLabels
+	CommonLabels    pyeza.CommonLabels
 }
 
 // PageData holds the data for the client dashboard page.
@@ -25,11 +28,11 @@ func NewView(deps *Deps) view.View {
 		pageData := &PageData{
 			PageData: types.PageData{
 				CacheVersion: viewCtx.CacheVersion,
-				Title:        "Clients Dashboard",
+				Title:        deps.DashboardLabels.ClientTitle,
 				CurrentPath:  viewCtx.CurrentPath,
 				ActiveNav:    "clients",
 				ActiveSubNav: "dashboard",
-				HeaderTitle:  "Clients Dashboard",
+				HeaderTitle:  deps.DashboardLabels.ClientTitle,
 				HeaderIcon:   "icon-users",
 				CommonLabels: deps.CommonLabels,
 			},

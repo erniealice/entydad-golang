@@ -22,6 +22,7 @@ type Deps struct {
 	GetListPageData func(ctx context.Context, req *clientpb.GetClientListPageDataRequest) (*clientpb.GetClientListPageDataResponse, error)
 	GetInUseIDs     func(ctx context.Context, ids []string) (map[string]bool, error)
 	Labels          entydad.ClientLabels
+	SharedLabels    entydad.SharedLabels
 	CommonLabels    pyeza.CommonLabels
 	TableLabels     types.TableLabels
 }
@@ -106,11 +107,11 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 
 	l := deps.Labels
 	columns := clientColumns(l)
-	rows := buildTableRows(resp.GetClientList(), status, l, deps.Routes, inUseIDs, perms)
+	rows := buildTableRows(resp.GetClientList(), status, l, deps.SharedLabels, deps.Routes, inUseIDs, perms)
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
-	bulkCfg.Actions = buildBulkActions(l, deps.CommonLabels, status, deps.Routes)
+	bulkCfg.Actions = buildBulkActions(l, deps.SharedLabels, deps.CommonLabels, status, deps.Routes)
 
 	refreshURL := route.ResolveURL(deps.Routes.TableURL, "status", status)
 
@@ -139,7 +140,7 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 			ActionURL:       deps.Routes.AddURL,
 			Icon:            "icon-plus",
 			Disabled:        !perms.Can("client", "create"),
-			DisabledTooltip: "No permission",
+			DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
 		},
 		BulkActions: &bulkCfg,
 	}
@@ -157,7 +158,7 @@ func clientColumns(l entydad.ClientLabels) []types.TableColumn {
 	}
 }
 
-func buildTableRows(clients []*clientpb.Client, status string, l entydad.ClientLabels, routes entydad.ClientRoutes, inUseIDs map[string]bool, perms *types.UserPermissions) []types.TableRow {
+func buildTableRows(clients []*clientpb.Client, status string, l entydad.ClientLabels, sl entydad.SharedLabels, routes entydad.ClientRoutes, inUseIDs map[string]bool, perms *types.UserPermissions) []types.TableRow {
 	rows := []types.TableRow{}
 	for _, c := range clients {
 		active := c.GetActive()
@@ -190,7 +191,7 @@ func buildTableRows(clients []*clientpb.Client, status string, l entydad.ClientL
 				"status":    recordStatus,
 				"deletable": strconv.FormatBool(!isInUse),
 			},
-			Actions: buildRowActions(id, name, active, isInUse, l, routes, perms),
+			Actions: buildRowActions(id, name, active, isInUse, l, sl, routes, perms),
 		})
 	}
 	return rows
@@ -259,7 +260,7 @@ func statusVariant(status string) string {
 	}
 }
 
-func buildRowActions(id, name string, active, isInUse bool, l entydad.ClientLabels, routes entydad.ClientRoutes, perms *types.UserPermissions) []types.TableAction {
+func buildRowActions(id, name string, active, isInUse bool, l entydad.ClientLabels, sl entydad.SharedLabels, routes entydad.ClientRoutes, perms *types.UserPermissions) []types.TableAction {
 	actions := []types.TableAction{
 		{Type: "view", Label: l.Detail.Actions.ViewClient, Action: "view", Href: route.ResolveURL(routes.DetailURL, "id", id)},
 		{Type: "edit", Label: l.Detail.Actions.EditClient, Action: "edit", URL: route.ResolveURL(routes.EditURL, "id", id), DrawerTitle: l.Detail.Actions.EditClient,
@@ -270,16 +271,16 @@ func buildRowActions(id, name string, active, isInUse bool, l entydad.ClientLabe
 			Type: "deactivate", Label: l.Detail.Actions.DeactivateClient, Action: "deactivate",
 			URL: routes.SetStatusURL + "?status=inactive", ItemName: name,
 			ConfirmTitle:   l.Detail.Actions.DeactivateClient,
-			ConfirmMessage: fmt.Sprintf("Are you sure you want to deactivate %s?", name),
-			Disabled: !perms.Can("client", "update"), DisabledTooltip: "No permission",
+			ConfirmMessage: fmt.Sprintf(sl.Confirm.Deactivate, name),
+			Disabled: !perms.Can("client", "update"), DisabledTooltip: sl.Badges.NoPermission,
 		})
 	} else {
 		actions = append(actions, types.TableAction{
 			Type: "activate", Label: l.Detail.Actions.ActivateClient, Action: "activate",
 			URL: routes.SetStatusURL + "?status=active", ItemName: name,
 			ConfirmTitle:   l.Detail.Actions.ActivateClient,
-			ConfirmMessage: fmt.Sprintf("Are you sure you want to activate %s?", name),
-			Disabled: !perms.Can("client", "update"), DisabledTooltip: "No permission",
+			ConfirmMessage: fmt.Sprintf(sl.Confirm.Activate, name),
+			Disabled: !perms.Can("client", "update"), DisabledTooltip: sl.Badges.NoPermission,
 		})
 	}
 	deleteAction := types.TableAction{
@@ -291,16 +292,16 @@ func buildRowActions(id, name string, active, isInUse bool, l entydad.ClientLabe
 	}
 	if isInUse {
 		deleteAction.Disabled = true
-		deleteAction.DisabledTooltip = "Cannot delete: customer has sales records"
+		deleteAction.DisabledTooltip = sl.Errors.CannotDeleteInUse
 	} else if !perms.Can("client", "delete") {
 		deleteAction.Disabled = true
-		deleteAction.DisabledTooltip = "No permission"
+		deleteAction.DisabledTooltip = sl.Badges.NoPermission
 	}
 	actions = append(actions, deleteAction)
 	return actions
 }
 
-func buildBulkActions(l entydad.ClientLabels, cl pyeza.CommonLabels, status string, routes entydad.ClientRoutes) []types.BulkAction {
+func buildBulkActions(l entydad.ClientLabels, sl entydad.SharedLabels, cl pyeza.CommonLabels, status string, routes entydad.ClientRoutes) []types.BulkAction {
 	actions := []types.BulkAction{}
 
 	switch status {
@@ -312,7 +313,7 @@ func buildBulkActions(l entydad.ClientLabels, cl pyeza.CommonLabels, status stri
 			Variant:         "warning",
 			Endpoint:        routes.BulkSetStatusURL,
 			ConfirmTitle:    l.BulkActions.SetAsInactive,
-			ConfirmMessage:  "Are you sure you want to deactivate {{count}} customer(s)?",
+			ConfirmMessage:  sl.Confirm.BulkDeactivate,
 			ExtraParamsJSON: `{"target_status":"inactive"}`,
 		})
 	case "inactive":
@@ -323,7 +324,7 @@ func buildBulkActions(l entydad.ClientLabels, cl pyeza.CommonLabels, status stri
 			Variant:         "primary",
 			Endpoint:        routes.BulkSetStatusURL,
 			ConfirmTitle:    cl.Bulk.Activate,
-			ConfirmMessage:  "Are you sure you want to activate {{count}} customer(s)?",
+			ConfirmMessage:  sl.Confirm.BulkActivate,
 			ExtraParamsJSON: `{"target_status":"active"}`,
 		})
 	}
@@ -335,7 +336,7 @@ func buildBulkActions(l entydad.ClientLabels, cl pyeza.CommonLabels, status stri
 		Variant:          "danger",
 		Endpoint:         routes.BulkDeleteURL,
 		ConfirmTitle:     cl.Bulk.Delete,
-		ConfirmMessage:   "Are you sure you want to delete {{count}} customer(s)? This action cannot be undone.",
+		ConfirmMessage:   sl.Confirm.BulkDelete,
 		RequiresDataAttr: "deletable",
 	})
 

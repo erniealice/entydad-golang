@@ -24,6 +24,7 @@ type Deps struct {
 	GetUsersByRoleID    func(ctx context.Context, roleID string) ([]roleusers.UserByRole, error)
 	Routes               entydad.RoleRoutes
 	Labels              entydad.RoleLabels
+	SharedLabels         entydad.SharedLabels
 	RolePermissionLabels entydad.RolePermissionLabels
 	RoleUserLabels       entydad.RoleUserLabels
 	CommonLabels        pyeza.CommonLabels
@@ -234,15 +235,15 @@ func buildPermissionsTable(ctx context.Context, deps *Deps, roleID string, perms
 		rpID := rp.GetId()
 		permName := perm.GetName()
 		permCode := perm.GetPermissionCode()
-		permType := "Allow"
+		permType := deps.SharedLabels.Badges.Allow
 		dateAssigned := rp.GetDateCreatedString()
 
 		pt := perm.GetPermissionType()
 		if pt == permissionpb.PermissionType_PERMISSION_TYPE_DENY {
-			permType = "Deny"
+			permType = deps.SharedLabels.Badges.Deny
 		}
 		typeVariant := "success"
-		if permType == "Deny" {
+		if pt == permissionpb.PermissionType_PERMISSION_TYPE_DENY {
 			typeVariant = "danger"
 		}
 
@@ -252,8 +253,8 @@ func buildPermissionsTable(ctx context.Context, deps *Deps, roleID string, perms
 				URL:            route.ResolveURL(deps.Routes.DetailPermissionsRemoveURL, "id", roleID),
 				ItemName:       permName,
 				ConfirmTitle:   l.Actions.Remove,
-				ConfirmMessage: fmt.Sprintf("Are you sure you want to remove %s from this role?", permName),
-				Disabled: !perms.Can("role", "update"), DisabledTooltip: "No permission",
+				ConfirmMessage: fmt.Sprintf(deps.SharedLabels.Confirm.Remove, permName),
+				Disabled: !perms.Can("role", "update"), DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
 			},
 		}
 
@@ -301,7 +302,7 @@ func buildPermissionsTable(ctx context.Context, deps *Deps, roleID string, perms
 			ActionURL:       route.ResolveURL(deps.Routes.DetailPermissionsAssignURL, "id", roleID),
 			Icon:            "icon-plus",
 			Disabled:        !perms.Can("role", "update"),
-			DisabledTooltip: "No permission",
+			DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
 		},
 	}
 	types.ApplyTableSettings(tableConfig)
@@ -340,8 +341,8 @@ func buildUsersTable(ctx context.Context, deps *Deps, roleID string, perms *type
 				URL:            route.ResolveURL(deps.Routes.UsersRemoveURL, "id", roleID),
 				ItemName:       u.UserName,
 				ConfirmTitle:   l.Actions.Remove,
-				ConfirmMessage: fmt.Sprintf("Are you sure you want to remove %s from this role?", u.UserName),
-				Disabled: !perms.Can("role", "update"), DisabledTooltip: "No permission",
+				ConfirmMessage: fmt.Sprintf(deps.SharedLabels.Confirm.Remove, u.UserName),
+				Disabled: !perms.Can("role", "update"), DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
 			},
 		}
 
@@ -387,7 +388,7 @@ func buildUsersTable(ctx context.Context, deps *Deps, roleID string, perms *type
 			ActionURL:       route.ResolveURL(deps.Routes.UsersAssignURL, "id", roleID),
 			Icon:            "icon-plus",
 			Disabled:        !perms.Can("role", "update"),
-			DisabledTooltip: "No permission",
+			DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
 		},
 	}
 	types.ApplyTableSettings(tableConfig)

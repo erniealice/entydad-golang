@@ -23,6 +23,7 @@ type Deps struct {
 	RefreshURL      string
 	Routes          entydad.RoleRoutes
 	Labels          entydad.RoleLabels
+	SharedLabels    entydad.SharedLabels
 	CommonLabels    pyeza.CommonLabels
 	TableLabels     types.TableLabels
 }
@@ -98,11 +99,11 @@ func buildTableConfig(ctx context.Context, deps *Deps) (*types.TableConfig, erro
 
 	l := deps.Labels
 	columns := roleColumns(l)
-	rows := buildTableRows(resp.GetRoleList(), l, deps.Routes, inUseIDs, perms)
+	rows := buildTableRows(resp.GetRoleList(), l, deps.SharedLabels, deps.Routes, inUseIDs, perms)
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
-	bulkCfg.Actions = buildBulkActions(l, deps.CommonLabels, deps.Routes)
+	bulkCfg.Actions = buildBulkActions(l, deps.SharedLabels, deps.CommonLabels, deps.Routes)
 
 	tableConfig := &types.TableConfig{
 		ID:                   "roles-table",
@@ -129,7 +130,7 @@ func buildTableConfig(ctx context.Context, deps *Deps) (*types.TableConfig, erro
 			ActionURL:       deps.Routes.AddURL,
 			Icon:            "icon-plus",
 			Disabled:        !perms.Can("role", "create"),
-			DisabledTooltip: "No permission",
+			DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
 		},
 		BulkActions: &bulkCfg,
 	}
@@ -148,7 +149,7 @@ func roleColumns(l entydad.RoleLabels) []types.TableColumn {
 	}
 }
 
-func buildTableRows(roles []*rolepb.Role, l entydad.RoleLabels, routes entydad.RoleRoutes, inUseIDs map[string]bool, perms *types.UserPermissions) []types.TableRow {
+func buildTableRows(roles []*rolepb.Role, l entydad.RoleLabels, sl entydad.SharedLabels, routes entydad.RoleRoutes, inUseIDs map[string]bool, perms *types.UserPermissions) []types.TableRow {
 	rows := []types.TableRow{}
 	for _, r := range roles {
 		active := r.GetActive()
@@ -170,16 +171,16 @@ func buildTableRows(roles []*rolepb.Role, l entydad.RoleLabels, routes entydad.R
 				Type: "deactivate", Label: l.Actions.Deactivate, Action: "deactivate",
 				URL: routes.SetStatusURL + "?status=inactive", ItemName: name,
 				ConfirmTitle:   l.Actions.Deactivate,
-				ConfirmMessage: fmt.Sprintf("Are you sure you want to deactivate %s?", name),
-				Disabled: !perms.Can("role", "update"), DisabledTooltip: "No permission",
+				ConfirmMessage: fmt.Sprintf(sl.Confirm.Deactivate, name),
+				Disabled: !perms.Can("role", "update"), DisabledTooltip: sl.Badges.NoPermission,
 			})
 		} else {
 			actions = append(actions, types.TableAction{
 				Type: "activate", Label: l.Actions.Activate, Action: "activate",
 				URL: routes.SetStatusURL + "?status=active", ItemName: name,
 				ConfirmTitle:   l.Actions.Activate,
-				ConfirmMessage: fmt.Sprintf("Are you sure you want to activate %s?", name),
-				Disabled: !perms.Can("role", "update"), DisabledTooltip: "No permission",
+				ConfirmMessage: fmt.Sprintf(sl.Confirm.Activate, name),
+				Disabled: !perms.Can("role", "update"), DisabledTooltip: sl.Badges.NoPermission,
 			})
 		}
 		isInUse := inUseIDs[id]
@@ -192,7 +193,7 @@ func buildTableRows(roles []*rolepb.Role, l entydad.RoleLabels, routes entydad.R
 		}
 		if isInUse {
 			deleteAction.Disabled = true
-			deleteAction.DisabledTooltip = "Cannot delete: role is assigned to users"
+			deleteAction.DisabledTooltip = sl.Errors.CannotDeleteInUse
 		} else if !perms.Can("role", "delete") {
 			deleteAction.Disabled = true
 			deleteAction.DisabledTooltip = "No permission"
@@ -236,7 +237,7 @@ func statusVariant(status string) string {
 	}
 }
 
-func buildBulkActions(l entydad.RoleLabels, common pyeza.CommonLabels, routes entydad.RoleRoutes) []types.BulkAction {
+func buildBulkActions(l entydad.RoleLabels, sl entydad.SharedLabels, common pyeza.CommonLabels, routes entydad.RoleRoutes) []types.BulkAction {
 	return []types.BulkAction{
 		{
 			Key:             "activate",
@@ -245,7 +246,7 @@ func buildBulkActions(l entydad.RoleLabels, common pyeza.CommonLabels, routes en
 			Variant:         "primary",
 			Endpoint:        routes.BulkSetStatusURL,
 			ConfirmTitle:    l.Actions.Activate,
-			ConfirmMessage:  "Are you sure you want to activate {{count}} role(s)?",
+			ConfirmMessage:  sl.Confirm.BulkActivate,
 			ExtraParamsJSON: `{"target_status":"active"}`,
 		},
 		{
@@ -255,7 +256,7 @@ func buildBulkActions(l entydad.RoleLabels, common pyeza.CommonLabels, routes en
 			Variant:         "warning",
 			Endpoint:        routes.BulkSetStatusURL,
 			ConfirmTitle:    l.Actions.Deactivate,
-			ConfirmMessage:  "Are you sure you want to deactivate {{count}} role(s)?",
+			ConfirmMessage:  sl.Confirm.BulkDeactivate,
 			ExtraParamsJSON: `{"target_status":"inactive"}`,
 		},
 		{
@@ -265,7 +266,7 @@ func buildBulkActions(l entydad.RoleLabels, common pyeza.CommonLabels, routes en
 			Variant:          "danger",
 			Endpoint:         routes.BulkDeleteURL,
 			ConfirmTitle:     common.Bulk.Delete,
-			ConfirmMessage:   "Are you sure you want to delete {{count}} role(s)? This action cannot be undone.",
+			ConfirmMessage:   sl.Confirm.BulkDelete,
 			RequiresDataAttr: "deletable",
 		},
 	}

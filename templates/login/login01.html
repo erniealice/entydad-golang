@@ -24,12 +24,12 @@
             <div class="login-card-icon">
                 {{template "icon-shield" .}}
             </div>
-            <h2 class="login-card-title">Admin / Owner</h2>
-            <p class="login-card-description">Sign in with your admin credentials</p>
+            <h2 class="login-card-title">{{.Labels.AdminTitle}}</h2>
+            <p class="login-card-description">{{.Labels.AdminDescription}}</p>
             <form class="login-form" method="POST" action="/login">
                 <div class="login-field">
                     <label for="email">{{.Labels.Email}}</label>
-                    <input type="email" id="email" name="email" placeholder="you@example.com" required>
+                    <input type="email" id="email" name="email" placeholder="{{.Labels.EmailPlaceholder}}" required>
                 </div>
                 <div class="login-field">
                     <label for="password">{{.Labels.Password}}</label>
@@ -43,13 +43,13 @@
             <div class="login-card-icon">
                 {{template "icon-users" .}}
             </div>
-            <h2 class="login-card-title">Branch Staff</h2>
-            <p class="login-card-description">Sign in with your staff PIN</p>
+            <h2 class="login-card-title">{{.Labels.StaffTitle}}</h2>
+            <p class="login-card-description">{{.Labels.StaffDescription}}</p>
             <div class="login-pin-placeholder">
                 <div class="login-card-icon login-card-icon--lock">
                     {{template "icon-lock" .}}
                 </div>
-                <p>PIN entry coming soon</p>
+                <p>{{.Labels.StaffPinComingSoon}}</p>
             </div>
         </div>
     </div>

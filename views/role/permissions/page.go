@@ -22,6 +22,7 @@ type Deps struct {
 	GetRoleItemPageData func(ctx context.Context, req *rolepb.GetRoleItemPageDataRequest) (*rolepb.GetRoleItemPageDataResponse, error)
 	Routes              entydad.RoleRoutes
 	Labels              entydad.RolePermissionLabels
+	SharedLabels        entydad.SharedLabels
 	CommonLabels        pyeza.CommonLabels
 	TableLabels         types.TableLabels
 }
@@ -102,7 +103,7 @@ func buildTableConfig(ctx context.Context, deps *Deps, roleID string) (*types.Ta
 
 	l := deps.Labels
 	columns := permissionColumns(l)
-	rows := buildTableRows(role, l, deps.Routes)
+	rows := buildTableRows(role, l, deps.SharedLabels, deps.Routes)
 	types.ApplyColumnStyles(columns, rows)
 
 	refreshURL := route.ResolveURL(deps.Routes.DetailPermissionsTableURL, "id", roleID)
@@ -147,7 +148,7 @@ func permissionColumns(l entydad.RolePermissionLabels) []types.TableColumn {
 	}
 }
 
-func buildTableRows(role *rolepb.Role, l entydad.RolePermissionLabels, routes entydad.RoleRoutes) []types.TableRow {
+func buildTableRows(role *rolepb.Role, l entydad.RolePermissionLabels, sl entydad.SharedLabels, routes entydad.RoleRoutes) []types.TableRow {
 	rows := []types.TableRow{}
 
 	for _, rp := range role.GetRolePermissions() {
@@ -159,16 +160,16 @@ func buildTableRows(role *rolepb.Role, l entydad.RolePermissionLabels, routes en
 		rpID := rp.GetId()
 		permName := perm.GetName()
 		permCode := perm.GetPermissionCode()
-		permType := "Allow"
+		permType := sl.Badges.Allow
 		dateAssigned := rp.GetDateCreatedString()
 
 		// Permission type badge — from the embedded Permission object
 		pt := perm.GetPermissionType()
 		if pt == permissionpb.PermissionType_PERMISSION_TYPE_DENY {
-			permType = "Deny"
+			permType = sl.Badges.Deny
 		}
 		typeVariant := "success"
-		if permType == "Deny" {
+		if pt == permissionpb.PermissionType_PERMISSION_TYPE_DENY {
 			typeVariant = "danger"
 		}
 
@@ -178,7 +179,7 @@ func buildTableRows(role *rolepb.Role, l entydad.RolePermissionLabels, routes en
 				URL:            route.ResolveURL(routes.DetailPermissionsRemoveURL, "id", role.GetId()),
 				ItemName:       permName,
 				ConfirmTitle:   l.Actions.Remove,
-				ConfirmMessage: fmt.Sprintf("Are you sure you want to remove %s from this role?", permName),
+				ConfirmMessage: fmt.Sprintf(sl.Confirm.Remove, permName),
 			},
 		}
 

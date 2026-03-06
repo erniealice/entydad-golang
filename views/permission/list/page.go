@@ -23,6 +23,7 @@ type Deps struct {
 	RefreshURL      string
 	Routes          entydad.PermissionRoutes
 	Labels          entydad.PermissionLabels
+	SharedLabels    entydad.SharedLabels
 	CommonLabels    pyeza.CommonLabels
 	TableLabels     types.TableLabels
 }
@@ -96,11 +97,11 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 
 	l := deps.Labels
 	columns := permissionColumns(l)
-	rows := buildTableRows(resp.GetPermissionList(), status, l, deps.Routes, perms)
+	rows := buildTableRows(resp.GetPermissionList(), status, l, deps.SharedLabels, deps.Routes, perms)
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
-	bulkCfg.Actions = buildBulkActions(l, deps.CommonLabels, status, deps.Routes)
+	bulkCfg.Actions = buildBulkActions(l, deps.SharedLabels, deps.CommonLabels, status, deps.Routes)
 
 	refreshURL := route.ResolveURL(deps.Routes.TableURL, "status", status)
 
@@ -129,7 +130,7 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 			ActionURL:       deps.Routes.AddURL,
 			Icon:            "icon-plus",
 			Disabled:        !perms.Can("permission", "create"),
-			DisabledTooltip: "No permission",
+			DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
 		},
 		BulkActions: &bulkCfg,
 	}
@@ -157,7 +158,7 @@ func extractEntity(code string) string {
 	return code
 }
 
-func buildTableRows(permissions []*permissionpb.Permission, status string, l entydad.PermissionLabels, routes entydad.PermissionRoutes, perms *types.UserPermissions) []types.TableRow {
+func buildTableRows(permissions []*permissionpb.Permission, status string, l entydad.PermissionLabels, sl entydad.SharedLabels, routes entydad.PermissionRoutes, perms *types.UserPermissions) []types.TableRow {
 	// Filter permissions by status first
 	filtered := make([]*permissionpb.Permission, 0, len(permissions))
 	for _, p := range permissions {
@@ -195,27 +196,27 @@ func buildTableRows(permissions []*permissionpb.Permission, status string, l ent
 		name := p.GetName()
 		code := p.GetPermissionCode()
 		entity := extractEntity(code)
-		permType := formatPermissionType(p.GetPermissionType())
+		permType := formatPermissionType(p.GetPermissionType(), sl)
 
 		actions := []types.TableAction{
 			{Type: "edit", Label: l.Actions.Edit, Action: "edit", URL: route.ResolveURL(routes.EditURL, "id", id), DrawerTitle: l.Actions.Edit,
-				Disabled: !perms.Can("permission", "update"), DisabledTooltip: "No permission"},
+				Disabled: !perms.Can("permission", "update"), DisabledTooltip: sl.Badges.NoPermission},
 		}
 		if active {
 			actions = append(actions, types.TableAction{
 				Type: "deactivate", Label: l.Actions.Deactivate, Action: "deactivate",
 				URL: routes.SetStatusURL + "?status=inactive", ItemName: name,
 				ConfirmTitle:   l.Actions.Deactivate,
-				ConfirmMessage: fmt.Sprintf("Are you sure you want to deactivate %s?", name),
-				Disabled: !perms.Can("permission", "update"), DisabledTooltip: "No permission",
+				ConfirmMessage: fmt.Sprintf(sl.Confirm.Deactivate, name),
+				Disabled: !perms.Can("permission", "update"), DisabledTooltip: sl.Badges.NoPermission,
 			})
 		} else {
 			actions = append(actions, types.TableAction{
 				Type: "activate", Label: l.Actions.Activate, Action: "activate",
 				URL: routes.SetStatusURL + "?status=active", ItemName: name,
 				ConfirmTitle:   l.Actions.Activate,
-				ConfirmMessage: fmt.Sprintf("Are you sure you want to activate %s?", name),
-				Disabled: !perms.Can("permission", "update"), DisabledTooltip: "No permission",
+				ConfirmMessage: fmt.Sprintf(sl.Confirm.Activate, name),
+				Disabled: !perms.Can("permission", "update"), DisabledTooltip: sl.Badges.NoPermission,
 			})
 		}
 		deleteAction := types.TableAction{
@@ -234,7 +235,7 @@ func buildTableRows(permissions []*permissionpb.Permission, status string, l ent
 				{Type: "text", Value: name},
 				{Type: "badge", Value: entity, Variant: "default", BadgeType: "type"},
 				{Type: "text", Value: code},
-				{Type: "badge", Value: permType, Variant: permTypeVariant(permType)},
+				{Type: "badge", Value: permType, Variant: permTypeVariant(p.GetPermissionType())},
 				{Type: "badge", Value: recordStatus, Variant: statusVariant(recordStatus)},
 			},
 			DataAttrs: map[string]string{
@@ -250,22 +251,22 @@ func buildTableRows(permissions []*permissionpb.Permission, status string, l ent
 	return rows
 }
 
-func formatPermissionType(pt permissionpb.PermissionType) string {
+func formatPermissionType(pt permissionpb.PermissionType, sl entydad.SharedLabels) string {
 	switch pt {
 	case permissionpb.PermissionType_PERMISSION_TYPE_ALLOW:
-		return "Allow"
+		return sl.Badges.Allow
 	case permissionpb.PermissionType_PERMISSION_TYPE_DENY:
-		return "Deny"
+		return sl.Badges.Deny
 	default:
-		return "Allow"
+		return sl.Badges.Allow
 	}
 }
 
-func permTypeVariant(permType string) string {
-	switch permType {
-	case "Allow":
+func permTypeVariant(pt permissionpb.PermissionType) string {
+	switch pt {
+	case permissionpb.PermissionType_PERMISSION_TYPE_ALLOW:
 		return "success"
-	case "Deny":
+	case permissionpb.PermissionType_PERMISSION_TYPE_DENY:
 		return "danger"
 	default:
 		return "default"
@@ -327,7 +328,7 @@ func statusVariant(status string) string {
 	}
 }
 
-func buildBulkActions(l entydad.PermissionLabels, common pyeza.CommonLabels, status string, routes entydad.PermissionRoutes) []types.BulkAction {
+func buildBulkActions(l entydad.PermissionLabels, sl entydad.SharedLabels, common pyeza.CommonLabels, status string, routes entydad.PermissionRoutes) []types.BulkAction {
 	actions := []types.BulkAction{}
 
 	switch status {
@@ -339,7 +340,7 @@ func buildBulkActions(l entydad.PermissionLabels, common pyeza.CommonLabels, sta
 			Variant:         "warning",
 			Endpoint:        routes.BulkSetStatusURL,
 			ConfirmTitle:    l.Actions.Deactivate,
-			ConfirmMessage:  "Are you sure you want to deactivate {{count}} permission(s)?",
+			ConfirmMessage:  sl.Confirm.BulkDeactivate,
 			ExtraParamsJSON: `{"target_status":"inactive"}`,
 		})
 	case "inactive":
@@ -350,7 +351,7 @@ func buildBulkActions(l entydad.PermissionLabels, common pyeza.CommonLabels, sta
 			Variant:         "primary",
 			Endpoint:        routes.BulkSetStatusURL,
 			ConfirmTitle:    l.Actions.Activate,
-			ConfirmMessage:  "Are you sure you want to activate {{count}} permission(s)?",
+			ConfirmMessage:  sl.Confirm.BulkActivate,
 			ExtraParamsJSON: `{"target_status":"active"}`,
 		})
 	}
@@ -362,7 +363,7 @@ func buildBulkActions(l entydad.PermissionLabels, common pyeza.CommonLabels, sta
 		Variant:        "danger",
 		Endpoint:       routes.BulkDeleteURL,
 		ConfirmTitle:   common.Bulk.Delete,
-		ConfirmMessage: "Are you sure you want to delete {{count}} permission(s)? This action cannot be undone.",
+		ConfirmMessage: sl.Confirm.BulkDelete,
 	})
 
 	return actions
