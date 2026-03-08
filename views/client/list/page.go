@@ -172,7 +172,10 @@ func buildTableRows(clients []*clientpb.Client, status string, l entydad.ClientL
 
 		id := c.GetId()
 		u := c.GetUser()
-		name := u.GetFirstName() + " " + u.GetLastName()
+		name := c.GetCompanyName()
+		if name == "" {
+			name = u.GetFirstName() + " " + u.GetLastName()
+		}
 		email := u.GetEmailAddress()
 		phone := u.GetMobileNumber()
 		isInUse := inUseIDs[id]
