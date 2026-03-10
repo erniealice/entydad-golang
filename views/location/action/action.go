@@ -13,17 +13,6 @@ import (
 	"github.com/erniealice/entydad-golang"
 )
 
-// FormLabels holds i18n labels for the drawer form template.
-type FormLabels struct {
-	Name                   string
-	NamePlaceholder        string
-	Address                string
-	AddressPlaceholder     string
-	Description            string
-	DescriptionPlaceholder string
-	Active                 string
-}
-
 // FormData is the template data for the location drawer form.
 type FormData struct {
 	FormAction   string
@@ -33,7 +22,7 @@ type FormData struct {
 	Address      string
 	Description  string
 	Active       bool
-	Labels       FormLabels
+	Labels       entydad.LocationFormLabels
 	CommonLabels any
 }
 
@@ -46,18 +35,7 @@ type Deps struct {
 	SetLocationActive func(ctx context.Context, id string, active bool) error
 	GetInUseIDs       func(ctx context.Context, ids []string) (map[string]bool, error)
 	Routes            entydad.LocationRoutes
-}
-
-func formLabels(t func(string) string) FormLabels {
-	return FormLabels{
-		Name:                   t("form.name"),
-		NamePlaceholder:        t("form.namePlaceholder"),
-		Address:                t("form.address"),
-		AddressPlaceholder:     t("form.addressPlaceholder"),
-		Description:            t("form.description"),
-		DescriptionPlaceholder: t("form.descriptionPlaceholder"),
-		Active:                 t("form.active"),
-	}
+	Labels            entydad.LocationLabels
 }
 
 // NewAddAction creates the location add action (GET = form, POST = create).
@@ -71,7 +49,7 @@ func NewAddAction(deps *Deps) view.View {
 			return view.OK("location-drawer-form", &FormData{
 				FormAction:   deps.Routes.AddURL,
 				Active:       true,
-				Labels:       formLabels(viewCtx.T),
+				Labels:       deps.Labels.Form,
 				CommonLabels: nil, // injected by ViewAdapter
 			})
 		}
@@ -130,7 +108,7 @@ func NewEditAction(deps *Deps) view.View {
 				Address:      loc.GetAddress(),
 				Description:  loc.GetDescription(),
 				Active:       loc.GetActive(),
-				Labels:       formLabels(viewCtx.T),
+				Labels:       deps.Labels.Form,
 				CommonLabels: nil, // injected by ViewAdapter
 			})
 		}

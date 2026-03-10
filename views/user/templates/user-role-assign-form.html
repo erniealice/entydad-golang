@@ -17,6 +17,6 @@ Data: .UserID, .FormAction, .Labels, .RoleOptions, .CommonLabels
         </div>
     </div>
 
-    {{template "sheet-form-footer" (dict "Messages" .Messages "CommonLabels" .CommonLabels "ShowCancel" true)}}
+    {{template "sheet-form-footer" (dict "CommonLabels" .CommonLabels "ShowCancel" true)}}
 </form>
 {{end}}
