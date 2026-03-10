@@ -37,6 +37,48 @@ type FormLabels struct {
 	LastName           string
 	Email              string
 	Phone              string
+	Active             string
+
+	// Section titles
+	SectionCompany   string
+	SectionContact   string
+	SectionFinancial string
+	SectionAddress   string
+
+	// Placeholders
+	CompanyNamePlaceholder        string
+	SupplierTypePlaceholder       string
+	StatusPlaceholder             string
+	FirstNamePlaceholder          string
+	LastNamePlaceholder           string
+	EmailPlaceholder              string
+	PhonePlaceholder              string
+	PaymentTermsPlaceholder       string
+	CreditLimitPlaceholder        string
+	DefaultCurrencyPlaceholder    string
+	LeadTimeDaysPlaceholder       string
+	TaxIDPlaceholder              string
+	RegistrationNumberPlaceholder string
+	StreetAddressPlaceholder      string
+	CityPlaceholder               string
+	ProvincePlaceholder           string
+	PostalCodePlaceholder         string
+	CountryPlaceholder            string
+	WebsitePlaceholder            string
+	NotesPlaceholder              string
+
+	// Select option labels
+	TypeCompany    string
+	TypeIndividual string
+
+	StatusActive  string
+	StatusBlocked string
+	StatusOnHold  string
+
+	TermsImmediate string
+	TermsNet30     string
+	TermsNet60     string
+	Terms2_10Net30 string
 }
 
 // FormData is the template data for the supplier drawer form.
@@ -101,6 +143,48 @@ func formLabels(t func(string) string) FormLabels {
 		LastName:           t("supplier.form.lastName"),
 		Email:              t("supplier.form.email"),
 		Phone:              t("supplier.form.phone"),
+		Active:             t("supplier.form.active"),
+
+		// Section titles
+		SectionCompany:   t("supplier.form.sectionCompany"),
+		SectionContact:   t("supplier.form.sectionContact"),
+		SectionFinancial: t("supplier.form.sectionFinancial"),
+		SectionAddress:   t("supplier.form.sectionAddress"),
+
+		// Placeholders
+		CompanyNamePlaceholder:        t("supplier.form.companyNamePlaceholder"),
+		SupplierTypePlaceholder:       t("supplier.form.supplierTypePlaceholder"),
+		StatusPlaceholder:             t("supplier.form.statusPlaceholder"),
+		FirstNamePlaceholder:          t("supplier.form.firstNamePlaceholder"),
+		LastNamePlaceholder:           t("supplier.form.lastNamePlaceholder"),
+		EmailPlaceholder:              t("supplier.form.emailPlaceholder"),
+		PhonePlaceholder:              t("supplier.form.phonePlaceholder"),
+		PaymentTermsPlaceholder:       t("supplier.form.paymentTermsPlaceholder"),
+		CreditLimitPlaceholder:        t("supplier.form.creditLimitPlaceholder"),
+		DefaultCurrencyPlaceholder:    t("supplier.form.defaultCurrencyPlaceholder"),
+		LeadTimeDaysPlaceholder:       t("supplier.form.leadTimeDaysPlaceholder"),
+		TaxIDPlaceholder:              t("supplier.form.taxIdPlaceholder"),
+		RegistrationNumberPlaceholder: t("supplier.form.registrationNumberPlaceholder"),
+		StreetAddressPlaceholder:      t("supplier.form.streetAddressPlaceholder"),
+		CityPlaceholder:               t("supplier.form.cityPlaceholder"),
+		ProvincePlaceholder:           t("supplier.form.provincePlaceholder"),
+		PostalCodePlaceholder:         t("supplier.form.postalCodePlaceholder"),
+		CountryPlaceholder:            t("supplier.form.countryPlaceholder"),
+		WebsitePlaceholder:            t("supplier.form.websitePlaceholder"),
+		NotesPlaceholder:              t("supplier.form.notesPlaceholder"),
+
+		// Select option labels
+		TypeCompany:    t("supplier.form.typeCompany"),
+		TypeIndividual: t("supplier.form.typeIndividual"),
+
+		StatusActive:  t("supplier.form.statusActive"),
+		StatusBlocked: t("supplier.form.statusBlocked"),
+		StatusOnHold:  t("supplier.form.statusOnHold"),
+
+		TermsImmediate: t("supplier.form.termsImmediate"),
+		TermsNet30:     t("supplier.form.termsNet30"),
+		TermsNet60:     t("supplier.form.termsNet60"),
+		Terms2_10Net30: t("supplier.form.terms2_10Net30"),
 	}
 }
 

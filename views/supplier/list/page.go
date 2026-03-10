@@ -328,7 +328,7 @@ func buildRowActions(id, companyName, status string, isInUse bool, l entydad.Sup
 		deleteAction.DisabledTooltip = sl.Errors.CannotDeleteInUse
 	} else if !perms.Can("supplier", "delete") {
 		deleteAction.Disabled = true
-		deleteAction.DisabledTooltip = "No permission"
+		deleteAction.DisabledTooltip = sl.Badges.NoPermission
 	}
 	actions = append(actions, deleteAction)
 	return actions

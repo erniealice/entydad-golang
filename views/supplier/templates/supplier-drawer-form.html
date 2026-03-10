@@ -13,7 +13,7 @@ Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
 
     <div class="sheet-body">
         {{/* --- Company Section --- */}}
-        {{template "form-section" (dict "Title" .Labels.CompanyName)}}
+        {{template "form-section" (dict "Title" .Labels.SectionCompany)}}
 
         <div class="form-row single">
             {{template "form-group" (dict
@@ -22,7 +22,7 @@ Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
                 "Label" .Labels.CompanyName
                 "Value" .CompanyName
                 "Required" true
-                "Placeholder" "Enter company name"
+                "Placeholder" .Labels.CompanyNamePlaceholder
             )}}
         </div>
 
@@ -32,10 +32,10 @@ Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
                 "Name" "supplier_type"
                 "Label" .Labels.SupplierType
                 "Value" .SupplierType
-                "Placeholder" "Select type"
+                "Placeholder" .Labels.SupplierTypePlaceholder
                 "Options" (list
-                    (dict "Value" "company" "Label" "Company" "Selected" (eq .SupplierType "company"))
-                    (dict "Value" "individual" "Label" "Individual" "Selected" (eq .SupplierType "individual"))
+                    (dict "Value" "company" "Label" .Labels.TypeCompany "Selected" (eq .SupplierType "company"))
+                    (dict "Value" "individual" "Label" .Labels.TypeIndividual "Selected" (eq .SupplierType "individual"))
                 )
             )}}
             {{template "form-group" (dict
@@ -43,17 +43,17 @@ Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
                 "Name" "status"
                 "Label" .Labels.Status
                 "Value" .Status
-                "Placeholder" "Select status"
+                "Placeholder" .Labels.StatusPlaceholder
                 "Options" (list
-                    (dict "Value" "active" "Label" "Active" "Selected" (eq .Status "active"))
-                    (dict "Value" "blocked" "Label" "Blocked" "Selected" (eq .Status "blocked"))
-                    (dict "Value" "on_hold" "Label" "On Hold" "Selected" (eq .Status "on_hold"))
+                    (dict "Value" "active" "Label" .Labels.StatusActive "Selected" (eq .Status "active"))
+                    (dict "Value" "blocked" "Label" .Labels.StatusBlocked "Selected" (eq .Status "blocked"))
+                    (dict "Value" "on_hold" "Label" .Labels.StatusOnHold "Selected" (eq .Status "on_hold"))
                 )
             )}}
         </div>
 
         {{/* --- Contact Section --- */}}
-        {{template "form-section" (dict "Title" .Labels.FirstName)}}
+        {{template "form-section" (dict "Title" .Labels.SectionContact)}}
 
         <div class="form-row">
             {{template "form-group" (dict
@@ -62,7 +62,7 @@ Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
                 "Label" .Labels.FirstName
                 "Value" .FirstName
                 "Required" true
-                "Placeholder" "Enter first name"
+                "Placeholder" .Labels.FirstNamePlaceholder
             )}}
             {{template "form-group" (dict
                 "Type" "text"
@@ -70,7 +70,7 @@ Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
                 "Label" .Labels.LastName
                 "Value" .LastName
                 "Required" true
-                "Placeholder" "Enter last name"
+                "Placeholder" .Labels.LastNamePlaceholder
             )}}
         </div>
 
@@ -80,7 +80,7 @@ Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
                 "Name" "email_address"
                 "Label" .Labels.Email
                 "Value" .Email
-                "Placeholder" "Enter email address"
+                "Placeholder" .Labels.EmailPlaceholder
             )}}
         </div>
 
@@ -90,12 +90,12 @@ Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
                 "Name" "mobile_number"
                 "Label" .Labels.Phone
                 "Value" .Phone
-                "Placeholder" "Enter phone number"
+                "Placeholder" .Labels.PhonePlaceholder
             )}}
         </div>
 
         {{/* --- Financial Section --- */}}
-        {{template "form-section" (dict "Title" .Labels.PaymentTerms)}}
+        {{template "form-section" (dict "Title" .Labels.SectionFinancial)}}
 
         <div class="form-row">
             {{template "form-group" (dict
@@ -103,12 +103,12 @@ Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
                 "Name" "payment_terms"
                 "Label" .Labels.PaymentTerms
                 "Value" .PaymentTerms
-                "Placeholder" "Select terms"
+                "Placeholder" .Labels.PaymentTermsPlaceholder
                 "Options" (list
-                    (dict "Value" "immediate" "Label" "Immediate" "Selected" (eq .PaymentTerms "immediate"))
-                    (dict "Value" "net_30" "Label" "Net 30" "Selected" (eq .PaymentTerms "net_30"))
-                    (dict "Value" "net_60" "Label" "Net 60" "Selected" (eq .PaymentTerms "net_60"))
-                    (dict "Value" "2_10_net_30" "Label" "2/10 Net 30" "Selected" (eq .PaymentTerms "2_10_net_30"))
+                    (dict "Value" "immediate" "Label" .Labels.TermsImmediate "Selected" (eq .PaymentTerms "immediate"))
+                    (dict "Value" "net_30" "Label" .Labels.TermsNet30 "Selected" (eq .PaymentTerms "net_30"))
+                    (dict "Value" "net_60" "Label" .Labels.TermsNet60 "Selected" (eq .PaymentTerms "net_60"))
+                    (dict "Value" "2_10_net_30" "Label" .Labels.Terms2_10Net30 "Selected" (eq .PaymentTerms "2_10_net_30"))
                 )
             )}}
             {{template "form-group" (dict
@@ -116,7 +116,7 @@ Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
                 "Name" "credit_limit"
                 "Label" .Labels.CreditLimit
                 "Value" .CreditLimit
-                "Placeholder" "0.00"
+                "Placeholder" .Labels.CreditLimitPlaceholder
             )}}
         </div>
 
@@ -126,14 +126,14 @@ Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
                 "Name" "default_currency"
                 "Label" .Labels.DefaultCurrency
                 "Value" .DefaultCurrency
-                "Placeholder" "PHP"
+                "Placeholder" .Labels.DefaultCurrencyPlaceholder
             )}}
             {{template "form-group" (dict
                 "Type" "number"
                 "Name" "lead_time_days"
                 "Label" .Labels.LeadTimeDays
                 "Value" .LeadTimeDays
-                "Placeholder" "0"
+                "Placeholder" .Labels.LeadTimeDaysPlaceholder
             )}}
         </div>
 
@@ -143,19 +143,19 @@ Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
                 "Name" "tax_id"
                 "Label" .Labels.TaxID
                 "Value" .TaxID
-                "Placeholder" "Enter TIN/VAT/EIN"
+                "Placeholder" .Labels.TaxIDPlaceholder
             )}}
             {{template "form-group" (dict
                 "Type" "text"
                 "Name" "registration_number"
                 "Label" .Labels.RegistrationNumber
                 "Value" .RegistrationNumber
-                "Placeholder" "Enter registration number"
+                "Placeholder" .Labels.RegistrationNumberPlaceholder
             )}}
         </div>
 
         {{/* --- Address Section --- */}}
-        {{template "form-section" (dict "Title" .Labels.StreetAddress)}}
+        {{template "form-section" (dict "Title" .Labels.SectionAddress)}}
 
         <div class="form-row single">
             {{template "form-group" (dict
@@ -163,7 +163,7 @@ Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
                 "Name" "street_address"
                 "Label" .Labels.StreetAddress
                 "Value" .StreetAddress
-                "Placeholder" "Enter street address"
+                "Placeholder" .Labels.StreetAddressPlaceholder
             )}}
         </div>
 
@@ -173,14 +173,14 @@ Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
                 "Name" "city"
                 "Label" .Labels.City
                 "Value" .City
-                "Placeholder" "Enter city"
+                "Placeholder" .Labels.CityPlaceholder
             )}}
             {{template "form-group" (dict
                 "Type" "text"
                 "Name" "province"
                 "Label" .Labels.Province
                 "Value" .Province
-                "Placeholder" "Enter province"
+                "Placeholder" .Labels.ProvincePlaceholder
             )}}
         </div>
 
@@ -190,14 +190,14 @@ Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
                 "Name" "postal_code"
                 "Label" .Labels.PostalCode
                 "Value" .PostalCode
-                "Placeholder" "Enter postal code"
+                "Placeholder" .Labels.PostalCodePlaceholder
             )}}
             {{template "form-group" (dict
                 "Type" "text"
                 "Name" "country"
                 "Label" .Labels.Country
                 "Value" .Country
-                "Placeholder" "PH"
+                "Placeholder" .Labels.CountryPlaceholder
             )}}
         </div>
 
@@ -208,7 +208,7 @@ Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
                 "Name" "website"
                 "Label" .Labels.Website
                 "Value" .Website
-                "Placeholder" "https://example.com"
+                "Placeholder" .Labels.WebsitePlaceholder
             )}}
         </div>
 
@@ -218,7 +218,7 @@ Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
                 "Name" "notes"
                 "Label" .Labels.Notes
                 "Value" .Notes
-                "Placeholder" "Add notes about this supplier"
+                "Placeholder" .Labels.NotesPlaceholder
                 "Rows" 3
             )}}
         </div>
@@ -227,13 +227,13 @@ Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
         <div class="form-row single">
             {{template "toggle" (dict
                 "Name" "active"
-                "Label" "Active"
+                "Label" .Labels.Active
                 "Checked" .Active
                 "Value" "true"
             )}}
         </div>
     </div>
 
-    {{template "sheet-form-footer" (dict "CommonLabels" .CommonLabels "ShowCancel" true "IsEdit" .IsEdit)}}
+    {{template "sheet-form-footer" (dict "Messages" .Messages "CommonLabels" .CommonLabels "ShowCancel" true "IsEdit" .IsEdit)}}
 </form>
 {{end}}

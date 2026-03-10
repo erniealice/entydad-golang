@@ -48,6 +48,6 @@ Data: .Name, .Description, .Private, .Active, .ID, .FormAction, .IsEdit, .Common
         </div>
     </div>
 
-    {{template "sheet-form-footer" (dict "CommonLabels" .CommonLabels "ShowCancel" true "IsEdit" .IsEdit)}}
+    {{template "sheet-form-footer" (dict "Messages" .Messages "CommonLabels" .CommonLabels "ShowCancel" true "IsEdit" .IsEdit)}}
 </form>
 {{end}}

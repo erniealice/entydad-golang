@@ -773,6 +773,48 @@ type SupplierFormLabels struct {
 	LastName           string `json:"lastName"`
 	Email              string `json:"email"`
 	Phone              string `json:"phone"`
+	Active             string `json:"active"`
+
+	// Section titles
+	SectionCompany   string `json:"sectionCompany"`
+	SectionContact   string `json:"sectionContact"`
+	SectionFinancial string `json:"sectionFinancial"`
+	SectionAddress   string `json:"sectionAddress"`
+
+	// Placeholders
+	CompanyNamePlaceholder        string `json:"companyNamePlaceholder"`
+	SupplierTypePlaceholder       string `json:"supplierTypePlaceholder"`
+	StatusPlaceholder             string `json:"statusPlaceholder"`
+	FirstNamePlaceholder          string `json:"firstNamePlaceholder"`
+	LastNamePlaceholder           string `json:"lastNamePlaceholder"`
+	EmailPlaceholder              string `json:"emailPlaceholder"`
+	PhonePlaceholder              string `json:"phonePlaceholder"`
+	PaymentTermsPlaceholder       string `json:"paymentTermsPlaceholder"`
+	CreditLimitPlaceholder        string `json:"creditLimitPlaceholder"`
+	DefaultCurrencyPlaceholder    string `json:"defaultCurrencyPlaceholder"`
+	LeadTimeDaysPlaceholder       string `json:"leadTimeDaysPlaceholder"`
+	TaxIDPlaceholder              string `json:"taxIdPlaceholder"`
+	RegistrationNumberPlaceholder string `json:"registrationNumberPlaceholder"`
+	StreetAddressPlaceholder      string `json:"streetAddressPlaceholder"`
+	CityPlaceholder               string `json:"cityPlaceholder"`
+	ProvincePlaceholder           string `json:"provincePlaceholder"`
+	PostalCodePlaceholder         string `json:"postalCodePlaceholder"`
+	CountryPlaceholder            string `json:"countryPlaceholder"`
+	WebsitePlaceholder            string `json:"websitePlaceholder"`
+	NotesPlaceholder              string `json:"notesPlaceholder"`
+
+	// Select option labels
+	TypeCompany    string `json:"typeCompany"`
+	TypeIndividual string `json:"typeIndividual"`
+
+	StatusActive  string `json:"statusActive"`
+	StatusBlocked string `json:"statusBlocked"`
+	StatusOnHold  string `json:"statusOnHold"`
+
+	TermsImmediate  string `json:"termsImmediate"`
+	TermsNet30      string `json:"termsNet30"`
+	TermsNet60      string `json:"termsNet60"`
+	Terms2_10Net30  string `json:"terms2_10Net30"`
 }
 
 type SupplierDetailLabels struct {
