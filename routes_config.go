@@ -39,6 +39,7 @@ type ClientRoutes struct {
 	TabActionURL     string `json:"tab_action_url"`
 	SetStatusURL     string `json:"set_status_url"`
 	BulkSetStatusURL string `json:"bulk_set_status_url"`
+	SearchURL        string `json:"search_url"`
 
 	// Report routes
 	ReceivablesAgingURL string `json:"receivables_aging_url"`
@@ -59,6 +60,7 @@ func DefaultClientRoutes() ClientRoutes {
 		TabActionURL:     ClientTabActionURL,
 		SetStatusURL:     ClientSetStatusURL,
 		BulkSetStatusURL: ClientBulkSetStatusURL,
+		SearchURL:        ClientSearchURL,
 
 		ReceivablesAgingURL: ReceivablesAgingURL,
 	}
@@ -78,6 +80,7 @@ func (r ClientRoutes) RouteMap() map[string]string {
 		"client.tab_action":     r.TabActionURL,
 		"client.set_status":     r.SetStatusURL,
 		"client.bulk_set_status": r.BulkSetStatusURL,
+		"client.search":          r.SearchURL,
 
 		"client.receivables_aging": r.ReceivablesAgingURL,
 	}

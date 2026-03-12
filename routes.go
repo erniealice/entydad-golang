@@ -14,6 +14,7 @@ const (
 	ClientTabActionURL  = "/action/clients/{id}/tab/{tab}"
 	ClientSetStatusURL     = "/action/clients/set-status"
 	ClientBulkSetStatusURL = "/action/clients/bulk-set-status"
+	ClientSearchURL        = "/action/clients/search"
 
 	UserDashboardURL     = "/app/users/dashboard"
 	UserListURL          = "/app/users/list/{status}"
