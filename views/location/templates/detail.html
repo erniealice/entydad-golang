@@ -21,6 +21,8 @@
             {{template "location-tab-pricelists" .}}
         {{else if eq .ActiveTab "audit"}}
             {{template "location-tab-audit" .}}
+        {{else if eq .ActiveTab "attachments"}}
+            {{template "attachment-tab" .}}
         {{end}}
     </div>
 </div>

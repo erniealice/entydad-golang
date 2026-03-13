@@ -21,6 +21,8 @@
             {{template "user-tab-security" .}}
         {{else if eq .ActiveTab "audit"}}
             {{template "user-tab-audit" .}}
+        {{else if eq .ActiveTab "attachments"}}
+            {{template "attachment-tab" .}}
         {{end}}
     </div>
 </div>

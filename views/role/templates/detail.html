@@ -19,6 +19,8 @@
             {{template "role-tab-permissions" .}}
         {{else if eq .ActiveTab "users"}}
             {{template "role-tab-users" .}}
+        {{else if eq .ActiveTab "attachments"}}
+            {{template "attachment-tab" .}}
         {{end}}
     </div>
 </div>

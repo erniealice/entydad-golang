@@ -4,9 +4,11 @@ import (
 	"context"
 	"log"
 
-	"github.com/erniealice/pyeza-golang/attachment"
+	"github.com/erniealice/fycha-golang/views/attachment"
 	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/view"
+
+	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
 )
 
 // loadAttachments populates the AttachmentTable and AttachmentUploadURL on PageData.
@@ -14,12 +16,15 @@ func loadAttachments(ctx context.Context, deps *Deps, id string, pageData *PageD
 	cfg := attachmentConfig(deps, id)
 
 	if deps.ListAttachments != nil {
-		attachments, err := deps.ListAttachments(ctx, "supplier", id)
+		resp, err := deps.ListAttachments(ctx, "supplier", id)
 		if err != nil {
 			log.Printf("Failed to list attachments for supplier %s: %v", id, err)
-		} else {
-			pageData.AttachmentTable = attachment.BuildTable(attachments, cfg, id)
 		}
+		var items []*attachmentpb.Attachment
+		if resp != nil {
+			items = resp.GetData()
+		}
+		pageData.AttachmentTable = attachment.BuildTable(items, cfg, id)
 	}
 
 	pageData.AttachmentUploadURL = route.ResolveURL(deps.Routes.AttachmentUploadURL, "id", id)

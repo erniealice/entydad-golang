@@ -12,6 +12,7 @@ import (
 
 	"github.com/erniealice/entydad-golang"
 
+	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
 	locationpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/location"
 )
 
@@ -25,9 +26,9 @@ type Deps struct {
 
 	// Attachment operations (injected by composition root)
 	UploadFile       func(ctx context.Context, bucket, key string, content []byte, contentType string) error
-	ListAttachments  func(ctx context.Context, entityType, entityID string) ([]map[string]any, error)
-	CreateAttachment func(ctx context.Context, data map[string]any) error
-	DeleteAttachment func(ctx context.Context, id string) error
+	ListAttachments  func(ctx context.Context, moduleKey, foreignKey string) (*attachmentpb.ListAttachmentsResponse, error)
+	CreateAttachment func(ctx context.Context, req *attachmentpb.CreateAttachmentRequest) (*attachmentpb.CreateAttachmentResponse, error)
+	DeleteAttachment func(ctx context.Context, req *attachmentpb.DeleteAttachmentRequest) (*attachmentpb.DeleteAttachmentResponse, error)
 	NewID            func() string
 }
 

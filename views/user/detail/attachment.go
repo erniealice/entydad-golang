@@ -1,7 +1,7 @@
 package detail
 
 import (
-	"github.com/erniealice/pyeza-golang/attachment"
+	"github.com/erniealice/fycha-golang/views/attachment"
 	"github.com/erniealice/pyeza-golang/view"
 )
 

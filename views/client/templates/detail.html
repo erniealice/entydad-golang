@@ -17,6 +17,8 @@
         {{template "client-tab-basic" .}}
         {{else if eq .ActiveTab "history"}}
         {{template "client-tab-history" .}}
+        {{else if eq .ActiveTab "attachments"}}
+        {{template "attachment-tab" .}}
         {{end}}
     </div>
 </div>
