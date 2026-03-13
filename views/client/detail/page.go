@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	pyeza "github.com/erniealice/pyeza-golang"
+	"github.com/erniealice/pyeza-golang/attachment"
 	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
@@ -29,6 +30,14 @@ type Deps struct {
 	ListRevenues         func(ctx context.Context, collection string) ([]map[string]any, error)
 	Labels               entydad.ClientLabels
 	CommonLabels         pyeza.CommonLabels
+	TableLabels          types.TableLabels
+
+	// Attachment operations (injected by composition root)
+	UploadFile       func(ctx context.Context, bucket, key string, content []byte, contentType string) error
+	ListAttachments  func(ctx context.Context, entityType, entityID string) ([]map[string]any, error)
+	CreateAttachment func(ctx context.Context, data map[string]any) error
+	DeleteAttachment func(ctx context.Context, id string) error
+	NewID            func() string
 }
 
 // TagChip represents a tag displayed as a chip on the detail page.
@@ -88,6 +97,9 @@ type PageData struct {
 	PurchaseStats PurchaseStats
 	Orders        []OrderRow
 	HasOrders     bool
+	// Attachments
+	AttachmentTable     *types.TableConfig
+	AttachmentUploadURL string
 }
 
 // NewView creates the client detail view.
@@ -199,6 +211,20 @@ func NewView(deps *Deps) view.View {
 			HasOrders:       hasOrders,
 		}
 
+		// Load attachment data when attachments tab is active
+		if activeTab == "attachments" {
+			if deps.ListAttachments != nil {
+				cfg := attachmentConfig(deps)
+				atts, err := deps.ListAttachments(ctx, cfg.EntityType, id)
+				if err != nil {
+					log.Printf("Failed to list attachments: %v", err)
+					atts = []map[string]any{}
+				}
+				pageData.AttachmentTable = attachment.BuildTable(atts, cfg, id)
+			}
+			pageData.AttachmentUploadURL = route.ResolveURL(deps.Routes.AttachmentUploadURL, "id", id)
+		}
+
 		return view.OK("client-detail", pageData)
 	})
 }
@@ -210,6 +236,7 @@ func buildTabItems(id string, deps *Deps) []pyeza.TabItem {
 	return []pyeza.TabItem{
 		{Key: "basic", Label: deps.Labels.Detail.Tabs.Info, Href: base + "?tab=basic", HxGet: action + "basic", Icon: "icon-info"},
 		{Key: "history", Label: deps.Labels.Detail.Tabs.PurchaseHistory, Href: base + "?tab=history", HxGet: action + "history", Icon: "icon-shopping-bag"},
+		{Key: "attachments", Label: "Attachments", Href: base + "?tab=attachments", HxGet: action + "attachments", Icon: "icon-paperclip"},
 	}
 }
 
@@ -290,9 +317,23 @@ func NewTabAction(deps *Deps) view.View {
 		case "history":
 			pageData.PurchaseStats, pageData.Orders = loadPurchaseHistory(ctx, deps, id)
 			pageData.HasOrders = len(pageData.Orders) > 0
+		case "attachments":
+			if deps.ListAttachments != nil {
+				cfg := attachmentConfig(deps)
+				atts, err := deps.ListAttachments(ctx, cfg.EntityType, id)
+				if err != nil {
+					log.Printf("Failed to list attachments: %v", err)
+					atts = []map[string]any{}
+				}
+				pageData.AttachmentTable = attachment.BuildTable(atts, cfg, id)
+			}
+			pageData.AttachmentUploadURL = route.ResolveURL(deps.Routes.AttachmentUploadURL, "id", id)
 		}
 
 		templateName := "client-tab-" + tab
+		if tab == "attachments" {
+			templateName = "attachment-tab"
+		}
 		return view.OK(templateName, pageData)
 	})
 }

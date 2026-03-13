@@ -41,6 +41,10 @@ type ClientRoutes struct {
 	BulkSetStatusURL string `json:"bulk_set_status_url"`
 	SearchURL        string `json:"search_url"`
 
+	// Attachment routes
+	AttachmentUploadURL string `json:"attachment_upload_url"`
+	AttachmentDeleteURL string `json:"attachment_delete_url"`
+
 	// Report routes
 	ReceivablesAgingURL string `json:"receivables_aging_url"`
 }
@@ -62,6 +66,9 @@ func DefaultClientRoutes() ClientRoutes {
 		BulkSetStatusURL: ClientBulkSetStatusURL,
 		SearchURL:        ClientSearchURL,
 
+		AttachmentUploadURL: ClientAttachmentUploadURL,
+		AttachmentDeleteURL: ClientAttachmentDeleteURL,
+
 		ReceivablesAgingURL: ReceivablesAgingURL,
 	}
 }
@@ -81,6 +88,9 @@ func (r ClientRoutes) RouteMap() map[string]string {
 		"client.set_status":     r.SetStatusURL,
 		"client.bulk_set_status": r.BulkSetStatusURL,
 		"client.search":          r.SearchURL,
+
+		"client.attachment.upload": r.AttachmentUploadURL,
+		"client.attachment.delete": r.AttachmentDeleteURL,
 
 		"client.receivables_aging": r.ReceivablesAgingURL,
 	}
@@ -105,6 +115,10 @@ type UserRoutes struct {
 	DetailURL         string `json:"detail_url"`
 	TabActionURL      string `json:"tab_action_url"`
 	ResetPasswordURL  string `json:"reset_password_url"`
+
+	// Attachment routes
+	AttachmentUploadURL string `json:"attachment_upload_url"`
+	AttachmentDeleteURL string `json:"attachment_delete_url"`
 
 	// Legacy /manage/ user-roles routes (kept for backward compatibility)
 	RolesURL       string `json:"roles_url"`
@@ -136,6 +150,9 @@ func DefaultUserRoutes() UserRoutes {
 		TabActionURL:      UserTabActionURL,
 		ResetPasswordURL:  UserResetPasswordURL,
 
+		AttachmentUploadURL: UserAttachmentUploadURL,
+		AttachmentDeleteURL: UserAttachmentDeleteURL,
+
 		// Legacy /manage/ routes
 		RolesURL:       UserRolesURL,
 		RolesTableURL:  UserRolesTableURL,
@@ -164,6 +181,9 @@ func (r UserRoutes) RouteMap() map[string]string {
 		"user.bulk_set_status": r.BulkSetStatusURL,
 		"user.detail":         r.DetailURL,
 		"user.tab_action":     r.TabActionURL,
+
+		"user.attachment.upload": r.AttachmentUploadURL,
+		"user.attachment.delete": r.AttachmentDeleteURL,
 
 		// Legacy /manage/ routes
 		"user.role.list":   r.RolesURL,
@@ -196,6 +216,10 @@ type RoleRoutes struct {
 	BulkSetStatusURL string `json:"bulk_set_status_url"`
 	DetailURL        string `json:"detail_url"`
 	TabActionURL     string `json:"tab_action_url"`
+
+	// Attachment routes
+	AttachmentUploadURL string `json:"attachment_upload_url"`
+	AttachmentDeleteURL string `json:"attachment_delete_url"`
 
 	// Legacy /manage/ role-permissions routes (kept for backward compatibility)
 	PermissionsURL       string `json:"permissions_url"`
@@ -231,6 +255,9 @@ func DefaultRoleRoutes() RoleRoutes {
 		DetailURL:        RoleDetailURL,
 		TabActionURL:     RoleTabActionURL,
 
+		AttachmentUploadURL: RoleAttachmentUploadURL,
+		AttachmentDeleteURL: RoleAttachmentDeleteURL,
+
 		// Legacy /manage/ routes
 		PermissionsURL:       RolePermissionsURL,
 		PermissionsTableURL:  RolePermissionsTableURL,
@@ -264,6 +291,9 @@ func (r RoleRoutes) RouteMap() map[string]string {
 		"role.bulk_set_status": r.BulkSetStatusURL,
 		"role.detail":         r.DetailURL,
 		"role.tab_action":     r.TabActionURL,
+
+		"role.attachment.upload": r.AttachmentUploadURL,
+		"role.attachment.delete": r.AttachmentDeleteURL,
 
 		// Legacy /manage/ routes
 		"role.permission.list":   r.PermissionsURL,
@@ -302,6 +332,10 @@ type LocationRoutes struct {
 	BulkSetStatusURL string `json:"bulk_set_status_url"`
 	TabActionURL     string `json:"tab_action_url"`
 	EditDetailURL    string `json:"edit_detail_url"`
+
+	// Attachment routes
+	AttachmentUploadURL string `json:"attachment_upload_url"`
+	AttachmentDeleteURL string `json:"attachment_delete_url"`
 }
 
 // DefaultLocationRoutes returns a LocationRoutes populated from the
@@ -319,6 +353,9 @@ func DefaultLocationRoutes() LocationRoutes {
 		BulkSetStatusURL: LocationBulkSetStatusURL,
 		TabActionURL:     LocationTabActionURL,
 		EditDetailURL:    LocationEditDetailURL,
+
+		AttachmentUploadURL: LocationAttachmentUploadURL,
+		AttachmentDeleteURL: LocationAttachmentDeleteURL,
 	}
 }
 
@@ -336,6 +373,9 @@ func (r LocationRoutes) RouteMap() map[string]string {
 		"location.bulk_set_status": r.BulkSetStatusURL,
 		"location.tab_action":      r.TabActionURL,
 		"location.edit_detail":     r.EditDetailURL,
+
+		"location.attachment.upload": r.AttachmentUploadURL,
+		"location.attachment.delete": r.AttachmentDeleteURL,
 	}
 }
 
@@ -446,6 +486,10 @@ type SupplierRoutes struct {
 	SetStatusURL     string `json:"set_status_url"`
 	BulkSetStatusURL string `json:"bulk_set_status_url"`
 
+	// Attachment routes
+	AttachmentUploadURL string `json:"attachment_upload_url"`
+	AttachmentDeleteURL string `json:"attachment_delete_url"`
+
 	// Report routes
 	PayablesAgingURL string `json:"payables_aging_url"`
 }
@@ -465,6 +509,9 @@ func DefaultSupplierRoutes() SupplierRoutes {
 		SetStatusURL:     SupplierSetStatusURL,
 		BulkSetStatusURL: SupplierBulkSetStatusURL,
 
+		AttachmentUploadURL: SupplierAttachmentUploadURL,
+		AttachmentDeleteURL: SupplierAttachmentDeleteURL,
+
 		PayablesAgingURL: PayablesAgingURL,
 	}
 }
@@ -482,6 +529,9 @@ func (r SupplierRoutes) RouteMap() map[string]string {
 		"supplier.tab_action":      r.TabActionURL,
 		"supplier.set_status":      r.SetStatusURL,
 		"supplier.bulk_set_status": r.BulkSetStatusURL,
+
+		"supplier.attachment.upload": r.AttachmentUploadURL,
+		"supplier.attachment.delete": r.AttachmentDeleteURL,
 
 		"supplier.payables_aging": r.PayablesAgingURL,
 	}

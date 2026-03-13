@@ -6,6 +6,7 @@ import (
 	"log"
 
 	pyeza "github.com/erniealice/pyeza-golang"
+	"github.com/erniealice/pyeza-golang/attachment"
 	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
@@ -27,6 +28,13 @@ type Deps struct {
 	UserRoleLabels               entydad.UserRoleLabels
 	CommonLabels                 pyeza.CommonLabels
 	TableLabels                  types.TableLabels
+
+	// Attachment operations (injected by composition root)
+	UploadFile       func(ctx context.Context, bucket, key string, content []byte, contentType string) error
+	ListAttachments  func(ctx context.Context, entityType, entityID string) ([]map[string]any, error)
+	CreateAttachment func(ctx context.Context, data map[string]any) error
+	DeleteAttachment func(ctx context.Context, id string) error
+	NewID            func() string
 }
 
 // PageData holds the data for the user detail page.
@@ -43,10 +51,12 @@ type PageData struct {
 	UserMobile      string
 	UserStatus      string
 	StatusVariant   string
-	RoleNames        []string
-	RolesTable       *types.TableConfig
-	ResetPasswordURL string
-	EditURL          string
+	RoleNames            []string
+	RolesTable           *types.TableConfig
+	ResetPasswordURL     string
+	EditURL              string
+	AttachmentTable      *types.TableConfig
+	AttachmentUploadURL  string
 }
 
 // NewView creates the user detail view (full page).
@@ -85,6 +95,9 @@ func NewTabAction(deps *Deps) view.View {
 
 		// Return only the tab partial template
 		templateName := "user-tab-" + tab
+		if tab == "attachments" {
+			templateName = "attachment-tab"
+		}
 		return view.OK(templateName, pageData)
 	})
 }
@@ -166,6 +179,17 @@ func buildPageData(ctx context.Context, deps *Deps, id, activeTab string, viewCt
 		} else {
 			pageData.RolesTable = tableConfig
 		}
+	case "attachments":
+		if deps.ListAttachments != nil {
+			cfg := attachmentConfig(deps)
+			atts, err := deps.ListAttachments(ctx, cfg.EntityType, id)
+			if err != nil {
+				log.Printf("Failed to list attachments: %v", err)
+				atts = []map[string]any{}
+			}
+			pageData.AttachmentTable = attachment.BuildTable(atts, cfg, id)
+		}
+		pageData.AttachmentUploadURL = route.ResolveURL(deps.Routes.AttachmentUploadURL, "id", id)
 	}
 
 	return pageData, nil
@@ -179,6 +203,7 @@ func buildTabItems(id string, labels entydad.UserLabels, roleCount int, routes e
 		{Key: "roles", Label: labels.Detail.Tabs.Roles, Href: base + "?tab=roles", HxGet: action + "roles", Icon: "icon-shield", Count: roleCount, Disabled: false},
 		{Key: "security", Label: labels.Detail.Tabs.Security, Href: base + "?tab=security", HxGet: action + "security", Icon: "icon-shield-check", Count: 0, Disabled: false},
 		{Key: "audit", Label: labels.Detail.Tabs.AuditTrail, Href: base + "?tab=audit", HxGet: action + "audit", Icon: "icon-clock", Count: 0, Disabled: false},
+		{Key: "attachments", Label: "Attachments", Href: base + "?tab=attachments", HxGet: action + "attachments", Icon: "icon-paperclip", Count: 0, Disabled: false},
 	}
 }
 

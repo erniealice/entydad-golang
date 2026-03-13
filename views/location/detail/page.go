@@ -22,6 +22,13 @@ type Deps struct {
 	Labels       entydad.LocationLabels
 	CommonLabels pyeza.CommonLabels
 	TableLabels  types.TableLabels
+
+	// Attachment operations (injected by composition root)
+	UploadFile       func(ctx context.Context, bucket, key string, content []byte, contentType string) error
+	ListAttachments  func(ctx context.Context, entityType, entityID string) ([]map[string]any, error)
+	CreateAttachment func(ctx context.Context, data map[string]any) error
+	DeleteAttachment func(ctx context.Context, id string) error
+	NewID            func() string
 }
 
 // PageData holds the data for the location detail page.
@@ -38,6 +45,9 @@ type PageData struct {
 	LocationStatus  string
 	StatusVariant   string
 	EditDetailURL   string
+	// Attachments
+	AttachmentTable     *types.TableConfig
+	AttachmentUploadURL string
 }
 
 // NewView creates the location detail view (full page).
@@ -53,6 +63,11 @@ func NewView(deps *Deps) view.View {
 		pageData, err := buildPageData(ctx, deps, id, activeTab, viewCtx)
 		if err != nil {
 			return view.Error(err)
+		}
+
+		switch activeTab {
+		case "attachments":
+			loadAttachments(ctx, deps, id, pageData)
 		}
 
 		return view.OK("location-detail", pageData)
@@ -74,8 +89,16 @@ func NewTabAction(deps *Deps) view.View {
 			return view.Error(err)
 		}
 
+		switch tab {
+		case "attachments":
+			loadAttachments(ctx, deps, id, pageData)
+		}
+
 		// Return only the tab partial template
 		templateName := "location-tab-" + tab
+		if tab == "attachments" {
+			templateName = "attachment-tab"
+		}
 		return view.OK(templateName, pageData)
 	})
 }
@@ -147,5 +170,6 @@ func buildTabItems(id string, labels entydad.LocationLabels, routes entydad.Loca
 		{Key: "users", Label: labels.Detail.Tabs.Users, Href: base + "?tab=users", HxGet: action + "users", Icon: "icon-users", Count: 0, Disabled: false},
 		{Key: "pricelists", Label: labels.Detail.Tabs.PriceLists, Href: base + "?tab=pricelists", HxGet: action + "pricelists", Icon: "icon-tag", Count: 0, Disabled: false},
 		{Key: "audit", Label: labels.Detail.Tabs.AuditTrail, Href: base + "?tab=audit", HxGet: action + "audit", Icon: "icon-clock", Count: 0, Disabled: false},
+		{Key: "attachments", Label: "Attachments", Href: base + "?tab=attachments", HxGet: action + "attachments", Icon: "icon-paperclip", Count: 0, Disabled: false},
 	}
 }

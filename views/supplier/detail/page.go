@@ -22,6 +22,14 @@ type Deps struct {
 	ReadSupplier func(ctx context.Context, req *supplierpb.ReadSupplierRequest) (*supplierpb.ReadSupplierResponse, error)
 	Labels       entydad.SupplierLabels
 	CommonLabels pyeza.CommonLabels
+	TableLabels  types.TableLabels
+
+	// Attachment operations (injected by composition root)
+	UploadFile       func(ctx context.Context, bucket, key string, content []byte, contentType string) error
+	ListAttachments  func(ctx context.Context, entityType, entityID string) ([]map[string]any, error)
+	CreateAttachment func(ctx context.Context, data map[string]any) error
+	DeleteAttachment func(ctx context.Context, id string) error
+	NewID            func() string
 }
 
 // PageData holds the data for the supplier detail page.
@@ -64,6 +72,9 @@ type PageData struct {
 	HasFinancial bool
 	HasAddress   bool
 	HasNotes     bool
+	// Attachments
+	AttachmentTable     *types.TableConfig
+	AttachmentUploadURL string
 }
 
 // NewView creates the supplier detail view.
@@ -91,6 +102,11 @@ func NewView(deps *Deps) view.View {
 		supplier := data[0]
 
 		pageData := buildPageData(supplier, id, activeTab, viewCtx, deps)
+
+		switch activeTab {
+		case "attachments":
+			loadAttachments(ctx, deps, id, pageData)
+		}
 
 		return view.OK("supplier-detail", pageData)
 	})
@@ -121,7 +137,15 @@ func NewTabAction(deps *Deps) view.View {
 
 		pageData := buildPageData(supplier, id, tab, viewCtx, deps)
 
+		switch tab {
+		case "attachments":
+			loadAttachments(ctx, deps, id, pageData)
+		}
+
 		templateName := "supplier-tab-" + tab
+		if tab == "attachments" {
+			templateName = "attachment-tab"
+		}
 		return view.OK(templateName, pageData)
 	})
 }
@@ -246,6 +270,7 @@ func buildTabItems(id string, deps *Deps) []pyeza.TabItem {
 	action := route.ResolveURL(routes.TabActionURL, "id", id, "tab", "")
 	return []pyeza.TabItem{
 		{Key: "info", Label: deps.Labels.Detail.InfoTab, Href: base + "?tab=info", HxGet: action + "info", Icon: "icon-info"},
+		{Key: "attachments", Label: "Attachments", Href: base + "?tab=attachments", HxGet: action + "attachments", Icon: "icon-paperclip"},
 	}
 }
 

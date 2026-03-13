@@ -17,8 +17,8 @@ packages/entydad-golang-ryta/
 │       ├── entydad-supplier-detail.css
 │       ├── entydad-user-dashboard.css
 │       ├── entydad-user-detail.css
-│       ├── login01.css
-│       └── login02.css
+│       ├── entydad-login01.css
+│       └── entydad-login02.css
 ├── views/
 │   ├── client/
 │   │   ├── action/action.go          # CRUD + status + bulk actions
@@ -932,8 +932,8 @@ Both functions use `runtime.Caller(0)` via `packageDir()` to discover the packag
 - `entydad-role-detail.css` -- role detail page
 - `entydad-location-detail.css` -- location detail page
 - `entydad-supplier-detail.css` -- supplier detail page
-- `login01.css` -- simple login page
-- `login02.css` -- split-screen login page
+- `entydad-login01.css` -- simple login page
+- `entydad-login02.css` -- split-screen login page
 
 ## Consumer App Wiring Guide
 
