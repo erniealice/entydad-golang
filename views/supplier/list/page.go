@@ -296,7 +296,7 @@ func buildRowActions(id, companyName, status string, isInUse bool, l entydad.Sup
 			URL: routes.SetStatusURL + "?status=blocked", ItemName: companyName,
 			ConfirmTitle:   l.Actions.Block,
 			ConfirmMessage: fmt.Sprintf(sl.Confirm.Block, companyName),
-			Disabled: !perms.Can("supplier", "update"), DisabledTooltip: sl.Badges.NoPermission,
+			Disabled:       !perms.Can("supplier", "update"), DisabledTooltip: sl.Badges.NoPermission,
 		})
 	case "blocked":
 		actions = append(actions, types.TableAction{
@@ -304,7 +304,7 @@ func buildRowActions(id, companyName, status string, isInUse bool, l entydad.Sup
 			URL: routes.SetStatusURL + "?status=active", ItemName: companyName,
 			ConfirmTitle:   l.Actions.Activate,
 			ConfirmMessage: fmt.Sprintf(sl.Confirm.Activate, companyName),
-			Disabled: !perms.Can("supplier", "update"), DisabledTooltip: sl.Badges.NoPermission,
+			Disabled:       !perms.Can("supplier", "update"), DisabledTooltip: sl.Badges.NoPermission,
 		})
 	case "on_hold":
 		actions = append(actions, types.TableAction{
@@ -312,7 +312,7 @@ func buildRowActions(id, companyName, status string, isInUse bool, l entydad.Sup
 			URL: routes.SetStatusURL + "?status=active", ItemName: companyName,
 			ConfirmTitle:   l.Actions.Activate,
 			ConfirmMessage: fmt.Sprintf(sl.Confirm.Activate, companyName),
-			Disabled: !perms.Can("supplier", "update"), DisabledTooltip: sl.Badges.NoPermission,
+			Disabled:       !perms.Can("supplier", "update"), DisabledTooltip: sl.Badges.NoPermission,
 		})
 	}
 

@@ -12,13 +12,13 @@ import (
 // ClientLabels holds all translatable strings for the client module.
 // JSON tags match the "client" wrapper key in retail/client.json.
 type ClientLabels struct {
-	Page        ClientPageLabels        `json:"page"`
-	Buttons     ClientButtonLabels      `json:"buttons"`
-	Columns     ClientColumnLabels      `json:"columns"`
-	Empty       ClientEmptyLabels       `json:"empty"`
-	Form        ClientFormLabels        `json:"form"`
-	Detail      ClientDetailLabels      `json:"detail"`
-	BulkActions ClientBulkActionLabels  `json:"bulkActions"`
+	Page        ClientPageLabels       `json:"page"`
+	Buttons     ClientButtonLabels     `json:"buttons"`
+	Columns     ClientColumnLabels     `json:"columns"`
+	Empty       ClientEmptyLabels      `json:"empty"`
+	Form        ClientFormLabels       `json:"form"`
+	Detail      ClientDetailLabels     `json:"detail"`
+	BulkActions ClientBulkActionLabels `json:"bulkActions"`
 }
 
 type ClientPageLabels struct {
@@ -50,39 +50,39 @@ type ClientEmptyLabels struct {
 }
 
 type ClientFormLabels struct {
-	Email                  string `json:"email"`
-	Phone                  string `json:"phone"`
-	CompanyName            string `json:"companyName"`
-	CompanyNamePlaceholder string `json:"companyNamePlaceholder"`
-	CustomerType           string `json:"customerType"`
-	DateOfBirth            string `json:"dateOfBirth"`
-	StreetAddress          string `json:"streetAddress"`
+	Email                    string `json:"email"`
+	Phone                    string `json:"phone"`
+	CompanyName              string `json:"companyName"`
+	CompanyNamePlaceholder   string `json:"companyNamePlaceholder"`
+	CustomerType             string `json:"customerType"`
+	DateOfBirth              string `json:"dateOfBirth"`
+	StreetAddress            string `json:"streetAddress"`
 	StreetAddressPlaceholder string `json:"streetAddressPlaceholder"`
-	City                   string `json:"city"`
-	CityPlaceholder        string `json:"cityPlaceholder"`
-	Province               string `json:"province"`
-	ProvincePlaceholder    string `json:"provincePlaceholder"`
-	PostalCode             string `json:"postalCode"`
-	PostalCodePlaceholder  string `json:"postalCodePlaceholder"`
-	Notes                  string `json:"notes"`
-	NotesPlaceholder       string `json:"notesPlaceholder"`
-	Tags                   string `json:"tags"`
-	TagsPlaceholder        string `json:"tagsPlaceholder"`
-	TagsSearchPlaceholder  string `json:"tagsSearchPlaceholder"`
-	TagsNoResults          string `json:"tagsNoResults"`
+	City                     string `json:"city"`
+	CityPlaceholder          string `json:"cityPlaceholder"`
+	Province                 string `json:"province"`
+	ProvincePlaceholder      string `json:"provincePlaceholder"`
+	PostalCode               string `json:"postalCode"`
+	PostalCodePlaceholder    string `json:"postalCodePlaceholder"`
+	Notes                    string `json:"notes"`
+	NotesPlaceholder         string `json:"notesPlaceholder"`
+	Tags                     string `json:"tags"`
+	TagsPlaceholder          string `json:"tagsPlaceholder"`
+	TagsSearchPlaceholder    string `json:"tagsSearchPlaceholder"`
+	TagsNoResults            string `json:"tagsNoResults"`
 }
 
 type ClientDetailLabels struct {
-	CompanyDetails  ClientCompanyDetailLabels  `json:"companyDetails"`
-	Actions         ClientDetailActionLabels   `json:"actions"`
-	Profile         ClientDetailSectionLabels  `json:"profile"`
-	Company         ClientDetailSectionLabels  `json:"company"`
-	Personal        ClientDetailSectionLabels  `json:"personal"`
-	Address         ClientDetailSectionLabels  `json:"address"`
-	NotesSection    ClientDetailSectionLabels  `json:"notesSection"`
-	Tags            ClientDetailTagLabels      `json:"tags"`
+	CompanyDetails  ClientCompanyDetailLabels   `json:"companyDetails"`
+	Actions         ClientDetailActionLabels    `json:"actions"`
+	Profile         ClientDetailSectionLabels   `json:"profile"`
+	Company         ClientDetailSectionLabels   `json:"company"`
+	Personal        ClientDetailSectionLabels   `json:"personal"`
+	Address         ClientDetailSectionLabels   `json:"address"`
+	NotesSection    ClientDetailSectionLabels   `json:"notesSection"`
+	Tags            ClientDetailTagLabels       `json:"tags"`
 	PurchaseHistory ClientPurchaseHistoryLabels `json:"purchaseHistory"`
-	Tabs            ClientDetailTabLabels      `json:"tabs"`
+	Tabs            ClientDetailTabLabels       `json:"tabs"`
 }
 
 type ClientCompanyDetailLabels struct {
@@ -96,8 +96,8 @@ type ClientDetailSectionLabels struct {
 
 // ClientDetailTagLabels holds labels for the tags section on the detail page.
 type ClientDetailTagLabels struct {
-	Title      string `json:"title"`
-	NoTags     string `json:"noTags"`
+	Title  string `json:"title"`
+	NoTags string `json:"noTags"`
 }
 
 // ClientPurchaseHistoryLabels holds labels for the purchase history section.
@@ -135,13 +135,13 @@ type ClientBulkActionLabels struct {
 // UserLabels holds all translatable strings for the user module.
 // JSON tags match retail/user.json (no wrapper key).
 type UserLabels struct {
-	Page    UserPageLabels    `json:"page"`
-	Buttons UserButtonLabels  `json:"buttons"`
-	Columns UserColumnLabels  `json:"columns"`
-	Empty   UserEmptyLabels   `json:"empty"`
-	Form    UserFormLabels    `json:"form"`
-	Actions UserActionLabels  `json:"actions"`
-	Detail  UserDetailLabels  `json:"detail"`
+	Page    UserPageLabels   `json:"page"`
+	Buttons UserButtonLabels `json:"buttons"`
+	Columns UserColumnLabels `json:"columns"`
+	Empty   UserEmptyLabels  `json:"empty"`
+	Form    UserFormLabels   `json:"form"`
+	Actions UserActionLabels `json:"actions"`
+	Detail  UserDetailLabels `json:"detail"`
 }
 
 type UserPageLabels struct {
@@ -186,10 +186,10 @@ type UserActionLabels struct {
 
 // UserDetailLabels holds labels for the user detail page.
 type UserDetailLabels struct {
-	BasicInfo   UserDetailBasicInfoLabels       `json:"basicInfo"`
-	Tabs        UserDetailTabLabels             `json:"tabs"`
-	Security    UserDetailSecurityLabels        `json:"security"`
-	EmptyStates UserDetailEmptyStateLabels      `json:"emptyStates"`
+	BasicInfo   UserDetailBasicInfoLabels  `json:"basicInfo"`
+	Tabs        UserDetailTabLabels        `json:"tabs"`
+	Security    UserDetailSecurityLabels   `json:"security"`
+	EmptyStates UserDetailEmptyStateLabels `json:"emptyStates"`
 }
 
 // UserDetailSecurityLabels holds labels for the security tab.
@@ -241,13 +241,13 @@ type UserDetailTabLabels struct {
 // LocationLabels holds all translatable strings for the location module.
 // JSON tags match the "location" wrapper key in retail/location.json.
 type LocationLabels struct {
-	Page    LocationPageLabels    `json:"page"`
-	Buttons LocationButtonLabels  `json:"buttons"`
-	Columns LocationColumnLabels  `json:"columns"`
-	Empty   LocationEmptyLabels   `json:"empty"`
-	Form    LocationFormLabels    `json:"form"`
-	Actions LocationActionLabels  `json:"actions"`
-	Detail  LocationDetailLabels  `json:"detail"`
+	Page    LocationPageLabels   `json:"page"`
+	Buttons LocationButtonLabels `json:"buttons"`
+	Columns LocationColumnLabels `json:"columns"`
+	Empty   LocationEmptyLabels  `json:"empty"`
+	Form    LocationFormLabels   `json:"form"`
+	Actions LocationActionLabels `json:"actions"`
+	Detail  LocationDetailLabels `json:"detail"`
 }
 
 type LocationPageLabels struct {
@@ -335,13 +335,13 @@ type LocationDetailEmptyLabels struct {
 // RoleLabels holds all translatable strings for the role module.
 // JSON tags match the "role" wrapper key in retail/role.json.
 type RoleLabels struct {
-	Page    RolePageLabels    `json:"page"`
-	Buttons RoleButtonLabels  `json:"buttons"`
-	Columns RoleColumnLabels  `json:"columns"`
-	Empty   RoleEmptyLabels   `json:"empty"`
-	Form    RoleFormLabels    `json:"form"`
-	Actions RoleActionLabels  `json:"actions"`
-	Detail  RoleDetailLabels  `json:"detail"`
+	Page    RolePageLabels   `json:"page"`
+	Buttons RoleButtonLabels `json:"buttons"`
+	Columns RoleColumnLabels `json:"columns"`
+	Empty   RoleEmptyLabels  `json:"empty"`
+	Form    RoleFormLabels   `json:"form"`
+	Actions RoleActionLabels `json:"actions"`
+	Detail  RoleDetailLabels `json:"detail"`
 }
 
 type RolePageLabels struct {
@@ -417,12 +417,12 @@ type RoleDetailInfoLabels struct {
 
 // PermissionLabels holds all translatable strings for the permission module.
 type PermissionLabels struct {
-	Page    PermissionPageLabels    `json:"page"`
-	Buttons PermissionButtonLabels  `json:"buttons"`
-	Columns PermissionColumnLabels  `json:"columns"`
-	Empty   PermissionEmptyLabels   `json:"empty"`
-	Form    PermissionFormLabels    `json:"form"`
-	Actions PermissionActionLabels  `json:"actions"`
+	Page    PermissionPageLabels   `json:"page"`
+	Buttons PermissionButtonLabels `json:"buttons"`
+	Columns PermissionColumnLabels `json:"columns"`
+	Empty   PermissionEmptyLabels  `json:"empty"`
+	Form    PermissionFormLabels   `json:"form"`
+	Actions PermissionActionLabels `json:"actions"`
 }
 
 type PermissionPageLabels struct {
@@ -454,15 +454,15 @@ type PermissionEmptyLabels struct {
 }
 
 type PermissionFormLabels struct {
-	Name                       string `json:"name"`
-	NamePlaceholder            string `json:"namePlaceholder"`
-	PermissionCode             string `json:"permissionCode"`
-	PermissionCodePlaceholder  string `json:"permissionCodePlaceholder"`
-	PermissionCodeHint         string `json:"permissionCodeHint"`
-	PermissionType             string `json:"permissionType"`
-	Description                string `json:"description"`
-	DescriptionPlaceholder     string `json:"descriptionPlaceholder"`
-	Active                     string `json:"active"`
+	Name                      string `json:"name"`
+	NamePlaceholder           string `json:"namePlaceholder"`
+	PermissionCode            string `json:"permissionCode"`
+	PermissionCodePlaceholder string `json:"permissionCodePlaceholder"`
+	PermissionCodeHint        string `json:"permissionCodeHint"`
+	PermissionType            string `json:"permissionType"`
+	Description               string `json:"description"`
+	DescriptionPlaceholder    string `json:"descriptionPlaceholder"`
+	Active                    string `json:"active"`
 }
 
 type PermissionActionLabels struct {
@@ -479,12 +479,12 @@ type PermissionActionLabels struct {
 
 // RolePermissionLabels holds all translatable strings for the role-permission assignment view.
 type RolePermissionLabels struct {
-	Page    RolePermissionPageLabels    `json:"page"`
-	Buttons RolePermissionButtonLabels  `json:"buttons"`
-	Columns RolePermissionColumnLabels  `json:"columns"`
-	Empty   RolePermissionEmptyLabels   `json:"empty"`
-	Form    RolePermissionFormLabels    `json:"form"`
-	Actions RolePermissionActionLabels  `json:"actions"`
+	Page    RolePermissionPageLabels   `json:"page"`
+	Buttons RolePermissionButtonLabels `json:"buttons"`
+	Columns RolePermissionColumnLabels `json:"columns"`
+	Empty   RolePermissionEmptyLabels  `json:"empty"`
+	Form    RolePermissionFormLabels   `json:"form"`
+	Actions RolePermissionActionLabels `json:"actions"`
 }
 
 type RolePermissionPageLabels struct {
@@ -513,8 +513,8 @@ type RolePermissionFormLabels struct {
 }
 
 type RolePermissionActionLabels struct {
-	Assign          string `json:"assign"`
-	Remove          string `json:"remove"`
+	Assign            string `json:"assign"`
+	Remove            string `json:"remove"`
 	ManagePermissions string `json:"managePermissions"`
 }
 
@@ -524,12 +524,12 @@ type RolePermissionActionLabels struct {
 
 // UserRoleLabels holds all translatable strings for the user-role assignment view.
 type UserRoleLabels struct {
-	Page    UserRolePageLabels    `json:"page"`
-	Buttons UserRoleButtonLabels  `json:"buttons"`
-	Columns UserRoleColumnLabels  `json:"columns"`
-	Empty   UserRoleEmptyLabels   `json:"empty"`
-	Form    UserRoleFormLabels    `json:"form"`
-	Actions UserRoleActionLabels  `json:"actions"`
+	Page    UserRolePageLabels   `json:"page"`
+	Buttons UserRoleButtonLabels `json:"buttons"`
+	Columns UserRoleColumnLabels `json:"columns"`
+	Empty   UserRoleEmptyLabels  `json:"empty"`
+	Form    UserRoleFormLabels   `json:"form"`
+	Actions UserRoleActionLabels `json:"actions"`
 }
 
 type UserRolePageLabels struct {
@@ -542,9 +542,9 @@ type UserRoleButtonLabels struct {
 }
 
 type UserRoleColumnLabels struct {
-	RoleName    string `json:"roleName"`
-	Description string `json:"description"`
-	Color       string `json:"color"`
+	RoleName     string `json:"roleName"`
+	Description  string `json:"description"`
+	Color        string `json:"color"`
 	DateAssigned string `json:"dateAssigned"`
 }
 
@@ -569,12 +569,12 @@ type UserRoleActionLabels struct {
 
 // RoleUserLabels holds all translatable strings for the role-user assignment view.
 type RoleUserLabels struct {
-	Page    RoleUserPageLabels    `json:"page"`
-	Buttons RoleUserButtonLabels  `json:"buttons"`
-	Columns RoleUserColumnLabels  `json:"columns"`
-	Empty   RoleUserEmptyLabels   `json:"empty"`
-	Form    RoleUserFormLabels    `json:"form"`
-	Actions RoleUserActionLabels  `json:"actions"`
+	Page    RoleUserPageLabels   `json:"page"`
+	Buttons RoleUserButtonLabels `json:"buttons"`
+	Columns RoleUserColumnLabels `json:"columns"`
+	Empty   RoleUserEmptyLabels  `json:"empty"`
+	Form    RoleUserFormLabels   `json:"form"`
+	Actions RoleUserActionLabels `json:"actions"`
 }
 
 type RoleUserPageLabels struct {
@@ -613,12 +613,12 @@ type RoleUserActionLabels struct {
 
 // WorkspaceLabels holds all translatable strings for the workspace module.
 type WorkspaceLabels struct {
-	Page    WorkspacePageLabels    `json:"page"`
-	Buttons WorkspaceButtonLabels  `json:"buttons"`
-	Columns WorkspaceColumnLabels  `json:"columns"`
-	Empty   WorkspaceEmptyLabels   `json:"empty"`
-	Form    WorkspaceFormLabels    `json:"form"`
-	Actions WorkspaceActionLabels  `json:"actions"`
+	Page    WorkspacePageLabels   `json:"page"`
+	Buttons WorkspaceButtonLabels `json:"buttons"`
+	Columns WorkspaceColumnLabels `json:"columns"`
+	Empty   WorkspaceEmptyLabels  `json:"empty"`
+	Form    WorkspaceFormLabels   `json:"form"`
+	Actions WorkspaceActionLabels `json:"actions"`
 }
 
 type WorkspacePageLabels struct {
@@ -671,18 +671,18 @@ type WorkspaceActionLabels struct {
 
 // LoginLabels holds i18n strings for the login page.
 type LoginLabels struct {
-	Title               string `json:"title"`
-	Email               string `json:"email"`
-	Password            string `json:"password"`
-	Submit              string `json:"submit"`
-	ForgotLink          string `json:"forgotLink"`
-	Error               string `json:"error"`
-	AdminTitle          string `json:"adminTitle"`
-	AdminDescription    string `json:"adminDescription"`
-	EmailPlaceholder    string `json:"emailPlaceholder"`
-	StaffTitle          string `json:"staffTitle"`
-	StaffDescription    string `json:"staffDescription"`
-	StaffPinComingSoon  string `json:"staffPinComingSoon"`
+	Title              string `json:"title"`
+	Email              string `json:"email"`
+	Password           string `json:"password"`
+	Submit             string `json:"submit"`
+	ForgotLink         string `json:"forgotLink"`
+	Error              string `json:"error"`
+	AdminTitle         string `json:"adminTitle"`
+	AdminDescription   string `json:"adminDescription"`
+	EmailPlaceholder   string `json:"emailPlaceholder"`
+	StaffTitle         string `json:"staffTitle"`
+	StaffDescription   string `json:"staffDescription"`
+	StaffPinComingSoon string `json:"staffPinComingSoon"`
 }
 
 // Login02Labels holds i18n strings for the login02 split-screen page.
@@ -709,13 +709,13 @@ type Login02Labels struct {
 
 // SupplierLabels holds all translatable strings for the supplier module.
 type SupplierLabels struct {
-	Page    SupplierPageLabels    `json:"page"`
-	Buttons SupplierButtonLabels  `json:"buttons"`
-	Columns SupplierColumnLabels  `json:"columns"`
-	Empty   SupplierEmptyLabels   `json:"empty"`
-	Form    SupplierFormLabels    `json:"form"`
-	Detail  SupplierDetailLabels  `json:"detail"`
-	Actions SupplierActionLabels  `json:"actions"`
+	Page    SupplierPageLabels   `json:"page"`
+	Buttons SupplierButtonLabels `json:"buttons"`
+	Columns SupplierColumnLabels `json:"columns"`
+	Empty   SupplierEmptyLabels  `json:"empty"`
+	Form    SupplierFormLabels   `json:"form"`
+	Detail  SupplierDetailLabels `json:"detail"`
+	Actions SupplierActionLabels `json:"actions"`
 }
 
 type SupplierPageLabels struct {
@@ -744,12 +744,12 @@ type SupplierColumnLabels struct {
 }
 
 type SupplierEmptyLabels struct {
-	ActiveTitle     string `json:"activeTitle"`
-	ActiveMessage   string `json:"activeMessage"`
-	BlockedTitle    string `json:"blockedTitle"`
-	BlockedMessage  string `json:"blockedMessage"`
-	OnHoldTitle     string `json:"onHoldTitle"`
-	OnHoldMessage   string `json:"onHoldMessage"`
+	ActiveTitle    string `json:"activeTitle"`
+	ActiveMessage  string `json:"activeMessage"`
+	BlockedTitle   string `json:"blockedTitle"`
+	BlockedMessage string `json:"blockedMessage"`
+	OnHoldTitle    string `json:"onHoldTitle"`
+	OnHoldMessage  string `json:"onHoldMessage"`
 }
 
 type SupplierFormLabels struct {
@@ -811,10 +811,10 @@ type SupplierFormLabels struct {
 	StatusBlocked string `json:"statusBlocked"`
 	StatusOnHold  string `json:"statusOnHold"`
 
-	TermsImmediate  string `json:"termsImmediate"`
-	TermsNet30      string `json:"termsNet30"`
-	TermsNet60      string `json:"termsNet60"`
-	Terms2_10Net30  string `json:"terms2_10Net30"`
+	TermsImmediate string `json:"termsImmediate"`
+	TermsNet30     string `json:"termsNet30"`
+	TermsNet60     string `json:"termsNet60"`
+	Terms2_10Net30 string `json:"terms2_10Net30"`
 }
 
 type SupplierDetailLabels struct {
@@ -831,12 +831,12 @@ type SupplierDetailSectionLabels struct {
 }
 
 type SupplierActionLabels struct {
-	View       string `json:"view"`
-	Edit       string `json:"edit"`
-	Delete     string `json:"delete"`
-	Activate   string `json:"activate"`
-	Block      string `json:"block"`
-	SetOnHold  string `json:"setOnHold"`
+	View      string `json:"view"`
+	Edit      string `json:"edit"`
+	Delete    string `json:"delete"`
+	Activate  string `json:"activate"`
+	Block     string `json:"block"`
+	SetOnHold string `json:"setOnHold"`
 }
 
 // ---------------------------------------------------------------------------
@@ -891,50 +891,50 @@ type ClientTagConfirmLabels struct {
 
 // SharedLabels holds translatable strings shared across all entydad modules.
 type SharedLabels struct {
-	Errors  SharedErrorLabels  `json:"errors"`
+	Errors  SharedErrorLabels   `json:"errors"`
 	Confirm SharedConfirmLabels `json:"confirm"`
-	Badges  SharedBadgeLabels  `json:"badges"`
+	Badges  SharedBadgeLabels   `json:"badges"`
 }
 
 // SharedErrorLabels holds HTMXError messages used across all action handlers.
 type SharedErrorLabels struct {
-	PermissionDenied  string `json:"permissionDenied"`
-	InvalidFormData   string `json:"invalidFormData"`
-	InvalidStatus     string `json:"invalidStatus"`
+	PermissionDenied    string `json:"permissionDenied"`
+	InvalidFormData     string `json:"invalidFormData"`
+	InvalidStatus       string `json:"invalidStatus"`
 	InvalidTargetStatus string `json:"invalidTargetStatus"`
-	NotFound          string `json:"notFound"`
-	IDRequired        string `json:"idRequired"`
-	NoIDsProvided     string `json:"noIdsProvided"`
-	PasswordRequired  string `json:"passwordRequired"`
-	PasswordFailed    string `json:"passwordFailed"`
-	RoleRequired      string `json:"roleRequired"`
-	PermissionRequired string `json:"permissionRequired"`
-	UserRequired      string `json:"userRequired"`
-	TagNotFound       string `json:"tagNotFound"`
-	TagNameExists     string `json:"tagNameExists"`
-	VerifyFailed      string `json:"verifyFailed"`
-	CannotDeleteInUse string `json:"cannotDeleteInUse"`
+	NotFound            string `json:"notFound"`
+	IDRequired          string `json:"idRequired"`
+	NoIDsProvided       string `json:"noIdsProvided"`
+	PasswordRequired    string `json:"passwordRequired"`
+	PasswordFailed      string `json:"passwordFailed"`
+	RoleRequired        string `json:"roleRequired"`
+	PermissionRequired  string `json:"permissionRequired"`
+	UserRequired        string `json:"userRequired"`
+	TagNotFound         string `json:"tagNotFound"`
+	TagNameExists       string `json:"tagNameExists"`
+	VerifyFailed        string `json:"verifyFailed"`
+	CannotDeleteInUse   string `json:"cannotDeleteInUse"`
 }
 
 // SharedConfirmLabels holds confirm dialog message templates used across modules.
 type SharedConfirmLabels struct {
-	Activate         string `json:"activate"`
-	Deactivate       string `json:"deactivate"`
-	Delete           string `json:"delete"`
-	Block            string `json:"block"`
-	Remove           string `json:"remove"`
-	BulkActivate     string `json:"bulkActivate"`
-	BulkDeactivate   string `json:"bulkDeactivate"`
-	BulkDelete       string `json:"bulkDelete"`
-	BulkBlock        string `json:"bulkBlock"`
+	Activate       string `json:"activate"`
+	Deactivate     string `json:"deactivate"`
+	Delete         string `json:"delete"`
+	Block          string `json:"block"`
+	Remove         string `json:"remove"`
+	BulkActivate   string `json:"bulkActivate"`
+	BulkDeactivate string `json:"bulkDeactivate"`
+	BulkDelete     string `json:"bulkDelete"`
+	BulkBlock      string `json:"bulkBlock"`
 }
 
 // SharedBadgeLabels holds translatable badge values.
 type SharedBadgeLabels struct {
-	Allow       string `json:"allow"`
-	Deny        string `json:"deny"`
-	Yes         string `json:"yes"`
-	No          string `json:"no"`
+	Allow        string `json:"allow"`
+	Deny         string `json:"deny"`
+	Yes          string `json:"yes"`
+	No           string `json:"no"`
 	NoPermission string `json:"noPermission"`
 }
 
@@ -971,12 +971,12 @@ func MapTableLabels(common pyeza.CommonLabels) types.TableLabels {
 		ApplyFilters:       common.Table.ApplyFilters,
 		Sort:               common.Table.Sort,
 		Columns:            common.Table.Columns,
-		Export:              common.Table.Export,
+		Export:             common.Table.Export,
 		DensityDefault:     common.Table.Density.Default,
 		DensityComfortable: common.Table.Density.Comfortable,
 		DensityCompact:     common.Table.Density.Compact,
 		Show:               common.Table.Show,
-		Entries:             common.Table.Entries,
+		Entries:            common.Table.Entries,
 		Showing:            common.Table.Showing,
 		To:                 common.Table.To,
 		Of:                 common.Table.Of,

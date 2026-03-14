@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
-	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/hybra-golang/views/attachment"
+	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
@@ -21,16 +21,16 @@ import (
 
 // Deps holds view dependencies.
 type Deps struct {
-	ReadRole            func(ctx context.Context, req *rolepb.ReadRoleRequest) (*rolepb.ReadRoleResponse, error)
-	RoleGetItemPageData func(ctx context.Context, req *rolepb.GetRoleItemPageDataRequest) (*rolepb.GetRoleItemPageDataResponse, error)
-	GetUsersByRoleID    func(ctx context.Context, roleID string) ([]roleusers.UserByRole, error)
+	ReadRole             func(ctx context.Context, req *rolepb.ReadRoleRequest) (*rolepb.ReadRoleResponse, error)
+	RoleGetItemPageData  func(ctx context.Context, req *rolepb.GetRoleItemPageDataRequest) (*rolepb.GetRoleItemPageDataResponse, error)
+	GetUsersByRoleID     func(ctx context.Context, roleID string) ([]roleusers.UserByRole, error)
 	Routes               entydad.RoleRoutes
-	Labels              entydad.RoleLabels
+	Labels               entydad.RoleLabels
 	SharedLabels         entydad.SharedLabels
 	RolePermissionLabels entydad.RolePermissionLabels
 	RoleUserLabels       entydad.RoleUserLabels
-	CommonLabels        pyeza.CommonLabels
-	TableLabels         types.TableLabels
+	CommonLabels         pyeza.CommonLabels
+	TableLabels          types.TableLabels
 
 	// Attachment operations (injected by composition root)
 	UploadFile       func(ctx context.Context, bucket, key string, content []byte, contentType string) error
@@ -43,16 +43,16 @@ type Deps struct {
 // PageData holds the data for the role detail page.
 type PageData struct {
 	types.PageData
-	ContentTemplate  string
-	Labels           entydad.RoleLabels
-	ActiveTab        string
-	TabItems         []pyeza.TabItem
-	ID               string
-	RoleName         string
-	RoleDescription  string
-	RoleColor        string
-	RoleStatus       string
-	StatusVariant    string
+	ContentTemplate     string
+	Labels              entydad.RoleLabels
+	ActiveTab           string
+	TabItems            []pyeza.TabItem
+	ID                  string
+	RoleName            string
+	RoleDescription     string
+	RoleColor           string
+	RoleStatus          string
+	StatusVariant       string
 	PermissionsTable    *types.TableConfig
 	UsersTable          *types.TableConfig
 	AttachmentTable     *types.TableConfig
@@ -283,7 +283,7 @@ func buildPermissionsTable(ctx context.Context, deps *Deps, roleID string, perms
 				ItemName:       permName,
 				ConfirmTitle:   l.Actions.Remove,
 				ConfirmMessage: fmt.Sprintf(deps.SharedLabels.Confirm.Remove, permName),
-				Disabled: !perms.Can("role", "update"), DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
+				Disabled:       !perms.Can("role", "update"), DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
 			},
 		}
 
@@ -371,7 +371,7 @@ func buildUsersTable(ctx context.Context, deps *Deps, roleID string, perms *type
 				ItemName:       u.UserName,
 				ConfirmTitle:   l.Actions.Remove,
 				ConfirmMessage: fmt.Sprintf(deps.SharedLabels.Confirm.Remove, u.UserName),
-				Disabled: !perms.Can("role", "update"), DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
+				Disabled:       !perms.Can("role", "update"), DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
 			},
 		}
 

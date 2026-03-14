@@ -172,7 +172,7 @@ func buildTableRows(roles []*rolepb.Role, l entydad.RoleLabels, sl entydad.Share
 				URL: routes.SetStatusURL + "?status=inactive", ItemName: name,
 				ConfirmTitle:   l.Actions.Deactivate,
 				ConfirmMessage: fmt.Sprintf(sl.Confirm.Deactivate, name),
-				Disabled: !perms.Can("role", "update"), DisabledTooltip: sl.Badges.NoPermission,
+				Disabled:       !perms.Can("role", "update"), DisabledTooltip: sl.Badges.NoPermission,
 			})
 		} else {
 			actions = append(actions, types.TableAction{
@@ -180,7 +180,7 @@ func buildTableRows(roles []*rolepb.Role, l entydad.RoleLabels, sl entydad.Share
 				URL: routes.SetStatusURL + "?status=active", ItemName: name,
 				ConfirmTitle:   l.Actions.Activate,
 				ConfirmMessage: fmt.Sprintf(sl.Confirm.Activate, name),
-				Disabled: !perms.Can("role", "update"), DisabledTooltip: sl.Badges.NoPermission,
+				Disabled:       !perms.Can("role", "update"), DisabledTooltip: sl.Badges.NoPermission,
 			})
 		}
 		isInUse := inUseIDs[id]

@@ -275,7 +275,7 @@ func buildRowActions(id, name string, active, isInUse bool, l entydad.ClientLabe
 			URL: routes.SetStatusURL + "?status=inactive", ItemName: name,
 			ConfirmTitle:   l.Detail.Actions.DeactivateClient,
 			ConfirmMessage: fmt.Sprintf(sl.Confirm.Deactivate, name),
-			Disabled: !perms.Can("client", "update"), DisabledTooltip: sl.Badges.NoPermission,
+			Disabled:       !perms.Can("client", "update"), DisabledTooltip: sl.Badges.NoPermission,
 		})
 	} else {
 		actions = append(actions, types.TableAction{
@@ -283,7 +283,7 @@ func buildRowActions(id, name string, active, isInUse bool, l entydad.ClientLabe
 			URL: routes.SetStatusURL + "?status=active", ItemName: name,
 			ConfirmTitle:   l.Detail.Actions.ActivateClient,
 			ConfirmMessage: fmt.Sprintf(sl.Confirm.Activate, name),
-			Disabled: !perms.Can("client", "update"), DisabledTooltip: sl.Badges.NoPermission,
+			Disabled:       !perms.Can("client", "update"), DisabledTooltip: sl.Badges.NoPermission,
 		})
 	}
 	deleteAction := types.TableAction{

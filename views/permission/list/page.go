@@ -208,7 +208,7 @@ func buildTableRows(permissions []*permissionpb.Permission, status string, l ent
 				URL: routes.SetStatusURL + "?status=inactive", ItemName: name,
 				ConfirmTitle:   l.Actions.Deactivate,
 				ConfirmMessage: fmt.Sprintf(sl.Confirm.Deactivate, name),
-				Disabled: !perms.Can("permission", "update"), DisabledTooltip: sl.Badges.NoPermission,
+				Disabled:       !perms.Can("permission", "update"), DisabledTooltip: sl.Badges.NoPermission,
 			})
 		} else {
 			actions = append(actions, types.TableAction{
@@ -216,7 +216,7 @@ func buildTableRows(permissions []*permissionpb.Permission, status string, l ent
 				URL: routes.SetStatusURL + "?status=active", ItemName: name,
 				ConfirmTitle:   l.Actions.Activate,
 				ConfirmMessage: fmt.Sprintf(sl.Confirm.Activate, name),
-				Disabled: !perms.Can("permission", "update"), DisabledTooltip: sl.Badges.NoPermission,
+				Disabled:       !perms.Can("permission", "update"), DisabledTooltip: sl.Badges.NoPermission,
 			})
 		}
 		deleteAction := types.TableAction{

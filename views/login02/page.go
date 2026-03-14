@@ -3,10 +3,10 @@ package login02
 import (
 	"context"
 
+	entydad "github.com/erniealice/entydad-golang"
 	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
-	entydad "github.com/erniealice/entydad-golang"
 )
 
 // CarouselSlide holds data for a single carousel slide.
@@ -25,13 +25,13 @@ type SocialProvider struct {
 type Deps struct {
 	Labels          entydad.Login02Labels
 	CommonLabels    pyeza.CommonLabels
-	RedirectURL     string          // where to send after login (default: /app/)
-	LogoText        string          // brand name displayed on form side
-	LogoIcon        string          // icon template name for logo mark
-	LoginPostURL    string          // form action URL (default: /login)
-	RegisterURL     string          // sign-up link URL (default: /register)
-	ForgotURL       string          // forgot password URL (default: /auth/reset-password)
-	Slides          []CarouselSlide // carousel slides (left panel)
+	RedirectURL     string           // where to send after login (default: /app/)
+	LogoText        string           // brand name displayed on form side
+	LogoIcon        string           // icon template name for logo mark
+	LoginPostURL    string           // form action URL (default: /login)
+	RegisterURL     string           // sign-up link URL (default: /register)
+	ForgotURL       string           // forgot password URL (default: /auth/reset-password)
+	Slides          []CarouselSlide  // carousel slides (left panel)
 	SocialProviders []SocialProvider // social login buttons
 }
 

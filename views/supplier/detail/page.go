@@ -42,21 +42,21 @@ type PageData struct {
 	ActiveTab       string
 	TabItems        []pyeza.TabItem
 	// Company info
-	CompanyName  string
-	SupplierType string
-	InternalID   string
-	Status       string
+	CompanyName   string
+	SupplierType  string
+	InternalID    string
+	Status        string
 	StatusVariant string
 	// Contact info (from user)
-	ContactName string
+	ContactName  string
 	ContactEmail string
 	ContactPhone string
 	// Financial info
-	PaymentTerms    string
-	CreditLimit     string
-	DefaultCurrency string
-	LeadTimeDays    string
-	TaxID           string
+	PaymentTerms       string
+	CreditLimit        string
+	DefaultCurrency    string
+	LeadTimeDays       string
+	TaxID              string
 	RegistrationNumber string
 	// Address info
 	StreetAddress string

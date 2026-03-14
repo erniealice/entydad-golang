@@ -24,9 +24,9 @@ type DashboardStats struct {
 // ActivityItem represents a single entry in the recent activity feed.
 type ActivityItem struct {
 	IconHTML    template.HTML
-	Title      string
+	Title       string
 	Description string
-	TimeAgo    string
+	TimeAgo     string
 }
 
 // ChartData holds data for the activity chart.

@@ -76,16 +76,16 @@ func DefaultClientRoutes() ClientRoutes {
 // RouteMap returns a map of dot-notation keys to route path values.
 func (r ClientRoutes) RouteMap() map[string]string {
 	return map[string]string{
-		"client.dashboard":      r.DashboardURL,
-		"client.list":           r.ListURL,
-		"client.table":          r.TableURL,
-		"client.add":            r.AddURL,
-		"client.edit":           r.EditURL,
-		"client.delete":         r.DeleteURL,
-		"client.bulk_delete":    r.BulkDeleteURL,
-		"client.detail":         r.DetailURL,
-		"client.tab_action":     r.TabActionURL,
-		"client.set_status":     r.SetStatusURL,
+		"client.dashboard":       r.DashboardURL,
+		"client.list":            r.ListURL,
+		"client.table":           r.TableURL,
+		"client.add":             r.AddURL,
+		"client.edit":            r.EditURL,
+		"client.delete":          r.DeleteURL,
+		"client.bulk_delete":     r.BulkDeleteURL,
+		"client.detail":          r.DetailURL,
+		"client.tab_action":      r.TabActionURL,
+		"client.set_status":      r.SetStatusURL,
 		"client.bulk_set_status": r.BulkSetStatusURL,
 		"client.search":          r.SearchURL,
 
@@ -112,9 +112,9 @@ type UserRoutes struct {
 	BulkDeleteURL    string `json:"bulk_delete_url"`
 	SetStatusURL     string `json:"set_status_url"`
 	BulkSetStatusURL string `json:"bulk_set_status_url"`
-	DetailURL         string `json:"detail_url"`
-	TabActionURL      string `json:"tab_action_url"`
-	ResetPasswordURL  string `json:"reset_password_url"`
+	DetailURL        string `json:"detail_url"`
+	TabActionURL     string `json:"tab_action_url"`
+	ResetPasswordURL string `json:"reset_password_url"`
 
 	// Attachment routes
 	AttachmentUploadURL string `json:"attachment_upload_url"`
@@ -146,9 +146,9 @@ func DefaultUserRoutes() UserRoutes {
 		BulkDeleteURL:    UserBulkDeleteURL,
 		SetStatusURL:     UserSetStatusURL,
 		BulkSetStatusURL: UserBulkSetStatusURL,
-		DetailURL:         UserDetailURL,
-		TabActionURL:      UserTabActionURL,
-		ResetPasswordURL:  UserResetPasswordURL,
+		DetailURL:        UserDetailURL,
+		TabActionURL:     UserTabActionURL,
+		ResetPasswordURL: UserResetPasswordURL,
 
 		AttachmentUploadURL: UserAttachmentUploadURL,
 		AttachmentDeleteURL: UserAttachmentDeleteURL,
@@ -170,17 +170,17 @@ func DefaultUserRoutes() UserRoutes {
 // RouteMap returns a map of dot-notation keys to route path values.
 func (r UserRoutes) RouteMap() map[string]string {
 	return map[string]string{
-		"user.dashboard":      r.DashboardURL,
-		"user.list":           r.ListURL,
-		"user.table":          r.TableURL,
-		"user.add":            r.AddURL,
-		"user.edit":           r.EditURL,
-		"user.delete":         r.DeleteURL,
-		"user.bulk_delete":    r.BulkDeleteURL,
-		"user.set_status":     r.SetStatusURL,
+		"user.dashboard":       r.DashboardURL,
+		"user.list":            r.ListURL,
+		"user.table":           r.TableURL,
+		"user.add":             r.AddURL,
+		"user.edit":            r.EditURL,
+		"user.delete":          r.DeleteURL,
+		"user.bulk_delete":     r.BulkDeleteURL,
+		"user.set_status":      r.SetStatusURL,
 		"user.bulk_set_status": r.BulkSetStatusURL,
-		"user.detail":         r.DetailURL,
-		"user.tab_action":     r.TabActionURL,
+		"user.detail":          r.DetailURL,
+		"user.tab_action":      r.TabActionURL,
 
 		"user.attachment.upload": r.AttachmentUploadURL,
 		"user.attachment.delete": r.AttachmentDeleteURL,
@@ -281,16 +281,16 @@ func DefaultRoleRoutes() RoleRoutes {
 // RouteMap returns a map of dot-notation keys to route path values.
 func (r RoleRoutes) RouteMap() map[string]string {
 	return map[string]string{
-		"role.list":           r.ListURL,
-		"role.table":          r.TableURL,
-		"role.add":            r.AddURL,
-		"role.edit":           r.EditURL,
-		"role.delete":         r.DeleteURL,
-		"role.bulk_delete":    r.BulkDeleteURL,
-		"role.set_status":     r.SetStatusURL,
+		"role.list":            r.ListURL,
+		"role.table":           r.TableURL,
+		"role.add":             r.AddURL,
+		"role.edit":            r.EditURL,
+		"role.delete":          r.DeleteURL,
+		"role.bulk_delete":     r.BulkDeleteURL,
+		"role.set_status":      r.SetStatusURL,
 		"role.bulk_set_status": r.BulkSetStatusURL,
-		"role.detail":         r.DetailURL,
-		"role.tab_action":     r.TabActionURL,
+		"role.detail":          r.DetailURL,
+		"role.tab_action":      r.TabActionURL,
 
 		"role.attachment.upload": r.AttachmentUploadURL,
 		"role.attachment.delete": r.AttachmentDeleteURL,
@@ -413,13 +413,13 @@ func DefaultPermissionRoutes() PermissionRoutes {
 // RouteMap returns a map of dot-notation keys to route path values.
 func (r PermissionRoutes) RouteMap() map[string]string {
 	return map[string]string{
-		"permission.list":           r.ListURL,
-		"permission.table":          r.TableURL,
-		"permission.add":            r.AddURL,
-		"permission.edit":           r.EditURL,
-		"permission.delete":         r.DeleteURL,
-		"permission.bulk_delete":    r.BulkDeleteURL,
-		"permission.set_status":     r.SetStatusURL,
+		"permission.list":            r.ListURL,
+		"permission.table":           r.TableURL,
+		"permission.add":             r.AddURL,
+		"permission.edit":            r.EditURL,
+		"permission.delete":          r.DeleteURL,
+		"permission.bulk_delete":     r.BulkDeleteURL,
+		"permission.set_status":      r.SetStatusURL,
 		"permission.bulk_set_status": r.BulkSetStatusURL,
 	}
 }
@@ -458,13 +458,13 @@ func DefaultWorkspaceRoutes() WorkspaceRoutes {
 // RouteMap returns a map of dot-notation keys to route path values.
 func (r WorkspaceRoutes) RouteMap() map[string]string {
 	return map[string]string{
-		"workspace.list":           r.ListURL,
-		"workspace.table":          r.TableURL,
-		"workspace.add":            r.AddURL,
-		"workspace.edit":           r.EditURL,
-		"workspace.delete":         r.DeleteURL,
-		"workspace.bulk_delete":    r.BulkDeleteURL,
-		"workspace.set_status":     r.SetStatusURL,
+		"workspace.list":            r.ListURL,
+		"workspace.table":           r.TableURL,
+		"workspace.add":             r.AddURL,
+		"workspace.edit":            r.EditURL,
+		"workspace.delete":          r.DeleteURL,
+		"workspace.bulk_delete":     r.BulkDeleteURL,
+		"workspace.set_status":      r.SetStatusURL,
 		"workspace.bulk_set_status": r.BulkSetStatusURL,
 	}
 }

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
-	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/hybra-golang/views/attachment"
+	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
@@ -41,23 +41,23 @@ type Deps struct {
 // PageData holds the data for the user detail page.
 type PageData struct {
 	types.PageData
-	ContentTemplate string
-	Labels          entydad.UserLabels
-	ActiveTab       string
-	TabItems        []pyeza.TabItem
-	ID              string
-	UserFirstName   string
-	UserLastName    string
-	UserEmail       string
-	UserMobile      string
-	UserStatus      string
-	StatusVariant   string
-	RoleNames            []string
-	RolesTable           *types.TableConfig
-	ResetPasswordURL     string
-	EditURL              string
-	AttachmentTable      *types.TableConfig
-	AttachmentUploadURL  string
+	ContentTemplate     string
+	Labels              entydad.UserLabels
+	ActiveTab           string
+	TabItems            []pyeza.TabItem
+	ID                  string
+	UserFirstName       string
+	UserLastName        string
+	UserEmail           string
+	UserMobile          string
+	UserStatus          string
+	StatusVariant       string
+	RoleNames           []string
+	RolesTable          *types.TableConfig
+	ResetPasswordURL    string
+	EditURL             string
+	AttachmentTable     *types.TableConfig
+	AttachmentUploadURL string
 }
 
 // NewView creates the user detail view (full page).
@@ -155,17 +155,17 @@ func buildPageData(ctx context.Context, deps *Deps, id, activeTab string, viewCt
 			HeaderIcon:     "icon-user",
 			CommonLabels:   deps.CommonLabels,
 		},
-		ContentTemplate: "user-detail-content",
-		Labels:          deps.Labels,
-		ActiveTab:       activeTab,
-		TabItems:        tabItems,
-		ID:              id,
-		UserFirstName:   firstName,
-		UserLastName:    lastName,
-		UserEmail:       email,
-		UserMobile:      mobile,
-		UserStatus:      userStatus,
-		StatusVariant:   statusVariant,
+		ContentTemplate:  "user-detail-content",
+		Labels:           deps.Labels,
+		ActiveTab:        activeTab,
+		TabItems:         tabItems,
+		ID:               id,
+		UserFirstName:    firstName,
+		UserLastName:     lastName,
+		UserEmail:        email,
+		UserMobile:       mobile,
+		UserStatus:       userStatus,
+		StatusVariant:    statusVariant,
 		RoleNames:        roleNames,
 		ResetPasswordURL: route.ResolveURL(deps.Routes.ResetPasswordURL, "id", id),
 		EditURL:          route.ResolveURL(deps.Routes.EditURL, "id", id),
@@ -322,7 +322,7 @@ func buildRolesTable(ctx context.Context, deps *Deps, userID string, perms *type
 				ItemName:       roleName,
 				ConfirmTitle:   l.Actions.Remove,
 				ConfirmMessage: fmt.Sprintf(deps.SharedLabels.Confirm.Remove, roleName),
-				Disabled: !perms.Can("user", "update"), DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
+				Disabled:       !perms.Can("user", "update"), DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
 			},
 		}
 

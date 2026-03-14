@@ -3,10 +3,10 @@ package login01
 import (
 	"context"
 
+	entydad "github.com/erniealice/entydad-golang"
 	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
-	entydad "github.com/erniealice/entydad-golang"
 )
 
 // Deps holds view dependencies for the login page.

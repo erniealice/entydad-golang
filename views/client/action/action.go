@@ -19,33 +19,33 @@ import (
 
 // FormLabels holds i18n labels for the drawer form template.
 type FormLabels struct {
-	FirstName               string
-	FirstNamePlaceholder    string
-	LastName                string
-	LastNamePlaceholder     string
-	Email                   string
-	EmailPlaceholder        string
-	Mobile                  string
-	MobilePlaceholder       string
-	Active                  string
-	CompanyName             string
-	CompanyNamePlaceholder  string
-	CustomerType            string
-	DateOfBirth             string
-	StreetAddress           string
+	FirstName                string
+	FirstNamePlaceholder     string
+	LastName                 string
+	LastNamePlaceholder      string
+	Email                    string
+	EmailPlaceholder         string
+	Mobile                   string
+	MobilePlaceholder        string
+	Active                   string
+	CompanyName              string
+	CompanyNamePlaceholder   string
+	CustomerType             string
+	DateOfBirth              string
+	StreetAddress            string
 	StreetAddressPlaceholder string
-	City                    string
-	CityPlaceholder         string
-	Province                string
-	ProvincePlaceholder     string
-	PostalCode              string
-	PostalCodePlaceholder   string
-	Notes                   string
-	NotesPlaceholder        string
-	Tags                    string
-	TagsPlaceholder         string
-	TagsSearchPlaceholder   string
-	TagsNoResults           string
+	City                     string
+	CityPlaceholder          string
+	Province                 string
+	ProvincePlaceholder      string
+	PostalCode               string
+	PostalCodePlaceholder    string
+	Notes                    string
+	NotesPlaceholder         string
+	Tags                     string
+	TagsPlaceholder          string
+	TagsSearchPlaceholder    string
+	TagsNoResults            string
 }
 
 // TagOption represents a tag available for selection in the form.
