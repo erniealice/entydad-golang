@@ -35,7 +35,7 @@
     width: 100%;
     height: 100%;
     background: linear-gradient(180deg, var(--accent-terracotta-light) 0%, transparent 100%);
-    border-radius: 0.75rem;
+    border-radius: var(--radius-lg);
     position: relative;
     overflow: hidden;
 }
@@ -81,8 +81,8 @@
     align-items: flex-start;
     gap: 0.875rem;
     padding: 1rem;
-    border-radius: 0.75rem;
-    transition: background 0.2s ease;
+    border-radius: var(--radius-lg);
+    transition: background var(--transition-base);
 }
 
 .entydad-activity-item:hover {
@@ -92,7 +92,7 @@
 .entydad-activity-icon {
     width: 2.5rem;
     height: 2.5rem;
-    border-radius: 0.625rem;
+    border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     justify-content: center;

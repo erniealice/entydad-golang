@@ -52,7 +52,7 @@
 
     {{/* --- Contact Info Section --- */}}
     {{if .HasContact}}
-    <h4 class="detail-section-title" style="margin-top: 2rem;">{{.Labels.Detail.ContactInfo.Title}}</h4>
+    <h4 class="detail-section-title detail-section-title--spaced">{{.Labels.Detail.ContactInfo.Title}}</h4>
     <div class="detail-info-grid">
         {{if .ContactName}}
         <div class="detail-info-item">
@@ -77,7 +77,7 @@
 
     {{/* --- Financial Info Section --- */}}
     {{if .HasFinancial}}
-    <h4 class="detail-section-title" style="margin-top: 2rem;">{{.Labels.Detail.FinancialInfo.Title}}</h4>
+    <h4 class="detail-section-title detail-section-title--spaced">{{.Labels.Detail.FinancialInfo.Title}}</h4>
     <div class="detail-info-grid">
         {{if .PaymentTerms}}
         <div class="detail-info-item">
@@ -120,7 +120,7 @@
 
     {{/* --- Address Info Section --- */}}
     {{if .HasAddress}}
-    <h4 class="detail-section-title" style="margin-top: 2rem;">{{.Labels.Detail.AddressInfo.Title}}</h4>
+    <h4 class="detail-section-title detail-section-title--spaced">{{.Labels.Detail.AddressInfo.Title}}</h4>
     <div class="detail-info-grid">
         {{if .StreetAddress}}
         <div class="detail-info-item">
@@ -157,7 +157,7 @@
 
     {{/* --- Website --- */}}
     {{if .Website}}
-    <h4 class="detail-section-title" style="margin-top: 2rem;">Website</h4>
+    <h4 class="detail-section-title detail-section-title--spaced">Website</h4>
     <div class="detail-info-grid">
         <div class="detail-info-item">
             <span class="detail-info-value"><a href="{{.Website}}" target="_blank" rel="noopener">{{.Website}}</a></span>
@@ -167,7 +167,7 @@
 
     {{/* --- Notes Section --- */}}
     {{if .HasNotes}}
-    <h4 class="detail-section-title" style="margin-top: 2rem;">{{.Labels.Form.Notes}}</h4>
+    <h4 class="detail-section-title detail-section-title--spaced">{{.Labels.Form.Notes}}</h4>
     <div class="supplier-notes-content">
         {{.Notes}}
     </div>

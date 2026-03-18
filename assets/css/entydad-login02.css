@@ -82,7 +82,7 @@
     width: 3rem;
     height: 3rem;
     background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-primary-dark, var(--accent-primary)) 100%);
-    border-radius: 0.75rem;
+    border-radius: var(--radius-lg);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -142,10 +142,10 @@
     font-size: 0.9375rem;
     color: var(--text-primary);
     background: var(--bg-card, var(--bg-base));
-    border: 1px solid var(--border);
+    border: var(--border-width) solid var(--border);
     border-radius: var(--radius-md, 0.5rem);
     outline: none;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition: border-color var(--transition-base), box-shadow var(--transition-base);
 }
 
 .auth-form-input:focus {
@@ -188,7 +188,7 @@
     text-decoration: none;
     font-weight: 500;
     font-size: 0.875rem;
-    transition: color 0.2s ease;
+    transition: color var(--transition-base);
 }
 
 .auth-form-link:hover {
@@ -205,7 +205,7 @@
     border: none;
     border-radius: var(--radius-md, 0.5rem);
     cursor: pointer;
-    transition: background 0.2s ease, box-shadow 0.2s ease;
+    transition: background var(--transition-base), box-shadow var(--transition-base);
 }
 
 .auth-button:hover {
@@ -251,12 +251,12 @@
     padding: 0.75rem 1.25rem;
     background: var(--bg-card, var(--bg-base));
     color: var(--text-primary);
-    border: 1px solid var(--border);
+    border: var(--border-width) solid var(--border);
     border-radius: var(--radius-md, 0.5rem);
     font-size: 0.9375rem;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all var(--transition-base);
     width: 100%;
 }
 

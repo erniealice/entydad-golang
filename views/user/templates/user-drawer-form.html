@@ -57,7 +57,7 @@ Data: .FirstName, .LastName, .Email, .Mobile, .Active, .ID, .FormAction, .IsEdit
                         <input type="password" id="password" name="password" class="form-input" placeholder="{{.Labels.PasswordPlaceholder}}" autocomplete="new-password">
                         <button type="button" class="password-toggle-btn" data-target="password" aria-label="Toggle password visibility">
                             <span class="eye-icon">{{template "icon-eye"}}</span>
-                            <span class="eye-off-icon" style="display: none;">{{template "icon-eye-off"}}</span>
+                            <span class="eye-off-icon" hidden>{{template "icon-eye-off"}}</span>
                         </button>
                     </div>
                     <div class="password-actions-row">

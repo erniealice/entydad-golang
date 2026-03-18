@@ -36,7 +36,7 @@
 {{define "user-tab-info"}}
 <div class="tab-scroll">
     <h4 class="detail-section-title">{{.Labels.Detail.BasicInfo.Title}}</h4>
-    <div id="info-result" style="display:none;" class="form-result"></div>
+    <div id="info-result" class="form-result" style="display:none;"></div>
     <form id="info-edit-form"
           hx-post="{{.EditURL}}"
           hx-swap="none"
@@ -91,7 +91,7 @@
             )}}
         </div>
 
-        <div style="margin-top: var(--space-4);">
+        <div class="form-section-gap">
             <button type="submit" class="btn btn--primary btn--sm">
                 {{template "icon-save"}}
                 <span>{{.Labels.Detail.BasicInfo.Save}}</span>
@@ -150,13 +150,13 @@ function handleInfoUpdate(evt) {
         </div>
     </div>
 
-    <h4 class="detail-section-title" style="margin-top: var(--space-6);">{{.Labels.Detail.Security.PasswordSection}}</h4>
+    <h4 class="detail-section-title detail-section-title--spaced">{{.Labels.Detail.Security.PasswordSection}}</h4>
     <form id="reset-password-form"
           hx-post="{{.ResetPasswordURL}}"
           hx-swap="none"
           hx-on::after-request="handlePasswordReset(event)">
-        <div id="password-result" style="display:none;" class="form-result"></div>
-        <div class="form-row single" style="max-width: 400px;">
+        <div id="password-result" class="form-result" style="display:none;"></div>
+        <div class="form-row single password-form-row">
             <div class="form-group">
                 <div class="password-field-wrapper">
                     <div class="input-icon-wrapper icon-both">
@@ -164,7 +164,7 @@ function handleInfoUpdate(evt) {
                         <input type="password" id="security-password" name="password" class="form-input" placeholder="Enter new password" autocomplete="new-password" required>
                         <button type="button" class="password-toggle-btn" data-target="security-password" aria-label="Toggle password visibility">
                             <span class="eye-icon">{{template "icon-eye"}}</span>
-                            <span class="eye-off-icon" style="display: none;">{{template "icon-eye-off"}}</span>
+                            <span class="eye-off-icon" hidden>{{template "icon-eye-off"}}</span>
                         </button>
                     </div>
                     <div class="password-actions-row">
@@ -176,7 +176,7 @@ function handleInfoUpdate(evt) {
                 </div>
             </div>
         </div>
-        <div style="margin-top: var(--space-3);">
+        <div class="form-section-gap">
             <button type="submit" class="btn btn--primary btn--sm">
                 {{template "icon-save"}}
                 <span>{{.Labels.Detail.Security.ResetPassword}}</span>
