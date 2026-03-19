@@ -144,19 +144,19 @@
     {{if .HasOrders}}
     {{/* --- Stat Cards --- */}}
     <div class="purchase-stats-row">
-        <div class="purchase-stat-card">
+        <div class="purchase-stat-card" data-testid="stat-lifetime-spend">
             <span class="stat-label">{{.Labels.Detail.PurchaseHistory.LifetimeSpend}}</span>
             <span class="stat-value">{{.PurchaseStats.LifetimeSpend}}</span>
         </div>
-        <div class="purchase-stat-card">
+        <div class="purchase-stat-card" data-testid="stat-total-orders">
             <span class="stat-label">{{.Labels.Detail.PurchaseHistory.TotalOrders}}</span>
             <span class="stat-value">{{.PurchaseStats.TotalOrders}}</span>
         </div>
-        <div class="purchase-stat-card">
+        <div class="purchase-stat-card" data-testid="stat-avg-order">
             <span class="stat-label">{{.Labels.Detail.PurchaseHistory.AvgOrderValue}}</span>
             <span class="stat-value">{{.PurchaseStats.AvgOrderValue}}</span>
         </div>
-        <div class="purchase-stat-card">
+        <div class="purchase-stat-card" data-testid="stat-last-order">
             <span class="stat-label">{{.Labels.Detail.PurchaseHistory.LastPurchase}}</span>
             <span class="stat-value">{{.PurchaseStats.LastPurchase}}</span>
         </div>
@@ -165,7 +165,7 @@
     {{/* --- Orders Table --- */}}
     <h4 class="detail-section-title detail-section-title--spaced">{{.Labels.Detail.RecentOrders}}</h4>
     <div class="purchase-orders-table">
-        <table>
+        <table id="purchase-history-table">
             <thead>
                 <tr>
                     <th>{{.Labels.Detail.ColDate}}</th>
