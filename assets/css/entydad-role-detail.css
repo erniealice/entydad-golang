@@ -30,7 +30,7 @@
     flex: 1;
 }
 .detail-permission-code {
-    font-size: 0.8125rem;
+    font-size: var(--text-sm);
     color: var(--text-muted);
     font-family: var(--font-mono, monospace);
 }

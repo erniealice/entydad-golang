@@ -64,7 +64,7 @@
 }
 
 .entydad-chart-label {
-    font-size: 0.75rem;
+    font-size: var(--text-xs);
     color: var(--text-muted);
 }
 
@@ -115,19 +115,19 @@
 }
 
 .entydad-activity-title {
-    font-size: 0.9375rem;
+    font-size: var(--text-base);
     font-weight: 500;
     color: var(--text-primary);
     margin-bottom: 0.125rem;
 }
 
 .entydad-activity-desc {
-    font-size: 0.8125rem;
+    font-size: var(--text-sm);
     color: var(--text-muted);
 }
 
 .entydad-activity-time {
-    font-size: 0.75rem;
+    font-size: var(--text-xs);
     color: var(--text-muted);
     white-space: nowrap;
 }

@@ -29,7 +29,7 @@
 .form-result {
     padding: 0.75rem 1rem;
     border-radius: var(--radius-md);
-    font-size: 0.875rem;
+    font-size: var(--text-md);
     font-weight: 500;
     margin-bottom: 1rem;
 }

@@ -86,17 +86,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0,0,0,.1));
+    box-shadow: var(--shadow-md);
 }
 
 .auth-logo-mark svg {
     width: 1.5rem;
     height: 1.5rem;
-    color: white;
+    color: var(--text-inverse);
 }
 
 .auth-logo-text {
-    font-size: 1.5rem;
+    font-size: var(--text-4xl);
     font-weight: 600;
     color: var(--text-primary);
 }
@@ -105,7 +105,7 @@
 .auth-heading {
     text-align: center;
     margin-bottom: 0.5rem;
-    font-size: 1.5rem;
+    font-size: var(--text-4xl);
     font-weight: 700;
     color: var(--text-primary);
 }
@@ -114,7 +114,7 @@
     text-align: center;
     margin-bottom: 2rem;
     color: var(--text-secondary);
-    font-size: 0.9375rem;
+    font-size: var(--text-base);
 }
 
 /* Form */
@@ -131,7 +131,7 @@
 }
 
 .auth-form-label {
-    font-size: 0.875rem;
+    font-size: var(--text-md);
     font-weight: 500;
     color: var(--text-primary);
 }
@@ -139,7 +139,7 @@
 .auth-form-input {
     width: 100%;
     padding: 0.625rem 0.875rem;
-    font-size: 0.9375rem;
+    font-size: var(--text-base);
     color: var(--text-primary);
     background: var(--bg-card, var(--bg-base));
     border: var(--border-width) solid var(--border);
@@ -158,8 +158,8 @@
 }
 
 .auth-form-error {
-    font-size: 0.8125rem;
-    color: var(--status-error, #ef4444);
+    font-size: var(--text-sm);
+    color: var(--status-error);
     min-height: 1rem;
 }
 
@@ -173,7 +173,7 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    font-size: 0.875rem;
+    font-size: var(--text-md);
     color: var(--text-secondary);
 }
 
@@ -187,7 +187,7 @@
     color: var(--accent-primary);
     text-decoration: none;
     font-weight: 500;
-    font-size: 0.875rem;
+    font-size: var(--text-md);
     transition: color var(--transition-base);
 }
 
@@ -198,9 +198,9 @@
 .auth-button {
     width: 100%;
     padding: 0.75rem 1.5rem;
-    font-size: 1rem;
+    font-size: var(--text-base);
     font-weight: 600;
-    color: white;
+    color: var(--text-inverse);
     background: var(--accent-primary);
     border: none;
     border-radius: var(--radius-md, 0.5rem);
@@ -210,7 +210,7 @@
 
 .auth-button:hover {
     background: var(--accent-primary-dark, var(--accent-primary));
-    box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0,0,0,.1));
+    box-shadow: var(--shadow-md);
 }
 
 /* Divider */
@@ -230,7 +230,7 @@
 }
 
 .auth-form-divider span {
-    font-size: 0.8125rem;
+    font-size: var(--text-sm);
     color: var(--text-muted, var(--text-secondary));
     font-weight: 500;
 }
@@ -253,7 +253,7 @@
     color: var(--text-primary);
     border: var(--border-width) solid var(--border);
     border-radius: var(--radius-md, 0.5rem);
-    font-size: 0.9375rem;
+    font-size: var(--text-base);
     font-weight: 500;
     cursor: pointer;
     transition: all var(--transition-base);
@@ -262,7 +262,7 @@
 
 .auth-social-button:hover {
     background: var(--bg-hover, var(--bg-card));
-    box-shadow: var(--shadow-sm, 0 1px 2px rgba(0,0,0,.05));
+    box-shadow: var(--shadow-sm);
 }
 
 .auth-social-button svg {
@@ -278,7 +278,7 @@
     justify-content: center;
     gap: 0.25rem;
     margin-top: 0.5rem;
-    font-size: 0.875rem;
+    font-size: var(--text-md);
     color: var(--text-secondary);
 }
 

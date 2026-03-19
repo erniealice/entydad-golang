@@ -44,19 +44,19 @@
 }
 
 .password-strength-bar.active.weak {
-    background: var(--status-error, #ef4444);
+    background: var(--status-error);
 }
 
 .password-strength-bar.active.fair {
-    background: var(--status-warning, #f59e0b);
+    background: var(--status-warning);
 }
 
 .password-strength-bar.active.good {
-    background: var(--status-info, #3b82f6);
+    background: var(--status-info);
 }
 
 .password-strength-bar.active.strong {
-    background: var(--status-success, #22c55e);
+    background: var(--status-success);
 }
 
 /* --- Terms / Privacy Notice --- */
@@ -66,7 +66,7 @@
     align-items: center;
     justify-content: center;
     gap: 0.25rem;
-    font-size: 0.8125rem;
+    font-size: var(--text-sm);
     color: var(--text-muted, var(--text-secondary));
     text-align: center;
     margin-bottom: 0.25rem;
