@@ -4,6 +4,6 @@
 .supplier-notes-content {
     font-size: var(--text-base);
     color: var(--text-secondary);
-    line-height: 1.6;
+    line-height: var(--leading-relaxed);
     white-space: pre-wrap;
 }

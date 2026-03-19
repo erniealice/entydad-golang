@@ -18,7 +18,7 @@ body {
     font-family: var(--font-body);
     background: var(--bg-base);
     color: var(--text-primary);
-    line-height: 1.5;
+    line-height: var(--leading-normal);
 }
 
 /* --- Login Page Layout --- */
@@ -28,18 +28,18 @@ body {
     align-items: center;
     justify-content: center;
     min-height: 100vh;
-    padding: 2rem 1rem;
+    padding: var(--spacing-4xl) var(--spacing-lg);
 }
 
 .login-header {
     text-align: center;
-    margin-bottom: 2rem;
+    margin-bottom: var(--spacing-4xl);
 }
 
 .login-title {
     font-size: var(--text-7xl);
-    font-weight: 700;
-    margin: 0 0 0.5rem;
+    font-weight: var(--font-weight-bold);
+    margin: 0 0 var(--spacing-sm);
     color: var(--text-primary);
 }
 
@@ -47,7 +47,7 @@ body {
 .login-cards {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 2rem;
+    gap: var(--spacing-4xl);
     max-width: 56rem;
     width: 100%;
 }
@@ -64,7 +64,7 @@ body {
     background: var(--bg-card);
     border: var(--border-width) solid var(--border);
     border-radius: var(--radius-lg);
-    padding: 2rem;
+    padding: var(--spacing-4xl);
     text-align: center;
     transition: box-shadow var(--transition-fast);
 }
@@ -77,13 +77,13 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: var(--spacing-2xl);
     color: var(--accent-primary);
 }
 
 .login-card-icon svg {
-    width: 3rem;
-    height: 3rem;
+    width: var(--icon-3xl);
+    height: var(--icon-3xl);
 }
 
 .login-card-icon--lock {
@@ -92,16 +92,16 @@ body {
 
 .login-card-title {
     font-size: var(--text-xl);
-    font-weight: 600;
-    margin: 0 0 0.75rem;
+    font-weight: var(--font-weight-semibold);
+    margin: 0 0 var(--spacing-md);
     color: var(--text-primary);
 }
 
 .login-card-description {
     font-size: var(--text-md);
     color: var(--text-secondary);
-    margin: 0 0 2rem;
-    line-height: 1.5;
+    margin: 0 0 var(--spacing-4xl);
+    line-height: var(--leading-normal);
 }
 
 /* --- Login Form --- */
@@ -110,14 +110,14 @@ body {
 }
 
 .login-field {
-    margin-bottom: 1rem;
+    margin-bottom: var(--spacing-lg);
 }
 
 .login-field label {
     display: block;
     font-size: var(--text-md);
-    font-weight: 500;
-    margin-bottom: 0.5rem;
+    font-weight: var(--font-weight-medium);
+    margin-bottom: var(--spacing-sm);
     color: var(--text-primary);
 }
 
@@ -146,16 +146,16 @@ body {
 /* --- Submit Button --- */
 .login-submit {
     width: 100%;
-    padding: 0.75rem 1rem;
+    padding: var(--spacing-md) var(--spacing-lg);
     background: var(--status-success);
     color: var(--text-inverse);
     border: none;
     border-radius: var(--radius-md);
     font-size: var(--text-md);
-    font-weight: 500;
+    font-weight: var(--font-weight-medium);
     font-family: inherit;
     cursor: pointer;
-    margin-top: 0.5rem;
+    margin-top: var(--spacing-sm);
     transition: background-color var(--transition-fast);
 }
 
@@ -171,7 +171,7 @@ body {
 /* --- Forgot Password Link --- */
 .login-forgot {
     display: block;
-    margin-top: 1rem;
+    margin-top: var(--spacing-lg);
     font-size: var(--text-md);
     color: var(--accent-primary);
     text-decoration: none;
@@ -185,14 +185,14 @@ body {
 
 /* --- PIN Placeholder (Branch Staff) --- */
 .login-pin-placeholder {
-    padding: 2rem 1rem;
+    padding: var(--spacing-4xl) var(--spacing-lg);
     background: var(--bg-base);
     border-radius: var(--radius-md);
     color: var(--text-secondary);
 }
 
 .login-pin-placeholder .login-card-icon {
-    margin-bottom: 1rem;
+    margin-bottom: var(--spacing-lg);
 }
 
 .login-pin-placeholder p {
