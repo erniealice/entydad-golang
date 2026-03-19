@@ -5,7 +5,7 @@
 
 {{/* Content-only partial — for HTMX navigation */}}
 {{define "client-detail-content"}}
-<div class="page-content client-detail-layout" data-page-css="/assets/css/entydad/entydad-client-detail.css?v={{.CacheVersion}}" data-page-title="{{.Title}}">
+<div class="page-content detail-layout" data-page-css="/assets/css/entydad/entydad-client-detail.css?v={{.CacheVersion}}" data-page-title="{{.Title}}">
     {{/* --- Tabs --- */}}
     <div class="detail-tabs">
         {{template "tabs" (dict "Items" .TabItems "ActiveTab" .ActiveTab "Variant" "default" "ID" "client-tabs")}}
@@ -29,22 +29,22 @@
 <div class="tab-scroll">
     <h2 class="visually-hidden">{{.Labels.Detail.Profile.Title}}</h2>
     {{/* --- Profile Section --- */}}
-    <h4 class="client-section-title">{{.Labels.Detail.Profile.Title}}</h4>
-    <div class="client-info-grid">
-        <div class="client-info-item">
-            <span class="client-info-label">{{.Labels.Detail.Name}}</span>
-            <span class="client-info-value">{{.ClientName}}</span>
+    <h4 class="detail-section-title">{{.Labels.Detail.Profile.Title}}</h4>
+    <div class="detail-info-grid">
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Detail.Name}}</span>
+            <span class="detail-info-value">{{.ClientName}}</span>
         </div>
-        <div class="client-info-item">
-            <span class="client-info-label">{{.Labels.Form.Email}}</span>
-            <span class="client-info-value">{{if .ClientEmail}}{{.ClientEmail}}{{else}}&mdash;{{end}}</span>
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Form.Email}}</span>
+            <span class="detail-info-value">{{if .ClientEmail}}{{.ClientEmail}}{{else}}&mdash;{{end}}</span>
         </div>
-        <div class="client-info-item">
-            <span class="client-info-label">{{.Labels.Form.Phone}}</span>
-            <span class="client-info-value">{{if .ClientPhone}}{{.ClientPhone}}{{else}}&mdash;{{end}}</span>
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Form.Phone}}</span>
+            <span class="detail-info-value">{{if .ClientPhone}}{{.ClientPhone}}{{else}}&mdash;{{end}}</span>
         </div>
-        <div class="client-info-item">
-            <span class="client-info-label">{{.Labels.Detail.CompanyDetails.Status}}</span>
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Detail.CompanyDetails.Status}}</span>
             <span>
                 <span class="badge badge--{{.StatusVariant}}">
                     {{.ClientStatus}}
@@ -55,18 +55,18 @@
 
     {{/* --- Company Section --- */}}
     {{if .HasCompany}}
-    <h4 class="client-section-title client-section-title--spaced">{{.Labels.Detail.Company.Title}}</h4>
-    <div class="client-info-grid">
+    <h4 class="detail-section-title detail-section-title--spaced">{{.Labels.Detail.Company.Title}}</h4>
+    <div class="detail-info-grid">
         {{if .CompanyName}}
-        <div class="client-info-item">
-            <span class="client-info-label">{{.Labels.Form.CompanyName}}</span>
-            <span class="client-info-value">{{.CompanyName}}</span>
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Form.CompanyName}}</span>
+            <span class="detail-info-value">{{.CompanyName}}</span>
         </div>
         {{end}}
         {{if .CustomerType}}
-        <div class="client-info-item">
-            <span class="client-info-label">{{.Labels.Form.CustomerType}}</span>
-            <span class="client-info-value client-customer-type">{{.CustomerType}}</span>
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Form.CustomerType}}</span>
+            <span class="detail-info-value client-customer-type">{{.CustomerType}}</span>
         </div>
         {{end}}
     </div>
@@ -74,12 +74,12 @@
 
     {{/* --- Personal Section --- */}}
     {{if .HasPersonal}}
-    <h4 class="client-section-title client-section-title--spaced">{{.Labels.Detail.Personal.Title}}</h4>
-    <div class="client-info-grid">
+    <h4 class="detail-section-title detail-section-title--spaced">{{.Labels.Detail.Personal.Title}}</h4>
+    <div class="detail-info-grid">
         {{if .DateOfBirth}}
-        <div class="client-info-item">
-            <span class="client-info-label">{{.Labels.Form.DateOfBirth}}</span>
-            <span class="client-info-value">{{.DateOfBirth}}</span>
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Form.DateOfBirth}}</span>
+            <span class="detail-info-value">{{.DateOfBirth}}</span>
         </div>
         {{end}}
     </div>
@@ -87,30 +87,30 @@
 
     {{/* --- Address Section --- */}}
     {{if .HasAddress}}
-    <h4 class="client-section-title client-section-title--spaced">{{.Labels.Detail.Address.Title}}</h4>
-    <div class="client-info-grid">
+    <h4 class="detail-section-title detail-section-title--spaced">{{.Labels.Detail.Address.Title}}</h4>
+    <div class="detail-info-grid">
         {{if .StreetAddress}}
-        <div class="client-info-item">
-            <span class="client-info-label">{{.Labels.Form.StreetAddress}}</span>
-            <span class="client-info-value">{{.StreetAddress}}</span>
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Form.StreetAddress}}</span>
+            <span class="detail-info-value">{{.StreetAddress}}</span>
         </div>
         {{end}}
         {{if .City}}
-        <div class="client-info-item">
-            <span class="client-info-label">{{.Labels.Form.City}}</span>
-            <span class="client-info-value">{{.City}}</span>
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Form.City}}</span>
+            <span class="detail-info-value">{{.City}}</span>
         </div>
         {{end}}
         {{if .Province}}
-        <div class="client-info-item">
-            <span class="client-info-label">{{.Labels.Form.Province}}</span>
-            <span class="client-info-value">{{.Province}}</span>
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Form.Province}}</span>
+            <span class="detail-info-value">{{.Province}}</span>
         </div>
         {{end}}
         {{if .PostalCode}}
-        <div class="client-info-item">
-            <span class="client-info-label">{{.Labels.Form.PostalCode}}</span>
-            <span class="client-info-value">{{.PostalCode}}</span>
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Form.PostalCode}}</span>
+            <span class="detail-info-value">{{.PostalCode}}</span>
         </div>
         {{end}}
     </div>
@@ -118,14 +118,14 @@
 
     {{/* --- Notes Section --- */}}
     {{if .HasNotes}}
-    <h4 class="client-section-title client-section-title--spaced">{{.Labels.Detail.NotesSection.Title}}</h4>
+    <h4 class="detail-section-title detail-section-title--spaced">{{.Labels.Detail.NotesSection.Title}}</h4>
     <div class="client-notes-content">
         {{.Notes}}
     </div>
     {{end}}
 
     {{/* --- Tags Section --- */}}
-    <h4 class="client-section-title client-section-title--spaced">{{.Labels.Detail.Tags.Title}}</h4>
+    <h4 class="detail-section-title detail-section-title--spaced">{{.Labels.Detail.Tags.Title}}</h4>
     {{if .HasTags}}
     <div class="client-tags-list">
         {{range .Tags}}
@@ -163,7 +163,7 @@
     </div>
 
     {{/* --- Orders Table --- */}}
-    <h4 class="client-section-title client-section-title--spaced">{{.Labels.Detail.RecentOrders}}</h4>
+    <h4 class="detail-section-title detail-section-title--spaced">{{.Labels.Detail.RecentOrders}}</h4>
     <div class="purchase-orders-table">
         <table>
             <thead>
