@@ -599,3 +599,51 @@ func (r LoginRoutes) RouteMap() map[string]string {
 		"login.post": r.LoginPostURL,
 	}
 }
+
+// ---------------------------------------------------------------------------
+// AuthRoutes
+// ---------------------------------------------------------------------------
+
+// AuthRoutes holds all route paths for authentication views (signup, reset, logout).
+type AuthRoutes struct {
+	LoginURL             string `json:"login_url"`
+	LoginPostURL         string `json:"login_post_url"`
+	SignupURL            string `json:"signup_url"`
+	SignupPostURL        string `json:"signup_post_url"`
+	ResetPasswordURL     string `json:"reset_password_url"`
+	ResetPasswordPostURL string `json:"reset_password_post_url"`
+	ResetConfirmURL      string `json:"reset_confirm_url"`
+	ResetConfirmPostURL  string `json:"reset_confirm_post_url"`
+	LogoutURL            string `json:"logout_url"`
+}
+
+// DefaultAuthRoutes returns an AuthRoutes populated from the package-level
+// URL constants defined in routes.go.
+func DefaultAuthRoutes() AuthRoutes {
+	return AuthRoutes{
+		LoginURL:             AuthLoginURL,
+		LoginPostURL:         AuthLoginPostURL,
+		SignupURL:            AuthSignupURL,
+		SignupPostURL:        AuthSignupPostURL,
+		ResetPasswordURL:     AuthResetPasswordURL,
+		ResetPasswordPostURL: AuthResetPasswordPostURL,
+		ResetConfirmURL:      AuthResetConfirmURL,
+		ResetConfirmPostURL:  AuthResetConfirmPostURL,
+		LogoutURL:            AuthLogoutURL,
+	}
+}
+
+// RouteMap returns a map of route keys to URL paths for AuthRoutes.
+func (r AuthRoutes) RouteMap() map[string]string {
+	return map[string]string{
+		"auth.login.page":          r.LoginURL,
+		"auth.login.post":          r.LoginPostURL,
+		"auth.signup.page":         r.SignupURL,
+		"auth.signup.post":         r.SignupPostURL,
+		"auth.reset-password.page": r.ResetPasswordURL,
+		"auth.reset-password.post": r.ResetPasswordPostURL,
+		"auth.reset-confirm.page":  r.ResetConfirmURL,
+		"auth.reset-confirm.post":  r.ResetConfirmPostURL,
+		"auth.logout":              r.LogoutURL,
+	}
+}

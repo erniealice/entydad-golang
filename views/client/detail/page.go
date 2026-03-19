@@ -240,7 +240,7 @@ func buildTabItems(id string, deps *Deps) []pyeza.TabItem {
 	return []pyeza.TabItem{
 		{Key: "basic", Label: deps.Labels.Detail.Tabs.Info, Href: base + "?tab=basic", HxGet: action + "basic", Icon: "icon-info"},
 		{Key: "history", Label: deps.Labels.Detail.Tabs.PurchaseHistory, Href: base + "?tab=history", HxGet: action + "history", Icon: "icon-shopping-bag"},
-		{Key: "attachments", Label: "Attachments", Href: base + "?tab=attachments", HxGet: action + "attachments", Icon: "icon-paperclip"},
+		{Key: "attachments", Label: deps.Labels.Detail.Tabs.Attachments, Href: base + "?tab=attachments", HxGet: action + "attachments", Icon: "icon-paperclip"},
 	}
 }
 

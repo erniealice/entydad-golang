@@ -31,6 +31,10 @@ type FormLabels struct {
 	CompanyName              string
 	CompanyNamePlaceholder   string
 	CustomerType             string
+	SelectTypePlaceholder    string
+	TypeRetail               string
+	TypeWholesale            string
+	TypeVIP                  string
 	DateOfBirth              string
 	StreetAddress            string
 	StreetAddressPlaceholder string
@@ -115,6 +119,10 @@ func formLabels(t func(string) string) FormLabels {
 		CompanyName:              t("client.form.companyName"),
 		CompanyNamePlaceholder:   t("client.form.companyNamePlaceholder"),
 		CustomerType:             t("client.form.customerType"),
+		SelectTypePlaceholder:    t("client.form.selectTypePlaceholder"),
+		TypeRetail:               t("client.form.typeRetail"),
+		TypeWholesale:            t("client.form.typeWholesale"),
+		TypeVIP:                  t("client.form.typeVIP"),
 		DateOfBirth:              t("client.form.dateOfBirth"),
 		StreetAddress:            t("client.form.streetAddress"),
 		StreetAddressPlaceholder: t("client.form.streetAddressPlaceholder"),

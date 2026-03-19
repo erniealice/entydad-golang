@@ -133,7 +133,18 @@ const (
 	ClientTagDeleteURL     = "/action/clients/tags/delete"
 	ClientTagBulkDeleteURL = "/action/clients/tags/bulk-delete"
 
-	// Login routes
+	// Auth routes (all prefixed with /auth/)
+	AuthLoginURL             = "/auth/login"
+	AuthLoginPostURL         = "/auth/login"
+	AuthSignupURL            = "/auth/signup"
+	AuthSignupPostURL        = "/auth/signup"
+	AuthResetPasswordURL     = "/auth/reset-password"
+	AuthResetPasswordPostURL = "/auth/reset-password"
+	AuthResetConfirmURL      = "/auth/reset-password/confirm"
+	AuthResetConfirmPostURL  = "/auth/reset-password/confirm"
+	AuthLogoutURL            = "/auth/logout"
+
+	// Legacy login routes (redirect to /auth/login)
 	LoginURL     = "/login"
 	LoginPostURL = "/login"
 

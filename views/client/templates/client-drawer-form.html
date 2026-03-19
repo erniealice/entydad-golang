@@ -67,11 +67,11 @@ Data: .FirstName, .LastName, .Email, .Mobile, .Active, .ID, .FormAction, .IsEdit
                 "Name" "customer_type"
                 "Label" .Labels.CustomerType
                 "Value" .CustomerType
-                "Placeholder" "Select type"
+                "Placeholder" .Labels.SelectTypePlaceholder
                 "Options" (list
-                    (dict "Value" "retail" "Label" "Retail" "Selected" (eq .CustomerType "retail"))
-                    (dict "Value" "wholesale" "Label" "Wholesale" "Selected" (eq .CustomerType "wholesale"))
-                    (dict "Value" "vip" "Label" "VIP" "Selected" (eq .CustomerType "vip"))
+                    (dict "Value" "retail" "Label" .Labels.TypeRetail "Selected" (eq .CustomerType "retail"))
+                    (dict "Value" "wholesale" "Label" .Labels.TypeWholesale "Selected" (eq .CustomerType "wholesale"))
+                    (dict "Value" "vip" "Label" .Labels.TypeVIP "Selected" (eq .CustomerType "vip"))
                 )
             )}}
         </div>

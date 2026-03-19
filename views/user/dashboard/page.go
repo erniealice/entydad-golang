@@ -46,6 +46,7 @@ type DashboardData struct {
 // Deps holds view dependencies.
 type Deps struct {
 	DashboardLabels  entydad.DashboardLabels
+	Dashboard        entydad.UserDashboardLabels
 	CommonLabels     pyeza.CommonLabels
 	GetDashboardData func(ctx context.Context) (*DashboardData, error)
 }
@@ -60,6 +61,12 @@ type PageData struct {
 	ActivePeriod    string
 	ChartSVGPath    string
 	ChartFillPath   string
+	Labels          userDashboardPageLabels
+}
+
+// userDashboardPageLabels holds labels exposed to the user dashboard template.
+type userDashboardPageLabels struct {
+	Dashboard entydad.UserDashboardLabels
 }
 
 // NewView creates the user dashboard view.
@@ -105,6 +112,9 @@ func NewView(deps *Deps) view.View {
 			ActivePeriod:    period,
 			ChartSVGPath:    chartSVGPath,
 			ChartFillPath:   chartFillPath,
+			Labels: userDashboardPageLabels{
+				Dashboard: deps.Dashboard,
+			},
 		}
 
 		return view.OK("user-dashboard", pageData)

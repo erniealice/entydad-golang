@@ -133,7 +133,7 @@ body {
     transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
-.login-field input:focus {
+.login-field input:focus-visible {
     outline: none;
     border-color: var(--border-focus);
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);

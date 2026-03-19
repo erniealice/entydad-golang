@@ -55,7 +55,7 @@ Data: .FirstName, .LastName, .Email, .Mobile, .Active, .ID, .FormAction, .IsEdit
                     <div class="input-icon-wrapper icon-both">
                         <span class="input-icon">{{template "icon-lock"}}</span>
                         <input type="password" id="password" name="password" class="form-input" placeholder="{{.Labels.PasswordPlaceholder}}" autocomplete="new-password">
-                        <button type="button" class="password-toggle-btn" data-target="password" aria-label="Toggle password visibility">
+                        <button type="button" class="password-toggle-btn" data-target="password" aria-label="{{.Labels.TogglePasswordVisibility}}">
                             <span class="eye-icon">{{template "icon-eye"}}</span>
                             <span class="eye-off-icon" hidden>{{template "icon-eye-off"}}</span>
                         </button>

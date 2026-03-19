@@ -224,7 +224,7 @@ func buildTabItems(id string, labels entydad.RoleLabels, routes entydad.RoleRout
 		{Key: "info", Label: labels.Detail.Tabs.Info, Href: base + "?tab=info", HxGet: action + "info", Icon: "icon-info", Count: 0, Disabled: false},
 		{Key: "permissions", Label: labels.Detail.Tabs.Permissions, Href: base + "?tab=permissions", HxGet: action + "permissions", Icon: "icon-key", Count: permCount, Disabled: false},
 		{Key: "users", Label: labels.Detail.Tabs.Users, Href: base + "?tab=users", HxGet: action + "users", Icon: "icon-user", Count: userCount, Disabled: false},
-		{Key: "attachments", Label: "Attachments", Href: base + "?tab=attachments", HxGet: action + "attachments", Icon: "icon-paperclip", Count: 0, Disabled: false},
+		{Key: "attachments", Label: labels.Detail.AttachmentsTab, Href: base + "?tab=attachments", HxGet: action + "attachments", Icon: "icon-paperclip", Count: 0, Disabled: false},
 	}
 }
 

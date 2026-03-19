@@ -1,0 +1,85 @@
+/*
+ * ==========================================================================
+ * SIGNUP02 STYLES
+ * ==========================================================================
+ * Split-screen signup page — extends entydad-login02.css.
+ * This file is intentionally minimal: the bulk of the split-screen layout,
+ * form fields, logo, buttons, social providers, and carousel are all handled
+ * by entydad-login02.css (.auth-* classes).
+ *
+ * Only signup-specific additions live here:
+ *   - .signup-name-row — two-column name field grid
+ *   - .password-strength — 4-bar strength meter
+ *   - .signup-terms — small terms/privacy notice beneath the form
+ * ==========================================================================
+ */
+
+/* --- Name Row (side-by-side first/last name fields) --- */
+.signup-name-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+@media (max-width: 640px) {
+    .signup-name-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* --- Password Strength Meter --- */
+.password-strength {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.25rem;
+    margin-top: 0.375rem;
+    height: 0.25rem;
+}
+
+.password-strength-bar {
+    height: 100%;
+    border-radius: var(--radius-sm, 9999px);
+    background: var(--border);
+    transition: background-color var(--transition-base);
+}
+
+.password-strength-bar.active.weak {
+    background: var(--status-error, #ef4444);
+}
+
+.password-strength-bar.active.fair {
+    background: var(--status-warning, #f59e0b);
+}
+
+.password-strength-bar.active.good {
+    background: var(--status-info, #3b82f6);
+}
+
+.password-strength-bar.active.strong {
+    background: var(--status-success, #22c55e);
+}
+
+/* --- Terms / Privacy Notice --- */
+.signup-terms {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    font-size: 0.8125rem;
+    color: var(--text-muted, var(--text-secondary));
+    text-align: center;
+    margin-bottom: 0.25rem;
+}
+
+.signup-terms a {
+    color: var(--accent-primary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color var(--transition-base);
+}
+
+.signup-terms a:hover {
+    color: var(--accent-primary-dark, var(--accent-primary));
+    text-decoration: underline;
+}

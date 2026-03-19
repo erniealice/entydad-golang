@@ -12,7 +12,7 @@
     </div>
 
     {{/* --- Tab Content Area --- */}}
-    <div id="tabContent" class="detail-body">
+    <div id="tabContent" class="detail-body" role="tabpanel" aria-labelledby="tab-{{.ActiveTab}}">
         {{if eq .ActiveTab "info"}}
             {{template "location-tab-info" .}}
         {{else if eq .ActiveTab "users"}}
@@ -33,8 +33,9 @@
      ============================================= */}}
 {{define "location-tab-info"}}
 <div class="tab-scroll">
+    <h2 class="visually-hidden">{{.Labels.Detail.BasicInfo.Title}}</h2>
     <h4 class="detail-section-title">{{.Labels.Detail.BasicInfo.Title}}</h4>
-    <div id="info-result" class="form-result" style="display:none;"></div>
+    <div id="info-result" class="form-result" style="display:none;" aria-live="polite" aria-atomic="true" data-success-message="{{.Labels.Detail.UpdateSuccess}}" data-error-message="{{.Labels.Detail.UpdateError}}"></div>
     <form id="info-edit-form"
           hx-post="{{.EditDetailURL}}"
           hx-swap="none"
@@ -95,9 +96,9 @@ function handleInfoUpdate(evt) {
     el.style.display = 'block';
     if (evt.detail.successful) {
         el.className = 'form-result form-result--success';
-        el.textContent = 'Location updated successfully';
+        el.textContent = el.dataset.successMessage || 'Location updated successfully';
     } else {
-        var msg = evt.detail.xhr.getResponseHeader('HX-Error-Message') || 'Failed to update location';
+        var msg = evt.detail.xhr.getResponseHeader('HX-Error-Message') || el.dataset.errorMessage || 'Failed to update location';
         el.className = 'form-result form-result--error';
         el.textContent = msg;
     }

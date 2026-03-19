@@ -5,14 +5,14 @@
 
 {{/* Content-only partial — for HTMX navigation */}}
 {{define "user-detail-content"}}
-<div class="page-content detail-layout" data-page-css="/assets/css/entydad/entydad-user-detail.css?v={{.CacheVersion}}">
+<div class="page-content detail-layout" data-page-css="/assets/css/entydad/entydad-user-detail.css?v={{.CacheVersion}}" data-page-title="{{.Title}}">
     {{/* --- HTMX Tab Buttons --- */}}
     <div class="detail-tabs">
         {{template "tabs" (dict "Items" .TabItems "ActiveTab" .ActiveTab "Variant" "default" "ID" "user-detail-tabs")}}
     </div>
 
     {{/* --- Tab Content Area --- */}}
-    <div id="tabContent" class="detail-body">
+    <div id="tabContent" class="detail-body" role="tabpanel" aria-labelledby="tab-{{.ActiveTab}}">
         {{if eq .ActiveTab "info"}}
             {{template "user-tab-info" .}}
         {{else if eq .ActiveTab "roles"}}
@@ -35,8 +35,9 @@
      ============================================= */}}
 {{define "user-tab-info"}}
 <div class="tab-scroll">
+    <h2 class="visually-hidden">{{.Labels.Detail.BasicInfo.Title}}</h2>
     <h4 class="detail-section-title">{{.Labels.Detail.BasicInfo.Title}}</h4>
-    <div id="info-result" class="form-result" style="display:none;"></div>
+    <div id="info-result" class="form-result" style="display:none;" aria-live="polite" aria-atomic="true" data-success-message="{{.Labels.Detail.UpdateSuccess}}" data-error-message="{{.Labels.Detail.UpdateError}}"></div>
     <form id="info-edit-form"
           hx-post="{{.EditURL}}"
           hx-swap="none"
@@ -106,9 +107,9 @@ function handleInfoUpdate(evt) {
     el.style.display = 'block';
     if (evt.detail.successful) {
         el.className = 'form-result form-result--success';
-        el.textContent = 'User updated successfully';
+        el.textContent = el.dataset.successMessage || 'User updated successfully';
     } else {
-        var msg = evt.detail.xhr.getResponseHeader('HX-Error-Message') || 'Failed to update user';
+        var msg = evt.detail.xhr.getResponseHeader('HX-Error-Message') || el.dataset.errorMessage || 'Failed to update user';
         el.className = 'form-result form-result--error';
         el.textContent = msg;
     }
@@ -126,8 +127,8 @@ function handleInfoUpdate(evt) {
         {{template "table-card" .RolesTable}}
     {{else}}
         <div class="coming-soon-panel">
-            <div class="coming-soon-title">No roles assigned</div>
-            <p class="coming-soon-text">Assign roles to this user to control their access.</p>
+            <div class="coming-soon-title">{{.Labels.Detail.NoRolesAssigned}}</div>
+            <p class="coming-soon-text">{{.Labels.Detail.NoRolesDesc}}</p>
         </div>
     {{end}}
 </div>
@@ -155,14 +156,14 @@ function handleInfoUpdate(evt) {
           hx-post="{{.ResetPasswordURL}}"
           hx-swap="none"
           hx-on::after-request="handlePasswordReset(event)">
-        <div id="password-result" class="form-result" style="display:none;"></div>
+        <div id="password-result" class="form-result" style="display:none;" aria-live="polite" aria-atomic="true" data-success-message="{{.Labels.Detail.PasswordUpdated}}" data-error-message="{{.Labels.Detail.PasswordFailed}}"></div>
         <div class="form-row single password-form-row">
             <div class="form-group">
                 <div class="password-field-wrapper">
                     <div class="input-icon-wrapper icon-both">
                         <span class="input-icon">{{template "icon-lock"}}</span>
-                        <input type="password" id="security-password" name="password" class="form-input" placeholder="Enter new password" autocomplete="new-password" required>
-                        <button type="button" class="password-toggle-btn" data-target="security-password" aria-label="Toggle password visibility">
+                        <input type="password" id="security-password" name="password" class="form-input" placeholder="{{.Labels.Detail.NewPasswordPlaceholder}}" autocomplete="new-password" required>
+                        <button type="button" class="password-toggle-btn" data-target="security-password" aria-label="{{.Labels.Detail.TogglePasswordVisibility}}">
                             <span class="eye-icon">{{template "icon-eye"}}</span>
                             <span class="eye-off-icon" hidden>{{template "icon-eye-off"}}</span>
                         </button>
@@ -170,7 +171,7 @@ function handleInfoUpdate(evt) {
                     <div class="password-actions-row">
                         <button type="button" class="btn-generate-password" id="securityGenerateBtn">
                             <span class="btn-generate-icon">{{template "icon-dice"}}</span>
-                            Generate Password
+                            {{.Labels.Detail.GeneratePassword}}
                         </button>
                     </div>
                 </div>
@@ -254,10 +255,10 @@ function handlePasswordReset(evt) {
     el.style.display = 'block';
     if (evt.detail.successful) {
         el.className = 'form-result form-result--success';
-        el.textContent = 'Password updated successfully';
+        el.textContent = el.dataset.successMessage || 'Password updated successfully';
         document.getElementById('security-password').value = '';
     } else {
-        var msg = evt.detail.xhr.getResponseHeader('HX-Error-Message') || 'Failed to update password';
+        var msg = evt.detail.xhr.getResponseHeader('HX-Error-Message') || el.dataset.errorMessage || 'Failed to update password';
         el.className = 'form-result form-result--error';
         el.textContent = msg;
     }

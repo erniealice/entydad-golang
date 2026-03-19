@@ -13,6 +13,7 @@ import (
 // Deps holds view dependencies.
 type Deps struct {
 	DashboardLabels entydad.DashboardLabels
+	Dashboard       entydad.ClientDashboardLabels
 	CommonLabels    pyeza.CommonLabels
 }
 
@@ -20,6 +21,12 @@ type Deps struct {
 type PageData struct {
 	types.PageData
 	ContentTemplate string
+	Labels          clientDashboardPageLabels
+}
+
+// clientDashboardPageLabels holds labels exposed to the client dashboard template.
+type clientDashboardPageLabels struct {
+	Dashboard entydad.ClientDashboardLabels
 }
 
 // NewView creates the client dashboard view.
@@ -37,6 +44,9 @@ func NewView(deps *Deps) view.View {
 				CommonLabels: deps.CommonLabels,
 			},
 			ContentTemplate: "client-dashboard-content",
+			Labels: clientDashboardPageLabels{
+				Dashboard: deps.Dashboard,
+			},
 		}
 
 		return view.OK("client-dashboard", pageData)

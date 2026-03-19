@@ -12,7 +12,7 @@
     </div>
 
     {{/* --- Tab Content Area --- */}}
-    <div id="tabContent" class="detail-body">
+    <div id="tabContent" class="detail-body" role="tabpanel" aria-labelledby="tab-{{.ActiveTab}}">
         {{if eq .ActiveTab "info"}}
             {{template "role-tab-info" .}}
         {{else if eq .ActiveTab "permissions"}}
@@ -33,6 +33,7 @@
      ============================================= */}}
 {{define "role-tab-info"}}
 <div class="tab-scroll">
+    <h2 class="visually-hidden">{{.Labels.Detail.Info.Title}}</h2>
     <h4 class="detail-section-title">{{.Labels.Detail.Info.Title}}</h4>
     <div class="detail-info-grid">
         <div class="detail-info-item">
@@ -75,8 +76,8 @@
         {{template "table-card" .PermissionsTable}}
     {{else}}
         <div class="coming-soon-panel">
-            <div class="coming-soon-title">No permissions assigned</div>
-            <p class="coming-soon-text">Assign permissions to this role to control access.</p>
+            <div class="coming-soon-title">{{.Labels.Detail.NoPermissionsAssigned}}</div>
+            <p class="coming-soon-text">{{.Labels.Detail.NoPermissionsDesc}}</p>
         </div>
     {{end}}
 </div>
@@ -91,8 +92,8 @@
         {{template "table-card" .UsersTable}}
     {{else}}
         <div class="coming-soon-panel">
-            <div class="coming-soon-title">No users assigned</div>
-            <p class="coming-soon-text">Assign users to this role to grant them its permissions.</p>
+            <div class="coming-soon-title">{{.Labels.Detail.NoUsersAssigned}}</div>
+            <p class="coming-soon-text">{{.Labels.Detail.NoUsersDesc}}</p>
         </div>
     {{end}}
 </div>

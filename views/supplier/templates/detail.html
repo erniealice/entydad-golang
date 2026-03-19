@@ -12,7 +12,7 @@
     </div>
 
     {{/* --- Tab Body --- */}}
-    <div id="tabContent" class="detail-body">
+    <div id="tabContent" class="detail-body" role="tabpanel" aria-labelledby="tab-{{.ActiveTab}}">
         {{if eq .ActiveTab "info"}}
         {{template "supplier-tab-info" .}}
         {{else if eq .ActiveTab "attachments"}}
@@ -25,6 +25,7 @@
 {{/* Supplier Information Tab */}}
 {{define "supplier-tab-info"}}
 <div class="tab-scroll">
+    <h2 class="visually-hidden">{{.Labels.Detail.CompanyInfo.Title}}</h2>
     {{/* --- Company Info Section --- */}}
     <h4 class="detail-section-title">{{.Labels.Detail.CompanyInfo.Title}}</h4>
     <div class="detail-info-grid">
@@ -100,7 +101,7 @@
         {{if .LeadTimeDays}}
         <div class="detail-info-item">
             <span class="detail-info-label">{{.Labels.Form.LeadTimeDays}}</span>
-            <span class="detail-info-value">{{.LeadTimeDays}} days</span>
+            <span class="detail-info-value">{{.LeadTimeDays}} {{.Labels.Detail.DaysSuffix}}</span>
         </div>
         {{end}}
         {{if .TaxID}}
@@ -157,7 +158,7 @@
 
     {{/* --- Website --- */}}
     {{if .Website}}
-    <h4 class="detail-section-title detail-section-title--spaced">Website</h4>
+    <h4 class="detail-section-title detail-section-title--spaced">{{.Labels.Detail.Website}}</h4>
     <div class="detail-info-grid">
         <div class="detail-info-item">
             <span class="detail-info-value"><a href="{{.Website}}" target="_blank" rel="noopener">{{.Website}}</a></span>

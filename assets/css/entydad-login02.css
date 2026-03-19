@@ -144,11 +144,11 @@
     background: var(--bg-card, var(--bg-base));
     border: var(--border-width) solid var(--border);
     border-radius: var(--radius-md, 0.5rem);
-    outline: none;
     transition: border-color var(--transition-base), box-shadow var(--transition-base);
 }
 
-.auth-form-input:focus {
+.auth-form-input:focus-visible {
+    outline: none;
     border-color: var(--accent-primary);
     box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb, 59, 130, 246), 0.1);
 }

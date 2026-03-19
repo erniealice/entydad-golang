@@ -5,14 +5,14 @@
 
 {{/* Content-only partial — for HTMX navigation */}}
 {{define "client-detail-content"}}
-<div class="page-content client-detail-layout" data-page-css="/assets/css/entydad/entydad-client-detail.css?v={{.CacheVersion}}">
+<div class="page-content client-detail-layout" data-page-css="/assets/css/entydad/entydad-client-detail.css?v={{.CacheVersion}}" data-page-title="{{.Title}}">
     {{/* --- Tabs --- */}}
     <div class="detail-tabs">
         {{template "tabs" (dict "Items" .TabItems "ActiveTab" .ActiveTab "Variant" "default" "ID" "client-tabs")}}
     </div>
 
     {{/* --- Tab Body --- */}}
-    <div id="tabContent" class="detail-body">
+    <div id="tabContent" class="detail-body" role="tabpanel" aria-labelledby="tab-{{.ActiveTab}}">
         {{if eq .ActiveTab "basic"}}
         {{template "client-tab-basic" .}}
         {{else if eq .ActiveTab "history"}}
@@ -27,11 +27,12 @@
 {{/* Basic Information Tab */}}
 {{define "client-tab-basic"}}
 <div class="tab-scroll">
+    <h2 class="visually-hidden">{{.Labels.Detail.Profile.Title}}</h2>
     {{/* --- Profile Section --- */}}
     <h4 class="client-section-title">{{.Labels.Detail.Profile.Title}}</h4>
     <div class="client-info-grid">
         <div class="client-info-item">
-            <span class="client-info-label">Name</span>
+            <span class="client-info-label">{{.Labels.Detail.Name}}</span>
             <span class="client-info-value">{{.ClientName}}</span>
         </div>
         <div class="client-info-item">
@@ -162,15 +163,15 @@
     </div>
 
     {{/* --- Orders Table --- */}}
-    <h4 class="client-section-title client-section-title--spaced">Recent Orders</h4>
+    <h4 class="client-section-title client-section-title--spaced">{{.Labels.Detail.RecentOrders}}</h4>
     <div class="purchase-orders-table">
         <table>
             <thead>
                 <tr>
-                    <th>Date</th>
-                    <th>Reference</th>
-                    <th>Amount</th>
-                    <th>Status</th>
+                    <th>{{.Labels.Detail.ColDate}}</th>
+                    <th>{{.Labels.Detail.ColReference}}</th>
+                    <th>{{.Labels.Detail.ColAmount}}</th>
+                    <th>{{.Labels.Detail.ColStatus}}</th>
                 </tr>
             </thead>
             <tbody>
@@ -188,7 +189,7 @@
     {{else}}
     <div class="coming-soon-panel">
         <div class="coming-soon-title">{{.Labels.Detail.PurchaseHistory.Empty}}</div>
-        <p class="coming-soon-text">Purchase history for this client will appear here once transactions are recorded.</p>
+        <p class="coming-soon-text">{{.Labels.Detail.PurchaseHistoryEmpty}}</p>
     </div>
     {{end}}
 </div>

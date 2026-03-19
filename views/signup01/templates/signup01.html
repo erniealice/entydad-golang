@@ -1,0 +1,140 @@
+{{define "signup01"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Labels.Title}}</title>
+    {{template "fonts"}}
+    <link rel="stylesheet" href="/assets/css/app/main.css?v={{.CacheVersion}}">
+    <link rel="stylesheet" href="/assets/css/entydad/entydad-signup01.css?v={{.CacheVersion}}">
+</head>
+<body>
+    {{template "signup01-content" .}}
+</body>
+</html>
+{{end}}
+
+{{define "signup01-content"}}
+<div class="signup-page">
+    <div class="signup-header">
+        <h1 class="signup-title">{{.Labels.Title}}</h1>
+    </div>
+    <div class="signup-wrapper">
+        <div class="signup-card">
+            <h2 class="signup-card-heading">{{.Labels.Heading}}</h2>
+
+            <form class="signup-form" method="POST" action="/auth/signup" autocomplete="on">
+                <!-- Name row: first + last side by side -->
+                <div class="signup-name-row">
+                    <div class="signup-field">
+                        <label for="first_name">{{.Labels.FirstName}}</label>
+                        <input
+                            type="text"
+                            id="first_name"
+                            name="first_name"
+                            placeholder="{{.Labels.FirstName}}"
+                            required
+                            autocomplete="given-name"
+                        >
+                    </div>
+                    <div class="signup-field">
+                        <label for="last_name">{{.Labels.LastName}}</label>
+                        <input
+                            type="text"
+                            id="last_name"
+                            name="last_name"
+                            placeholder="{{.Labels.LastName}}"
+                            required
+                            autocomplete="family-name"
+                        >
+                    </div>
+                </div>
+
+                <div class="signup-field">
+                    <label for="email">{{.Labels.Email}}</label>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        placeholder="{{.Labels.EmailPlaceholder}}"
+                        required
+                        autocomplete="email"
+                    >
+                </div>
+
+                <div class="signup-field">
+                    <label for="password">{{.Labels.Password}}</label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        required
+                        autocomplete="new-password"
+                        oninput="updatePasswordStrength(this.value)"
+                    >
+                    <!-- Password strength indicator -->
+                    <div class="password-strength" id="passwordStrength" aria-label="{{.Labels.PasswordStrength}}">
+                        <div class="password-strength-bar" id="strengthBar1"></div>
+                        <div class="password-strength-bar" id="strengthBar2"></div>
+                        <div class="password-strength-bar" id="strengthBar3"></div>
+                        <div class="password-strength-bar" id="strengthBar4"></div>
+                    </div>
+                </div>
+
+                <div class="signup-field">
+                    <label for="confirm_password">{{.Labels.ConfirmPassword}}</label>
+                    <input
+                        type="password"
+                        id="confirm_password"
+                        name="confirm_password"
+                        required
+                        autocomplete="new-password"
+                    >
+                </div>
+
+                <button type="submit" class="signup-submit">{{.Labels.Submit}}</button>
+            </form>
+
+            <div class="signup-footer">
+                <span>{{.Labels.HasAccount}}</span>
+                <a href="{{.LoginURL}}" class="signup-signin-link">{{.Labels.SignInLink}}</a>
+            </div>
+
+            {{if .Labels.TermsPrefix}}
+            <div class="signup-terms">
+                <span>{{.Labels.TermsPrefix}}</span>
+                <a href="/terms" class="signup-terms-link">{{.Labels.TermsLink}}</a>
+                <span>&amp;</span>
+                <a href="/privacy" class="signup-terms-link">{{.Labels.PrivacyLink}}</a>
+            </div>
+            {{end}}
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    function updatePasswordStrength(value) {
+        var bars = document.querySelectorAll('.password-strength-bar');
+        var score = 0;
+        if (value.length >= 8) score++;
+        if (/[A-Z]/.test(value)) score++;
+        if (/[0-9]/.test(value)) score++;
+        if (/[^A-Za-z0-9]/.test(value)) score++;
+
+        var levels = ['', 'weak', 'fair', 'good', 'strong'];
+        var level = levels[score] || '';
+
+        bars.forEach(function(bar, i) {
+            bar.className = 'password-strength-bar';
+            if (i < score) {
+                bar.classList.add('active', level);
+            }
+        });
+    }
+    // Expose for inline oninput
+    window.updatePasswordStrength = updatePasswordStrength;
+})();
+</script>
+{{end}}

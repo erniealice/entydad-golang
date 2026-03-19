@@ -1,4 +1,4 @@
-{{define "login02"}}
+{{define "signup02"}}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,9 +9,10 @@
     <link rel="stylesheet" href="/assets/css/app/main.css?v={{.CacheVersion}}">
     <link rel="stylesheet" href="/assets/css/pyeza/carousel.css?v={{.CacheVersion}}">
     <link rel="stylesheet" href="/assets/css/entydad/entydad-login02.css?v={{.CacheVersion}}">
+    <link rel="stylesheet" href="/assets/css/entydad/entydad-signup02.css?v={{.CacheVersion}}">
 </head>
 <body>
-    {{template "login02-content" .}}
+    {{template "signup02-content" .}}
 
     <!-- Carousel JavaScript -->
     <script>
@@ -55,11 +56,36 @@
             carousel.addEventListener('mouseleave', function() { startAutoPlay(); });
         })();
     </script>
+
+    <!-- Password strength JavaScript -->
+    <script>
+    (function() {
+        function updatePasswordStrength(value) {
+            var bars = document.querySelectorAll('.password-strength-bar');
+            var score = 0;
+            if (value.length >= 8) score++;
+            if (/[A-Z]/.test(value)) score++;
+            if (/[0-9]/.test(value)) score++;
+            if (/[^A-Za-z0-9]/.test(value)) score++;
+
+            var levels = ['', 'weak', 'fair', 'good', 'strong'];
+            var level = levels[score] || '';
+
+            bars.forEach(function(bar, i) {
+                bar.className = 'password-strength-bar';
+                if (i < score) {
+                    bar.classList.add('active', level);
+                }
+            });
+        }
+        window.updatePasswordStrength = updatePasswordStrength;
+    })();
+    </script>
 </body>
 </html>
 {{end}}
 
-{{define "login02-content"}}
+{{define "signup02-content"}}
 <div class="auth-page">
     <div class="auth-split">
         <!-- Left Side - Carousel -->
@@ -95,7 +121,7 @@
         </div>
         {{end}}
 
-        <!-- Right Side - Login Form -->
+        <!-- Right Side - Signup Form -->
         <div class="auth-form-section">
             <div class="auth-form-container">
                 <!-- Logo -->
@@ -114,8 +140,38 @@
                 <h1 class="auth-heading">{{.Labels.Heading}}</h1>
                 <p class="auth-subheading">{{.Labels.Subheading}}</p>
 
-                <!-- Login Form -->
-                <form class="auth-form" action="{{.LoginPostURL}}" method="POST">
+                <!-- Signup Form -->
+                <form class="auth-form" action="{{.SignupPostURL}}" method="POST" autocomplete="on">
+                    <!-- Name row: first + last side by side -->
+                    <div class="signup-name-row">
+                        <div class="auth-form-group">
+                            <label class="auth-form-label" for="first_name">{{.Labels.FirstNameLabel}}</label>
+                            <input
+                                type="text"
+                                id="first_name"
+                                name="first_name"
+                                class="auth-form-input"
+                                placeholder="{{.Labels.FirstNamePlaceholder}}"
+                                required
+                                autocomplete="given-name"
+                            >
+                            <span class="auth-form-error" id="firstNameError"></span>
+                        </div>
+                        <div class="auth-form-group">
+                            <label class="auth-form-label" for="last_name">{{.Labels.LastNameLabel}}</label>
+                            <input
+                                type="text"
+                                id="last_name"
+                                name="last_name"
+                                class="auth-form-input"
+                                placeholder="{{.Labels.LastNamePlaceholder}}"
+                                required
+                                autocomplete="family-name"
+                            >
+                            <span class="auth-form-error" id="lastNameError"></span>
+                        </div>
+                    </div>
+
                     <div class="auth-form-group">
                         <label class="auth-form-label" for="email">{{.Labels.EmailLabel}}</label>
                         <input
@@ -139,20 +195,43 @@
                             class="auth-form-input"
                             placeholder="{{.Labels.PasswordPlaceholder}}"
                             required
-                            autocomplete="current-password"
+                            autocomplete="new-password"
+                            oninput="updatePasswordStrength(this.value)"
                         >
+                        <!-- Password strength indicator -->
+                        <div class="password-strength" id="passwordStrength" aria-label="{{.Labels.PasswordStrength}}">
+                            <div class="password-strength-bar" id="strengthBar1"></div>
+                            <div class="password-strength-bar" id="strengthBar2"></div>
+                            <div class="password-strength-bar" id="strengthBar3"></div>
+                            <div class="password-strength-bar" id="strengthBar4"></div>
+                        </div>
                         <span class="auth-form-error" id="passwordError"></span>
                     </div>
 
-                    <div class="auth-form-row">
-                        <div class="auth-form-checkbox">
-                            <input type="checkbox" id="remember" name="remember">
-                            <label for="remember">{{.Labels.RememberMe}}</label>
-                        </div>
-                        <a href="{{.ForgotURL}}" class="auth-form-link">{{.Labels.ForgotPassword}}</a>
+                    <div class="auth-form-group">
+                        <label class="auth-form-label" for="confirm_password">{{.Labels.ConfirmPasswordLabel}}</label>
+                        <input
+                            type="password"
+                            id="confirm_password"
+                            name="confirm_password"
+                            class="auth-form-input"
+                            placeholder="{{.Labels.ConfirmPasswordPlaceholder}}"
+                            required
+                            autocomplete="new-password"
+                        >
+                        <span class="auth-form-error" id="confirmPasswordError"></span>
                     </div>
 
-                    <button type="submit" class="auth-button">{{.Labels.SignInButton}}</button>
+                    {{if .Labels.TermsText}}
+                    <div class="signup-terms">
+                        <span>{{.Labels.TermsText}}</span>
+                        {{if .TermsURL}}
+                        <a href="{{.TermsURL}}" class="auth-form-link" target="_blank" rel="noopener noreferrer">{{.Labels.TermsLink}}</a>
+                        {{end}}
+                    </div>
+                    {{end}}
+
+                    <button type="submit" class="auth-button">{{.Labels.SignUpButton}}</button>
                 </form>
 
                 {{if .SocialProviders}}
@@ -160,7 +239,7 @@
                     <span>{{.Labels.SocialDivider}}</span>
                 </div>
 
-                <!-- Social Login Buttons -->
+                <!-- Social Signup Buttons -->
                 <div class="auth-social-buttons">
                     {{range .SocialProviders}}
                     <button type="button" class="auth-social-button">
@@ -172,10 +251,10 @@
                 {{end}}
 
                 <!-- Footer -->
-                {{if .Labels.NoAccount}}
+                {{if .Labels.HasAccount}}
                 <div class="auth-form-footer">
-                    <span>{{.Labels.NoAccount}}</span>
-                    <a href="{{.RegisterURL}}" class="auth-form-link">{{.Labels.SignUpLink}}</a>
+                    <span>{{.Labels.HasAccount}}</span>
+                    <a href="{{.LoginURL}}" class="auth-form-link">{{.Labels.SignInLink}}</a>
                 </div>
                 {{end}}
             </div>

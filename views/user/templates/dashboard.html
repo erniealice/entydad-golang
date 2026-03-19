@@ -8,10 +8,10 @@
 <div class="page-content" data-page-css="/assets/css/entydad/entydad-user-dashboard.css?v={{.CacheVersion}}">
     <!-- Stats Row -->
     <div class="entydad-stats-row">
-        {{template "stat-card" dict "Icon" "icon-shield" "Value" (printf "%d" .Stats.TotalUsers) "Label" "Total Users" "Trend" "" "TrendUp" true "Color" "terracotta"}}
-        {{template "stat-card" dict "Icon" "icon-user-check" "Value" (printf "%d" .Stats.ActiveUsers) "Label" "Active" "Trend" "" "TrendUp" true "Color" "sage"}}
-        {{template "stat-card" dict "Icon" "icon-user-minus" "Value" (printf "%d" .Stats.InactiveUsers) "Label" "Inactive" "Trend" "" "TrendUp" false "Color" "navy"}}
-        {{template "stat-card" dict "Icon" "icon-shield" "Value" (printf "%d" .Stats.TotalRoles) "Label" "Roles" "Trend" "" "TrendUp" true "Color" "amber"}}
+        {{template "stat-card" dict "Icon" "icon-shield" "Value" (printf "%d" .Stats.TotalUsers) "Label" .Labels.Dashboard.TotalUsers "Trend" "" "TrendUp" true "Color" "terracotta"}}
+        {{template "stat-card" dict "Icon" "icon-user-check" "Value" (printf "%d" .Stats.ActiveUsers) "Label" .Labels.Dashboard.Active "Trend" "" "TrendUp" true "Color" "sage"}}
+        {{template "stat-card" dict "Icon" "icon-user-minus" "Value" (printf "%d" .Stats.InactiveUsers) "Label" .Labels.Dashboard.Inactive "Trend" "" "TrendUp" false "Color" "navy"}}
+        {{template "stat-card" dict "Icon" "icon-shield" "Value" (printf "%d" .Stats.TotalRoles) "Label" .Labels.Dashboard.Roles "Trend" "" "TrendUp" true "Color" "amber"}}
     </div>
 
     <!-- Main Grid -->
@@ -19,11 +19,11 @@
         <!-- User Activity Chart -->
         <div class="card">
             <div class="card-header">
-                <h2 class="card-title">User Activity</h2>
+                <h2 class="card-title">{{.Labels.Dashboard.UserActivity}}</h2>
                 <div class="card-actions">
-                    <a href="?period=week" class="card-btn{{if eq .ActivePeriod "week"}} primary{{end}}">Week</a>
-                    <a href="?period=month" class="card-btn{{if eq .ActivePeriod "month"}} primary{{end}}">Month</a>
-                    <a href="?period=year" class="card-btn{{if eq .ActivePeriod "year"}} primary{{end}}">Year</a>
+                    <a href="?period=week" class="card-btn{{if eq .ActivePeriod "week"}} primary{{end}}">{{.Labels.Dashboard.FilterWeek}}</a>
+                    <a href="?period=month" class="card-btn{{if eq .ActivePeriod "month"}} primary{{end}}">{{.Labels.Dashboard.FilterMonth}}</a>
+                    <a href="?period=year" class="card-btn{{if eq .ActivePeriod "year"}} primary{{end}}">{{.Labels.Dashboard.FilterYear}}</a>
                 </div>
             </div>
             <div class="entydad-chart-area">
@@ -66,8 +66,8 @@
         <!-- Recent Activity -->
         <div class="card">
             <div class="card-header">
-                <h2 class="card-title">Recent Activity</h2>
-                <button class="card-btn">View All</button>
+                <h2 class="card-title">{{.Labels.Dashboard.RecentActivity}}</h2>
+                <button class="card-btn">{{.Labels.Dashboard.ViewAll}}</button>
             </div>
             <div class="entydad-activity-list">
                 {{if .RecentActivity}}
@@ -85,7 +85,7 @@
                     {{end}}
                 {{else}}
                 <div class="entydad-activity-empty">
-                    <p>No recent activity</p>
+                    <p>{{.Labels.Dashboard.NoRecentActivity}}</p>
                 </div>
                 {{end}}
             </div>

@@ -12,7 +12,7 @@ Data: .Name, .Code, .Description, .Active, .ID, .FormAction, .IsEdit, .CommonLab
             {{template "form-group" (dict
                 "Type" "text"
                 "Name" "name"
-                "Label" "Tag Name"
+                "Label" .Labels.TagName
                 "Value" .Name
                 "Required" true
             )}}
@@ -22,9 +22,9 @@ Data: .Name, .Code, .Description, .Active, .ID, .FormAction, .IsEdit, .CommonLab
             {{template "form-group" (dict
                 "Type" "text"
                 "Name" "code"
-                "Label" "Code"
+                "Label" .Labels.Code
                 "Value" .Code
-                "Placeholder" "Auto-generated from name if empty"
+                "Placeholder" .Labels.CodeAutoPlaceholder
             )}}
         </div>
 
@@ -32,16 +32,16 @@ Data: .Name, .Code, .Description, .Active, .ID, .FormAction, .IsEdit, .CommonLab
             {{template "form-group" (dict
                 "Type" "textarea"
                 "Name" "description"
-                "Label" "Description"
+                "Label" .Labels.Description
                 "Value" .Description
-                "Placeholder" "Describe this tag..."
+                "Placeholder" .Labels.DescriptionPlaceholder
             )}}
         </div>
 
         <div class="form-row single">
             {{template "toggle" (dict
                 "Name" "active"
-                "Label" "Active"
+                "Label" .Labels.Active
                 "Checked" .Active
                 "Value" "true"
             )}}

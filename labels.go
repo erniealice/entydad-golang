@@ -83,6 +83,14 @@ type ClientDetailLabels struct {
 	Tags            ClientDetailTagLabels       `json:"tags"`
 	PurchaseHistory ClientPurchaseHistoryLabels `json:"purchaseHistory"`
 	Tabs            ClientDetailTabLabels       `json:"tabs"`
+	// Flat inline labels
+	Name                string `json:"name"`
+	RecentOrders        string `json:"recentOrders"`
+	ColDate             string `json:"colDate"`
+	ColReference        string `json:"colReference"`
+	ColAmount           string `json:"colAmount"`
+	ColStatus           string `json:"colStatus"`
+	PurchaseHistoryEmpty string `json:"purchaseHistoryEmpty"`
 }
 
 type ClientCompanyDetailLabels struct {
@@ -114,6 +122,7 @@ type ClientPurchaseHistoryLabels struct {
 type ClientDetailTabLabels struct {
 	Info            string `json:"info"`
 	PurchaseHistory string `json:"purchaseHistory"`
+	Attachments     string `json:"attachments"`
 }
 
 type ClientDetailActionLabels struct {
@@ -186,10 +195,22 @@ type UserActionLabels struct {
 
 // UserDetailLabels holds labels for the user detail page.
 type UserDetailLabels struct {
-	BasicInfo   UserDetailBasicInfoLabels  `json:"basicInfo"`
-	Tabs        UserDetailTabLabels        `json:"tabs"`
-	Security    UserDetailSecurityLabels   `json:"security"`
-	EmptyStates UserDetailEmptyStateLabels `json:"emptyStates"`
+	BasicInfo               UserDetailBasicInfoLabels  `json:"basicInfo"`
+	Tabs                    UserDetailTabLabels        `json:"tabs"`
+	Security                UserDetailSecurityLabels   `json:"security"`
+	EmptyStates             UserDetailEmptyStateLabels `json:"emptyStates"`
+	// Inline feedback and empty-state messages
+	UpdateSuccess           string `json:"updateSuccess"`
+	UpdateError             string `json:"updateError"`
+	NoRolesAssigned         string `json:"noRolesAssigned"`
+	NoRolesDesc             string `json:"noRolesDesc"`
+	NewPasswordPlaceholder  string `json:"newPasswordPlaceholder"`
+	TogglePasswordVisibility string `json:"togglePasswordVisibility"`
+	GeneratePassword        string `json:"generatePassword"`
+	PasswordUpdated         string `json:"passwordUpdated"`
+	PasswordFailed          string `json:"passwordFailed"`
+	// Tab label for attachments (shared across all detail pages)
+	AttachmentsTab          string `json:"attachmentsTab"`
 }
 
 // UserDetailSecurityLabels holds labels for the security tab.
@@ -295,9 +316,14 @@ type LocationActionLabels struct {
 }
 
 type LocationDetailLabels struct {
-	BasicInfo   LocationDetailBasicInfoLabels `json:"basicInfo"`
-	Tabs        LocationDetailTabLabels       `json:"tabs"`
-	EmptyStates LocationDetailEmptyLabels     `json:"emptyStates"`
+	BasicInfo    LocationDetailBasicInfoLabels `json:"basicInfo"`
+	Tabs         LocationDetailTabLabels       `json:"tabs"`
+	EmptyStates  LocationDetailEmptyLabels     `json:"emptyStates"`
+	// Inline feedback messages
+	UpdateSuccess string `json:"updateSuccess"`
+	UpdateError   string `json:"updateError"`
+	// Tab label for attachments
+	AttachmentsTab string `json:"attachmentsTab"`
 }
 
 type LocationDetailBasicInfoLabels struct {
@@ -393,8 +419,15 @@ type RoleActionLabels struct {
 
 // RoleDetailLabels holds labels for the role detail page.
 type RoleDetailLabels struct {
-	Tabs RoleDetailTabLabels  `json:"tabs"`
-	Info RoleDetailInfoLabels `json:"info"`
+	Tabs           RoleDetailTabLabels  `json:"tabs"`
+	Info           RoleDetailInfoLabels `json:"info"`
+	// Empty-state labels for role detail tabs
+	NoPermissionsAssigned string `json:"noPermissionsAssigned"`
+	NoPermissionsDesc     string `json:"noPermissionsDesc"`
+	NoUsersAssigned       string `json:"noUsersAssigned"`
+	NoUsersDesc           string `json:"noUsersDesc"`
+	// Tab label for attachments
+	AttachmentsTab        string `json:"attachmentsTab"`
 }
 
 type RoleDetailTabLabels struct {
@@ -701,6 +734,133 @@ type Login02Labels struct {
 	SignUpLink          string `json:"signUpLink"`
 	SocialDivider       string `json:"socialDivider"`
 	Error               string `json:"error"`
+	// Carousel navigation
+	PreviousSlide string `json:"previousSlide"`
+	NextSlide     string `json:"nextSlide"`
+	ContinueWith  string `json:"continueWith"`
+}
+
+// ---------------------------------------------------------------------------
+// Signup labels
+// ---------------------------------------------------------------------------
+
+// SignupLabels holds i18n strings for the signup01 page (dual-card style).
+type SignupLabels struct {
+	Title            string `json:"title"`
+	Heading          string `json:"heading"`
+	FirstName        string `json:"firstName"`
+	LastName         string `json:"lastName"`
+	Email            string `json:"email"`
+	EmailPlaceholder string `json:"emailPlaceholder"`
+	Password         string `json:"password"`
+	ConfirmPassword  string `json:"confirmPassword"`
+	Submit           string `json:"submit"`
+	HasAccount       string `json:"hasAccount"`
+	SignInLink       string `json:"signInLink"`
+	TermsPrefix      string `json:"termsPrefix"`
+	TermsLink        string `json:"termsLink"`
+	PrivacyLink      string `json:"privacyLink"`
+	AdminTitle       string `json:"adminTitle"`
+	AdminDescription string `json:"adminDescription"`
+	StaffTitle       string `json:"staffTitle"`
+	StaffDescription string `json:"staffDescription"`
+	PasswordStrength string `json:"passwordStrength"`
+}
+
+// Signup02Labels holds i18n strings for the signup02 page (split-screen style).
+type Signup02Labels struct {
+	Title                      string `json:"title"`
+	Heading                    string `json:"heading"`
+	Subheading                 string `json:"subheading"`
+	FirstNameLabel             string `json:"firstNameLabel"`
+	FirstNamePlaceholder       string `json:"firstNamePlaceholder"`
+	LastNameLabel              string `json:"lastNameLabel"`
+	LastNamePlaceholder        string `json:"lastNamePlaceholder"`
+	EmailLabel                 string `json:"emailLabel"`
+	EmailPlaceholder           string `json:"emailPlaceholder"`
+	PasswordLabel              string `json:"passwordLabel"`
+	PasswordPlaceholder        string `json:"passwordPlaceholder"`
+	ConfirmPasswordLabel       string `json:"confirmPasswordLabel"`
+	ConfirmPasswordPlaceholder string `json:"confirmPasswordPlaceholder"`
+	SignUpButton               string `json:"signUpButton"`
+	HasAccount                 string `json:"hasAccount"`
+	SignInLink                 string `json:"signInLink"`
+	SocialDivider              string `json:"socialDivider"`
+	TermsText                  string `json:"termsText"`
+	Error                      string `json:"error"`
+	// Carousel navigation + accessibility
+	PreviousSlide   string `json:"previousSlide"`
+	NextSlide       string `json:"nextSlide"`
+	ContinueWith    string `json:"continueWith"`
+	PasswordStrength string `json:"passwordStrength"`
+	TermsLink       string `json:"termsLink"`
+}
+
+// ---------------------------------------------------------------------------
+// Reset password labels
+// ---------------------------------------------------------------------------
+
+// ResetPasswordLabels holds i18n strings for the reset-password01 page (dual-card style).
+type ResetPasswordLabels struct {
+	Title              string `json:"title"`
+	Heading            string `json:"heading"`
+	Description        string `json:"description"`
+	Email              string `json:"email"`
+	EmailPlaceholder   string `json:"emailPlaceholder"`
+	Submit             string `json:"submit"`
+	BackToLogin        string `json:"backToLogin"`
+	ConfirmHeading     string `json:"confirmHeading"`
+	ConfirmDescription string `json:"confirmDescription"`
+	NewPassword        string `json:"newPassword"`
+	ConfirmPassword    string `json:"confirmPassword"`
+	ResetButton        string `json:"resetButton"`
+	SuccessHeading     string `json:"successHeading"`
+	SuccessMessage     string `json:"successMessage"`
+}
+
+// ResetPassword02Labels holds i18n strings for the reset-password02 page (split-screen style).
+type ResetPassword02Labels struct {
+	Title                      string `json:"title"`
+	Heading                    string `json:"heading"`
+	Subheading                 string `json:"subheading"`
+	EmailLabel                 string `json:"emailLabel"`
+	EmailPlaceholder           string `json:"emailPlaceholder"`
+	SendResetButton            string `json:"sendResetButton"`
+	BackToLogin                string `json:"backToLogin"`
+	ConfirmHeading             string `json:"confirmHeading"`
+	ConfirmSubheading          string `json:"confirmSubheading"`
+	NewPasswordLabel           string `json:"newPasswordLabel"`
+	NewPasswordPlaceholder     string `json:"newPasswordPlaceholder"`
+	ConfirmPasswordLabel       string `json:"confirmPasswordLabel"`
+	ConfirmPasswordPlaceholder string `json:"confirmPasswordPlaceholder"`
+	ResetButton                string `json:"resetButton"`
+	SuccessHeading             string `json:"successHeading"`
+	SuccessMessage             string `json:"successMessage"`
+	Error                      string `json:"error"`
+	// Carousel navigation
+	PreviousSlide string `json:"previousSlide"`
+	NextSlide     string `json:"nextSlide"`
+}
+
+// ---------------------------------------------------------------------------
+// Auth email labels
+// ---------------------------------------------------------------------------
+
+// AuthEmailLabels holds i18n strings for authentication-related email templates.
+type AuthEmailLabels struct {
+	ResetSubject           string `json:"resetSubject"`
+	ResetHeading           string `json:"resetHeading"`
+	ResetBody              string `json:"resetBody"`
+	ResetButtonText        string `json:"resetButtonText"`
+	ResetExpiry            string `json:"resetExpiry"`
+	WelcomeSubject         string `json:"welcomeSubject"`
+	WelcomeHeading         string `json:"welcomeHeading"`
+	WelcomeBody            string `json:"welcomeBody"`
+	WelcomeButtonText      string `json:"welcomeButtonText"`
+	PasswordChangedSubject string `json:"passwordChangedSubject"`
+	PasswordChangedHeading string `json:"passwordChangedHeading"`
+	PasswordChangedBody    string `json:"passwordChangedBody"`
+	SecurityNotice         string `json:"securityNotice"`
 }
 
 // ---------------------------------------------------------------------------
@@ -818,11 +978,16 @@ type SupplierFormLabels struct {
 }
 
 type SupplierDetailLabels struct {
-	InfoTab       string                      `json:"infoTab"`
-	CompanyInfo   SupplierDetailSectionLabels `json:"companyInfo"`
-	ContactInfo   SupplierDetailSectionLabels `json:"contactInfo"`
-	FinancialInfo SupplierDetailSectionLabels `json:"financialInfo"`
-	AddressInfo   SupplierDetailSectionLabels `json:"addressInfo"`
+	InfoTab        string                      `json:"infoTab"`
+	CompanyInfo    SupplierDetailSectionLabels `json:"companyInfo"`
+	ContactInfo    SupplierDetailSectionLabels `json:"contactInfo"`
+	FinancialInfo  SupplierDetailSectionLabels `json:"financialInfo"`
+	AddressInfo    SupplierDetailSectionLabels `json:"addressInfo"`
+	// Tab label for attachments
+	AttachmentsTab string `json:"attachmentsTab"`
+	// Inline labels
+	DaysSuffix string `json:"daysSuffix"`
+	Website    string `json:"website"`
 }
 
 // SupplierDetailSectionLabels holds a title for a detail page section.
@@ -942,6 +1107,35 @@ type SharedBadgeLabels struct {
 type DashboardLabels struct {
 	ClientTitle string `json:"clientTitle"`
 	UserTitle   string `json:"userTitle"`
+}
+
+// ClientDashboardLabels holds translatable strings for the client dashboard.
+type ClientDashboardLabels struct {
+	TotalClients   string `json:"totalClients"`
+	Active         string `json:"active"`
+	Inactive       string `json:"inactive"`
+	NewThisMonth   string `json:"newThisMonth"`
+	ClientGrowth   string `json:"clientGrowth"`
+	FilterWeek     string `json:"filterWeek"`
+	FilterMonth    string `json:"filterMonth"`
+	FilterYear     string `json:"filterYear"`
+	RecentActivity string `json:"recentActivity"`
+	ViewAll        string `json:"viewAll"`
+}
+
+// UserDashboardLabels holds translatable strings for the user dashboard.
+type UserDashboardLabels struct {
+	TotalUsers       string `json:"totalUsers"`
+	Active           string `json:"active"`
+	Inactive         string `json:"inactive"`
+	Roles            string `json:"roles"`
+	UserActivity     string `json:"userActivity"`
+	FilterWeek       string `json:"filterWeek"`
+	FilterMonth      string `json:"filterMonth"`
+	FilterYear       string `json:"filterYear"`
+	RecentActivity   string `json:"recentActivity"`
+	ViewAll          string `json:"viewAll"`
+	NoRecentActivity string `json:"noRecentActivity"`
 }
 
 // ---------------------------------------------------------------------------

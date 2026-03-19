@@ -25,6 +25,16 @@ func slugify(name string) string {
 	return strings.Trim(s, "-")
 }
 
+// TagFormLabels holds i18n labels for the client tag drawer form.
+type TagFormLabels struct {
+	TagName             string
+	Code                string
+	CodeAutoPlaceholder string
+	Description         string
+	DescriptionPlaceholder string
+	Active              string
+}
+
 // FormData is the template data for the tag drawer form.
 type FormData struct {
 	FormAction   string
@@ -34,7 +44,20 @@ type FormData struct {
 	Code         string
 	Description  string
 	Active       bool
+	Labels       TagFormLabels
 	CommonLabels any
+}
+
+// tagFormLabels builds i18n labels for the tag drawer form using dot-notation keys.
+func tagFormLabels(t func(string) string) TagFormLabels {
+	return TagFormLabels{
+		TagName:                t("client.tagForm.tagName"),
+		Code:                   t("client.tagForm.code"),
+		CodeAutoPlaceholder:    t("client.tagForm.codeAutoPlaceholder"),
+		Description:            t("client.tagForm.description"),
+		DescriptionPlaceholder: t("client.tagForm.descriptionPlaceholder"),
+		Active:                 t("client.tagForm.active"),
+	}
 }
 
 // resolveCode returns the explicit code if provided, otherwise slugifies the name.
@@ -88,6 +111,7 @@ func NewAddAction(deps *Deps) view.View {
 			return view.OK("client-tag-drawer-form", &FormData{
 				FormAction:   deps.Routes.AddURL,
 				Active:       true,
+				Labels:       tagFormLabels(viewCtx.T),
 				CommonLabels: nil,
 			})
 		}
@@ -150,6 +174,7 @@ func NewEditAction(deps *Deps) view.View {
 				Code:         cat.GetCode(),
 				Description:  cat.GetDescription(),
 				Active:       cat.GetActive(),
+				Labels:       tagFormLabels(viewCtx.T),
 				CommonLabels: nil,
 			})
 		}

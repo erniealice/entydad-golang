@@ -16,18 +16,19 @@ import (
 
 // FormLabels holds i18n labels for the drawer form template.
 type FormLabels struct {
-	FirstName            string
-	FirstNamePlaceholder string
-	LastName             string
-	LastNamePlaceholder  string
-	Email                string
-	EmailPlaceholder     string
-	Mobile               string
-	MobilePlaceholder    string
-	Password             string
-	PasswordPlaceholder  string
-	PasswordGenerate     string
-	Active               string
+	FirstName                string
+	FirstNamePlaceholder     string
+	LastName                 string
+	LastNamePlaceholder      string
+	Email                    string
+	EmailPlaceholder         string
+	Mobile                   string
+	MobilePlaceholder        string
+	Password                 string
+	PasswordPlaceholder      string
+	PasswordGenerate         string
+	Active                   string
+	TogglePasswordVisibility string
 }
 
 // FormData is the template data for the user drawer form.
@@ -59,18 +60,19 @@ type Deps struct {
 
 func formLabels(t func(string) string) FormLabels {
 	return FormLabels{
-		FirstName:            t("form.firstName"),
-		FirstNamePlaceholder: t("form.firstNamePlaceholder"),
-		LastName:             t("form.lastName"),
-		LastNamePlaceholder:  t("form.lastNamePlaceholder"),
-		Email:                t("form.email"),
-		EmailPlaceholder:     t("form.emailPlaceholder"),
-		Mobile:               t("form.mobile"),
-		MobilePlaceholder:    t("form.mobilePlaceholder"),
-		Password:             t("form.password"),
-		PasswordPlaceholder:  t("form.passwordPlaceholder"),
-		PasswordGenerate:     t("form.passwordGenerate"),
-		Active:               t("form.active"),
+		FirstName:                t("form.firstName"),
+		FirstNamePlaceholder:     t("form.firstNamePlaceholder"),
+		LastName:                 t("form.lastName"),
+		LastNamePlaceholder:      t("form.lastNamePlaceholder"),
+		Email:                    t("form.email"),
+		EmailPlaceholder:         t("form.emailPlaceholder"),
+		Mobile:                   t("form.mobile"),
+		MobilePlaceholder:        t("form.mobilePlaceholder"),
+		Password:                 t("form.password"),
+		PasswordPlaceholder:      t("form.passwordPlaceholder"),
+		PasswordGenerate:         t("form.passwordGenerate"),
+		Active:                   t("form.active"),
+		TogglePasswordVisibility: t("form.togglePasswordVisibility"),
 	}
 }
 
