@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math"
 	"strconv"
 
+	espynahttp "github.com/erniealice/espyna-golang/contrib/http"
 	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/types"
@@ -14,10 +16,11 @@ import (
 	locationpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/location"
 
 	"github.com/erniealice/entydad-golang"
+	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
 )
 
-// Deps holds view dependencies.
-type Deps struct {
+// ListViewDeps holds view dependencies.
+type ListViewDeps struct {
 	GetListPageData func(ctx context.Context, req *locationpb.GetLocationListPageDataRequest) (*locationpb.GetLocationListPageDataResponse, error)
 	GetInUseIDs     func(ctx context.Context, ids []string) (map[string]bool, error)
 	RefreshURL      string
@@ -35,15 +38,26 @@ type PageData struct {
 	Table           *types.TableConfig
 }
 
+var locationAllowedSortCols = []string{
+	"date_created", "name", "city", "country",
+}
+
+var locationSearchFields = []string{"name", "city", "address_line_1"}
+
 // NewView creates the location list view (full page).
-func NewView(deps *Deps) view.View {
+func NewView(deps *ListViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		status := viewCtx.Request.PathValue("status")
 		if status == "" {
 			status = "active"
 		}
 
-		tableConfig, err := buildTableConfig(ctx, deps, status)
+		p, err := espynahttp.ParseTableParams(viewCtx.Request, locationAllowedSortCols)
+		if err != nil {
+			return view.Error(err)
+		}
+
+		tableConfig, err := buildTableConfig(ctx, deps, status, p)
 		if err != nil {
 			return view.Error(err)
 		}
@@ -64,6 +78,16 @@ func NewView(deps *Deps) view.View {
 			Table:           tableConfig,
 		}
 
+		// KB help content
+		if viewCtx.Translations != nil {
+			if provider, ok := viewCtx.Translations.(*lynguaV1.TranslationProvider); ok {
+				if kb, _ := provider.LoadKBIfExists(viewCtx.Lang, viewCtx.BusinessType, "locations"); kb != nil {
+					pageData.HasHelp = true
+					pageData.HelpContent = kb.Body
+				}
+			}
+		}
+
 		return view.OK("location-list", pageData)
 	})
 }
@@ -71,14 +95,19 @@ func NewView(deps *Deps) view.View {
 // NewTableView creates a view that returns only the table-card HTML.
 // Used as the refresh target after CRUD operations so that only the table
 // is swapped (not the entire page content).
-func NewTableView(deps *Deps) view.View {
+func NewTableView(deps *ListViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		status := viewCtx.Request.PathValue("status")
 		if status == "" {
 			status = "active"
 		}
 
-		tableConfig, err := buildTableConfig(ctx, deps, status)
+		p, err := espynahttp.ParseTableParams(viewCtx.Request, locationAllowedSortCols)
+		if err != nil {
+			return view.Error(err)
+		}
+
+		tableConfig, err := buildTableConfig(ctx, deps, status, p)
 		if err != nil {
 			return view.Error(err)
 		}
@@ -88,10 +117,16 @@ func NewTableView(deps *Deps) view.View {
 }
 
 // buildTableConfig fetches location data and builds the table configuration.
-func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.TableConfig, error) {
+func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p espynahttp.TableQueryParams) (*types.TableConfig, error) {
 	perms := view.GetUserPermissions(ctx)
 
-	resp, err := deps.GetListPageData(ctx, &locationpb.GetLocationListPageDataRequest{})
+	listParams := espynahttp.ToListParams(p, locationSearchFields)
+	resp, err := deps.GetListPageData(ctx, &locationpb.GetLocationListPageDataRequest{
+		Search:     listParams.Search,
+		Filters:    listParams.Filters,
+		Sort:       listParams.Sort,
+		Pagination: listParams.Pagination,
+	})
 	if err != nil {
 		log.Printf("Failed to list locations: %v", err)
 		return nil, fmt.Errorf("failed to load locations: %w", err)
@@ -117,6 +152,23 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 
 	refreshURL := route.ResolveURL(deps.Routes.TableURL, "status", status)
 
+	// Build ServerPagination
+	totalRows := int(resp.GetPagination().GetTotalItems())
+	sp := &types.ServerPagination{
+		Enabled:       true,
+		Mode:          "offset",
+		CurrentPage:   p.Page,
+		PageSize:      p.PageSize,
+		TotalRows:     totalRows,
+		TotalPages:    int(math.Ceil(float64(totalRows) / float64(p.PageSize))),
+		SearchQuery:   p.Search,
+		SortColumn:    p.SortColumn,
+		SortDirection: p.SortDir,
+		FiltersJSON:   p.FiltersRaw,
+		PaginationURL: refreshURL,
+	}
+	sp.BuildDisplay()
+
 	tableConfig := &types.TableConfig{
 		ID:                   "locations-table",
 		RefreshURL:           refreshURL,
@@ -130,8 +182,8 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 		ShowExport:           true,
 		ShowDensity:          true,
 		ShowEntries:          true,
-		DefaultSortColumn:    "name",
-		DefaultSortDirection: "asc",
+		DefaultSortColumn:    "date_created",
+		DefaultSortDirection: "desc",
 		Labels:               deps.TableLabels,
 		EmptyState: types.TableEmptyState{
 			Title:   statusEmptyTitle(l, status),
@@ -144,7 +196,8 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 			Disabled:        !perms.Can("location", "create"),
 			DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
 		},
-		BulkActions: &bulkCfg,
+		BulkActions:      &bulkCfg,
+		ServerPagination: sp,
 	}
 	types.ApplyTableSettings(tableConfig)
 
@@ -153,9 +206,10 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 
 func locationColumns(l entydad.LocationLabels) []types.TableColumn {
 	return []types.TableColumn{
-		{Key: "name", Label: l.Columns.Name, Sortable: true},
-		{Key: "address", Label: l.Columns.Address, Sortable: true},
-		{Key: "status", Label: l.Columns.Status, Sortable: true, Width: "120px"},
+		{Key: "name", Label: l.Columns.Name, Sortable: true, Filterable: true, FilterType: types.FilterTypeString},
+		{Key: "city", Label: l.Columns.City, Sortable: true, Filterable: true, FilterType: types.FilterTypeString},
+		{Key: "country", Label: l.Columns.Country, Sortable: true, Filterable: true, FilterType: types.FilterTypeString},
+		{Key: "date_created", Label: l.Columns.DateCreated, Sortable: true, Filterable: true, FilterType: types.FilterTypeDate},
 	}
 }
 
@@ -174,6 +228,7 @@ func buildTableRows(locations []*locationpb.Location, status string, l entydad.L
 		id := loc.GetId()
 		name := loc.GetName()
 		address := loc.GetAddress()
+		isInUse := inUseIDs[id]
 
 		actions := []types.TableAction{
 			{Type: "view", Label: l.Actions.View, Action: "view", Href: route.ResolveURL(routes.DetailURL, "id", id)},
@@ -197,7 +252,6 @@ func buildTableRows(locations []*locationpb.Location, status string, l entydad.L
 				Disabled:       !perms.Can("location", "update"), DisabledTooltip: sl.Badges.NoPermission,
 			})
 		}
-		isInUse := inUseIDs[id]
 		deleteAction := types.TableAction{
 			Type:     "delete",
 			Label:    l.Actions.Delete,
@@ -210,7 +264,7 @@ func buildTableRows(locations []*locationpb.Location, status string, l entydad.L
 			deleteAction.DisabledTooltip = sl.Errors.CannotDeleteInUse
 		} else if !perms.Can("location", "delete") {
 			deleteAction.Disabled = true
-			deleteAction.DisabledTooltip = "No permission"
+			deleteAction.DisabledTooltip = sl.Badges.NoPermission
 		}
 		actions = append(actions, deleteAction)
 
@@ -219,6 +273,7 @@ func buildTableRows(locations []*locationpb.Location, status string, l entydad.L
 			Cells: []types.TableCell{
 				{Type: "text", Value: name},
 				{Type: "text", Value: address},
+				{Type: "text", Value: ""},
 				{Type: "badge", Value: recordStatus, Variant: statusVariant(recordStatus)},
 			},
 			DataAttrs: map[string]string{

@@ -12,7 +12,7 @@ import (
 )
 
 // loadAttachments populates the AttachmentTable and AttachmentUploadURL on PageData.
-func loadAttachments(ctx context.Context, deps *Deps, id string, pageData *PageData) {
+func loadAttachments(ctx context.Context, deps *DetailViewDeps, id string, pageData *PageData) {
 	cfg := attachmentConfig(deps, id)
 
 	if deps.ListAttachments != nil {
@@ -31,7 +31,7 @@ func loadAttachments(ctx context.Context, deps *Deps, id string, pageData *PageD
 }
 
 // attachmentConfig builds the shared attachment.Config for the location entity.
-func attachmentConfig(deps *Deps, id string) *attachment.Config {
+func attachmentConfig(deps *DetailViewDeps, id string) *attachment.Config {
 	return &attachment.Config{
 		EntityType:       "location",
 		BucketName:       "attachments",
@@ -41,7 +41,7 @@ func attachmentConfig(deps *Deps, id string) *attachment.Config {
 		Labels:           attachment.DefaultLabels(),
 		CommonLabels:     deps.CommonLabels,
 		TableLabels:      deps.TableLabels,
-		NewID:            deps.NewID,
+		NewID:            deps.NewAttachmentID,
 		UploadFile:       deps.UploadFile,
 		ListAttachments:  deps.ListAttachments,
 		CreateAttachment: deps.CreateAttachment,
@@ -50,7 +50,7 @@ func attachmentConfig(deps *Deps, id string) *attachment.Config {
 }
 
 // NewAttachmentUploadAction creates the upload handler for location attachments.
-func NewAttachmentUploadAction(deps *Deps) view.View {
+func NewAttachmentUploadAction(deps *DetailViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		id := viewCtx.Request.PathValue("id")
 		cfg := attachmentConfig(deps, id)
@@ -59,7 +59,7 @@ func NewAttachmentUploadAction(deps *Deps) view.View {
 }
 
 // NewAttachmentDeleteAction creates the delete handler for location attachments.
-func NewAttachmentDeleteAction(deps *Deps) view.View {
+func NewAttachmentDeleteAction(deps *DetailViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		id := viewCtx.Request.PathValue("id")
 		cfg := attachmentConfig(deps, id)

@@ -14,10 +14,11 @@ import (
 	supplierpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/supplier"
 
 	"github.com/erniealice/entydad-golang"
+	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
 )
 
-// Deps holds view dependencies.
-type Deps struct {
+// ListViewDeps holds view dependencies.
+type ListViewDeps struct {
 	Routes          entydad.SupplierRoutes
 	GetListPageData func(ctx context.Context, req *supplierpb.GetSupplierListPageDataRequest) (*supplierpb.GetSupplierListPageDataResponse, error)
 	GetInUseIDs     func(ctx context.Context, ids []string) (map[string]bool, error)
@@ -35,7 +36,7 @@ type PageData struct {
 }
 
 // NewView creates the supplier list view (full page).
-func NewView(deps *Deps) view.View {
+func NewView(deps *ListViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		status := viewCtx.Request.PathValue("status")
 		if status == "" {
@@ -63,6 +64,16 @@ func NewView(deps *Deps) view.View {
 			Table:           tableConfig,
 		}
 
+		// KB help content
+		if viewCtx.Translations != nil {
+			if provider, ok := viewCtx.Translations.(*lynguaV1.TranslationProvider); ok {
+				if kb, _ := provider.LoadKBIfExists(viewCtx.Lang, viewCtx.BusinessType, "clients"); kb != nil {
+					pageData.HasHelp = true
+					pageData.HelpContent = kb.Body
+				}
+			}
+		}
+
 		return view.OK("supplier-list", pageData)
 	})
 }
@@ -70,7 +81,7 @@ func NewView(deps *Deps) view.View {
 // NewTableView creates a view that returns only the table-card HTML.
 // Used as the refresh target after CRUD operations so that only the table
 // is swapped (not the entire page content).
-func NewTableView(deps *Deps) view.View {
+func NewTableView(deps *ListViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		status := viewCtx.Request.PathValue("status")
 		if status == "" {
@@ -87,7 +98,7 @@ func NewTableView(deps *Deps) view.View {
 }
 
 // buildTableConfig fetches supplier data and builds the table configuration.
-func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.TableConfig, error) {
+func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string) (*types.TableConfig, error) {
 	perms := view.GetUserPermissions(ctx)
 
 	resp, err := deps.GetListPageData(ctx, &supplierpb.GetSupplierListPageDataRequest{})

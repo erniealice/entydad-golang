@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math"
 
+	espynahttp "github.com/erniealice/espyna-golang/contrib/http"
 	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/types"
@@ -13,10 +15,17 @@ import (
 	userpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/user"
 
 	"github.com/erniealice/entydad-golang"
+	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
 )
 
-// Deps holds view dependencies.
-type Deps struct {
+var userAllowedSortCols = []string{
+	"date_created", "first_name", "last_name", "email_address", "status",
+}
+
+var userSearchFields = []string{"first_name", "last_name", "email_address"}
+
+// ListViewDeps holds view dependencies.
+type ListViewDeps struct {
 	Routes          entydad.UserRoutes
 	GetListPageData func(ctx context.Context, req *userpb.GetUserListPageDataRequest) (*userpb.GetUserListPageDataResponse, error)
 	GetUserRolesMap func(ctx context.Context) (map[string][]entydad.RoleBadge, error)
@@ -35,14 +44,19 @@ type PageData struct {
 }
 
 // NewView creates the user list view (full page).
-func NewView(deps *Deps) view.View {
+func NewView(deps *ListViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		status := viewCtx.Request.PathValue("status")
 		if status == "" {
 			status = "active"
 		}
 
-		tableConfig, err := buildTableConfig(ctx, deps, status)
+		p, err := espynahttp.ParseTableParams(viewCtx.Request, userAllowedSortCols)
+		if err != nil {
+			return view.Error(err)
+		}
+
+		tableConfig, err := buildTableConfig(ctx, deps, status, p)
 		if err != nil {
 			return view.Error(err)
 		}
@@ -63,6 +77,16 @@ func NewView(deps *Deps) view.View {
 			Table:           tableConfig,
 		}
 
+		// KB help content
+		if viewCtx.Translations != nil {
+			if provider, ok := viewCtx.Translations.(*lynguaV1.TranslationProvider); ok {
+				if kb, _ := provider.LoadKBIfExists(viewCtx.Lang, viewCtx.BusinessType, "users"); kb != nil {
+					pageData.HasHelp = true
+					pageData.HelpContent = kb.Body
+				}
+			}
+		}
+
 		return view.OK("user-list", pageData)
 	})
 }
@@ -70,14 +94,19 @@ func NewView(deps *Deps) view.View {
 // NewTableView creates a view that returns only the table-card HTML.
 // Used as the refresh target after CRUD operations so that only the table
 // is swapped (not the entire page content).
-func NewTableView(deps *Deps) view.View {
+func NewTableView(deps *ListViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		status := viewCtx.Request.PathValue("status")
 		if status == "" {
 			status = "active"
 		}
 
-		tableConfig, err := buildTableConfig(ctx, deps, status)
+		p, err := espynahttp.ParseTableParams(viewCtx.Request, userAllowedSortCols)
+		if err != nil {
+			return view.Error(err)
+		}
+
+		tableConfig, err := buildTableConfig(ctx, deps, status, p)
 		if err != nil {
 			return view.Error(err)
 		}
@@ -87,10 +116,16 @@ func NewTableView(deps *Deps) view.View {
 }
 
 // buildTableConfig fetches user data and builds the table configuration.
-func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.TableConfig, error) {
+func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p espynahttp.TableQueryParams) (*types.TableConfig, error) {
 	perms := view.GetUserPermissions(ctx)
 
-	resp, err := deps.GetListPageData(ctx, &userpb.GetUserListPageDataRequest{})
+	listParams := espynahttp.ToListParams(p, userSearchFields)
+	resp, err := deps.GetListPageData(ctx, &userpb.GetUserListPageDataRequest{
+		Search:     listParams.Search,
+		Filters:    listParams.Filters,
+		Sort:       listParams.Sort,
+		Pagination: listParams.Pagination,
+	})
 	if err != nil {
 		log.Printf("Failed to list users: %v", err)
 		return nil, fmt.Errorf("failed to load users: %w", err)
@@ -115,6 +150,23 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 
 	refreshURL := route.ResolveURL(deps.Routes.TableURL, "status", status)
 
+	// Build ServerPagination
+	totalRows := int(resp.GetPagination().GetTotalItems())
+	sp := &types.ServerPagination{
+		Enabled:       true,
+		Mode:          "offset",
+		CurrentPage:   p.Page,
+		PageSize:      p.PageSize,
+		TotalRows:     totalRows,
+		TotalPages:    int(math.Ceil(float64(totalRows) / float64(p.PageSize))),
+		SearchQuery:   p.Search,
+		SortColumn:    p.SortColumn,
+		SortDirection: p.SortDir,
+		FiltersJSON:   p.FiltersRaw,
+		PaginationURL: refreshURL,
+	}
+	sp.BuildDisplay()
+
 	tableConfig := &types.TableConfig{
 		ID:                   "users-table",
 		RefreshURL:           refreshURL,
@@ -128,8 +180,8 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 		ShowExport:           true,
 		ShowDensity:          true,
 		ShowEntries:          true,
-		DefaultSortColumn:    "name",
-		DefaultSortDirection: "asc",
+		DefaultSortColumn:    "date_created",
+		DefaultSortDirection: "desc",
 		Labels:               deps.TableLabels,
 		EmptyState: types.TableEmptyState{
 			Title:   statusEmptyTitle(l, status),
@@ -142,7 +194,8 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 			Disabled:        !perms.Can("user", "create"),
 			DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
 		},
-		BulkActions: &bulkCfg,
+		BulkActions:      &bulkCfg,
+		ServerPagination: sp,
 	}
 	types.ApplyTableSettings(tableConfig)
 
@@ -151,10 +204,11 @@ func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.Ta
 
 func userColumns(l entydad.UserLabels) []types.TableColumn {
 	return []types.TableColumn{
-		{Key: "name", Label: l.Columns.Name, Sortable: true},
-		{Key: "email", Label: l.Columns.Email, Sortable: true},
+		{Key: "first_name", Label: l.Columns.Name, Sortable: true, Filterable: true, FilterType: types.FilterTypeString},
+		{Key: "email_address", Label: l.Columns.Email, Sortable: true, Filterable: true, FilterType: types.FilterTypeString},
 		{Key: "roles", Label: l.Columns.Roles, Sortable: false},
-		{Key: "status", Label: l.Columns.Status, Sortable: true, Width: "120px"},
+		{Key: "date_created", Label: "Date Created", Sortable: true, Filterable: true, FilterType: types.FilterTypeDate},
+		{Key: "status", Label: l.Columns.Status, Sortable: true, Filterable: false, Width: "120px"},
 	}
 }
 

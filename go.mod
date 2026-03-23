@@ -5,12 +5,14 @@ go 1.25.1
 require github.com/erniealice/pyeza-golang v0.0.8-alpha
 
 require (
+	github.com/erniealice/espyna-golang v0.0.0
 	github.com/erniealice/esqyma v0.0.0
 	github.com/erniealice/hybra-golang v0.0.0-00010101000000-000000000000
+	github.com/erniealice/lyngua v0.0.0-00010101000000-000000000000
 )
 
 require (
-	github.com/yuin/goldmark v1.7.16 // indirect
+	github.com/yuin/goldmark v1.7.17 // indirect
 	golang.org/x/net v0.48.0 // indirect
 	golang.org/x/sys v0.40.0 // indirect
 	golang.org/x/text v0.33.0 // indirect
@@ -30,3 +32,5 @@ replace leapfor.xyz/vya => ../../../master-monorepo-v2/packages/vya
 replace github.com/erniealice/hybra-golang => ../hybra-golang-ryta
 
 replace github.com/erniealice/pyeza-golang => ../pyeza-golang-ryta
+
+replace github.com/erniealice/espyna-golang => ../espyna-golang-ryta

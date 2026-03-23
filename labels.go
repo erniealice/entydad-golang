@@ -285,9 +285,12 @@ type LocationButtonLabels struct {
 }
 
 type LocationColumnLabels struct {
-	Name    string `json:"name"`
-	Address string `json:"address"`
-	Status  string `json:"status"`
+	Name        string `json:"name"`
+	Address     string `json:"address"`
+	City        string `json:"city"`
+	Country     string `json:"country"`
+	Status      string `json:"status"`
+	DateCreated string `json:"dateCreated"`
 }
 
 type LocationEmptyLabels struct {

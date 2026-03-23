@@ -6,12 +6,14 @@ import (
 	"log"
 
 	"github.com/erniealice/hybra-golang/views/attachment"
+	"github.com/erniealice/hybra-golang/views/auditlog"
 	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
 
 	"github.com/erniealice/entydad-golang"
+	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
 	roleusers "github.com/erniealice/entydad-golang/views/role/users"
 
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
@@ -19,8 +21,8 @@ import (
 	rolepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/role"
 )
 
-// Deps holds view dependencies.
-type Deps struct {
+// DetailViewDeps holds view dependencies.
+type DetailViewDeps struct {
 	ReadRole             func(ctx context.Context, req *rolepb.ReadRoleRequest) (*rolepb.ReadRoleResponse, error)
 	RoleGetItemPageData  func(ctx context.Context, req *rolepb.GetRoleItemPageDataRequest) (*rolepb.GetRoleItemPageDataResponse, error)
 	GetUsersByRoleID     func(ctx context.Context, roleID string) ([]roleusers.UserByRole, error)
@@ -32,12 +34,11 @@ type Deps struct {
 	CommonLabels         pyeza.CommonLabels
 	TableLabels          types.TableLabels
 
-	// Attachment operations (injected by composition root)
-	UploadFile       func(ctx context.Context, bucket, key string, content []byte, contentType string) error
-	ListAttachments  func(ctx context.Context, moduleKey, foreignKey string) (*attachmentpb.ListAttachmentsResponse, error)
-	CreateAttachment func(ctx context.Context, req *attachmentpb.CreateAttachmentRequest) (*attachmentpb.CreateAttachmentResponse, error)
-	DeleteAttachment func(ctx context.Context, req *attachmentpb.DeleteAttachmentRequest) (*attachmentpb.DeleteAttachmentResponse, error)
-	NewID            func() string
+	// Attachment operations (embedded from hybra)
+	attachment.AttachmentOps
+
+	// Audit log operations (embedded from hybra)
+	auditlog.AuditOps
 }
 
 // PageData holds the data for the role detail page.
@@ -57,10 +58,15 @@ type PageData struct {
 	UsersTable          *types.TableConfig
 	AttachmentTable     *types.TableConfig
 	AttachmentUploadURL string
+	// Audit history tab
+	AuditEntries    []auditlog.AuditEntryView
+	AuditHasNext    bool
+	AuditNextCursor string
+	AuditHistoryURL string
 }
 
 // NewView creates the role detail view (full page).
-func NewView(deps *Deps) view.View {
+func NewView(deps *DetailViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		id := viewCtx.Request.PathValue("id")
 
@@ -74,13 +80,23 @@ func NewView(deps *Deps) view.View {
 			return view.Error(err)
 		}
 
+		// KB help content
+		if viewCtx.Translations != nil {
+			if provider, ok := viewCtx.Translations.(*lynguaV1.TranslationProvider); ok {
+				if kb, _ := provider.LoadKBIfExists(viewCtx.Lang, viewCtx.BusinessType, "roles-detail"); kb != nil {
+					pageData.HasHelp = true
+					pageData.HelpContent = kb.Body
+				}
+			}
+		}
+
 		return view.OK("role-detail", pageData)
 	})
 }
 
 // NewTabAction creates the tab action view (partial — returns only the tab content).
 // Handles GET /action/roles/{id}/tab/{tab}
-func NewTabAction(deps *Deps) view.View {
+func NewTabAction(deps *DetailViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		id := viewCtx.Request.PathValue("id")
 		tab := viewCtx.Request.PathValue("tab")
@@ -98,12 +114,15 @@ func NewTabAction(deps *Deps) view.View {
 		if tab == "attachments" {
 			templateName = "attachment-tab"
 		}
+		if tab == "audit-history" {
+			templateName = "audit-history-tab"
+		}
 		return view.OK(templateName, pageData)
 	})
 }
 
 // buildPageData loads role data and builds the PageData for the given active tab.
-func buildPageData(ctx context.Context, deps *Deps, id, activeTab string, viewCtx *view.ViewContext) (*PageData, error) {
+func buildPageData(ctx context.Context, deps *DetailViewDeps, id, activeTab string, viewCtx *view.ViewContext) (*PageData, error) {
 	perms := view.GetUserPermissions(ctx)
 	resp, err := deps.ReadRole(ctx, &rolepb.ReadRoleRequest{
 		Data: &rolepb.Role{Id: id},
@@ -212,6 +231,25 @@ func buildPageData(ctx context.Context, deps *Deps, id, activeTab string, viewCt
 			pageData.AttachmentTable = attachment.BuildTable(items, cfg, id)
 		}
 		pageData.AttachmentUploadURL = route.ResolveURL(deps.Routes.AttachmentUploadURL, "id", id)
+	case "audit-history":
+		if deps.ListAuditHistory != nil {
+			cursor := viewCtx.Request.URL.Query().Get("cursor")
+			auditResp, err := deps.ListAuditHistory(ctx, &auditlog.ListAuditRequest{
+				EntityType:  "role",
+				EntityID:    id,
+				Limit:       20,
+				CursorToken: cursor,
+			})
+			if err != nil {
+				log.Printf("Failed to load audit history: %v", err)
+			}
+			if auditResp != nil {
+				pageData.AuditEntries = auditResp.Entries
+				pageData.AuditHasNext = auditResp.HasNext
+				pageData.AuditNextCursor = auditResp.NextCursor
+			}
+		}
+		pageData.AuditHistoryURL = route.ResolveURL(deps.Routes.TabActionURL, "id", id, "tab", "") + "audit-history"
 	}
 
 	return pageData, nil
@@ -225,6 +263,7 @@ func buildTabItems(id string, labels entydad.RoleLabels, routes entydad.RoleRout
 		{Key: "permissions", Label: labels.Detail.Tabs.Permissions, Href: base + "?tab=permissions", HxGet: action + "permissions", Icon: "icon-key", Count: permCount, Disabled: false},
 		{Key: "users", Label: labels.Detail.Tabs.Users, Href: base + "?tab=users", HxGet: action + "users", Icon: "icon-user", Count: userCount, Disabled: false},
 		{Key: "attachments", Label: labels.Detail.AttachmentsTab, Href: base + "?tab=attachments", HxGet: action + "attachments", Icon: "icon-paperclip", Count: 0, Disabled: false},
+		{Key: "audit-history", Label: "History", Href: base + "?tab=audit-history", HxGet: action + "audit-history", Icon: "icon-clock"},
 	}
 }
 
@@ -232,7 +271,7 @@ func buildTabItems(id string, labels entydad.RoleLabels, routes entydad.RoleRout
 // Permissions tab table
 // ---------------------------------------------------------------------------
 
-func buildPermissionsTable(ctx context.Context, deps *Deps, roleID string, perms *types.UserPermissions) (*types.TableConfig, error) {
+func buildPermissionsTable(ctx context.Context, deps *DetailViewDeps, roleID string, perms *types.UserPermissions) (*types.TableConfig, error) {
 	if deps.RoleGetItemPageData == nil {
 		return nil, fmt.Errorf("RoleGetItemPageData not available")
 	}
@@ -343,7 +382,7 @@ func buildPermissionsTable(ctx context.Context, deps *Deps, roleID string, perms
 // Users tab table
 // ---------------------------------------------------------------------------
 
-func buildUsersTable(ctx context.Context, deps *Deps, roleID string, perms *types.UserPermissions) (*types.TableConfig, error) {
+func buildUsersTable(ctx context.Context, deps *DetailViewDeps, roleID string, perms *types.UserPermissions) (*types.TableConfig, error) {
 	var users []roleusers.UserByRole
 	if deps.GetUsersByRoleID != nil {
 		var err error

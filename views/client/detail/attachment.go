@@ -5,7 +5,7 @@ import (
 	"github.com/erniealice/pyeza-golang/view"
 )
 
-func attachmentConfig(deps *Deps) *attachment.Config {
+func attachmentConfig(deps *DetailViewDeps) *attachment.Config {
 	return &attachment.Config{
 		EntityType:       "client",
 		BucketName:       "attachments",
@@ -14,7 +14,7 @@ func attachmentConfig(deps *Deps) *attachment.Config {
 		Labels:           attachment.DefaultLabels(),
 		CommonLabels:     deps.CommonLabels,
 		TableLabels:      deps.TableLabels,
-		NewID:            deps.NewID,
+		NewID:            deps.NewAttachmentID,
 		UploadFile:       deps.UploadFile,
 		ListAttachments:  deps.ListAttachments,
 		CreateAttachment: deps.CreateAttachment,
@@ -22,10 +22,10 @@ func attachmentConfig(deps *Deps) *attachment.Config {
 	}
 }
 
-func NewAttachmentUploadAction(deps *Deps) view.View {
+func NewAttachmentUploadAction(deps *DetailViewDeps) view.View {
 	return attachment.NewUploadAction(attachmentConfig(deps))
 }
 
-func NewAttachmentDeleteAction(deps *Deps) view.View {
+func NewAttachmentDeleteAction(deps *DetailViewDeps) view.View {
 	return attachment.NewDeleteAction(attachmentConfig(deps))
 }

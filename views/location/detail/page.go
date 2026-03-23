@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/erniealice/hybra-golang/views/attachment"
+	"github.com/erniealice/hybra-golang/views/auditlog"
 	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/types"
@@ -12,24 +14,22 @@ import (
 
 	"github.com/erniealice/entydad-golang"
 
-	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
 	locationpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/location"
 )
 
-// Deps holds view dependencies.
-type Deps struct {
+// DetailViewDeps holds view dependencies.
+type DetailViewDeps struct {
 	Routes       entydad.LocationRoutes
 	ReadLocation func(ctx context.Context, req *locationpb.ReadLocationRequest) (*locationpb.ReadLocationResponse, error)
 	Labels       entydad.LocationLabels
 	CommonLabels pyeza.CommonLabels
 	TableLabels  types.TableLabels
 
-	// Attachment operations (injected by composition root)
-	UploadFile       func(ctx context.Context, bucket, key string, content []byte, contentType string) error
-	ListAttachments  func(ctx context.Context, moduleKey, foreignKey string) (*attachmentpb.ListAttachmentsResponse, error)
-	CreateAttachment func(ctx context.Context, req *attachmentpb.CreateAttachmentRequest) (*attachmentpb.CreateAttachmentResponse, error)
-	DeleteAttachment func(ctx context.Context, req *attachmentpb.DeleteAttachmentRequest) (*attachmentpb.DeleteAttachmentResponse, error)
-	NewID            func() string
+	// Attachment operations (embedded from hybra)
+	attachment.AttachmentOps
+
+	// Audit log operations (embedded from hybra)
+	auditlog.AuditOps
 }
 
 // PageData holds the data for the location detail page.
@@ -49,10 +49,15 @@ type PageData struct {
 	// Attachments
 	AttachmentTable     *types.TableConfig
 	AttachmentUploadURL string
+	// Audit history tab
+	AuditEntries    []auditlog.AuditEntryView
+	AuditHasNext    bool
+	AuditNextCursor string
+	AuditHistoryURL string
 }
 
 // NewView creates the location detail view (full page).
-func NewView(deps *Deps) view.View {
+func NewView(deps *DetailViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		id := viewCtx.Request.PathValue("id")
 
@@ -69,6 +74,8 @@ func NewView(deps *Deps) view.View {
 		switch activeTab {
 		case "attachments":
 			loadAttachments(ctx, deps, id, pageData)
+		case "audit-history":
+			loadAuditHistory(ctx, deps, id, viewCtx, pageData)
 		}
 
 		return view.OK("location-detail", pageData)
@@ -77,7 +84,7 @@ func NewView(deps *Deps) view.View {
 
 // NewTabAction creates the tab action view (partial -- returns only the tab content).
 // Handles GET /action/locations/{id}/tab/{tab}
-func NewTabAction(deps *Deps) view.View {
+func NewTabAction(deps *DetailViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		id := viewCtx.Request.PathValue("id")
 		tab := viewCtx.Request.PathValue("tab")
@@ -93,6 +100,8 @@ func NewTabAction(deps *Deps) view.View {
 		switch tab {
 		case "attachments":
 			loadAttachments(ctx, deps, id, pageData)
+		case "audit-history":
+			loadAuditHistory(ctx, deps, id, viewCtx, pageData)
 		}
 
 		// Return only the tab partial template
@@ -100,12 +109,15 @@ func NewTabAction(deps *Deps) view.View {
 		if tab == "attachments" {
 			templateName = "attachment-tab"
 		}
+		if tab == "audit-history" {
+			templateName = "audit-history-tab"
+		}
 		return view.OK(templateName, pageData)
 	})
 }
 
 // buildPageData loads location data and builds the PageData for the given active tab.
-func buildPageData(ctx context.Context, deps *Deps, id, activeTab string, viewCtx *view.ViewContext) (*PageData, error) {
+func buildPageData(ctx context.Context, deps *DetailViewDeps, id, activeTab string, viewCtx *view.ViewContext) (*PageData, error) {
 	resp, err := deps.ReadLocation(ctx, &locationpb.ReadLocationRequest{
 		Data: &locationpb.Location{Id: id},
 	})
@@ -163,6 +175,29 @@ func buildPageData(ctx context.Context, deps *Deps, id, activeTab string, viewCt
 	return pageData, nil
 }
 
+// loadAuditHistory populates the audit history fields on PageData.
+func loadAuditHistory(ctx context.Context, deps *DetailViewDeps, id string, viewCtx *view.ViewContext, pageData *PageData) {
+	if deps.ListAuditHistory == nil {
+		return
+	}
+	cursor := viewCtx.Request.URL.Query().Get("cursor")
+	auditResp, err := deps.ListAuditHistory(ctx, &auditlog.ListAuditRequest{
+		EntityType:  "location",
+		EntityID:    id,
+		Limit:       20,
+		CursorToken: cursor,
+	})
+	if err != nil {
+		log.Printf("Failed to load audit history: %v", err)
+	}
+	if auditResp != nil {
+		pageData.AuditEntries = auditResp.Entries
+		pageData.AuditHasNext = auditResp.HasNext
+		pageData.AuditNextCursor = auditResp.NextCursor
+	}
+	pageData.AuditHistoryURL = route.ResolveURL(deps.Routes.TabActionURL, "id", id, "tab", "") + "audit-history"
+}
+
 func buildTabItems(id string, labels entydad.LocationLabels, routes entydad.LocationRoutes) []pyeza.TabItem {
 	base := route.ResolveURL(routes.DetailURL, "id", id)
 	action := route.ResolveURL(routes.TabActionURL, "id", id, "tab", "")
@@ -172,5 +207,6 @@ func buildTabItems(id string, labels entydad.LocationLabels, routes entydad.Loca
 		{Key: "pricelists", Label: labels.Detail.Tabs.PriceLists, Href: base + "?tab=pricelists", HxGet: action + "pricelists", Icon: "icon-tag", Count: 0, Disabled: false},
 		{Key: "audit", Label: labels.Detail.Tabs.AuditTrail, Href: base + "?tab=audit", HxGet: action + "audit", Icon: "icon-clock", Count: 0, Disabled: false},
 		{Key: "attachments", Label: labels.Detail.AttachmentsTab, Href: base + "?tab=attachments", HxGet: action + "attachments", Icon: "icon-paperclip", Count: 0, Disabled: false},
+		{Key: "audit-history", Label: "History", Href: base + "?tab=audit-history", HxGet: action + "audit-history", Icon: "icon-clock"},
 	}
 }

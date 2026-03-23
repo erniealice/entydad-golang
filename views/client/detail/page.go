@@ -9,12 +9,14 @@ import (
 	"strings"
 
 	"github.com/erniealice/hybra-golang/views/attachment"
+	"github.com/erniealice/hybra-golang/views/auditlog"
 	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
 
 	"github.com/erniealice/entydad-golang"
+	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
 
 	categorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
@@ -22,8 +24,8 @@ import (
 	clientcategorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client_category"
 )
 
-// Deps holds view dependencies.
-type Deps struct {
+// DetailViewDeps holds view dependencies.
+type DetailViewDeps struct {
 	Routes               entydad.ClientRoutes
 	ReadClient           func(ctx context.Context, req *clientpb.ReadClientRequest) (*clientpb.ReadClientResponse, error)
 	ListCategories       func(ctx context.Context, req *categorypb.ListCategoriesRequest) (*categorypb.ListCategoriesResponse, error)
@@ -33,12 +35,11 @@ type Deps struct {
 	CommonLabels         pyeza.CommonLabels
 	TableLabels          types.TableLabels
 
-	// Attachment operations (injected by composition root)
-	UploadFile       func(ctx context.Context, bucket, key string, content []byte, contentType string) error
-	ListAttachments  func(ctx context.Context, moduleKey, foreignKey string) (*attachmentpb.ListAttachmentsResponse, error)
-	CreateAttachment func(ctx context.Context, req *attachmentpb.CreateAttachmentRequest) (*attachmentpb.CreateAttachmentResponse, error)
-	DeleteAttachment func(ctx context.Context, req *attachmentpb.DeleteAttachmentRequest) (*attachmentpb.DeleteAttachmentResponse, error)
-	NewID            func() string
+	// Attachment operations (embedded from hybra)
+	attachment.AttachmentOps
+
+	// Audit log operations (embedded from hybra)
+	auditlog.AuditOps
 }
 
 // TagChip represents a tag displayed as a chip on the detail page.
@@ -101,10 +102,15 @@ type PageData struct {
 	// Attachments
 	AttachmentTable     *types.TableConfig
 	AttachmentUploadURL string
+	// Audit history tab
+	AuditEntries    []auditlog.AuditEntryView
+	AuditHasNext    bool
+	AuditNextCursor string
+	AuditHistoryURL string
 }
 
 // NewView creates the client detail view.
-func NewView(deps *Deps) view.View {
+func NewView(deps *DetailViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		id := viewCtx.Request.PathValue("id")
 
@@ -212,6 +218,16 @@ func NewView(deps *Deps) view.View {
 			HasOrders:       hasOrders,
 		}
 
+		// KB help content
+		if viewCtx.Translations != nil {
+			if provider, ok := viewCtx.Translations.(*lynguaV1.TranslationProvider); ok {
+				if kb, _ := provider.LoadKBIfExists(viewCtx.Lang, viewCtx.BusinessType, "clients-detail"); kb != nil {
+					pageData.HasHelp = true
+					pageData.HelpContent = kb.Body
+				}
+			}
+		}
+
 		// Load attachment data when attachments tab is active
 		if activeTab == "attachments" {
 			if deps.ListAttachments != nil {
@@ -233,7 +249,7 @@ func NewView(deps *Deps) view.View {
 	})
 }
 
-func buildTabItems(id string, deps *Deps) []pyeza.TabItem {
+func buildTabItems(id string, deps *DetailViewDeps) []pyeza.TabItem {
 	routes := deps.Routes
 	base := route.ResolveURL(routes.DetailURL, "id", id)
 	action := route.ResolveURL(routes.TabActionURL, "id", id, "tab", "")
@@ -241,11 +257,12 @@ func buildTabItems(id string, deps *Deps) []pyeza.TabItem {
 		{Key: "basic", Label: deps.Labels.Detail.Tabs.Info, Href: base + "?tab=basic", HxGet: action + "basic", Icon: "icon-info"},
 		{Key: "history", Label: deps.Labels.Detail.Tabs.PurchaseHistory, Href: base + "?tab=history", HxGet: action + "history", Icon: "icon-shopping-bag"},
 		{Key: "attachments", Label: deps.Labels.Detail.Tabs.Attachments, Href: base + "?tab=attachments", HxGet: action + "attachments", Icon: "icon-paperclip"},
+		{Key: "audit-history", Label: "History", Href: base + "?tab=audit-history", HxGet: action + "audit-history", Icon: "icon-clock"},
 	}
 }
 
 // NewTabAction creates the tab action view (partial — returns only the tab content).
-func NewTabAction(deps *Deps) view.View {
+func NewTabAction(deps *DetailViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		id := viewCtx.Request.PathValue("id")
 		tab := viewCtx.Request.PathValue("tab")
@@ -335,11 +352,33 @@ func NewTabAction(deps *Deps) view.View {
 				pageData.AttachmentTable = attachment.BuildTable(items, cfg, id)
 			}
 			pageData.AttachmentUploadURL = route.ResolveURL(deps.Routes.AttachmentUploadURL, "id", id)
+		case "audit-history":
+			if deps.ListAuditHistory != nil {
+				cursor := viewCtx.Request.URL.Query().Get("cursor")
+				auditResp, err := deps.ListAuditHistory(ctx, &auditlog.ListAuditRequest{
+					EntityType:  "client",
+					EntityID:    id,
+					Limit:       20,
+					CursorToken: cursor,
+				})
+				if err != nil {
+					log.Printf("Failed to load audit history: %v", err)
+				}
+				if auditResp != nil {
+					pageData.AuditEntries = auditResp.Entries
+					pageData.AuditHasNext = auditResp.HasNext
+					pageData.AuditNextCursor = auditResp.NextCursor
+				}
+			}
+			pageData.AuditHistoryURL = route.ResolveURL(deps.Routes.TabActionURL, "id", id, "tab", "") + "audit-history"
 		}
 
 		templateName := "client-tab-" + tab
 		if tab == "attachments" {
 			templateName = "attachment-tab"
+		}
+		if tab == "audit-history" {
+			templateName = "audit-history-tab"
 		}
 		return view.OK(templateName, pageData)
 	})
@@ -380,7 +419,7 @@ func buildFullAddress(street, city, province, postalCode string) string {
 
 // loadClientTags fetches the tags assigned to a client by looking up
 // client_category junction records and resolving category names.
-func loadClientTags(ctx context.Context, deps *Deps, clientID string) []TagChip {
+func loadClientTags(ctx context.Context, deps *DetailViewDeps, clientID string) []TagChip {
 	if deps.ListClientCategories == nil || deps.ListCategories == nil {
 		return nil
 	}
@@ -418,7 +457,7 @@ func loadClientTags(ctx context.Context, deps *Deps, clientID string) []TagChip 
 
 // loadPurchaseHistory fetches revenue records for a client, calculates stats,
 // and returns sorted order rows (most recent first).
-func loadPurchaseHistory(ctx context.Context, deps *Deps, clientID string) (PurchaseStats, []OrderRow) {
+func loadPurchaseHistory(ctx context.Context, deps *DetailViewDeps, clientID string) (PurchaseStats, []OrderRow) {
 	empty := PurchaseStats{
 		LifetimeSpend: "PHP 0.00",
 		AvgOrderValue: "PHP 0.00",

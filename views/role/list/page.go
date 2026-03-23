@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math"
 	"strconv"
 
+	espynahttp "github.com/erniealice/espyna-golang/contrib/http"
 	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/types"
@@ -14,13 +16,13 @@ import (
 	rolepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/role"
 
 	"github.com/erniealice/entydad-golang"
+	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
 )
 
-// Deps holds view dependencies.
-type Deps struct {
+// ListViewDeps holds view dependencies.
+type ListViewDeps struct {
 	GetListPageData func(ctx context.Context, req *rolepb.GetRoleListPageDataRequest) (*rolepb.GetRoleListPageDataResponse, error)
 	GetInUseIDs     func(ctx context.Context, ids []string) (map[string]bool, error)
-	RefreshURL      string
 	Routes          entydad.RoleRoutes
 	Labels          entydad.RoleLabels
 	SharedLabels    entydad.SharedLabels
@@ -35,10 +37,21 @@ type PageData struct {
 	Table           *types.TableConfig
 }
 
+var roleAllowedSortCols = []string{
+	"date_created", "name",
+}
+
+var roleSearchFields = []string{"name", "description"}
+
 // NewView creates the role list view (full page).
-func NewView(deps *Deps) view.View {
+func NewView(deps *ListViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
-		tableConfig, err := buildTableConfig(ctx, deps)
+		p, err := espynahttp.ParseTableParams(viewCtx.Request, roleAllowedSortCols)
+		if err != nil {
+			return view.Error(err)
+		}
+
+		tableConfig, err := buildTableConfig(ctx, deps, p)
 		if err != nil {
 			return view.Error(err)
 		}
@@ -59,6 +72,16 @@ func NewView(deps *Deps) view.View {
 			Table:           tableConfig,
 		}
 
+		// KB help content
+		if viewCtx.Translations != nil {
+			if provider, ok := viewCtx.Translations.(*lynguaV1.TranslationProvider); ok {
+				if kb, _ := provider.LoadKBIfExists(viewCtx.Lang, viewCtx.BusinessType, "roles"); kb != nil {
+					pageData.HasHelp = true
+					pageData.HelpContent = kb.Body
+				}
+			}
+		}
+
 		return view.OK("role-list", pageData)
 	})
 }
@@ -66,9 +89,14 @@ func NewView(deps *Deps) view.View {
 // NewTableView creates a view that returns only the table-card HTML.
 // Used as the refresh target after CRUD operations so that only the table
 // is swapped (not the entire page content).
-func NewTableView(deps *Deps) view.View {
+func NewTableView(deps *ListViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
-		tableConfig, err := buildTableConfig(ctx, deps)
+		p, err := espynahttp.ParseTableParams(viewCtx.Request, roleAllowedSortCols)
+		if err != nil {
+			return view.Error(err)
+		}
+
+		tableConfig, err := buildTableConfig(ctx, deps, p)
 		if err != nil {
 			return view.Error(err)
 		}
@@ -78,10 +106,16 @@ func NewTableView(deps *Deps) view.View {
 }
 
 // buildTableConfig fetches role data and builds the table configuration.
-func buildTableConfig(ctx context.Context, deps *Deps) (*types.TableConfig, error) {
+func buildTableConfig(ctx context.Context, deps *ListViewDeps, p espynahttp.TableQueryParams) (*types.TableConfig, error) {
 	perms := view.GetUserPermissions(ctx)
 
-	resp, err := deps.GetListPageData(ctx, &rolepb.GetRoleListPageDataRequest{})
+	listParams := espynahttp.ToListParams(p, roleSearchFields)
+	resp, err := deps.GetListPageData(ctx, &rolepb.GetRoleListPageDataRequest{
+		Search:     listParams.Search,
+		Filters:    listParams.Filters,
+		Sort:       listParams.Sort,
+		Pagination: listParams.Pagination,
+	})
 	if err != nil {
 		log.Printf("Failed to list roles: %v", err)
 		return nil, fmt.Errorf("failed to load roles: %w", err)
@@ -105,9 +139,28 @@ func buildTableConfig(ctx context.Context, deps *Deps) (*types.TableConfig, erro
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
 	bulkCfg.Actions = buildBulkActions(l, deps.SharedLabels, deps.CommonLabels, deps.Routes)
 
+	refreshURL := deps.Routes.TableURL
+
+	// Build ServerPagination
+	totalRows := int(resp.GetPagination().GetTotalItems())
+	sp := &types.ServerPagination{
+		Enabled:       true,
+		Mode:          "offset",
+		CurrentPage:   p.Page,
+		PageSize:      p.PageSize,
+		TotalRows:     totalRows,
+		TotalPages:    int(math.Ceil(float64(totalRows) / float64(p.PageSize))),
+		SearchQuery:   p.Search,
+		SortColumn:    p.SortColumn,
+		SortDirection: p.SortDir,
+		FiltersJSON:   p.FiltersRaw,
+		PaginationURL: refreshURL,
+	}
+	sp.BuildDisplay()
+
 	tableConfig := &types.TableConfig{
 		ID:                   "roles-table",
-		RefreshURL:           deps.Routes.TableURL,
+		RefreshURL:           refreshURL,
 		Columns:              columns,
 		Rows:                 rows,
 		ShowSearch:           true,
@@ -132,7 +185,8 @@ func buildTableConfig(ctx context.Context, deps *Deps) (*types.TableConfig, erro
 			Disabled:        !perms.Can("role", "create"),
 			DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
 		},
-		BulkActions: &bulkCfg,
+		BulkActions:      &bulkCfg,
+		ServerPagination: sp,
 	}
 	types.ApplyTableSettings(tableConfig)
 
@@ -141,11 +195,12 @@ func buildTableConfig(ctx context.Context, deps *Deps) (*types.TableConfig, erro
 
 func roleColumns(l entydad.RoleLabels) []types.TableColumn {
 	return []types.TableColumn{
-		{Key: "name", Label: l.Columns.Name, Sortable: true},
-		{Key: "description", Label: l.Columns.Description, Sortable: true},
-		{Key: "color", Label: l.Columns.Color, Sortable: true, Width: "120px"},
+		{Key: "name", Label: l.Columns.Name, Sortable: true, Filterable: true, FilterType: types.FilterTypeString},
+		{Key: "description", Label: l.Columns.Description, Sortable: false, Filterable: false},
+		{Key: "color", Label: l.Columns.Color, Sortable: false, Width: "120px"},
 		{Key: "permissions", Label: l.Columns.Permissions, Sortable: false, Width: "120px"},
-		{Key: "status", Label: l.Columns.Status, Sortable: true, Width: "120px"},
+		{Key: "status", Label: l.Columns.Status, Sortable: false, Width: "120px"},
+		{Key: "date_created", Label: "Date Created", Sortable: true, Filterable: true, FilterType: types.FilterTypeDate},
 	}
 }
 

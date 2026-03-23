@@ -17,8 +17,8 @@ import (
 	"github.com/erniealice/entydad-golang"
 )
 
-// Deps holds view dependencies.
-type Deps struct {
+// ListViewDeps holds view dependencies.
+type ListViewDeps struct {
 	GetListPageData func(ctx context.Context, req *permissionpb.GetPermissionListPageDataRequest) (*permissionpb.GetPermissionListPageDataResponse, error)
 	RefreshURL      string
 	Routes          entydad.PermissionRoutes
@@ -36,7 +36,7 @@ type PageData struct {
 }
 
 // NewView creates the permission list view (full page).
-func NewView(deps *Deps) view.View {
+func NewView(deps *ListViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		status := viewCtx.Request.PathValue("status")
 		if status == "" {
@@ -69,7 +69,7 @@ func NewView(deps *Deps) view.View {
 }
 
 // NewTableView creates a view that returns only the table-card HTML.
-func NewTableView(deps *Deps) view.View {
+func NewTableView(deps *ListViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		status := viewCtx.Request.PathValue("status")
 		if status == "" {
@@ -86,7 +86,7 @@ func NewTableView(deps *Deps) view.View {
 }
 
 // buildTableConfig fetches permission data and builds the table configuration.
-func buildTableConfig(ctx context.Context, deps *Deps, status string) (*types.TableConfig, error) {
+func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string) (*types.TableConfig, error) {
 	perms := view.GetUserPermissions(ctx)
 
 	resp, err := deps.GetListPageData(ctx, &permissionpb.GetPermissionListPageDataRequest{})
