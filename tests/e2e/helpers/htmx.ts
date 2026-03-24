@@ -27,3 +27,13 @@ export async function clickAndWaitHtmx(page: Page, selector: string) {
 export async function ensureHtmxReady(page: Page) {
   await page.waitForFunction(() => !!(window as any).htmx);
 }
+
+/** Wait for sheet/drawer to close (open class removed) */
+export async function waitForSheetClose(page: Page, timeout = 15000) {
+  await page.waitForFunction(() => {
+    const sheet = document.querySelector('.sheet.open, .sheet-form.open');
+    return !sheet;
+  }, { timeout });
+  // Extra settle time for HTMX table refresh after close
+  await waitForHtmxSettle(page, timeout);
+}
