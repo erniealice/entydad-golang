@@ -2,12 +2,12 @@
 
 **Module:** `github.com/erniealice/entydad-golang`
 
-Identity and entity management domain package for the Ryta OS platform. Provides reusable views, templates, labels, routes, and HTMX helpers for managing users, clients, roles, permissions, locations, workspaces, suppliers, and client tags. Consumer apps (retail-admin, service-admin) wire these views into their composition roots.
+Identity and entity management domain package for the Ichizen OS platform. Provides reusable views, templates, labels, routes, and HTMX helpers for managing users, clients, roles, permissions, locations, workspaces, suppliers, and client tags. Consumer apps (retail-admin, service-admin) wire these views into their composition roots.
 
 ## Package Structure
 
 ```
-packages/entydad-golang-ryta/
+packages/entydad-golang/
 ├── assets/
 │   └── css/
 │       ├── entydad-client-dashboard.css

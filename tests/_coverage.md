@@ -1,6 +1,6 @@
 # Entydad Route Test Coverage
 
-**Source:** `packages/entydad-golang-ryta/routes.go`
+**Source:** `packages/entydad-golang/routes.go`
 **Generated:** 2026-03-19
 **Last updated:** 2026-03-19
 
