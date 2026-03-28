@@ -26,8 +26,9 @@ type ModuleDeps struct {
 	CommonLabels     pyeza.CommonLabels
 	SharedLabels     entydad.SharedLabels
 	Labels           entydad.ClientLabels
-	DashboardLabels  entydad.ClientDashboardLabels
-	TableLabels      types.TableLabels
+	DashboardLabels      entydad.ClientDashboardLabels
+	DashboardTitleLabels entydad.DashboardLabels
+	TableLabels          types.TableLabels
 	GetListPageData func(ctx context.Context, req *clientpb.GetClientListPageDataRequest) (*clientpb.GetClientListPageDataResponse, error)
 	GetInUseIDs     func(ctx context.Context, ids []string) (map[string]bool, error)
 	// Client CRUD
@@ -117,7 +118,7 @@ func NewModule(deps *ModuleDeps) *Module {
 
 	return &Module{
 		routes:           deps.Routes,
-		Dashboard:        clientdashboard.NewView(&clientdashboard.Deps{CommonLabels: deps.CommonLabels, Dashboard: deps.DashboardLabels}),
+		Dashboard:        clientdashboard.NewView(&clientdashboard.Deps{DashboardLabels: deps.DashboardTitleLabels, CommonLabels: deps.CommonLabels, Dashboard: deps.DashboardLabels}),
 		List:             clientlist.NewView(listDeps),
 		Table:            clientlist.NewTableView(listDeps),
 		Detail:           clientdetail.NewView(detailDeps),

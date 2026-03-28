@@ -154,7 +154,8 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, p espynahttp.Tabl
 		SortColumn:    p.SortColumn,
 		SortDirection: p.SortDir,
 		FiltersJSON:   p.FiltersRaw,
-		PaginationURL: refreshURL,
+		PaginationURL:     refreshURL,
+		PaginationBodyURL: refreshURL,
 	}
 	sp.BuildDisplay()
 
@@ -195,12 +196,12 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, p espynahttp.Tabl
 
 func roleColumns(l entydad.RoleLabels) []types.TableColumn {
 	return []types.TableColumn{
-		{Key: "name", Label: l.Columns.Name, Sortable: true, Filterable: true, FilterType: types.FilterTypeString},
-		{Key: "description", Label: l.Columns.Description, Sortable: false, Filterable: false},
+		{Key: "name", Label: l.Columns.Name, Sortable: true, Filterable: true, FilterType: types.FilterTypeString, MinWidth: "150px"},
+		{Key: "description", Label: l.Columns.Description, Sortable: false, Filterable: true, FilterType: types.FilterTypeString, MinWidth: "150px"},
 		{Key: "color", Label: l.Columns.Color, Sortable: false, Width: "120px"},
-		{Key: "permissions", Label: l.Columns.Permissions, Sortable: false, Width: "120px"},
+		{Key: "permissions", Label: l.Columns.Permissions, Sortable: false, Width: "120px", Align: "center"},
 		{Key: "status", Label: l.Columns.Status, Sortable: false, Width: "120px"},
-		{Key: "date_created", Label: "Date Created", Sortable: true, Filterable: true, FilterType: types.FilterTypeDate},
+		{Key: "date_created", Label: l.Columns.DateCreated, Sortable: true, Filterable: true, FilterType: types.FilterTypeDate, Width: "180px"},
 	}
 }
 
@@ -266,6 +267,7 @@ func buildTableRows(roles []*rolepb.Role, l entydad.RoleLabels, sl entydad.Share
 				{Type: "text", Value: color},
 				{Type: "badge", Value: permCountStr, Variant: "default", BadgeType: "count"},
 				{Type: "badge", Value: recordStatus, Variant: statusVariant(recordStatus)},
+				types.DateTimeCell(r.GetDateCreatedString(), types.DateReadable),
 			},
 			DataAttrs: map[string]string{
 				"name":        name,

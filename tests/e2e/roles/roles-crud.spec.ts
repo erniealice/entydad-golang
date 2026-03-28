@@ -131,3 +131,109 @@ test.describe('ENT-ROL-003: Role Row Actions', () => {
     await expect(editBtn).toHaveCount(0);
   });
 });
+
+test.describe('ENT-ROL-004: Role Detail Page', () => {
+  test('detail page loads and renders correctly', async ({ page }) => {
+    await page.goto('/app/roles/list');
+    await expect(page.locator('#roles-table')).toBeVisible();
+
+    const viewLink = page.locator('#roles-table tbody tr[data-id]').first().locator('a.action-btn.view');
+    const href = await viewLink.getAttribute('href');
+    expect(href).toBeTruthy();
+
+    await page.goto(href!);
+
+    const h1 = page.locator('h1').first();
+    await expect(h1).toBeVisible({ timeout: 10000 });
+    const h1Text = await h1.textContent();
+    expect(h1Text!.trim().length).toBeGreaterThan(0);
+
+    const bodyText = await page.textContent('body');
+    expect(bodyText).not.toContain('Page content not available');
+
+    const detailLayout = page.locator('.detail-header, .detail-layout, .info-grid');
+    await expect(detailLayout.first()).toBeVisible({ timeout: 5000 });
+  });
+});
+
+test.describe('ENT-ROL-LIFECYCLE: Role Full Lifecycle', () => {
+  test('creates, views detail, and deletes a role', async ({ page }) => {
+    const ts = Date.now();
+
+    // 1. Navigate to list page
+    await page.goto('/app/roles/list');
+    await expect(page.locator('#roles-table')).toBeVisible();
+
+    // 2. Add new record via drawer (roles have no edit button per row)
+    await page.locator('.toolbar-primary-action').click();
+    await expect(page.locator('#sheet.open .sheet-panel')).toBeVisible();
+    await waitForHtmxSettle(page);
+
+    await page.locator('#name').fill(`E2ERole${ts}`);
+    await page.locator('#description').fill(`Role created by lifecycle test at ${ts}`);
+
+    // Submit
+    await page.locator('#sheet .sheet-footer button[type="submit"]').click();
+    await waitForHtmxSettle(page);
+    await expect(page.locator('.sheet.open')).not.toBeVisible({ timeout: 15000 });
+
+    // 3. Find the newly created record
+    await page.waitForTimeout(500);
+    await page.reload();
+    await expect(page.locator('#roles-table')).toBeVisible();
+
+    const rows = page.locator('#roles-table tbody tr[data-id]');
+    const rowCount = await rows.count();
+    expect(rowCount).toBeGreaterThan(0);
+
+    let targetRowIndex = -1;
+    for (let i = 0; i < rowCount; i++) {
+      const rowText = await rows.nth(i).textContent();
+      if (rowText?.includes(`E2ERole${ts}`)) {
+        targetRowIndex = i;
+        break;
+      }
+    }
+    expect(targetRowIndex).toBeGreaterThanOrEqual(0);
+
+    // 4. View detail page (roles have no edit button per row)
+    const viewLink = rows.nth(targetRowIndex).locator('a.action-btn.view');
+    const href = await viewLink.getAttribute('href');
+    expect(href).toBeTruthy();
+
+    await page.goto(href!);
+
+    // 5. Verify detail page renders
+    const h1 = page.locator('h1').first();
+    await expect(h1).toBeVisible({ timeout: 10000 });
+    const h1Text = await h1.textContent();
+    expect(h1Text!.trim().length).toBeGreaterThan(0);
+
+    const bodyText = await page.textContent('body');
+    expect(bodyText).not.toContain('Page content not available');
+
+    const detailLayout = page.locator('.detail-header, .detail-layout, .info-grid');
+    await expect(detailLayout.first()).toBeVisible({ timeout: 5000 });
+
+    // 6. Navigate back and delete the test record
+    await page.goto('/app/roles/list');
+    await expect(page.locator('#roles-table')).toBeVisible();
+
+    const rowsForDelete = page.locator('#roles-table tbody tr[data-id]');
+    for (let i = 0; i < await rowsForDelete.count(); i++) {
+      const rowText = await rowsForDelete.nth(i).textContent();
+      if (rowText?.includes(`E2ERole${ts}`)) {
+        const deleteBtn = rowsForDelete.nth(i).locator('.action-btn.delete');
+        const isDisabled = await deleteBtn.evaluate(el => el.classList.contains('disabled')).catch(() => true);
+        if (await deleteBtn.isVisible() && !isDisabled) {
+          await deleteBtn.click();
+          const confirmBtn = page.locator('#dialog.visible .dialog-btn-confirm');
+          await expect(confirmBtn).toBeVisible({ timeout: 5000 });
+          await confirmBtn.click();
+          await waitForHtmxSettle(page);
+        }
+        break;
+      }
+    }
+  });
+});

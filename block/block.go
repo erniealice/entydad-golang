@@ -149,12 +149,13 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 				return fmt.Errorf("entydad.Block: client use cases not initialized")
 			}
 			clientDeps := &clientmod.ModuleDeps{
-				Routes:          routes.Client,
-				CommonLabels:    ctx.Common,
-				SharedLabels:    labels.Shared,
-				Labels:          labels.Client,
-				DashboardLabels: labels.ClientDashboard,
-				TableLabels:     ctx.Table,
+				Routes:               routes.Client,
+				CommonLabels:         ctx.Common,
+				SharedLabels:         labels.Shared,
+				Labels:               labels.Client,
+				DashboardLabels:      labels.ClientDashboard,
+				DashboardTitleLabels: labels.Dashboard,
+				TableLabels:          ctx.Table,
 				GetListPageData:      uc.Entity.Client.GetClientListPageData.Execute,
 				GetInUseIDs:          refChecker.GetClientInUseIDs,
 				CreateClient:         uc.Entity.Client.CreateClient.Execute,
@@ -365,6 +366,8 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 		if cfg.enableAll || cfg.clientTag {
 			clienttagDeps := &clienttagmod.ModuleDeps{
 				Routes:       routes.ClientTag,
+				Labels:       labels.ClientTag,
+				SharedLabels: labels.Shared,
 				CommonLabels: ctx.Common,
 				TableLabels:  ctx.Table,
 				GetInUseIDs:  refChecker.GetCategoryInUseIDs,
@@ -401,8 +404,10 @@ type UpdateableSource interface {
 // blockLabels holds the subset of entydad label structs needed by Block().
 type blockLabels struct {
 	Shared          entydad.SharedLabels
+	Dashboard       entydad.DashboardLabels
 	Client          entydad.ClientLabels
 	ClientDashboard entydad.ClientDashboardLabels
+	ClientTag       entydad.ClientTagLabels
 	User            entydad.UserLabels
 	UserDashboard   entydad.UserDashboardLabels
 	UserRole        entydad.UserRoleLabels
@@ -432,10 +437,13 @@ type blockRoutes struct {
 func loadBlockLabels(t *lynguaV1.TranslationProvider, businessType string) blockLabels {
 	l := blockLabels{}
 
+	_ = t.LoadPathIfExists("en", businessType, "dashboard.json", "", &l.Dashboard)
+
 	if err := t.LoadPath("en", businessType, "client.json", "client", &l.Client); err != nil {
 		log.Printf("entydad.Block: warning: failed to load client labels: %v", err)
 	}
 	_ = t.LoadPathIfExists("en", businessType, "client.json", "client.dashboard", &l.ClientDashboard)
+	_ = t.LoadPathIfExists("en", businessType, "client_tag.json", "", &l.ClientTag)
 
 	if err := t.LoadPath("en", businessType, "user.json", "", &l.User); err != nil {
 		log.Printf("entydad.Block: warning: failed to load user labels: %v", err)

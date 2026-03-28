@@ -37,7 +37,8 @@ type ClientButtonLabels struct {
 }
 
 type ClientColumnLabels struct {
-	ClientName string `json:"clientName"`
+	ClientName  string `json:"clientName"`
+	DateCreated string `json:"dateCreated"`
 }
 
 type ClientEmptyLabels struct {
@@ -167,10 +168,11 @@ type UserButtonLabels struct {
 }
 
 type UserColumnLabels struct {
-	Name   string `json:"name"`
-	Email  string `json:"email"`
-	Roles  string `json:"roles"`
-	Status string `json:"status"`
+	Name        string `json:"name"`
+	Email       string `json:"email"`
+	Roles       string `json:"roles"`
+	DateCreated string `json:"dateCreated"`
+	Status      string `json:"status"`
 }
 
 type UserEmptyLabels struct {
@@ -392,6 +394,7 @@ type RoleColumnLabels struct {
 	Color       string `json:"color"`
 	Permissions string `json:"permissions"`
 	Status      string `json:"status"`
+	DateCreated string `json:"dateCreated"`
 }
 
 type RoleEmptyLabels struct {

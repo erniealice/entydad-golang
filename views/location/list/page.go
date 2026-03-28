@@ -165,7 +165,8 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 		SortColumn:    p.SortColumn,
 		SortDirection: p.SortDir,
 		FiltersJSON:   p.FiltersRaw,
-		PaginationURL: refreshURL,
+		PaginationURL:     refreshURL,
+		PaginationBodyURL: refreshURL,
 	}
 	sp.BuildDisplay()
 
@@ -274,7 +275,7 @@ func buildTableRows(locations []*locationpb.Location, status string, l entydad.L
 				{Type: "text", Value: name},
 				{Type: "text", Value: address},
 				{Type: "text", Value: ""},
-				{Type: "badge", Value: recordStatus, Variant: statusVariant(recordStatus)},
+				types.DateTimeCell(loc.GetDateCreatedString(), types.DateReadable),
 			},
 			DataAttrs: map[string]string{
 				"name":      name,

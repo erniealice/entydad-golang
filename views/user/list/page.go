@@ -163,7 +163,8 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 		SortColumn:    p.SortColumn,
 		SortDirection: p.SortDir,
 		FiltersJSON:   p.FiltersRaw,
-		PaginationURL: refreshURL,
+		PaginationURL:     refreshURL,
+		PaginationBodyURL: refreshURL,
 	}
 	sp.BuildDisplay()
 
@@ -204,10 +205,10 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 
 func userColumns(l entydad.UserLabels) []types.TableColumn {
 	return []types.TableColumn{
-		{Key: "first_name", Label: l.Columns.Name, Sortable: true, Filterable: true, FilterType: types.FilterTypeString},
-		{Key: "email_address", Label: l.Columns.Email, Sortable: true, Filterable: true, FilterType: types.FilterTypeString},
-		{Key: "roles", Label: l.Columns.Roles, Sortable: false},
-		{Key: "date_created", Label: "Date Created", Sortable: true, Filterable: true, FilterType: types.FilterTypeDate},
+		{Key: "first_name", Label: l.Columns.Name, Sortable: true, Filterable: true, FilterType: types.FilterTypeString, MinWidth: "150px"},
+		{Key: "email_address", Label: l.Columns.Email, Sortable: true, Filterable: true, FilterType: types.FilterTypeString, MinWidth: "180px"},
+		{Key: "roles", Label: l.Columns.Roles, Sortable: false, MinWidth: "120px"},
+		{Key: "date_created", Label: l.Columns.DateCreated, Sortable: true, Filterable: true, FilterType: types.FilterTypeDate, Width: "180px"},
 		{Key: "status", Label: l.Columns.Status, Sortable: true, Filterable: false, Width: "120px"},
 	}
 }
@@ -265,6 +266,7 @@ func buildTableRows(users []*userpb.User, status string, l entydad.UserLabels, s
 				{Type: "text", Value: name},
 				{Type: "text", Value: email},
 				rolesCell,
+				types.DateTimeCell(u.GetDateCreatedString(), types.DateReadable),
 				{Type: "badge", Value: recordStatus, Variant: statusVariant(recordStatus)},
 			},
 			DataAttrs: map[string]string{

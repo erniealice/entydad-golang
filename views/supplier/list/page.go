@@ -203,7 +203,7 @@ func buildTableRows(suppliers []*supplierpb.Supplier, status string, l entydad.S
 				{Type: "badge", Value: recordStatus, Variant: statusVariant(recordStatus)},
 				{Type: "text", Value: paymentTerms},
 				{Type: "text", Value: contactName},
-				{Type: "text", Value: dateCreated},
+				types.DateTimeCell(dateCreated, types.DateReadable),
 			},
 			DataAttrs: map[string]string{
 				"company_name": companyName,

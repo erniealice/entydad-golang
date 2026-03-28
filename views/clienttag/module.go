@@ -17,6 +17,8 @@ import (
 // ModuleDeps holds all dependencies for the client tag module.
 type ModuleDeps struct {
 	Routes               entydad.ClientTagRoutes
+	Labels               entydad.ClientTagLabels
+	SharedLabels         entydad.SharedLabels
 	CommonLabels         pyeza.CommonLabels
 	TableLabels          types.TableLabels
 	GetInUseIDs          func(ctx context.Context, ids []string) (map[string]bool, error)
@@ -56,6 +58,8 @@ func NewModule(deps *ModuleDeps) *Module {
 			ListCategories:       deps.ListCategories,
 			ListClientCategories: deps.ListClientCategories,
 			RefreshURL:           deps.Routes.ListURL,
+			Labels:               deps.Labels,
+			SharedLabels:         deps.SharedLabels,
 			CommonLabels:         deps.CommonLabels,
 			TableLabels:          deps.TableLabels,
 		}),

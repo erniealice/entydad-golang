@@ -181,7 +181,7 @@ test.describe('ENT-CLI-003: Client Edit via Drawer', () => {
 });
 
 test.describe('ENT-CLI-005: Client Detail Page', () => {
-  test('detail page loads or is documented as unavailable', async ({ page }) => {
+  test('detail page loads and renders correctly', async ({ page }) => {
     // Navigate to list first to get a valid client ID
     await page.goto('/app/clients/list/active');
     await expect(page.locator('#clients-table')).toBeVisible();
@@ -193,15 +193,132 @@ test.describe('ENT-CLI-005: Client Detail Page', () => {
     // Navigate to detail page
     await page.goto(href!);
 
-    // Check if page shows "Page content not available" - known issue
-    const pageContent = page.locator('.page-content');
-    const text = await pageContent.textContent();
+    // h1 should be visible and non-empty
+    const h1 = page.locator('h1').first();
+    await expect(h1).toBeVisible({ timeout: 10000 });
+    const h1Text = await h1.textContent();
+    expect(h1Text!.trim().length).toBeGreaterThan(0);
 
-    if (text?.includes('Page content not available')) {
-      test.skip(true, 'BUG: Client detail page shows "Page content not available" — view not wired in service-admin');
+    // Should NOT show "Page content not available"
+    const bodyText = await page.textContent('body');
+    expect(bodyText).not.toContain('Page content not available');
+
+    // Detail layout should exist
+    const detailLayout = page.locator('.detail-header, .detail-layout, .info-grid');
+    await expect(detailLayout.first()).toBeVisible({ timeout: 5000 });
+  });
+});
+
+test.describe('ENT-CLI-LIFECYCLE: Client Full Lifecycle', () => {
+  test('creates, edits, views detail, and deletes a client', async ({ page }) => {
+    const ts = Date.now();
+
+    // 1. Navigate to list page
+    await page.goto('/app/clients/list/active');
+    await expect(page.locator('#clients-table')).toBeVisible();
+
+    // 2. Add new record via drawer
+    await page.locator('.toolbar-primary-action').click();
+    await expect(page.locator('#sheet.open .sheet-panel')).toBeVisible();
+    await waitForHtmxSettle(page);
+
+    // Fill form fields
+    await page.locator('#first_name').fill(`E2ETest`);
+    await page.locator('#last_name').fill(`Lifecycle${ts}`);
+    await page.locator('#email_address').fill(`e2e-lifecycle-${ts}@test.com`);
+    await page.locator('#mobile_number').fill(`09170000${String(ts).slice(-4)}`);
+
+    // Submit
+    await page.locator('#sheet .sheet-footer button[type="submit"]').click();
+    await waitForHtmxSettle(page);
+    await expect(page.locator('.sheet.open')).not.toBeVisible({ timeout: 15000 });
+
+    // 3. Find the newly created record in the table
+    await page.waitForTimeout(500);
+    await page.reload();
+    await expect(page.locator('#clients-table')).toBeVisible();
+
+    const rows = page.locator('#clients-table tbody tr[data-id]');
+    const rowCount = await rows.count();
+    expect(rowCount).toBeGreaterThan(0);
+
+    let targetRowIndex = -1;
+    for (let i = 0; i < rowCount; i++) {
+      const rowText = await rows.nth(i).textContent();
+      if (rowText?.includes(`Lifecycle${ts}`)) {
+        targetRowIndex = i;
+        break;
+      }
     }
+    expect(targetRowIndex).toBeGreaterThanOrEqual(0);
+    const targetRow = rows.nth(targetRowIndex);
 
-    // If we get here, verify detail page structure
-    await expect(page.locator('.detail-layout')).toBeVisible();
+    // 4. Edit the record
+    await targetRow.locator('.action-btn.edit').click();
+    await expect(page.locator('#sheet.open .sheet-panel')).toBeVisible();
+    await waitForHtmxSettle(page);
+
+    // Verify pre-filled
+    const nameValue = await page.locator('#first_name').inputValue();
+    expect(nameValue.length).toBeGreaterThan(0);
+
+    // Modify a field
+    await page.locator('#notes').fill(`Edited by lifecycle test at ${ts}`);
+    await page.locator('#sheet .sheet-footer button[type="submit"]').click();
+    await waitForHtmxSettle(page);
+    await expect(page.locator('.sheet.open')).not.toBeVisible({ timeout: 15000 });
+
+    // 5. View detail page via "eye" button
+    await page.reload();
+    await expect(page.locator('#clients-table')).toBeVisible();
+
+    const rowsAfterEdit = page.locator('#clients-table tbody tr[data-id]');
+    let detailRowIndex = -1;
+    for (let i = 0; i < await rowsAfterEdit.count(); i++) {
+      const rowText = await rowsAfterEdit.nth(i).textContent();
+      if (rowText?.includes(`Lifecycle${ts}`)) {
+        detailRowIndex = i;
+        break;
+      }
+    }
+    expect(detailRowIndex).toBeGreaterThanOrEqual(0);
+
+    const viewLink = rowsAfterEdit.nth(detailRowIndex).locator('a.action-btn.view');
+    const href = await viewLink.getAttribute('href');
+    expect(href).toBeTruthy();
+
+    await page.goto(href!);
+
+    // 6. Verify detail page renders
+    const h1 = page.locator('h1').first();
+    await expect(h1).toBeVisible({ timeout: 10000 });
+    const h1Text = await h1.textContent();
+    expect(h1Text!.trim().length).toBeGreaterThan(0);
+
+    const bodyText = await page.textContent('body');
+    expect(bodyText).not.toContain('Page content not available');
+
+    const detailLayout = page.locator('.detail-header, .detail-layout, .info-grid');
+    await expect(detailLayout.first()).toBeVisible({ timeout: 5000 });
+
+    // 7. Navigate back and delete the test record
+    await page.goto('/app/clients/list/active');
+    await expect(page.locator('#clients-table')).toBeVisible();
+
+    const rowsForDelete = page.locator('#clients-table tbody tr[data-id]');
+    for (let i = 0; i < await rowsForDelete.count(); i++) {
+      const rowText = await rowsForDelete.nth(i).textContent();
+      if (rowText?.includes(`Lifecycle${ts}`)) {
+        const deleteBtn = rowsForDelete.nth(i).locator('.action-btn.delete');
+        if (await deleteBtn.isVisible()) {
+          await deleteBtn.click();
+          const confirmBtn = page.locator('#dialog.visible .dialog-btn-confirm');
+          await expect(confirmBtn).toBeVisible({ timeout: 5000 });
+          await confirmBtn.click();
+          await waitForHtmxSettle(page);
+        }
+        break;
+      }
+    }
   });
 });

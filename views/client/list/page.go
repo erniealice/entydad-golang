@@ -165,7 +165,8 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 		SortColumn:    p.SortColumn,
 		SortDirection: p.SortDir,
 		FiltersJSON:   p.FiltersRaw,
-		PaginationURL: refreshURL,
+		PaginationURL:     refreshURL,
+		PaginationBodyURL: refreshURL,
 	}
 	sp.BuildDisplay()
 
@@ -209,7 +210,7 @@ func clientColumns(l entydad.ClientLabels) []types.TableColumn {
 		{Key: "u.first_name", Label: l.Columns.ClientName, Sortable: true, Filterable: true, FilterType: types.FilterTypeString},
 		{Key: "u.email_address", Label: l.Form.Email, Sortable: true, Filterable: true, FilterType: types.FilterTypeString},
 		{Key: "u.mobile_number", Label: l.Form.Phone, Sortable: false, Filterable: true, FilterType: types.FilterTypeString},
-		{Key: "date_created", Label: "Date Created", Sortable: true, Filterable: true, FilterType: types.FilterTypeDate},
+		{Key: "date_created", Label: l.Columns.DateCreated, Sortable: true, Filterable: true, FilterType: types.FilterTypeDate, Width: "180px"},
 	}
 }
 
@@ -241,7 +242,7 @@ func buildTableRows(clients []*clientpb.Client, status string, l entydad.ClientL
 				{Type: "text", Value: name},
 				{Type: "text", Value: email},
 				{Type: "text", Value: phone},
-				{Type: "badge", Value: recordStatus, Variant: statusVariant(recordStatus)},
+				types.DateTimeCell(c.GetDateCreatedString(), types.DateReadable),
 			},
 			DataAttrs: map[string]string{
 				"name":      name,

@@ -142,3 +142,144 @@ test.describe('ENT-LOC-003: Location Row Actions', () => {
     await expect(deleteBtn).toBeVisible();
   });
 });
+
+test.describe('ENT-LOC-004: Location Detail Page', () => {
+  test('detail page loads and renders correctly', async ({ page }) => {
+    await page.goto('/app/locations/list/active');
+    await expect(page.locator('#locations-table')).toBeVisible();
+
+    const dataRows = page.locator('#locations-table tbody tr[data-id]');
+    const rowCount = await dataRows.count();
+    if (rowCount === 0) {
+      test.skip(true, 'No location rows — cannot test detail page');
+      return;
+    }
+
+    const viewLink = dataRows.first().locator('a.action-btn.view');
+    const href = await viewLink.getAttribute('href');
+    expect(href).toBeTruthy();
+
+    await page.goto(href!);
+
+    const h1 = page.locator('h1').first();
+    await expect(h1).toBeVisible({ timeout: 10000 });
+    const h1Text = await h1.textContent();
+    expect(h1Text!.trim().length).toBeGreaterThan(0);
+
+    const bodyText = await page.textContent('body');
+    expect(bodyText).not.toContain('Page content not available');
+
+    const detailLayout = page.locator('.detail-header, .detail-layout, .info-grid');
+    await expect(detailLayout.first()).toBeVisible({ timeout: 5000 });
+  });
+});
+
+test.describe('ENT-LOC-LIFECYCLE: Location Full Lifecycle', () => {
+  test('creates, edits, views detail, and deletes a location', async ({ page }) => {
+    const ts = Date.now();
+
+    // 1. Navigate to list page
+    await page.goto('/app/locations/list/active');
+    await expect(page.locator('#locations-table')).toBeVisible();
+
+    // 2. Add new record via drawer
+    await page.locator('.toolbar-primary-action').click();
+    await expect(page.locator('#sheet.open .sheet-panel')).toBeVisible();
+    await waitForHtmxSettle(page);
+
+    await page.locator('#name').fill(`E2E Location LC${ts}`);
+    await page.locator('#address').fill(`123 Lifecycle Street ${ts}`);
+    await page.locator('#description').fill(`Location created by lifecycle test at ${ts}`);
+
+    // Submit
+    await page.locator('#sheet .sheet-footer button[type="submit"]').click();
+    await waitForHtmxSettle(page);
+    await expect(page.locator('.sheet.open')).not.toBeVisible({ timeout: 15000 });
+
+    // 3. Find the newly created record
+    await page.waitForTimeout(500);
+    await page.reload();
+    await expect(page.locator('#locations-table')).toBeVisible();
+
+    const rows = page.locator('#locations-table tbody tr[data-id]');
+    const rowCount = await rows.count();
+    expect(rowCount).toBeGreaterThan(0);
+
+    let targetRowIndex = -1;
+    for (let i = 0; i < rowCount; i++) {
+      const rowText = await rows.nth(i).textContent();
+      if (rowText?.includes(`LC${ts}`)) {
+        targetRowIndex = i;
+        break;
+      }
+    }
+    expect(targetRowIndex).toBeGreaterThanOrEqual(0);
+    const targetRow = rows.nth(targetRowIndex);
+
+    // 4. Edit the record
+    await targetRow.locator('.action-btn.edit').click();
+    await expect(page.locator('#sheet.open .sheet-panel')).toBeVisible();
+    await waitForHtmxSettle(page);
+
+    const nameValue = await page.locator('#name').inputValue();
+    expect(nameValue.length).toBeGreaterThan(0);
+
+    await page.locator('#description').fill(`Edited by lifecycle test at ${ts}`);
+    await page.locator('#sheet .sheet-footer button[type="submit"]').click();
+    await waitForHtmxSettle(page);
+    await expect(page.locator('.sheet.open')).not.toBeVisible({ timeout: 15000 });
+
+    // 5. View detail page
+    await page.reload();
+    await expect(page.locator('#locations-table')).toBeVisible();
+
+    const rowsAfterEdit = page.locator('#locations-table tbody tr[data-id]');
+    let detailRowIndex = -1;
+    for (let i = 0; i < await rowsAfterEdit.count(); i++) {
+      const rowText = await rowsAfterEdit.nth(i).textContent();
+      if (rowText?.includes(`LC${ts}`)) {
+        detailRowIndex = i;
+        break;
+      }
+    }
+    expect(detailRowIndex).toBeGreaterThanOrEqual(0);
+
+    const viewLink = rowsAfterEdit.nth(detailRowIndex).locator('a.action-btn.view');
+    const href = await viewLink.getAttribute('href');
+    expect(href).toBeTruthy();
+
+    await page.goto(href!);
+
+    // 6. Verify detail page renders
+    const h1 = page.locator('h1').first();
+    await expect(h1).toBeVisible({ timeout: 10000 });
+    const h1Text = await h1.textContent();
+    expect(h1Text!.trim().length).toBeGreaterThan(0);
+
+    const bodyText = await page.textContent('body');
+    expect(bodyText).not.toContain('Page content not available');
+
+    const detailLayout = page.locator('.detail-header, .detail-layout, .info-grid');
+    await expect(detailLayout.first()).toBeVisible({ timeout: 5000 });
+
+    // 7. Navigate back and delete the test record
+    await page.goto('/app/locations/list/active');
+    await expect(page.locator('#locations-table')).toBeVisible();
+
+    const rowsForDelete = page.locator('#locations-table tbody tr[data-id]');
+    for (let i = 0; i < await rowsForDelete.count(); i++) {
+      const rowText = await rowsForDelete.nth(i).textContent();
+      if (rowText?.includes(`LC${ts}`)) {
+        const deleteBtn = rowsForDelete.nth(i).locator('.action-btn.delete');
+        if (await deleteBtn.isVisible()) {
+          await deleteBtn.click();
+          const confirmBtn = page.locator('#dialog.visible .dialog-btn-confirm');
+          await expect(confirmBtn).toBeVisible({ timeout: 5000 });
+          await confirmBtn.click();
+          await waitForHtmxSettle(page);
+        }
+        break;
+      }
+    }
+  });
+});
