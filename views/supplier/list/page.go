@@ -101,10 +101,14 @@ func NewTableView(deps *ListViewDeps) view.View {
 func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string) (*types.TableConfig, error) {
 	perms := view.GetUserPermissions(ctx)
 
-	resp, err := deps.GetListPageData(ctx, &supplierpb.GetSupplierListPageDataRequest{})
-	if err != nil {
-		log.Printf("Failed to list suppliers: %v", err)
-		return nil, fmt.Errorf("failed to load suppliers: %w", err)
+	var resp *supplierpb.GetSupplierListPageDataResponse
+	if deps.GetListPageData != nil {
+		var err error
+		resp, err = deps.GetListPageData(ctx, &supplierpb.GetSupplierListPageDataRequest{})
+		if err != nil {
+			log.Printf("Failed to list suppliers: %v", err)
+			return nil, fmt.Errorf("failed to load suppliers: %w", err)
+		}
 	}
 
 	// Check which items are in use
