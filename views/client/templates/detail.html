@@ -17,6 +17,8 @@
         {{template "client-tab-basic" .}}
         {{else if eq .ActiveTab "history"}}
         {{template "client-tab-history" .}}
+        {{else if eq .ActiveTab "subscriptions"}}
+        {{template "client-tab-subscriptions" .}}
         {{else if eq .ActiveTab "attachments"}}
         {{template "attachment-tab" .}}
         {{end}}
@@ -134,6 +136,41 @@
     </div>
     {{else}}
     <p class="client-tags-empty">{{.Labels.Detail.Tags.NoTags}}</p>
+    {{end}}
+</div>
+{{end}}
+
+{{/* Subscriptions Tab */}}
+{{define "client-tab-subscriptions"}}
+<div class="tab-scroll">
+    <h4 class="detail-section-title">Client Engagements</h4>
+    {{if .Subscriptions}}
+    <div class="purchase-orders-table">
+        <table id="subscriptions-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Package</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .Subscriptions}}
+                <tr data-id="{{.ID}}">
+                    <td>{{.Name}}</td>
+                    <td>{{.Plan}}</td>
+                    <td>{{.DateStart}}</td>
+                    <td>{{.DateEnd}}</td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+    {{else}}
+    <div class="coming-soon-panel">
+        <p class="coming-soon-text">No engagements found for this client.</p>
+    </div>
     {{end}}
 </div>
 {{end}}

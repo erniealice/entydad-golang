@@ -15,10 +15,44 @@
     <div id="tabContent" class="detail-body" role="tabpanel" aria-labelledby="tab-{{.ActiveTab}}">
         {{if eq .ActiveTab "info"}}
         {{template "supplier-tab-info" .}}
+        {{else if eq .ActiveTab "purchase-orders"}}
+        {{template "supplier-tab-purchase-orders" .}}
         {{else if eq .ActiveTab "attachments"}}
         {{template "attachment-tab" .}}
         {{end}}
     </div>
+</div>
+{{end}}
+
+{{define "supplier-tab-purchase-orders"}}
+<div class="tab-content-section">
+    <h4>Purchase Orders</h4>
+    {{if .PurchaseOrders}}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>PO Number</th>
+                <th>Order Date</th>
+                <th>Amount</th>
+                <th>Currency</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .PurchaseOrders}}
+            <tr data-id="{{.ID}}">
+                <td>{{.PONumber}}</td>
+                <td>{{.OrderDate}}</td>
+                <td style="text-align:right">{{.TotalAmount}}</td>
+                <td>{{.Currency}}</td>
+                <td><span class="badge {{if eq .Status "approved"}}badge-success{{else if eq .Status "draft"}}badge-default{{else if eq .Status "pending"}}badge-warning{{else if eq .Status "cancelled"}}badge-danger{{else}}badge-info{{end}}">{{.Status}}</span></td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+    {{else}}
+    <p class="text-muted">No purchase orders found for this supplier.</p>
+    {{end}}
 </div>
 {{end}}
 

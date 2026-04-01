@@ -15,6 +15,7 @@ import (
 	"github.com/erniealice/hybra-golang/views/attachment"
 	"github.com/erniealice/hybra-golang/views/auditlog"
 	supplierpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/supplier"
+	purchaseorderpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/expenditure/purchase_order"
 )
 
 // ModuleDeps holds all dependencies for the supplier module.
@@ -42,6 +43,9 @@ type ModuleDeps struct {
 
 	// Audit history
 	ListAuditHistory func(ctx context.Context, req *auditlog.ListAuditRequest) (*auditlog.ListAuditResponse, error)
+
+	// Purchase orders
+	ListPurchaseOrders func(ctx context.Context, req *purchaseorderpb.ListPurchaseOrdersRequest) (*purchaseorderpb.ListPurchaseOrdersResponse, error)
 }
 
 // Module holds all constructed supplier views.
@@ -94,6 +98,7 @@ func NewModule(deps *ModuleDeps) *Module {
 		AuditOps: auditlog.AuditOps{
 			ListAuditHistory: deps.ListAuditHistory,
 		},
+		ListPurchaseOrders: deps.ListPurchaseOrders,
 	}
 
 	return &Module{

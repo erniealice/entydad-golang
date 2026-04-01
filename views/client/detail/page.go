@@ -22,6 +22,7 @@ import (
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
 	clientpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client"
 	clientcategorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client_category"
+	subscriptionpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/subscription"
 )
 
 // DetailViewDeps holds view dependencies.
@@ -31,6 +32,7 @@ type DetailViewDeps struct {
 	ListCategories       func(ctx context.Context, req *categorypb.ListCategoriesRequest) (*categorypb.ListCategoriesResponse, error)
 	ListClientCategories func(ctx context.Context, req *clientcategorypb.ListClientCategoriesRequest) (*clientcategorypb.ListClientCategoriesResponse, error)
 	ListRevenues         func(ctx context.Context, collection string) ([]map[string]any, error)
+	ListSubscriptions    func(ctx context.Context, req *subscriptionpb.ListSubscriptionsRequest) (*subscriptionpb.ListSubscriptionsResponse, error)
 	Labels               entydad.ClientLabels
 	CommonLabels         pyeza.CommonLabels
 	TableLabels          types.TableLabels
@@ -63,6 +65,15 @@ type OrderRow struct {
 	Amount    string
 	Status    string
 	Variant   string
+}
+
+// SubscriptionRow represents a single subscription/engagement in the subscriptions tab.
+type SubscriptionRow struct {
+	ID        string
+	Name      string
+	Plan      string
+	DateStart string
+	DateEnd   string
 }
 
 // PageData holds the data for the client detail page.
@@ -107,6 +118,8 @@ type PageData struct {
 	AuditHasNext    bool
 	AuditNextCursor string
 	AuditHistoryURL string
+	// Subscriptions tab
+	Subscriptions []SubscriptionRow
 }
 
 // NewView creates the client detail view.
@@ -256,6 +269,7 @@ func buildTabItems(id string, deps *DetailViewDeps) []pyeza.TabItem {
 	return []pyeza.TabItem{
 		{Key: "basic", Label: deps.Labels.Detail.Tabs.Info, Href: base + "?tab=basic", HxGet: action + "basic", Icon: "icon-info"},
 		{Key: "history", Label: deps.Labels.Detail.Tabs.PurchaseHistory, Href: base + "?tab=history", HxGet: action + "history", Icon: "icon-shopping-bag"},
+		{Key: "subscriptions", Label: "Subscriptions", Href: base + "?tab=subscriptions", HxGet: action + "subscriptions", Icon: "icon-file-text"},
 		{Key: "attachments", Label: deps.Labels.Detail.Tabs.Attachments, Href: base + "?tab=attachments", HxGet: action + "attachments", Icon: "icon-paperclip"},
 		{Key: "audit-history", Label: "History", Href: base + "?tab=audit-history", HxGet: action + "audit-history", Icon: "icon-clock"},
 	}
@@ -338,6 +352,8 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 		case "history":
 			pageData.PurchaseStats, pageData.Orders = loadPurchaseHistory(ctx, deps, id)
 			pageData.HasOrders = len(pageData.Orders) > 0
+		case "subscriptions":
+			pageData.Subscriptions = loadClientSubscriptions(ctx, deps, id)
 		case "attachments":
 			if deps.ListAttachments != nil {
 				cfg := attachmentConfig(deps)
@@ -382,6 +398,50 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 		}
 		return view.OK(templateName, pageData)
 	})
+}
+
+// loadClientSubscriptions fetches active subscriptions for a client.
+func loadClientSubscriptions(ctx context.Context, deps *DetailViewDeps, clientID string) []SubscriptionRow {
+	if deps.ListSubscriptions == nil {
+		return nil
+	}
+	resp, err := deps.ListSubscriptions(ctx, &subscriptionpb.ListSubscriptionsRequest{
+		Filters: &categorypb.FilterRequest{
+			Filters: []*categorypb.TypedFilter{
+				{
+					Field: "client_id",
+					FilterType: &categorypb.TypedFilter_StringFilter{
+						StringFilter: &categorypb.StringFilter{
+							Value:    clientID,
+							Operator: categorypb.StringOperator_STRING_EQUALS,
+						},
+					},
+				},
+			},
+		},
+	})
+	if err != nil {
+		log.Printf("Failed to load subscriptions for client %s: %v", clientID, err)
+		return nil
+	}
+	var rows []SubscriptionRow
+	for _, s := range resp.GetData() {
+		if !s.GetActive() {
+			continue
+		}
+		planName := ""
+		if pp := s.GetPricePlan(); pp != nil {
+			planName = pp.GetName()
+		}
+		rows = append(rows, SubscriptionRow{
+			ID:        s.GetId(),
+			Name:      s.GetName(),
+			Plan:      planName,
+			DateStart: s.GetDateStartString(),
+			DateEnd:   s.GetDateEndString(),
+		})
+	}
+	return rows
 }
 
 // clientDisplayName returns the client's display name from the embedded user.

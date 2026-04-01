@@ -16,6 +16,7 @@ import (
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
 	clientpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client"
 	clientcategorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client_category"
+	subscriptionpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/subscription"
 	"github.com/erniealice/hybra-golang/views/attachment"
 	"github.com/erniealice/hybra-golang/views/auditlog"
 )
@@ -44,6 +45,8 @@ type ModuleDeps struct {
 	DeleteClientCategory func(ctx context.Context, req *clientcategorypb.DeleteClientCategoryRequest) (*clientcategorypb.DeleteClientCategoryResponse, error)
 	// Revenue listing (for detail view)
 	ListRevenues func(ctx context.Context, collection string) ([]map[string]any, error)
+	// Subscription listing (for detail view)
+	ListSubscriptions func(ctx context.Context, req *subscriptionpb.ListSubscriptionsRequest) (*subscriptionpb.ListSubscriptionsResponse, error)
 
 	// Attachment operations
 	UploadFile       func(ctx context.Context, bucket, key string, content []byte, contentType string) error
@@ -102,6 +105,7 @@ func NewModule(deps *ModuleDeps) *Module {
 		ListCategories:       deps.ListCategories,
 		ListClientCategories: deps.ListClientCategories,
 		ListRevenues:         deps.ListRevenues,
+		ListSubscriptions:    deps.ListSubscriptions,
 		Labels:               deps.Labels,
 		CommonLabels:         deps.CommonLabels,
 		AttachmentOps: attachment.AttachmentOps{

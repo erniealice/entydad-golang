@@ -181,6 +181,9 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 				clientDeps.CreateClientCategory = uc.Entity.ClientCategory.CreateClientCategory.Execute
 				clientDeps.DeleteClientCategory = uc.Entity.ClientCategory.DeleteClientCategory.Execute
 			}
+			if uc.Subscription != nil && uc.Subscription.Subscription != nil {
+				clientDeps.ListSubscriptions = uc.Subscription.Subscription.ListSubscriptions.Execute
+			}
 			clientmod.NewModule(clientDeps).RegisterRoutes(ctx.Routes)
 		}
 
@@ -363,6 +366,9 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 				supplierDeps.ReadSupplier = uc.Entity.Supplier.ReadSupplier.Execute
 				supplierDeps.UpdateSupplier = uc.Entity.Supplier.UpdateSupplier.Execute
 				supplierDeps.DeleteSupplier = uc.Entity.Supplier.DeleteSupplier.Execute
+			}
+			if uc.Expenditure != nil && uc.Expenditure.PurchaseOrder != nil && uc.Expenditure.PurchaseOrder.ListPurchaseOrders != nil {
+				supplierDeps.ListPurchaseOrders = uc.Expenditure.PurchaseOrder.ListPurchaseOrders.Execute
 			}
 			suppliermod.NewModule(supplierDeps).RegisterRoutes(ctx.Routes)
 		}

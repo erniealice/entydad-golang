@@ -17,6 +17,7 @@ import (
 	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
 
 	supplierpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/supplier"
+	purchaseorderpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/expenditure/purchase_order"
 )
 
 // DetailViewDeps holds view dependencies.
@@ -32,6 +33,18 @@ type DetailViewDeps struct {
 
 	// Audit log operations (embedded from hybra)
 	auditlog.AuditOps
+
+	ListPurchaseOrders func(ctx context.Context, req *purchaseorderpb.ListPurchaseOrdersRequest) (*purchaseorderpb.ListPurchaseOrdersResponse, error)
+}
+
+// PurchaseOrderRow holds display data for a single purchase order row.
+type PurchaseOrderRow struct {
+	ID          string
+	PONumber    string
+	Status      string
+	TotalAmount string
+	Currency    string
+	OrderDate   string
 }
 
 // PageData holds the data for the supplier detail page.
@@ -82,6 +95,8 @@ type PageData struct {
 	AuditHasNext    bool
 	AuditNextCursor string
 	AuditHistoryURL string
+	// Purchase Orders tab
+	PurchaseOrders []PurchaseOrderRow
 }
 
 // NewView creates the supplier detail view.
@@ -121,6 +136,25 @@ func NewView(deps *DetailViewDeps) view.View {
 		}
 
 		switch activeTab {
+		case "purchase-orders":
+			if deps.ListPurchaseOrders != nil {
+				supplierId := id
+				poResp, poErr := deps.ListPurchaseOrders(ctx, &purchaseorderpb.ListPurchaseOrdersRequest{
+					SupplierId: &supplierId,
+				})
+				if poErr == nil && poResp != nil {
+					for _, po := range poResp.GetData() {
+						pageData.PurchaseOrders = append(pageData.PurchaseOrders, PurchaseOrderRow{
+							ID:          po.GetId(),
+							PONumber:    po.GetPoNumber(),
+							Status:      po.GetStatus(),
+							TotalAmount: fmt.Sprintf("%.2f", po.GetTotalAmount()),
+							Currency:    po.GetCurrency(),
+							OrderDate:   po.GetOrderDateString(),
+						})
+					}
+				}
+			}
 		case "attachments":
 			loadAttachments(ctx, deps, id, pageData)
 		case "audit-history":
@@ -174,6 +208,25 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 		pageData := buildPageData(supplier, id, tab, viewCtx, deps)
 
 		switch tab {
+		case "purchase-orders":
+			if deps.ListPurchaseOrders != nil {
+				supplierId := id
+				poResp, poErr := deps.ListPurchaseOrders(ctx, &purchaseorderpb.ListPurchaseOrdersRequest{
+					SupplierId: &supplierId,
+				})
+				if poErr == nil && poResp != nil {
+					for _, po := range poResp.GetData() {
+						pageData.PurchaseOrders = append(pageData.PurchaseOrders, PurchaseOrderRow{
+							ID:          po.GetId(),
+							PONumber:    po.GetPoNumber(),
+							Status:      po.GetStatus(),
+							TotalAmount: fmt.Sprintf("%.2f", po.GetTotalAmount()),
+							Currency:    po.GetCurrency(),
+							OrderDate:   po.GetOrderDateString(),
+						})
+					}
+				}
+			}
 		case "attachments":
 			loadAttachments(ctx, deps, id, pageData)
 		case "audit-history":
@@ -328,6 +381,7 @@ func buildTabItems(id string, deps *DetailViewDeps) []pyeza.TabItem {
 	action := route.ResolveURL(routes.TabActionURL, "id", id, "tab", "")
 	return []pyeza.TabItem{
 		{Key: "info", Label: deps.Labels.Detail.InfoTab, Href: base + "?tab=info", HxGet: action + "info", Icon: "icon-info"},
+		{Key: "purchase-orders", Label: "Purchase Orders", Href: base + "?tab=purchase-orders", HxGet: action + "purchase-orders", Icon: "icon-shopping-cart"},
 		{Key: "attachments", Label: deps.Labels.Detail.AttachmentsTab, Href: base + "?tab=attachments", HxGet: action + "attachments", Icon: "icon-paperclip"},
 		{Key: "audit-history", Label: "History", Href: base + "?tab=audit-history", HxGet: action + "audit-history", Icon: "icon-clock"},
 	}
