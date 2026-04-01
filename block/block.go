@@ -344,7 +344,11 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 					return nil, nil
 				},
 				SetActive: func(fctx context.Context, id string, active bool) error {
-					_, err := db.Update(fctx, "supplier", id, map[string]any{"active": active})
+					status := "blocked"
+					if active {
+						status = "active"
+					}
+					_, err := db.Update(fctx, "supplier", id, map[string]any{"active": active, "status": status})
 					return err
 				},
 				UploadFile:       uploadFile,

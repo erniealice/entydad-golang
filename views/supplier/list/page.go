@@ -223,13 +223,15 @@ func buildTableRows(suppliers []*supplierpb.Supplier, status string, l entydad.S
 // supplierStatus returns the effective status string from a supplier record.
 // Uses the explicit Status field if set, otherwise falls back to Active bool.
 func supplierStatus(s *supplierpb.Supplier) string {
+	// Check active flag first — a soft-deleted supplier is always blocked
+	// regardless of its status field
+	if !s.GetActive() {
+		return "blocked"
+	}
 	if st := s.GetStatus(); st != "" {
 		return st
 	}
-	if s.GetActive() {
-		return "active"
-	}
-	return "blocked"
+	return "active"
 }
 
 func statusPageTitle(l entydad.SupplierLabels, status string) string {
@@ -307,7 +309,7 @@ func buildRowActions(id, companyName, status string, isInUse bool, l entydad.Sup
 	switch status {
 	case "active":
 		actions = append(actions, types.TableAction{
-			Type: "deactivate", Label: l.Actions.Block, Action: "block",
+			Type: "deactivate", Label: l.Actions.Block, Action: "deactivate",
 			URL: routes.SetStatusURL + "?status=blocked", ItemName: companyName,
 			ConfirmTitle:   l.Actions.Block,
 			ConfirmMessage: fmt.Sprintf(sl.Confirm.Block, companyName),
