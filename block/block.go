@@ -19,6 +19,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/erniealice/espyna-golang/consumer"
 	"github.com/erniealice/espyna-golang/contrib/postgres/reference"
@@ -212,7 +213,7 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 				CreateWorkspaceUser:          uc.Entity.WorkspaceUser.CreateWorkspaceUser.Execute,
 				ListWorkspaceUsers:           uc.Entity.WorkspaceUser.ListWorkspaceUsers.Execute,
 				GetWorkspaceUserItemPageData: uc.Entity.WorkspaceUser.GetWorkspaceUserItemPageData.Execute,
-				DefaultWorkspaceID:           "default-workspace",
+				DefaultWorkspaceID:           getDefaultWorkspaceID(),
 				CreateWorkspaceUserRole:      uc.Entity.WorkspaceUserRole.CreateWorkspaceUserRole.Execute,
 				DeleteWorkspaceUserRole:      uc.Entity.WorkspaceUserRole.DeleteWorkspaceUserRole.Execute,
 				ListRoles:                    uc.Entity.Role.ListRoles.Execute,
@@ -405,6 +406,15 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 type UpdateableSource interface {
 	entydad.DataSource
 	Update(ctx context.Context, collection, id string, data map[string]any) (map[string]any, error)
+}
+
+// getDefaultWorkspaceID returns the default workspace ID from the environment,
+// falling back to "default-workspace" if the env var is not set.
+func getDefaultWorkspaceID() string {
+	if v := os.Getenv("DEFAULT_WORKSPACE_ID"); v != "" {
+		return v
+	}
+	return "default-workspace"
 }
 
 // ---------------------------------------------------------------------------

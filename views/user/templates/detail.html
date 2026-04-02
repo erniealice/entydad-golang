@@ -19,10 +19,10 @@
             {{template "user-tab-roles" .}}
         {{else if eq .ActiveTab "security"}}
             {{template "user-tab-security" .}}
-        {{else if eq .ActiveTab "audit"}}
-            {{template "user-tab-audit" .}}
         {{else if eq .ActiveTab "attachments"}}
             {{template "attachment-tab" .}}
+        {{else if eq .ActiveTab "audit-history"}}
+            {{template "audit-history-tab" .}}
         {{end}}
     </div>
 </div>
@@ -267,14 +267,3 @@ function handlePasswordReset(evt) {
 </script>
 {{end}}
 
-{{/* =============================================
-     TAB PARTIAL: Audit Trail
-     ============================================= */}}
-{{define "user-tab-audit"}}
-<div class="tab-scroll">
-    <div class="coming-soon-panel">
-        <div class="coming-soon-title">{{.Labels.Detail.EmptyStates.AuditTitle}}</div>
-        <p class="coming-soon-text">{{.Labels.Detail.EmptyStates.AuditDesc}}</p>
-    </div>
-</div>
-{{end}}

@@ -39,6 +39,8 @@ type ActionDeps struct {
 	ListRoles                    func(ctx context.Context, req *rolepb.ListRolesRequest) (*rolepb.ListRolesResponse, error)
 	ListWorkspaceUsers           func(ctx context.Context, req *workspaceuserpb.ListWorkspaceUsersRequest) (*workspaceuserpb.ListWorkspaceUsersResponse, error)
 	GetWorkspaceUserItemPageData func(ctx context.Context, req *workspaceuserpb.GetWorkspaceUserItemPageDataRequest) (*workspaceuserpb.GetWorkspaceUserItemPageDataResponse, error)
+	CreateWorkspaceUser          func(ctx context.Context, req *workspaceuserpb.CreateWorkspaceUserRequest) (*workspaceuserpb.CreateWorkspaceUserResponse, error) // NEW
+	DefaultWorkspaceID           string                                                                                                                           // NEW
 	Labels                       entydad.UserRoleLabels
 }
 
@@ -168,6 +170,8 @@ func NewRemoveAction(deps *ActionDeps) view.View {
 }
 
 // findWorkspaceUserForAction finds the workspace_user record for a given user ID.
+// If no record is found and CreateWorkspaceUser + DefaultWorkspaceID are set, it
+// auto-creates one in the default workspace before returning.
 func findWorkspaceUserForAction(ctx context.Context, deps *ActionDeps, userID string) (*workspaceuserpb.WorkspaceUser, error) {
 	resp, err := deps.ListWorkspaceUsers(ctx, &workspaceuserpb.ListWorkspaceUsersRequest{})
 	if err != nil {
@@ -177,6 +181,24 @@ func findWorkspaceUserForAction(ctx context.Context, deps *ActionDeps, userID st
 	for _, wu := range resp.GetData() {
 		if wu.GetUserId() == userID {
 			return wu, nil
+		}
+	}
+
+	// Not found — auto-create for default workspace
+	if deps.CreateWorkspaceUser != nil && deps.DefaultWorkspaceID != "" {
+		log.Printf("Auto-creating workspace_user for user %s in workspace %s", userID, deps.DefaultWorkspaceID)
+		createResp, err := deps.CreateWorkspaceUser(ctx, &workspaceuserpb.CreateWorkspaceUserRequest{
+			Data: &workspaceuserpb.WorkspaceUser{
+				WorkspaceId: deps.DefaultWorkspaceID,
+				UserId:      userID,
+				Active:      true,
+			},
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to auto-create workspace user for %s: %w", userID, err)
+		}
+		if data := createResp.GetData(); len(data) > 0 {
+			return data[0], nil
 		}
 	}
 

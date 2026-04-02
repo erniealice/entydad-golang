@@ -149,6 +149,8 @@ func NewModule(deps *ModuleDeps) *Module {
 		ListRoles:                    deps.ListRoles,
 		ListWorkspaceUsers:           deps.ListWorkspaceUsers,
 		GetWorkspaceUserItemPageData: deps.GetWorkspaceUserItemPageData,
+		CreateWorkspaceUser:          deps.CreateWorkspaceUser,  // NEW
+		DefaultWorkspaceID:           deps.DefaultWorkspaceID,   // NEW
 		Labels:                       deps.UserRoleLabels,
 	}
 
