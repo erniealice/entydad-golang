@@ -80,10 +80,11 @@ const (
 	UserRolesAssignURL = "/action/manage/users/{id}/roles/assign"
 	UserRolesRemoveURL = "/action/manage/users/{id}/roles/remove"
 
-	RoleUsersURL       = "/app/roles/detail/{id}/users"
-	RoleUsersTableURL  = "/action/roles/detail/{id}/users/table"
-	RoleUsersAssignURL = "/action/roles/detail/{id}/users/assign"
-	RoleUsersRemoveURL = "/action/roles/detail/{id}/users/remove"
+	RoleUsersURL        = "/app/roles/detail/{id}/users"
+	RoleUsersTableURL   = "/action/roles/detail/{id}/users/table"
+	RoleUsersAssignURL  = "/action/roles/detail/{id}/users/assign"
+	RoleUsersRemoveURL  = "/action/roles/detail/{id}/users/remove"
+	RoleUsersSearchURL  = "/action/roles/detail/{id}/users/search"
 
 	// Migrated route constants: /detail/ pattern for user-roles and role-permissions
 	// Old /manage/ constants kept above for backward compatibility

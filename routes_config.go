@@ -232,6 +232,7 @@ type RoleRoutes struct {
 	UsersTableURL  string `json:"users_table_url"`
 	UsersAssignURL string `json:"users_assign_url"`
 	UsersRemoveURL string `json:"users_remove_url"`
+	UsersSearchURL string `json:"users_search_url"`
 
 	// Migrated /detail/ role-permissions routes
 	DetailPermissionsURL       string `json:"detail_permissions_url"`
@@ -269,6 +270,7 @@ func DefaultRoleRoutes() RoleRoutes {
 		UsersTableURL:  RoleUsersTableURL,
 		UsersAssignURL: RoleUsersAssignURL,
 		UsersRemoveURL: RoleUsersRemoveURL,
+		UsersSearchURL: RoleUsersSearchURL,
 
 		// Migrated /detail/ routes
 		DetailPermissionsURL:       RoleDetailPermissionsURL,
@@ -306,6 +308,7 @@ func (r RoleRoutes) RouteMap() map[string]string {
 		"role.user.table":  r.UsersTableURL,
 		"role.user.assign": r.UsersAssignURL,
 		"role.user.remove": r.UsersRemoveURL,
+		"role.user.search": r.UsersSearchURL,
 
 		// Migrated /detail/ routes
 		"role.detail_permission.list":   r.DetailPermissionsURL,

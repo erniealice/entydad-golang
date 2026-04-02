@@ -22,11 +22,12 @@ type AssignFormLabels struct {
 
 // AssignFormData is the template data for the assign user drawer form.
 type AssignFormData struct {
-	FormAction   string
-	RoleID       string
-	Labels       AssignFormLabels
-	UserOptions  []types.SelectOption
-	CommonLabels any
+	FormAction     string
+	RoleID         string
+	Labels         AssignFormLabels
+	UserOptions    []types.SelectOption // kept for backward compatibility
+	SearchUsersURL string               // for server-side auto-complete
+	CommonLabels   any
 }
 
 // ActionDeps holds dependencies for role-user action handlers.
@@ -94,11 +95,12 @@ func NewAssignAction(deps *ActionDeps) view.View {
 			}
 
 			return view.OK("role-user-assign-form", &AssignFormData{
-				FormAction:   route.ResolveURL(deps.Routes.UsersAssignURL, "id", roleID),
-				RoleID:       roleID,
-				Labels:       AssignFormLabels{User: deps.Labels.Form.User},
-				UserOptions:  options,
-				CommonLabels: nil,
+				FormAction:     route.ResolveURL(deps.Routes.UsersAssignURL, "id", roleID),
+				RoleID:         roleID,
+				Labels:         AssignFormLabels{User: deps.Labels.Form.User},
+				UserOptions:    options,
+				SearchUsersURL: route.ResolveURL(deps.Routes.UsersSearchURL, "id", roleID),
+				CommonLabels:   nil,
 			})
 		}
 

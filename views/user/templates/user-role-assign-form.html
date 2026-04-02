@@ -7,12 +7,13 @@ Data: .UserID, .FormAction, .Labels, .RoleOptions, .CommonLabels
 
     <div class="sheet-body">
         <div class="form-row single">
-            {{template "form-group" (dict
-                "Type" "select"
+            {{template "auto-complete" (dict
+                "ID" "role-search"
                 "Name" "role_id"
                 "Label" .Labels.Role
                 "Options" .RoleOptions
                 "Required" true
+                "Placeholder" "Search roles..."
             )}}
         </div>
     </div>

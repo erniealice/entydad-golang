@@ -19,6 +19,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 
 	"github.com/erniealice/espyna-golang/consumer"
@@ -29,15 +30,33 @@ import (
 	locationmod "github.com/erniealice/entydad-golang/views/location"
 	permissionmod "github.com/erniealice/entydad-golang/views/permission"
 	rolemod "github.com/erniealice/entydad-golang/views/role"
+	roleusers "github.com/erniealice/entydad-golang/views/role/users"
 	suppliermod "github.com/erniealice/entydad-golang/views/supplier"
 	usermod "github.com/erniealice/entydad-golang/views/user"
 	userdashboard "github.com/erniealice/entydad-golang/views/user/dashboard"
-	roleusers "github.com/erniealice/entydad-golang/views/role/users"
 	workspacemod "github.com/erniealice/entydad-golang/views/workspace"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
 	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
 	pyeza "github.com/erniealice/pyeza-golang"
 )
+
+// routeRegistrarFull — optional extension for raw http.HandlerFunc routes.
+// Apps that implement HandleFunc (e.g., service-admin chi router wrapper) can
+// register JSON endpoints and other raw HTTP handlers. Apps that don't will skip.
+type routeRegistrarFull interface {
+	pyeza.RouteRegistrar
+	HandleFunc(method, path string, handler http.HandlerFunc, middlewares ...string)
+}
+
+// handleFunc registers an http.HandlerFunc route if the registrar supports it.
+// Silently skips if the registrar does not implement HandleFunc.
+func handleFunc(r pyeza.RouteRegistrar, method, path string, handler http.HandlerFunc) {
+	if full, ok := r.(routeRegistrarFull); ok {
+		full.HandleFunc(method, path, handler)
+		return
+	}
+	log.Printf("entydad.Block: RouteRegistrar does not support HandleFunc — skipping %s %s", method, path)
+}
 
 // BlockOption configures which entydad modules are registered by Block().
 type BlockOption func(*blockConfig)
@@ -263,6 +282,11 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 				DeleteAttachment:        deleteAttachment,
 				NewID:                   newAttachmentID,
 			}).RegisterRoutes(ctx.Routes)
+
+			// Role-User search (http.HandlerFunc — uses HandleFunc, not GET)
+			handleFunc(ctx.Routes, "GET", routes.Role.UsersSearchURL, roleusers.NewSearchUsersAction(&roleusers.SearchDeps{
+				ListWorkspaceUsers: uc.Entity.WorkspaceUser.ListWorkspaceUsers.Execute,
+			}))
 		}
 
 		if cfg.enableAll || cfg.location {

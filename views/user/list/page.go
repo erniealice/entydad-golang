@@ -230,13 +230,13 @@ func buildTableRows(users []*userpb.User, status string, l entydad.UserLabels, s
 		email := u.GetEmailAddress()
 
 		// Build role chips for this user
-		var roleNames []string
+		var roleChips []types.ChipData
 		if userRolesMap != nil {
 			for _, rb := range userRolesMap[id] {
-				roleNames = append(roleNames, rb.Name)
+				roleChips = append(roleChips, types.ChipData{Label: rb.Name, Color: rb.Color})
 			}
 		}
-		rolesCell := types.BuildChipCellFromLabels(roleNames, 2)
+		rolesCell := types.BuildChipCellFromChips(roleChips, 2)
 
 		actions := []types.TableAction{
 			{Type: "view", Label: l.Actions.View, Action: "view", Href: route.ResolveURL(routes.DetailURL, "id", id)},
