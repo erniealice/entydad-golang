@@ -12,10 +12,10 @@ import (
 	supplierdetail "github.com/erniealice/entydad-golang/views/supplier/detail"
 	supplierlist "github.com/erniealice/entydad-golang/views/supplier/list"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
-	"github.com/erniealice/hybra-golang/views/attachment"
-	"github.com/erniealice/hybra-golang/views/auditlog"
 	supplierpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/supplier"
 	purchaseorderpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/expenditure/purchase_order"
+	"github.com/erniealice/hybra-golang/views/attachment"
+	"github.com/erniealice/hybra-golang/views/auditlog"
 )
 
 // PaymentTermOption is re-exported from action for use by callers wiring ModuleDeps.

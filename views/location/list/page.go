@@ -67,7 +67,7 @@ func NewView(deps *ListViewDeps) view.View {
 				CacheVersion:   viewCtx.CacheVersion,
 				Title:          statusTitle(deps.Labels, status),
 				CurrentPath:    viewCtx.CurrentPath,
-				ActiveNav:      "locations",
+				ActiveNav:      "location",
 				ActiveSubNav:   "locations-" + status,
 				HeaderTitle:    statusTitle(deps.Labels, status),
 				HeaderSubtitle: statusSubtitle(deps.Labels, status),
@@ -81,7 +81,7 @@ func NewView(deps *ListViewDeps) view.View {
 		// KB help content
 		if viewCtx.Translations != nil {
 			if provider, ok := viewCtx.Translations.(*lynguaV1.TranslationProvider); ok {
-				if kb, _ := provider.LoadKBIfExists(viewCtx.Lang, viewCtx.BusinessType, "locations"); kb != nil {
+				if kb, _ := provider.LoadKBIfExists(viewCtx.Lang, viewCtx.BusinessType, "location"); kb != nil {
 					pageData.HasHelp = true
 					pageData.HelpContent = kb.Body
 				}
@@ -155,16 +155,16 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 	// Build ServerPagination
 	totalRows := int(resp.GetPagination().GetTotalItems())
 	sp := &types.ServerPagination{
-		Enabled:       true,
-		Mode:          "offset",
-		CurrentPage:   p.Page,
-		PageSize:      p.PageSize,
-		TotalRows:     totalRows,
-		TotalPages:    int(math.Ceil(float64(totalRows) / float64(p.PageSize))),
-		SearchQuery:   p.Search,
-		SortColumn:    p.SortColumn,
-		SortDirection: p.SortDir,
-		FiltersJSON:   p.FiltersRaw,
+		Enabled:           true,
+		Mode:              "offset",
+		CurrentPage:       p.Page,
+		PageSize:          p.PageSize,
+		TotalRows:         totalRows,
+		TotalPages:        int(math.Ceil(float64(totalRows) / float64(p.PageSize))),
+		SearchQuery:       p.Search,
+		SortColumn:        p.SortColumn,
+		SortDirection:     p.SortDir,
+		FiltersJSON:       p.FiltersRaw,
 		PaginationURL:     refreshURL,
 		PaginationBodyURL: refreshURL,
 	}
@@ -206,10 +206,16 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 }
 
 func locationColumns(l entydad.LocationLabels) []types.TableColumn {
+	tzLabel := l.Columns.Timezone
+	if tzLabel == "" {
+		tzLabel = "Timezone"
+	}
 	return []types.TableColumn{
 		{Key: "name", Label: l.Columns.Name, Sortable: true, Filterable: true, FilterType: types.FilterTypeString},
 		{Key: "city", Label: l.Columns.City, Sortable: true, Filterable: true, FilterType: types.FilterTypeString},
 		{Key: "country", Label: l.Columns.Country, Sortable: true, Filterable: true, FilterType: types.FilterTypeString},
+		{Key: "timezone", Label: tzLabel, Sortable: true, Width: "160px"},
+		{Key: "location_area", Label: "Area", Sortable: true, Width: "160px"},
 		{Key: "date_created", Label: l.Columns.DateCreated, Sortable: true, Filterable: true, FilterType: types.FilterTypeDate},
 	}
 }
@@ -275,6 +281,8 @@ func buildTableRows(locations []*locationpb.Location, status string, l entydad.L
 				{Type: "text", Value: name},
 				{Type: "text", Value: address},
 				{Type: "text", Value: ""},
+				{Type: "text", Value: loc.GetTimezone()},
+				{Type: "text", Value: loc.GetLocationAreaId()},
 				types.DateTimeCell(loc.GetDateCreatedString(), types.DateReadable),
 			},
 			DataAttrs: map[string]string{

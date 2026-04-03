@@ -84,7 +84,7 @@ func NewView(deps *DetailViewDeps) view.View {
 		// KB help content
 		if viewCtx.Translations != nil {
 			if provider, ok := viewCtx.Translations.(*lynguaV1.TranslationProvider); ok {
-				if kb, _ := provider.LoadKBIfExists(viewCtx.Lang, viewCtx.BusinessType, "users-detail"); kb != nil {
+				if kb, _ := provider.LoadKBIfExists(viewCtx.Lang, viewCtx.BusinessType, "user-detail"); kb != nil {
 					pageData.HasHelp = true
 					pageData.HelpContent = kb.Body
 				}
@@ -167,7 +167,7 @@ func buildPageData(ctx context.Context, deps *DetailViewDeps, id, activeTab stri
 			CacheVersion:   viewCtx.CacheVersion,
 			Title:          displayName,
 			CurrentPath:    viewCtx.CurrentPath,
-			ActiveNav:      "users",
+			ActiveNav:      "user",
 			ActiveSubNav:   "users-active",
 			HeaderTitle:    displayName,
 			HeaderSubtitle: email,
@@ -192,7 +192,7 @@ func buildPageData(ctx context.Context, deps *DetailViewDeps, id, activeTab stri
 
 	// Load tab-specific data
 	switch activeTab {
-	case "roles":
+	case "role":
 		tableConfig, err := buildRolesTable(ctx, deps, id, perms)
 		if err != nil {
 			log.Printf("Failed to build roles table for user %s: %v", id, err)
@@ -242,7 +242,7 @@ func buildTabItems(id string, labels entydad.UserLabels, roleCount int, routes e
 	action := route.ResolveURL(routes.TabActionURL, "id", id, "tab", "")
 	return []pyeza.TabItem{
 		{Key: "info", Label: labels.Detail.Tabs.Info, Href: base + "?tab=info", HxGet: action + "info", Icon: "icon-info", Count: 0, Disabled: false},
-		{Key: "roles", Label: labels.Detail.Tabs.Roles, Href: base + "?tab=roles", HxGet: action + "roles", Icon: "icon-shield", Count: roleCount, Disabled: false},
+		{Key: "role", Label: labels.Detail.Tabs.Roles, Href: base + "?tab=roles", HxGet: action + "role", Icon: "icon-shield", Count: roleCount, Disabled: false},
 		{Key: "security", Label: labels.Detail.Tabs.Security, Href: base + "?tab=security", HxGet: action + "security", Icon: "icon-shield-check", Count: 0, Disabled: false},
 		{Key: "attachments", Label: labels.Detail.AttachmentsTab, Href: base + "?tab=attachments", HxGet: action + "attachments", Icon: "icon-paperclip", Count: 0, Disabled: false},
 		{Key: "audit-history", Label: "History", Href: base + "?tab=audit-history", HxGet: action + "audit-history", Icon: "icon-clock"},

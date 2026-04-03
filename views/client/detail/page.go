@@ -8,7 +8,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/erniealice/hybra-golang/views/attachment"
 	"github.com/erniealice/hybra-golang/views/auditlog"
@@ -28,19 +27,20 @@ import (
 
 // DetailViewDeps holds view dependencies.
 type DetailViewDeps struct {
-	Routes               entydad.ClientRoutes
-	ReadClient           func(ctx context.Context, req *clientpb.ReadClientRequest) (*clientpb.ReadClientResponse, error)
-	ListCategories       func(ctx context.Context, req *categorypb.ListCategoriesRequest) (*categorypb.ListCategoriesResponse, error)
-	ListClientCategories func(ctx context.Context, req *clientcategorypb.ListClientCategoriesRequest) (*clientcategorypb.ListClientCategoriesResponse, error)
-	ListRevenues         func(ctx context.Context, collection string) ([]map[string]any, error)
-	ListSubscriptions      func(ctx context.Context, req *subscriptionpb.ListSubscriptionsRequest) (*subscriptionpb.ListSubscriptionsResponse, error)
-	SubscriptionAddURL     string
-	SubscriptionDetailURL  string
-	SubscriptionEditURL    string
-	SubscriptionDeleteURL  string
-	Labels               entydad.ClientLabels
-	CommonLabels         pyeza.CommonLabels
-	TableLabels          types.TableLabels
+	Routes                entydad.ClientRoutes
+	ReadClient            func(ctx context.Context, req *clientpb.ReadClientRequest) (*clientpb.ReadClientResponse, error)
+	ListCategories        func(ctx context.Context, req *categorypb.ListCategoriesRequest) (*categorypb.ListCategoriesResponse, error)
+	ListClientCategories  func(ctx context.Context, req *clientcategorypb.ListClientCategoriesRequest) (*clientcategorypb.ListClientCategoriesResponse, error)
+	ListRevenues                func(ctx context.Context, collection string) ([]map[string]any, error)
+	ListSubscriptions           func(ctx context.Context, req *subscriptionpb.ListSubscriptionsRequest) (*subscriptionpb.ListSubscriptionsResponse, error)
+	GetSubscriptionListPageData func(ctx context.Context, req *subscriptionpb.GetSubscriptionListPageDataRequest) (*subscriptionpb.GetSubscriptionListPageDataResponse, error)
+	SubscriptionAddURL    string
+	SubscriptionDetailURL string
+	SubscriptionEditURL   string
+	SubscriptionDeleteURL string
+	Labels                entydad.ClientLabels
+	CommonLabels          pyeza.CommonLabels
+	TableLabels           types.TableLabels
 
 	// Attachment operations (embedded from hybra)
 	attachment.AttachmentOps
@@ -91,12 +91,12 @@ type PageData struct {
 	TabItems           []pyeza.TabItem
 	EditURL            string
 	SubscriptionAddURL string
-	ClientName          string
-	RepresentativeName  string
-	ClientEmail         string
-	ClientPhone         string
-	ClientStatus    string
-	StatusVariant   string
+	ClientName         string
+	RepresentativeName string
+	ClientEmail        string
+	ClientPhone        string
+	ClientStatus       string
+	StatusVariant      string
 	// CRM fields
 	Name          string
 	StreetAddress string
@@ -192,7 +192,7 @@ func NewView(deps *DetailViewDeps) view.View {
 				CacheVersion:   viewCtx.CacheVersion,
 				Title:          clientName,
 				CurrentPath:    viewCtx.CurrentPath,
-				ActiveNav:      "clients",
+				ActiveNav:      "client",
 				HeaderTitle:    clientName,
 				HeaderSubtitle: clientEmail,
 				HeaderIcon:     "icon-user",
@@ -205,27 +205,27 @@ func NewView(deps *DetailViewDeps) view.View {
 			TabItems:           tabItems,
 			EditURL:            route.ResolveURL(deps.Routes.EditURL, "id", id),
 			SubscriptionAddURL: deps.SubscriptionAddURL + "?client_id=" + id + "&client_name=" + url.QueryEscape(clientName),
-			ClientName:          clientName,
-			RepresentativeName:  representativeName,
-			ClientEmail:     clientEmail,
-			ClientPhone:     clientPhone,
-			ClientStatus:    clientStatus,
-			StatusVariant:   statusVariant,
-			Name:          name,
-			StreetAddress: streetAddress,
-			City:          city,
-			Province:      province,
-			PostalCode:    postalCode,
-			Notes:         notes,
-			FullAddress:   fullAddress,
-			Tags:          tags,
-			HasName:       hasName,
-			HasAddress:    hasAddress,
-			HasNotes:      hasNotes,
-			HasTags:       hasTags,
-			PurchaseStats:   stats,
-			Orders:          orders,
-			HasOrders:       hasOrders,
+			ClientName:         clientName,
+			RepresentativeName: representativeName,
+			ClientEmail:        clientEmail,
+			ClientPhone:        clientPhone,
+			ClientStatus:       clientStatus,
+			StatusVariant:      statusVariant,
+			Name:               name,
+			StreetAddress:      streetAddress,
+			City:               city,
+			Province:           province,
+			PostalCode:         postalCode,
+			Notes:              notes,
+			FullAddress:        fullAddress,
+			Tags:               tags,
+			HasName:            hasName,
+			HasAddress:         hasAddress,
+			HasNotes:           hasNotes,
+			HasTags:            hasTags,
+			PurchaseStats:      stats,
+			Orders:             orders,
+			HasOrders:          hasOrders,
 		}
 
 		// Load tab-specific data for the active tab on full page load
@@ -239,7 +239,7 @@ func NewView(deps *DetailViewDeps) view.View {
 		// KB help content
 		if viewCtx.Translations != nil {
 			if provider, ok := viewCtx.Translations.(*lynguaV1.TranslationProvider); ok {
-				if kb, _ := provider.LoadKBIfExists(viewCtx.Lang, viewCtx.BusinessType, "clients-detail"); kb != nil {
+				if kb, _ := provider.LoadKBIfExists(viewCtx.Lang, viewCtx.BusinessType, "client-detail"); kb != nil {
 					pageData.HasHelp = true
 					pageData.HelpContent = kb.Body
 				}
@@ -314,12 +314,12 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 			Labels:             deps.Labels,
 			ActiveTab:          tab,
 			TabItems:           buildTabItems(id, deps),
-			ClientName:          clientName,
-			RepresentativeName:  representativeName,
-			ClientEmail:         clientEmail,
-			ClientPhone:         clientPhone,
-			ClientStatus:        clientStatus,
-			StatusVariant:       statusVariant,
+			ClientName:         clientName,
+			RepresentativeName: representativeName,
+			ClientEmail:        clientEmail,
+			ClientPhone:        clientPhone,
+			ClientStatus:       clientStatus,
+			StatusVariant:      statusVariant,
 			EditURL:            route.ResolveURL(deps.Routes.EditURL, "id", id),
 			SubscriptionAddURL: deps.SubscriptionAddURL + "?client_id=" + id + "&client_name=" + url.QueryEscape(clientName),
 		}
@@ -353,12 +353,14 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 }
 
 // loadClientSubscriptions fetches active subscriptions for a client
-// using the ListSubscriptions use case with a client_id filter.
+// using GetSubscriptionListPageData with a client_id filter so that
+// PricePlan (and its embedded Plan) are populated via JOIN, enabling
+// the Plan name column to display correctly.
 func loadClientSubscriptions(ctx context.Context, deps *DetailViewDeps, clientID string) []SubscriptionRow {
-	if deps.ListSubscriptions == nil {
+	if deps.GetSubscriptionListPageData == nil {
 		return nil
 	}
-	resp, err := deps.ListSubscriptions(ctx, &subscriptionpb.ListSubscriptionsRequest{
+	resp, err := deps.GetSubscriptionListPageData(ctx, &subscriptionpb.GetSubscriptionListPageDataRequest{
 		Filters: &categorypb.FilterRequest{
 			Filters: []*categorypb.TypedFilter{
 				{
@@ -379,23 +381,21 @@ func loadClientSubscriptions(ctx context.Context, deps *DetailViewDeps, clientID
 		return nil
 	}
 	var rows []SubscriptionRow
-	for _, s := range resp.GetData() {
+	for _, s := range resp.GetSubscriptionList() {
 		if !s.GetActive() {
 			continue
 		}
 		planName := ""
 		if pp := s.GetPricePlan(); pp != nil {
-			planName = pp.GetName()
+			if p := pp.GetPlan(); p != nil {
+				planName = p.GetName()
+			}
+			if planName == "" {
+				planName = pp.GetName()
+			}
 		}
-		// Format dates: prefer string field, fall back to timestamp
-		dateStart := s.GetDateStartString()
-		if dateStart == "" && s.GetDateStart() > 0 {
-			dateStart = time.UnixMilli(s.GetDateStart()).Format("2006-01-02")
-		}
-		dateEnd := s.GetDateEndString()
-		if dateEnd == "" && s.GetDateEnd() > 0 {
-			dateEnd = time.UnixMilli(s.GetDateEnd()).Format("2006-01-02")
-		}
+		dateStart := s.GetDateStart()
+		dateEnd := s.GetDateEnd()
 		rows = append(rows, SubscriptionRow{
 			ID:        s.GetId(),
 			Name:      s.GetName(),

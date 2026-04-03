@@ -42,6 +42,17 @@ const (
 	LocationAttachmentDeleteURL = "/action/locations/{id}/attachments/delete"
 	LocationEditDetailURL       = "/action/locations/edit-detail/{id}"
 
+	LocationAreaDashboardURL     = "/app/location-areas/dashboard"
+	LocationAreaListURL          = "/app/location-areas/list/{status}"
+	LocationAreaTableURL         = "/action/location-areas/table/{status}"
+	LocationAreaDetailURL        = "/app/location-areas/{id}"
+	LocationAreaAddURL           = "/action/location-areas/add"
+	LocationAreaEditURL          = "/action/location-areas/edit/{id}"
+	LocationAreaDeleteURL        = "/action/location-areas/delete"
+	LocationAreaBulkDeleteURL    = "/action/location-areas/bulk-delete"
+	LocationAreaSetStatusURL     = "/action/location-areas/set-status"
+	LocationAreaBulkSetStatusURL = "/action/location-areas/bulk-set-status"
+
 	UserDetailURL           = "/app/users/detail/{id}"
 	UserTabActionURL        = "/action/users/{id}/tab/{tab}"
 	UserAttachmentUploadURL = "/action/users/{id}/attachments/upload"
@@ -80,11 +91,11 @@ const (
 	UserRolesAssignURL = "/action/manage/users/{id}/roles/assign"
 	UserRolesRemoveURL = "/action/manage/users/{id}/roles/remove"
 
-	RoleUsersURL        = "/app/roles/detail/{id}/users"
-	RoleUsersTableURL   = "/action/roles/detail/{id}/users/table"
-	RoleUsersAssignURL  = "/action/roles/detail/{id}/users/assign"
-	RoleUsersRemoveURL  = "/action/roles/detail/{id}/users/remove"
-	RoleUsersSearchURL  = "/action/roles/detail/{id}/users/search"
+	RoleUsersURL       = "/app/roles/detail/{id}/users"
+	RoleUsersTableURL  = "/action/roles/detail/{id}/users/table"
+	RoleUsersAssignURL = "/action/roles/detail/{id}/users/assign"
+	RoleUsersRemoveURL = "/action/roles/detail/{id}/users/remove"
+	RoleUsersSearchURL = "/action/roles/detail/{id}/users/search"
 
 	// Migrated route constants: /detail/ pattern for user-roles and role-permissions
 	// Old /manage/ constants kept above for backward compatibility

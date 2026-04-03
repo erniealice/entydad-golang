@@ -16,25 +16,28 @@ import (
 
 // FormLabels holds i18n labels for the payment term drawer form.
 type FormLabels struct {
-	Name                    string
-	NamePlaceholder         string
-	Code                    string
-	CodePlaceholder         string
-	Type                    string
-	NetDays                 string
-	DiscountDays            string
-	DiscountPercentBps      string
-	EntityScope             string
-	IsDefault               string
-	Description             string
-	DescriptionPlaceholder  string
-	DisplayOrder            string
-	Active                  string
+	Name                   string
+	NamePlaceholder        string
+	Code                   string
+	CodePlaceholder        string
+	Type                   string
+	NetDays                string
+	DiscountDays           string
+	DiscountPercentBps     string
+	EntityScope            string
+	IsDefault              string
+	Description            string
+	DescriptionPlaceholder string
+	DisplayOrder           string
+	Active                 string
 
 	// Select option labels — Type
-	TypeDueOnReceipt string
-	TypeNet          string
-	TypeCOD          string
+	TypeDueOnReceipt        string
+	TypeNet                 string
+	TypeCOD                 string
+	TypeProximate           string
+	ProximateDay            string
+	ProximateDayPlaceholder string
 
 	// Select option labels — EntityScope
 	ScopesBoth         string
@@ -57,6 +60,7 @@ type FormData struct {
 	IsDefault          bool
 	Description        string
 	DisplayOrder       string
+	ProximateDay       string
 	Active             bool
 	Labels             FormLabels
 	CommonLabels       any
@@ -64,11 +68,11 @@ type FormData struct {
 
 // Deps holds dependencies for payment term action handlers.
 type Deps struct {
-	Routes              entydad.PaymentTermRoutes
-	CreatePaymentTerm   func(ctx context.Context, req *paymenttermpb.CreatePaymentTermRequest) (*paymenttermpb.CreatePaymentTermResponse, error)
-	ReadPaymentTerm     func(ctx context.Context, req *paymenttermpb.ReadPaymentTermRequest) (*paymenttermpb.ReadPaymentTermResponse, error)
-	UpdatePaymentTerm   func(ctx context.Context, req *paymenttermpb.UpdatePaymentTermRequest) (*paymenttermpb.UpdatePaymentTermResponse, error)
-	DeletePaymentTerm   func(ctx context.Context, req *paymenttermpb.DeletePaymentTermRequest) (*paymenttermpb.DeletePaymentTermResponse, error)
+	Routes            entydad.PaymentTermRoutes
+	CreatePaymentTerm func(ctx context.Context, req *paymenttermpb.CreatePaymentTermRequest) (*paymenttermpb.CreatePaymentTermResponse, error)
+	ReadPaymentTerm   func(ctx context.Context, req *paymenttermpb.ReadPaymentTermRequest) (*paymenttermpb.ReadPaymentTermResponse, error)
+	UpdatePaymentTerm func(ctx context.Context, req *paymenttermpb.UpdatePaymentTermRequest) (*paymenttermpb.UpdatePaymentTermResponse, error)
+	DeletePaymentTerm func(ctx context.Context, req *paymenttermpb.DeletePaymentTermRequest) (*paymenttermpb.DeletePaymentTermResponse, error)
 }
 
 func formLabels(t func(string) string) FormLabels {
@@ -88,9 +92,12 @@ func formLabels(t func(string) string) FormLabels {
 		DisplayOrder:           t("paymentTerm.form.displayOrder"),
 		Active:                 t("paymentTerm.form.active"),
 
-		TypeDueOnReceipt: t("paymentTerm.form.typeDueOnReceipt"),
-		TypeNet:          t("paymentTerm.form.typeNet"),
-		TypeCOD:          t("paymentTerm.form.typeCOD"),
+		TypeDueOnReceipt:        t("paymentTerm.form.typeDueOnReceipt"),
+		TypeNet:                 t("paymentTerm.form.typeNet"),
+		TypeCOD:                 t("paymentTerm.form.typeCOD"),
+		TypeProximate:           t("paymentTerm.form.typeProximate"),
+		ProximateDay:            t("paymentTerm.form.proximateDay"),
+		ProximateDayPlaceholder: t("paymentTerm.form.proximateDayPlaceholder"),
 
 		ScopesBoth:         t("paymentTerm.form.scopesBoth"),
 		ScopesSupplierOnly: t("paymentTerm.form.scopesSupplierOnly"),
@@ -171,6 +178,7 @@ func NewAddAction(deps *Deps) view.View {
 				IsDefault:          isDefault,
 				Description:        optionalString(r.FormValue("description")),
 				DisplayOrder:       optionalInt32(r.FormValue("display_order")),
+				ProximateDay:       optionalInt32(r.FormValue("proximate_day")),
 			},
 		})
 		if err != nil {
@@ -223,6 +231,10 @@ func NewEditAction(deps *Deps) view.View {
 			if v := pt.GetDisplayOrder(); v > 0 {
 				displayOrder = strconv.FormatInt(int64(v), 10)
 			}
+			proximateDay := ""
+			if v := pt.GetProximateDay(); v > 0 {
+				proximateDay = strconv.FormatInt(int64(v), 10)
+			}
 
 			return view.OK("payment-term-drawer-form", &FormData{
 				FormAction:         route.ResolveURL(deps.Routes.EditURL, "id", id),
@@ -238,6 +250,7 @@ func NewEditAction(deps *Deps) view.View {
 				IsDefault:          pt.GetIsDefault(),
 				Description:        pt.GetDescription(),
 				DisplayOrder:       displayOrder,
+				ProximateDay:       proximateDay,
 				Active:             pt.GetActive(),
 				Labels:             formLabels(viewCtx.T),
 				CommonLabels:       nil,
@@ -267,6 +280,7 @@ func NewEditAction(deps *Deps) view.View {
 				IsDefault:          isDefault,
 				Description:        optionalString(r.FormValue("description")),
 				DisplayOrder:       optionalInt32(r.FormValue("display_order")),
+				ProximateDay:       optionalInt32(r.FormValue("proximate_day")),
 			},
 		})
 		if err != nil {
@@ -334,4 +348,3 @@ func NewBulkDeleteAction(deps *Deps) view.View {
 		return entydad.HTMXSuccess("payment-terms-table")
 	})
 }
-

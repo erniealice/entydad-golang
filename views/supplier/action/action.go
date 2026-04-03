@@ -3,6 +3,7 @@ package action
 import (
 	"context"
 	"log"
+	"math"
 	"net/http"
 	"strconv"
 
@@ -117,13 +118,13 @@ type FormData struct {
 
 // Deps holds dependencies for supplier action handlers.
 type Deps struct {
-	Routes             entydad.SupplierRoutes
-	CreateSupplier     func(ctx context.Context, req *supplierpb.CreateSupplierRequest) (*supplierpb.CreateSupplierResponse, error)
-	ReadSupplier       func(ctx context.Context, req *supplierpb.ReadSupplierRequest) (*supplierpb.ReadSupplierResponse, error)
-	UpdateSupplier     func(ctx context.Context, req *supplierpb.UpdateSupplierRequest) (*supplierpb.UpdateSupplierResponse, error)
-	DeleteSupplier     func(ctx context.Context, req *supplierpb.DeleteSupplierRequest) (*supplierpb.DeleteSupplierResponse, error)
-	SetSupplierActive  func(ctx context.Context, id string, active bool) error
-	ListPaymentTerms   func(ctx context.Context) ([]*PaymentTermOption, error)
+	Routes            entydad.SupplierRoutes
+	CreateSupplier    func(ctx context.Context, req *supplierpb.CreateSupplierRequest) (*supplierpb.CreateSupplierResponse, error)
+	ReadSupplier      func(ctx context.Context, req *supplierpb.ReadSupplierRequest) (*supplierpb.ReadSupplierResponse, error)
+	UpdateSupplier    func(ctx context.Context, req *supplierpb.UpdateSupplierRequest) (*supplierpb.UpdateSupplierResponse, error)
+	DeleteSupplier    func(ctx context.Context, req *supplierpb.DeleteSupplierRequest) (*supplierpb.DeleteSupplierResponse, error)
+	SetSupplierActive func(ctx context.Context, id string, active bool) error
+	ListPaymentTerms  func(ctx context.Context) ([]*PaymentTermOption, error)
 }
 
 func formLabels(t func(string) string) FormLabels {
@@ -211,8 +212,8 @@ func optionalInt32(s string) *int32 {
 	return &i
 }
 
-// optionalFloat64 parses a string as float64, returning nil if empty or invalid.
-func optionalFloat64(s string) *float64 {
+// optionalInt64Money parses a money string (e.g. "123.45") as int64 centavos, returning nil if empty or invalid.
+func optionalInt64Money(s string) *int64 {
 	if s == "" {
 		return nil
 	}
@@ -220,7 +221,8 @@ func optionalFloat64(s string) *float64 {
 	if err != nil {
 		return nil
 	}
-	return &v
+	i := int64(math.Round(v * 100))
+	return &i
 }
 
 // loadPaymentTerms fetches the payment term options. Returns nil slice on error (graceful degradation).
@@ -277,7 +279,7 @@ func NewAddAction(deps *Deps) view.View {
 				DefaultCurrency:    optionalString(r.FormValue("default_currency")),
 				PaymentTermId:      optionalString(r.FormValue("payment_term_id")),
 				LeadTimeDays:       optionalInt32(r.FormValue("lead_time_days")),
-				CreditLimit:        optionalFloat64(r.FormValue("credit_limit")),
+				CreditLimit:        optionalInt64Money(r.FormValue("credit_limit")),
 				Status:             optionalString(r.FormValue("status")),
 				Website:            optionalString(r.FormValue("website")),
 				Notes:              optionalString(r.FormValue("notes")),
@@ -346,7 +348,7 @@ func NewEditAction(deps *Deps) view.View {
 			}
 			creditLimit := ""
 			if cl := s.GetCreditLimit(); cl > 0 {
-				creditLimit = strconv.FormatFloat(cl, 'f', 2, 64)
+				creditLimit = strconv.FormatFloat(float64(cl)/100.0, 'f', 2, 64)
 			}
 
 			return view.OK("supplier-drawer-form", &FormData{
@@ -404,7 +406,7 @@ func NewEditAction(deps *Deps) view.View {
 				DefaultCurrency:    optionalString(r.FormValue("default_currency")),
 				PaymentTermId:      optionalString(r.FormValue("payment_term_id")),
 				LeadTimeDays:       optionalInt32(r.FormValue("lead_time_days")),
-				CreditLimit:        optionalFloat64(r.FormValue("credit_limit")),
+				CreditLimit:        optionalInt64Money(r.FormValue("credit_limit")),
 				Status:             optionalString(r.FormValue("status")),
 				Website:            optionalString(r.FormValue("website")),
 				Notes:              optionalString(r.FormValue("notes")),

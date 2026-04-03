@@ -13,8 +13,8 @@ import (
 	"github.com/erniealice/pyeza-golang/view"
 
 	"github.com/erniealice/entydad-golang"
-	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
 	roleusers "github.com/erniealice/entydad-golang/views/role/users"
+	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
 
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
 	permissionpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/permission"
@@ -83,7 +83,7 @@ func NewView(deps *DetailViewDeps) view.View {
 		// KB help content
 		if viewCtx.Translations != nil {
 			if provider, ok := viewCtx.Translations.(*lynguaV1.TranslationProvider); ok {
-				if kb, _ := provider.LoadKBIfExists(viewCtx.Lang, viewCtx.BusinessType, "roles-detail"); kb != nil {
+				if kb, _ := provider.LoadKBIfExists(viewCtx.Lang, viewCtx.BusinessType, "role-detail"); kb != nil {
 					pageData.HasHelp = true
 					pageData.HelpContent = kb.Body
 				}
@@ -182,8 +182,8 @@ func buildPageData(ctx context.Context, deps *DetailViewDeps, id, activeTab stri
 			CacheVersion:   viewCtx.CacheVersion,
 			Title:          roleName,
 			CurrentPath:    viewCtx.CurrentPath,
-			ActiveNav:      "users",
-			ActiveSubNav:   "roles",
+			ActiveNav:      "user",
+			ActiveSubNav:   "role",
 			HeaderTitle:    roleName,
 			HeaderSubtitle: roleDesc,
 			HeaderIcon:     "icon-shield",
@@ -210,7 +210,7 @@ func buildPageData(ctx context.Context, deps *DetailViewDeps, id, activeTab stri
 		} else {
 			pageData.PermissionsTable = tableConfig
 		}
-	case "users":
+	case "user":
 		tableConfig, err := buildUsersTable(ctx, deps, id, perms)
 		if err != nil {
 			log.Printf("Failed to build users table for role %s: %v", id, err)
@@ -261,7 +261,7 @@ func buildTabItems(id string, labels entydad.RoleLabels, routes entydad.RoleRout
 	return []pyeza.TabItem{
 		{Key: "info", Label: labels.Detail.Tabs.Info, Href: base + "?tab=info", HxGet: action + "info", Icon: "icon-info", Count: 0, Disabled: false},
 		{Key: "permissions", Label: labels.Detail.Tabs.Permissions, Href: base + "?tab=permissions", HxGet: action + "permissions", Icon: "icon-key", Count: permCount, Disabled: false},
-		{Key: "users", Label: labels.Detail.Tabs.Users, Href: base + "?tab=users", HxGet: action + "users", Icon: "icon-user", Count: userCount, Disabled: false},
+		{Key: "user", Label: labels.Detail.Tabs.Users, Href: base + "?tab=users", HxGet: action + "user", Icon: "icon-user", Count: userCount, Disabled: false},
 		{Key: "attachments", Label: labels.Detail.AttachmentsTab, Href: base + "?tab=attachments", HxGet: action + "attachments", Icon: "icon-paperclip", Count: 0, Disabled: false},
 		{Key: "audit-history", Label: "History", Href: base + "?tab=audit-history", HxGet: action + "audit-history", Icon: "icon-clock"},
 	}

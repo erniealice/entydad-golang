@@ -68,7 +68,7 @@ func NewView(deps *ListViewDeps) view.View {
 				CacheVersion:   viewCtx.CacheVersion,
 				Title:          statusPageTitle(deps.Labels, status),
 				CurrentPath:    viewCtx.CurrentPath,
-				ActiveNav:      "clients",
+				ActiveNav:      "client",
 				ActiveSubNav:   status,
 				HeaderTitle:    statusPageTitle(deps.Labels, status),
 				HeaderSubtitle: statusPageCaption(deps.Labels, status),
@@ -82,7 +82,7 @@ func NewView(deps *ListViewDeps) view.View {
 		// KB help content
 		if viewCtx.Translations != nil {
 			if provider, ok := viewCtx.Translations.(*lynguaV1.TranslationProvider); ok {
-				if kb, _ := provider.LoadKBIfExists(viewCtx.Lang, viewCtx.BusinessType, "clients"); kb != nil {
+				if kb, _ := provider.LoadKBIfExists(viewCtx.Lang, viewCtx.BusinessType, "client"); kb != nil {
 					pageData.HasHelp = true
 					pageData.HelpContent = kb.Body
 				}
@@ -156,16 +156,16 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 	// Build ServerPagination
 	totalRows := int(resp.GetPagination().GetTotalItems())
 	sp := &types.ServerPagination{
-		Enabled:       true,
-		Mode:          "offset",
-		CurrentPage:   p.Page,
-		PageSize:      p.PageSize,
-		TotalRows:     totalRows,
-		TotalPages:    int(math.Ceil(float64(totalRows) / float64(p.PageSize))),
-		SearchQuery:   p.Search,
-		SortColumn:    p.SortColumn,
-		SortDirection: p.SortDir,
-		FiltersJSON:   p.FiltersRaw,
+		Enabled:           true,
+		Mode:              "offset",
+		CurrentPage:       p.Page,
+		PageSize:          p.PageSize,
+		TotalRows:         totalRows,
+		TotalPages:        int(math.Ceil(float64(totalRows) / float64(p.PageSize))),
+		SearchQuery:       p.Search,
+		SortColumn:        p.SortColumn,
+		SortDirection:     p.SortDir,
+		FiltersJSON:       p.FiltersRaw,
 		PaginationURL:     refreshURL,
 		PaginationBodyURL: refreshURL,
 	}

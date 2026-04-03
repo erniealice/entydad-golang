@@ -14,12 +14,12 @@ import (
 	userlist "github.com/erniealice/entydad-golang/views/user/list"
 	userroles "github.com/erniealice/entydad-golang/views/user/roles"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
-	"github.com/erniealice/hybra-golang/views/attachment"
-	"github.com/erniealice/hybra-golang/views/auditlog"
 	rolepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/role"
 	userpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/user"
 	workspaceuserpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace_user"
 	workspaceuserrolepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace_user_role"
+	"github.com/erniealice/hybra-golang/views/attachment"
+	"github.com/erniealice/hybra-golang/views/auditlog"
 )
 
 // ModuleDeps holds all dependencies for the user module.
@@ -149,8 +149,8 @@ func NewModule(deps *ModuleDeps) *Module {
 		ListRoles:                    deps.ListRoles,
 		ListWorkspaceUsers:           deps.ListWorkspaceUsers,
 		GetWorkspaceUserItemPageData: deps.GetWorkspaceUserItemPageData,
-		CreateWorkspaceUser:          deps.CreateWorkspaceUser,  // NEW
-		DefaultWorkspaceID:           deps.DefaultWorkspaceID,   // NEW
+		CreateWorkspaceUser:          deps.CreateWorkspaceUser, // NEW
+		DefaultWorkspaceID:           deps.DefaultWorkspaceID,  // NEW
 		Labels:                       deps.UserRoleLabels,
 	}
 

@@ -49,7 +49,7 @@ func NewView(deps *Deps) view.View {
 				Title:          deps.Labels.Page.Heading,
 				CurrentPath:    viewCtx.CurrentPath,
 				ActiveNav:      "settings",
-				ActiveSubNav:   "payment-terms",
+				ActiveSubNav:   "payment-term",
 				HeaderTitle:    deps.Labels.Page.Heading,
 				HeaderSubtitle: deps.Labels.Page.Subtitle,
 				HeaderIcon:     "icon-clock",
@@ -62,7 +62,7 @@ func NewView(deps *Deps) view.View {
 		// KB help content
 		if viewCtx.Translations != nil {
 			if provider, ok := viewCtx.Translations.(*lynguaV1.TranslationProvider); ok {
-				if kb, _ := provider.LoadKBIfExists(viewCtx.Lang, viewCtx.BusinessType, "payment-terms"); kb != nil {
+				if kb, _ := provider.LoadKBIfExists(viewCtx.Lang, viewCtx.BusinessType, "payment-term"); kb != nil {
 					pageData.HasHelp = true
 					pageData.HelpContent = kb.Body
 				}
@@ -210,21 +210,21 @@ func buildTableRows(items []*paymenttermpb.PaymentTerm, l entydad.PaymentTermLab
 			},
 			Actions: []types.TableAction{
 				{
-					Type:        "edit",
-					Label:       l.Actions.Edit,
-					Action:      "edit",
-					URL:         route.ResolveURL(routes.EditURL, "id", id),
-					DrawerTitle: l.Actions.Edit,
-					Disabled:    !perms.Can("payment_term", "update"),
+					Type:            "edit",
+					Label:           l.Actions.Edit,
+					Action:          "edit",
+					URL:             route.ResolveURL(routes.EditURL, "id", id),
+					DrawerTitle:     l.Actions.Edit,
+					Disabled:        !perms.Can("payment_term", "update"),
 					DisabledTooltip: sl.Badges.NoPermission,
 				},
 				{
-					Type:     "delete",
-					Label:    l.Actions.Delete,
-					Action:   "delete",
-					URL:      routes.DeleteURL,
-					ItemName: name,
-					Disabled: !perms.Can("payment_term", "delete"),
+					Type:            "delete",
+					Label:           l.Actions.Delete,
+					Action:          "delete",
+					URL:             routes.DeleteURL,
+					ItemName:        name,
+					Disabled:        !perms.Can("payment_term", "delete"),
 					DisabledTooltip: sl.Badges.NoPermission,
 				},
 			},

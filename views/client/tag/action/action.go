@@ -27,12 +27,12 @@ func slugify(name string) string {
 
 // TagFormLabels holds i18n labels for the client tag drawer form.
 type TagFormLabels struct {
-	TagName             string
-	Code                string
-	CodeAutoPlaceholder string
-	Description         string
+	TagName                string
+	Code                   string
+	CodeAutoPlaceholder    string
+	Description            string
 	DescriptionPlaceholder string
-	Active              string
+	Active                 string
 }
 
 // FormData is the template data for the tag drawer form.

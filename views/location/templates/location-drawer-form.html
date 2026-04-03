@@ -1,7 +1,7 @@
 {{/*
 Location drawer form -- loaded into #sheetContent via HTMX.
 Used by both Add and Edit actions.
-Data: .Name, .Address, .Description, .Active, .ID, .FormAction, .IsEdit, .CommonLabels
+Data: .Name, .Address, .Description, .Timezone, .Active, .ID, .FormAction, .IsEdit, .CommonLabels
 */}}
 {{define "location-drawer-form"}}
 <form hx-post="{{.FormAction}}" hx-swap="none" hx-on::after-request="Sheet.handleResponse(event)">
@@ -36,6 +36,50 @@ Data: .Name, .Address, .Description, .Active, .ID, .FormAction, .IsEdit, .Common
                 "Label" .Labels.Description
                 "Value" .Description
                 "Placeholder" .Labels.DescriptionPlaceholder
+            )}}
+        </div>
+
+        <div class="form-row single">
+            {{template "auto-complete" (dict
+                "ID" "timezone-select"
+                "Name" "timezone"
+                "Label" .Labels.Timezone
+                "Placeholder" "Select timezone..."
+                "SearchPlaceholder" "Filter timezones..."
+                "Value" .Timezone
+                "SelectedLabel" .Timezone
+                "Options" (list
+                    (dict "Value" "Asia/Manila"         "Label" "Asia/Manila (PHT, UTC+8)"         "Selected" (eq .Timezone "Asia/Manila"))
+                    (dict "Value" "Asia/Singapore"      "Label" "Asia/Singapore (SGT, UTC+8)"      "Selected" (eq .Timezone "Asia/Singapore"))
+                    (dict "Value" "Asia/Tokyo"          "Label" "Asia/Tokyo (JST, UTC+9)"           "Selected" (eq .Timezone "Asia/Tokyo"))
+                    (dict "Value" "Asia/Seoul"          "Label" "Asia/Seoul (KST, UTC+9)"           "Selected" (eq .Timezone "Asia/Seoul"))
+                    (dict "Value" "Asia/Shanghai"       "Label" "Asia/Shanghai (CST, UTC+8)"        "Selected" (eq .Timezone "Asia/Shanghai"))
+                    (dict "Value" "Asia/Hong_Kong"      "Label" "Asia/Hong Kong (HKT, UTC+8)"       "Selected" (eq .Timezone "Asia/Hong_Kong"))
+                    (dict "Value" "Asia/Kolkata"        "Label" "Asia/Kolkata (IST, UTC+5:30)"      "Selected" (eq .Timezone "Asia/Kolkata"))
+                    (dict "Value" "Asia/Dubai"          "Label" "Asia/Dubai (GST, UTC+4)"           "Selected" (eq .Timezone "Asia/Dubai"))
+                    (dict "Value" "Asia/Jakarta"        "Label" "Asia/Jakarta (WIB, UTC+7)"         "Selected" (eq .Timezone "Asia/Jakarta"))
+                    (dict "Value" "Asia/Bangkok"        "Label" "Asia/Bangkok (ICT, UTC+7)"         "Selected" (eq .Timezone "Asia/Bangkok"))
+                    (dict "Value" "Asia/Kuala_Lumpur"   "Label" "Asia/Kuala Lumpur (MYT, UTC+8)"    "Selected" (eq .Timezone "Asia/Kuala_Lumpur"))
+                    (dict "Value" "Asia/Taipei"         "Label" "Asia/Taipei (CST, UTC+8)"          "Selected" (eq .Timezone "Asia/Taipei"))
+                    (dict "Value" "America/New_York"    "Label" "America/New York (EST/EDT, UTC-5)"  "Selected" (eq .Timezone "America/New_York"))
+                    (dict "Value" "America/Chicago"     "Label" "America/Chicago (CST/CDT, UTC-6)"   "Selected" (eq .Timezone "America/Chicago"))
+                    (dict "Value" "America/Denver"      "Label" "America/Denver (MST/MDT, UTC-7)"    "Selected" (eq .Timezone "America/Denver"))
+                    (dict "Value" "America/Los_Angeles" "Label" "America/Los Angeles (PST/PDT, UTC-8)" "Selected" (eq .Timezone "America/Los_Angeles"))
+                    (dict "Value" "America/Sao_Paulo"   "Label" "America/Sao Paulo (BRT, UTC-3)"     "Selected" (eq .Timezone "America/Sao_Paulo"))
+                    (dict "Value" "America/Toronto"     "Label" "America/Toronto (EST/EDT, UTC-5)"    "Selected" (eq .Timezone "America/Toronto"))
+                    (dict "Value" "Europe/London"       "Label" "Europe/London (GMT/BST, UTC+0)"      "Selected" (eq .Timezone "Europe/London"))
+                    (dict "Value" "Europe/Paris"        "Label" "Europe/Paris (CET/CEST, UTC+1)"      "Selected" (eq .Timezone "Europe/Paris"))
+                    (dict "Value" "Europe/Berlin"       "Label" "Europe/Berlin (CET/CEST, UTC+1)"     "Selected" (eq .Timezone "Europe/Berlin"))
+                    (dict "Value" "Europe/Moscow"       "Label" "Europe/Moscow (MSK, UTC+3)"          "Selected" (eq .Timezone "Europe/Moscow"))
+                    (dict "Value" "Australia/Sydney"    "Label" "Australia/Sydney (AEST/AEDT, UTC+10)" "Selected" (eq .Timezone "Australia/Sydney"))
+                    (dict "Value" "Australia/Melbourne" "Label" "Australia/Melbourne (AEST/AEDT, UTC+10)" "Selected" (eq .Timezone "Australia/Melbourne"))
+                    (dict "Value" "Australia/Perth"     "Label" "Australia/Perth (AWST, UTC+8)"       "Selected" (eq .Timezone "Australia/Perth"))
+                    (dict "Value" "Pacific/Auckland"    "Label" "Pacific/Auckland (NZST/NZDT, UTC+12)" "Selected" (eq .Timezone "Pacific/Auckland"))
+                    (dict "Value" "Pacific/Honolulu"    "Label" "Pacific/Honolulu (HST, UTC-10)"      "Selected" (eq .Timezone "Pacific/Honolulu"))
+                    (dict "Value" "Africa/Cairo"        "Label" "Africa/Cairo (EET, UTC+2)"           "Selected" (eq .Timezone "Africa/Cairo"))
+                    (dict "Value" "Africa/Lagos"        "Label" "Africa/Lagos (WAT, UTC+1)"           "Selected" (eq .Timezone "Africa/Lagos"))
+                    (dict "Value" "Africa/Johannesburg" "Label" "Africa/Johannesburg (SAST, UTC+2)"   "Selected" (eq .Timezone "Africa/Johannesburg"))
+                )
             )}}
         </div>
 

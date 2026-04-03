@@ -79,28 +79,28 @@ type SelectedTag struct {
 
 // FormData is the template data for the client drawer form.
 type FormData struct {
-	FormAction                 string
-	IsEdit                     bool
-	ID                         string
-	Mode                       string
-	Name                       string
-	FirstName                  string
-	LastName                   string
-	Email                      string
-	Mobile                     string
-	Active                     bool
-	StreetAddress              string
-	City                       string
-	Province                   string
-	PostalCode                 string
-	Notes                      string
-	PaymentTerms               []*PaymentTermOption
-	SelectedPaymentTermID      string
-	PaymentTermSelectOptions   []SelectOption
-	TagOptions                 []TagOption
-	SelectedTags               []SelectedTag
-	Labels                     FormLabels
-	CommonLabels               any
+	FormAction               string
+	IsEdit                   bool
+	ID                       string
+	Mode                     string
+	Name                     string
+	FirstName                string
+	LastName                 string
+	Email                    string
+	Mobile                   string
+	Active                   bool
+	StreetAddress            string
+	City                     string
+	Province                 string
+	PostalCode               string
+	Notes                    string
+	PaymentTerms             []*PaymentTermOption
+	SelectedPaymentTermID    string
+	PaymentTermSelectOptions []SelectOption
+	TagOptions               []TagOption
+	SelectedTags             []SelectedTag
+	Labels                   FormLabels
+	CommonLabels             any
 }
 
 // Deps holds dependencies for client action handlers.

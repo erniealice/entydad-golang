@@ -86,12 +86,12 @@ type ClientDetailLabels struct {
 	PurchaseHistory ClientPurchaseHistoryLabels `json:"purchaseHistory"`
 	Tabs            ClientDetailTabLabels       `json:"tabs"`
 	// Flat inline labels
-	Name                string `json:"name"`
-	RecentOrders        string `json:"recentOrders"`
-	ColDate             string `json:"colDate"`
-	ColReference        string `json:"colReference"`
-	ColAmount           string `json:"colAmount"`
-	ColStatus           string `json:"colStatus"`
+	Name                 string `json:"name"`
+	RecentOrders         string `json:"recentOrders"`
+	ColDate              string `json:"colDate"`
+	ColReference         string `json:"colReference"`
+	ColAmount            string `json:"colAmount"`
+	ColStatus            string `json:"colStatus"`
 	PurchaseHistoryEmpty string `json:"purchaseHistoryEmpty"`
 }
 
@@ -199,22 +199,22 @@ type UserActionLabels struct {
 
 // UserDetailLabels holds labels for the user detail page.
 type UserDetailLabels struct {
-	BasicInfo               UserDetailBasicInfoLabels  `json:"basicInfo"`
-	Tabs                    UserDetailTabLabels        `json:"tabs"`
-	Security                UserDetailSecurityLabels   `json:"security"`
-	EmptyStates             UserDetailEmptyStateLabels `json:"emptyStates"`
+	BasicInfo   UserDetailBasicInfoLabels  `json:"basicInfo"`
+	Tabs        UserDetailTabLabels        `json:"tabs"`
+	Security    UserDetailSecurityLabels   `json:"security"`
+	EmptyStates UserDetailEmptyStateLabels `json:"emptyStates"`
 	// Inline feedback and empty-state messages
-	UpdateSuccess           string `json:"updateSuccess"`
-	UpdateError             string `json:"updateError"`
-	NoRolesAssigned         string `json:"noRolesAssigned"`
-	NoRolesDesc             string `json:"noRolesDesc"`
-	NewPasswordPlaceholder  string `json:"newPasswordPlaceholder"`
+	UpdateSuccess            string `json:"updateSuccess"`
+	UpdateError              string `json:"updateError"`
+	NoRolesAssigned          string `json:"noRolesAssigned"`
+	NoRolesDesc              string `json:"noRolesDesc"`
+	NewPasswordPlaceholder   string `json:"newPasswordPlaceholder"`
 	TogglePasswordVisibility string `json:"togglePasswordVisibility"`
-	GeneratePassword        string `json:"generatePassword"`
-	PasswordUpdated         string `json:"passwordUpdated"`
-	PasswordFailed          string `json:"passwordFailed"`
+	GeneratePassword         string `json:"generatePassword"`
+	PasswordUpdated          string `json:"passwordUpdated"`
+	PasswordFailed           string `json:"passwordFailed"`
 	// Tab label for attachments (shared across all detail pages)
-	AttachmentsTab          string `json:"attachmentsTab"`
+	AttachmentsTab string `json:"attachmentsTab"`
 }
 
 // UserDetailSecurityLabels holds labels for the security tab.
@@ -293,6 +293,7 @@ type LocationColumnLabels struct {
 	Address     string `json:"address"`
 	City        string `json:"city"`
 	Country     string `json:"country"`
+	Timezone    string `json:"timezone"`
 	Status      string `json:"status"`
 	DateCreated string `json:"dateCreated"`
 }
@@ -311,6 +312,7 @@ type LocationFormLabels struct {
 	AddressPlaceholder     string `json:"addressPlaceholder"`
 	Description            string `json:"description"`
 	DescriptionPlaceholder string `json:"descriptionPlaceholder"`
+	Timezone               string `json:"timezone"`
 	Active                 string `json:"active"`
 }
 
@@ -323,9 +325,9 @@ type LocationActionLabels struct {
 }
 
 type LocationDetailLabels struct {
-	BasicInfo    LocationDetailBasicInfoLabels `json:"basicInfo"`
-	Tabs         LocationDetailTabLabels       `json:"tabs"`
-	EmptyStates  LocationDetailEmptyLabels     `json:"emptyStates"`
+	BasicInfo   LocationDetailBasicInfoLabels `json:"basicInfo"`
+	Tabs        LocationDetailTabLabels       `json:"tabs"`
+	EmptyStates LocationDetailEmptyLabels     `json:"emptyStates"`
 	// Inline feedback messages
 	UpdateSuccess string `json:"updateSuccess"`
 	UpdateError   string `json:"updateError"`
@@ -359,6 +361,114 @@ type LocationDetailEmptyLabels struct {
 	PriceListsDesc  string `json:"priceListsDesc"`
 	AuditTitle      string `json:"auditTitle"`
 	AuditDesc       string `json:"auditDesc"`
+}
+
+// ---------------------------------------------------------------------------
+// LocationArea labels
+// ---------------------------------------------------------------------------
+
+// LocationAreaLabels holds all translatable strings for the location area module.
+type LocationAreaLabels struct {
+	Page    LocationAreaPageLabels    `json:"page"`
+	Buttons LocationAreaButtonLabels  `json:"buttons"`
+	Columns LocationAreaColumnLabels  `json:"columns"`
+	Empty   LocationAreaEmptyLabels   `json:"empty"`
+	Form    LocationAreaFormLabels    `json:"form"`
+	Actions LocationAreaActionLabels  `json:"actions"`
+	Errors  LocationAreaErrorLabels   `json:"errors"`
+}
+
+type LocationAreaPageLabels struct {
+	Heading         string `json:"heading"`
+	HeadingActive   string `json:"headingActive"`
+	HeadingInactive string `json:"headingInactive"`
+	Caption         string `json:"caption"`
+	CaptionActive   string `json:"captionActive"`
+	CaptionInactive string `json:"captionInactive"`
+}
+
+type LocationAreaButtonLabels struct {
+	AddLocationArea string `json:"addLocationArea"`
+}
+
+type LocationAreaColumnLabels struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Status      string `json:"status"`
+	DateCreated string `json:"dateCreated"`
+}
+
+type LocationAreaEmptyLabels struct {
+	ActiveTitle     string `json:"activeTitle"`
+	ActiveMessage   string `json:"activeMessage"`
+	InactiveTitle   string `json:"inactiveTitle"`
+	InactiveMessage string `json:"inactiveMessage"`
+}
+
+type LocationAreaFormLabels struct {
+	Name                   string `json:"name"`
+	NamePlaceholder        string `json:"namePlaceholder"`
+	Description            string `json:"description"`
+	DescriptionPlaceholder string `json:"descriptionPlaceholder"`
+	Active                 string `json:"active"`
+}
+
+type LocationAreaActionLabels struct {
+	View       string `json:"view"`
+	Edit       string `json:"edit"`
+	Delete     string `json:"delete"`
+	Activate   string `json:"activate"`
+	Deactivate string `json:"deactivate"`
+}
+
+type LocationAreaErrorLabels struct {
+	CannotDeleteInUse string `json:"cannotDeleteInUse"`
+}
+
+// DefaultLocationAreaLabels returns sensible English defaults for LocationAreaLabels.
+func DefaultLocationAreaLabels() LocationAreaLabels {
+	return LocationAreaLabels{
+		Page: LocationAreaPageLabels{
+			Heading:         "Location Areas",
+			HeadingActive:   "Active Location Areas",
+			HeadingInactive: "Inactive Location Areas",
+			Caption:         "Manage location areas",
+			CaptionActive:   "Active location areas",
+			CaptionInactive: "Inactive location areas",
+		},
+		Buttons: LocationAreaButtonLabels{
+			AddLocationArea: "Add Location Area",
+		},
+		Columns: LocationAreaColumnLabels{
+			Name:        "Name",
+			Description: "Description",
+			Status:      "Status",
+			DateCreated: "Date Created",
+		},
+		Empty: LocationAreaEmptyLabels{
+			ActiveTitle:     "No active location areas",
+			ActiveMessage:   "Add your first location area to get started.",
+			InactiveTitle:   "No inactive location areas",
+			InactiveMessage: "Inactive location areas will appear here.",
+		},
+		Form: LocationAreaFormLabels{
+			Name:                   "Name",
+			NamePlaceholder:        "Enter name...",
+			Description:            "Description",
+			DescriptionPlaceholder: "Enter description...",
+			Active:                 "Active",
+		},
+		Actions: LocationAreaActionLabels{
+			View:       "View",
+			Edit:       "Edit",
+			Delete:     "Delete",
+			Activate:   "Activate",
+			Deactivate: "Deactivate",
+		},
+		Errors: LocationAreaErrorLabels{
+			CannotDeleteInUse: "Cannot delete — this location area is in use.",
+		},
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -427,15 +537,15 @@ type RoleActionLabels struct {
 
 // RoleDetailLabels holds labels for the role detail page.
 type RoleDetailLabels struct {
-	Tabs           RoleDetailTabLabels  `json:"tabs"`
-	Info           RoleDetailInfoLabels `json:"info"`
+	Tabs RoleDetailTabLabels  `json:"tabs"`
+	Info RoleDetailInfoLabels `json:"info"`
 	// Empty-state labels for role detail tabs
 	NoPermissionsAssigned string `json:"noPermissionsAssigned"`
 	NoPermissionsDesc     string `json:"noPermissionsDesc"`
 	NoUsersAssigned       string `json:"noUsersAssigned"`
 	NoUsersDesc           string `json:"noUsersDesc"`
 	// Tab label for attachments
-	AttachmentsTab        string `json:"attachmentsTab"`
+	AttachmentsTab string `json:"attachmentsTab"`
 }
 
 type RoleDetailTabLabels struct {
@@ -797,11 +907,11 @@ type Signup02Labels struct {
 	TermsText                  string `json:"termsText"`
 	Error                      string `json:"error"`
 	// Carousel navigation + accessibility
-	PreviousSlide   string `json:"previousSlide"`
-	NextSlide       string `json:"nextSlide"`
-	ContinueWith    string `json:"continueWith"`
+	PreviousSlide    string `json:"previousSlide"`
+	NextSlide        string `json:"nextSlide"`
+	ContinueWith     string `json:"continueWith"`
 	PasswordStrength string `json:"passwordStrength"`
-	TermsLink       string `json:"termsLink"`
+	TermsLink        string `json:"termsLink"`
 }
 
 // ---------------------------------------------------------------------------
@@ -986,11 +1096,11 @@ type SupplierFormLabels struct {
 }
 
 type SupplierDetailLabels struct {
-	InfoTab        string                      `json:"infoTab"`
-	CompanyInfo    SupplierDetailSectionLabels `json:"companyInfo"`
-	ContactInfo    SupplierDetailSectionLabels `json:"contactInfo"`
-	FinancialInfo  SupplierDetailSectionLabels `json:"financialInfo"`
-	AddressInfo    SupplierDetailSectionLabels `json:"addressInfo"`
+	InfoTab       string                      `json:"infoTab"`
+	CompanyInfo   SupplierDetailSectionLabels `json:"companyInfo"`
+	ContactInfo   SupplierDetailSectionLabels `json:"contactInfo"`
+	FinancialInfo SupplierDetailSectionLabels `json:"financialInfo"`
+	AddressInfo   SupplierDetailSectionLabels `json:"addressInfo"`
 	// Tab label for attachments
 	AttachmentsTab string `json:"attachmentsTab"`
 	// Inline labels
@@ -1064,12 +1174,12 @@ type ClientTagConfirmLabels struct {
 
 // PaymentTermLabels holds all translatable strings for the payment term module.
 type PaymentTermLabels struct {
-	Page    PaymentTermPageLabels    `json:"page"`
-	Buttons PaymentTermButtonLabels  `json:"buttons"`
-	Columns PaymentTermColumnLabels  `json:"columns"`
-	Empty   PaymentTermEmptyLabels   `json:"empty"`
-	Form    PaymentTermFormLabels    `json:"form"`
-	Actions PaymentTermActionLabels  `json:"actions"`
+	Page    PaymentTermPageLabels   `json:"page"`
+	Buttons PaymentTermButtonLabels `json:"buttons"`
+	Columns PaymentTermColumnLabels `json:"columns"`
+	Empty   PaymentTermEmptyLabels  `json:"empty"`
+	Form    PaymentTermFormLabels   `json:"form"`
+	Actions PaymentTermActionLabels `json:"actions"`
 }
 
 type PaymentTermPageLabels struct {
@@ -1113,9 +1223,12 @@ type PaymentTermFormLabels struct {
 	Active                 string `json:"active"`
 
 	// Type select options
-	TypeDueOnReceipt string `json:"typeDueOnReceipt"`
-	TypeNet          string `json:"typeNet"`
-	TypeCOD          string `json:"typeCOD"`
+	TypeDueOnReceipt        string `json:"typeDueOnReceipt"`
+	TypeNet                 string `json:"typeNet"`
+	TypeCOD                 string `json:"typeCOD"`
+	TypeProximate           string `json:"typeProximate"`
+	ProximateDay            string `json:"proximateDay"`
+	ProximateDayPlaceholder string `json:"proximateDayPlaceholder"`
 
 	// Entity scope select options
 	ScopesBoth         string `json:"scopesBoth"`

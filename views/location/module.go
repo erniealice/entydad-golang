@@ -12,9 +12,9 @@ import (
 	locationdetail "github.com/erniealice/entydad-golang/views/location/detail"
 	locationlist "github.com/erniealice/entydad-golang/views/location/list"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
+	locationpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/location"
 	"github.com/erniealice/hybra-golang/views/attachment"
 	"github.com/erniealice/hybra-golang/views/auditlog"
-	locationpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/location"
 )
 
 // ModuleDeps holds all dependencies for the location module.

@@ -37,7 +37,7 @@
 <div class="tab-scroll">
     <h2 class="visually-hidden">{{.Labels.Detail.BasicInfo.Title}}</h2>
     <h4 class="detail-section-title">{{.Labels.Detail.BasicInfo.Title}}</h4>
-    <div id="info-result" class="form-result" style="display:none;" aria-live="polite" aria-atomic="true" data-success-message="{{.Labels.Detail.UpdateSuccess}}" data-error-message="{{.Labels.Detail.UpdateError}}"></div>
+    <div id="info-result" class="form-result form-result--hidden" aria-live="polite" aria-atomic="true" data-success-message="{{.Labels.Detail.UpdateSuccess}}" data-error-message="{{.Labels.Detail.UpdateError}}"></div>
     <form id="info-edit-form"
           hx-post="{{.EditURL}}"
           hx-swap="none"
@@ -104,7 +104,6 @@
 function handleInfoUpdate(evt) {
     var el = document.getElementById('info-result');
     if (!el) return;
-    el.style.display = 'block';
     if (evt.detail.successful) {
         el.className = 'form-result form-result--success';
         el.textContent = el.dataset.successMessage || 'User updated successfully';
@@ -113,7 +112,7 @@ function handleInfoUpdate(evt) {
         el.className = 'form-result form-result--error';
         el.textContent = msg;
     }
-    setTimeout(function() { el.style.display = 'none'; }, 5000);
+    setTimeout(function() { el.classList.add('form-result--hidden'); }, 5000);
 }
 </script>
 {{end}}
@@ -156,7 +155,7 @@ function handleInfoUpdate(evt) {
           hx-post="{{.ResetPasswordURL}}"
           hx-swap="none"
           hx-on::after-request="handlePasswordReset(event)">
-        <div id="password-result" class="form-result" style="display:none;" aria-live="polite" aria-atomic="true" data-success-message="{{.Labels.Detail.PasswordUpdated}}" data-error-message="{{.Labels.Detail.PasswordFailed}}"></div>
+        <div id="password-result" class="form-result form-result--hidden" aria-live="polite" aria-atomic="true" data-success-message="{{.Labels.Detail.PasswordUpdated}}" data-error-message="{{.Labels.Detail.PasswordFailed}}"></div>
         <div class="form-row single password-form-row">
             <div class="form-group">
                 <div class="password-field-wrapper">
@@ -252,7 +251,6 @@ function handleInfoUpdate(evt) {
 function handlePasswordReset(evt) {
     var el = document.getElementById('password-result');
     if (!el) return;
-    el.style.display = 'block';
     if (evt.detail.successful) {
         el.className = 'form-result form-result--success';
         el.textContent = el.dataset.successMessage || 'Password updated successfully';
@@ -262,8 +260,7 @@ function handlePasswordReset(evt) {
         el.className = 'form-result form-result--error';
         el.textContent = msg;
     }
-    setTimeout(function() { el.style.display = 'none'; }, 5000);
+    setTimeout(function() { el.classList.add('form-result--hidden'); }, 5000);
 }
 </script>
 {{end}}
-

@@ -118,12 +118,19 @@ func NewAddAction(deps *Deps) view.View {
 			pwHash = h
 		}
 
+		mobile := r.FormValue("mobile_number")
+		if mobile == "" {
+			// The workspace/user list flow treats mobile as optional in the UI,
+			// but the current PostgreSQL schema requires a non-null value.
+			mobile = "+639000000000"
+		}
+
 		createResp, err := deps.CreateUser(ctx, &userpb.CreateUserRequest{
 			Data: &userpb.User{
 				FirstName:    r.FormValue("first_name"),
 				LastName:     r.FormValue("last_name"),
 				EmailAddress: r.FormValue("email_address"),
-				MobileNumber: r.FormValue("mobile_number"),
+				MobileNumber: mobile,
 				PasswordHash: pwHash,
 				Active:       active,
 			},

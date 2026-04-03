@@ -128,7 +128,7 @@ func NewView(deps *DetailViewDeps) view.View {
 		// KB help content
 		if viewCtx.Translations != nil {
 			if provider, ok := viewCtx.Translations.(*lynguaV1.TranslationProvider); ok {
-				if kb, _ := provider.LoadKBIfExists(viewCtx.Lang, viewCtx.BusinessType, "clients-detail"); kb != nil {
+				if kb, _ := provider.LoadKBIfExists(viewCtx.Lang, viewCtx.BusinessType, "client-detail"); kb != nil {
 					pageData.HasHelp = true
 					pageData.HelpContent = kb.Body
 				}
@@ -148,7 +148,7 @@ func NewView(deps *DetailViewDeps) view.View {
 							ID:          po.GetId(),
 							PONumber:    po.GetPoNumber(),
 							Status:      po.GetStatus(),
-							TotalAmount: fmt.Sprintf("%.2f", po.GetTotalAmount()),
+							TotalAmount: fmt.Sprintf("%.2f", float64(po.GetTotalAmount())/100.0),
 							Currency:    po.GetCurrency(),
 							OrderDate:   po.GetOrderDateString(),
 						})
@@ -220,7 +220,7 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 							ID:          po.GetId(),
 							PONumber:    po.GetPoNumber(),
 							Status:      po.GetStatus(),
-							TotalAmount: fmt.Sprintf("%.2f", po.GetTotalAmount()),
+							TotalAmount: fmt.Sprintf("%.2f", float64(po.GetTotalAmount())/100.0),
 							Currency:    po.GetCurrency(),
 							OrderDate:   po.GetOrderDateString(),
 						})
@@ -297,7 +297,7 @@ func buildPageData(supplier *supplierpb.Supplier, id, activeTab string, viewCtx 
 	paymentTerms := supplier.GetPaymentTerms()
 	creditLimit := ""
 	if cl := supplier.GetCreditLimit(); cl > 0 {
-		creditLimit = fmt.Sprintf("%.2f", cl)
+		creditLimit = fmt.Sprintf("%.2f", float64(cl)/100.0)
 	}
 	defaultCurrency := supplier.GetDefaultCurrency()
 	leadTimeDays := ""

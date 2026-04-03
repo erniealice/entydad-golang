@@ -27,6 +27,9 @@ import (
 	clientmod "github.com/erniealice/entydad-golang/views/client"
 	clienttagmod "github.com/erniealice/entydad-golang/views/clienttag"
 	locationmod "github.com/erniealice/entydad-golang/views/location"
+	locationareamod "github.com/erniealice/entydad-golang/views/location_area"
+	locationareaaction "github.com/erniealice/entydad-golang/views/location_area/action"
+	locationarealist "github.com/erniealice/entydad-golang/views/location_area/list"
 	paymenttermmod "github.com/erniealice/entydad-golang/views/payment_term"
 	permissionmod "github.com/erniealice/entydad-golang/views/permission"
 	rolemod "github.com/erniealice/entydad-golang/views/role"
@@ -67,16 +70,17 @@ func handleFunc(r pyeza.RouteRegistrar, method, path string, handler http.Handle
 type BlockOption func(*blockConfig)
 
 type blockConfig struct {
-	enableAll   bool
-	client      bool
-	clientTag   bool
-	paymentTerm bool
-	user        bool
-	role        bool
-	location    bool
-	permission  bool
-	workspace   bool
-	supplier    bool
+	enableAll    bool
+	client       bool
+	clientTag    bool
+	paymentTerm  bool
+	user         bool
+	role         bool
+	location     bool
+	locationArea bool
+	permission   bool
+	workspace    bool
+	supplier     bool
 }
 
 // WithClient enables the Client module in Block().
@@ -96,6 +100,9 @@ func WithRole() BlockOption { return func(c *blockConfig) { c.role = true } }
 
 // WithLocation enables the Location module in Block().
 func WithLocation() BlockOption { return func(c *blockConfig) { c.location = true } }
+
+// WithLocationArea enables the LocationArea module in Block().
+func WithLocationArea() BlockOption { return func(c *blockConfig) { c.locationArea = true } }
 
 // WithPermission enables the Permission module in Block().
 func WithPermission() BlockOption { return func(c *blockConfig) { c.permission = true } }
@@ -232,6 +239,7 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 			}
 			if uc.Subscription != nil && uc.Subscription.Subscription != nil {
 				clientDeps.ListSubscriptions = uc.Subscription.Subscription.ListSubscriptions.Execute
+				clientDeps.GetSubscriptionListPageData = uc.Subscription.Subscription.GetSubscriptionListPageData.Execute
 			}
 			clientmod.NewModule(clientDeps).RegisterRoutes(ctx.Routes)
 		}
@@ -344,6 +352,95 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 				DeleteAttachment: deleteAttachment,
 				NewID:            newAttachmentID,
 			}).RegisterRoutes(ctx.Routes)
+		}
+
+		if cfg.enableAll || cfg.locationArea {
+			crudDB, hasCRUD := db.(CRUDSource)
+			if !hasCRUD {
+				log.Println("entydad.Block: warning: DB does not implement CRUDSource — skipping location_area module")
+			} else {
+				locationareamod.NewModule(&locationareamod.ModuleDeps{
+					Routes:       routes.LocationArea,
+					CommonLabels: ctx.Common,
+					SharedLabels: labels.Shared,
+					Labels:       labels.LocationArea,
+					TableLabels:  ctx.Table,
+					GetListPageData: func(fctx context.Context, status string, search string, page, pageSize int) (*locationarealist.LocationAreaListResult, error) {
+						rows, err := crudDB.ListSimple(fctx, "location_area")
+						if err != nil {
+							return nil, err
+						}
+						items := make([]*locationarealist.LocationAreaItem, 0, len(rows))
+						for _, row := range rows {
+							active, _ := row["active"].(bool)
+							recordStatus := "active"
+							if !active {
+								recordStatus = "inactive"
+							}
+							if recordStatus != status {
+								continue
+							}
+							id, _ := row["id"].(string)
+							name, _ := row["name"].(string)
+							description, _ := row["description"].(string)
+							dateCreated, _ := row["date_created"].(string)
+							items = append(items, &locationarealist.LocationAreaItem{
+								ID:          id,
+								Name:        name,
+								Description: description,
+								Active:      active,
+								DateCreated: dateCreated,
+							})
+						}
+						return &locationarealist.LocationAreaListResult{Items: items, TotalItems: len(items)}, nil
+					},
+					GetInUseIDs: func(fctx context.Context, ids []string) (map[string]bool, error) {
+						return nil, nil
+					},
+					CreateLocationArea: func(fctx context.Context, name, description string, active bool) (string, error) {
+						row, err := crudDB.Create(fctx, "location_area", map[string]any{
+							"name":        name,
+							"description": description,
+							"active":      active,
+						})
+						if err != nil {
+							return "", err
+						}
+						id, _ := row["id"].(string)
+						return id, nil
+					},
+					ReadLocationArea: func(fctx context.Context, id string) (*locationareaaction.LocationAreaRecord, error) {
+						row, err := crudDB.Read(fctx, "location_area", id)
+						if err != nil {
+							return nil, err
+						}
+						name, _ := row["name"].(string)
+						description, _ := row["description"].(string)
+						active, _ := row["active"].(bool)
+						return &locationareaaction.LocationAreaRecord{
+							ID:          id,
+							Name:        name,
+							Description: description,
+							Active:      active,
+						}, nil
+					},
+					UpdateLocationArea: func(fctx context.Context, id, name, description string, active bool) error {
+						_, err := crudDB.Update(fctx, "location_area", id, map[string]any{
+							"name":        name,
+							"description": description,
+							"active":      active,
+						})
+						return err
+					},
+					DeleteLocationArea: func(fctx context.Context, id string) error {
+						return crudDB.Delete(fctx, "location_area", id)
+					},
+					SetLocationAreaActive: func(fctx context.Context, id string, active bool) error {
+						_, err := crudDB.Update(fctx, "location_area", id, map[string]any{"active": active})
+						return err
+					},
+				}).RegisterRoutes(ctx.Routes)
+			}
 		}
 
 		if cfg.enableAll || cfg.permission {
@@ -504,6 +601,16 @@ type UpdateableSource interface {
 	Update(ctx context.Context, collection, id string, data map[string]any) (map[string]any, error)
 }
 
+// CRUDSource extends UpdateableSource with Create, Read, and Delete operations.
+// espyna's DatabaseAdapter satisfies this interface. Used by simpler entities
+// (e.g. LocationArea) that do not yet have dedicated proto service use-cases.
+type CRUDSource interface {
+	UpdateableSource
+	Create(ctx context.Context, collection string, data map[string]any) (map[string]any, error)
+	Read(ctx context.Context, collection, id string) (map[string]any, error)
+	Delete(ctx context.Context, collection, id string) error
+}
+
 // getDefaultWorkspaceID returns the default workspace ID from the environment,
 // falling back to "default-workspace" if the env var is not set.
 func getDefaultWorkspaceID() string {
@@ -532,6 +639,7 @@ type blockLabels struct {
 	Role            entydad.RoleLabels
 	RolePermission  entydad.RolePermissionLabels
 	Location        entydad.LocationLabels
+	LocationArea    entydad.LocationAreaLabels
 	Permission      entydad.PermissionLabels
 	Workspace       entydad.WorkspaceLabels
 	Supplier        entydad.SupplierLabels
@@ -546,6 +654,7 @@ type blockRoutes struct {
 	User         entydad.UserRoutes
 	Role         entydad.RoleRoutes
 	Location     entydad.LocationRoutes
+	LocationArea entydad.LocationAreaRoutes
 	Permission   entydad.PermissionRoutes
 	Workspace    entydad.WorkspaceRoutes
 	Supplier     entydad.SupplierRoutes
@@ -576,6 +685,8 @@ func loadBlockLabels(t *lynguaV1.TranslationProvider, businessType string) block
 	if err := t.LoadPath("en", businessType, "location.json", "", &l.Location); err != nil {
 		log.Printf("entydad.Block: warning: failed to load location labels: %v", err)
 	}
+	l.LocationArea = entydad.DefaultLocationAreaLabels()
+	_ = t.LoadPathIfExists("en", businessType, "location_area.json", "", &l.LocationArea)
 	if err := t.LoadPath("en", businessType, "permission.json", "", &l.Permission); err != nil {
 		log.Printf("entydad.Block: warning: failed to load permission labels: %v", err)
 	}
@@ -626,6 +737,9 @@ func loadBlockRoutes(t *lynguaV1.TranslationProvider, businessType string) block
 
 	r.Location = entydad.DefaultLocationRoutes()
 	_ = t.LoadPathIfExists("en", businessType, "route.json", "location", &r.Location)
+
+	r.LocationArea = entydad.DefaultLocationAreaRoutes()
+	_ = t.LoadPathIfExists("en", businessType, "route.json", "location_area", &r.LocationArea)
 
 	r.Permission = entydad.DefaultPermissionRoutes()
 	_ = t.LoadPathIfExists("en", businessType, "route.json", "permission", &r.Permission)

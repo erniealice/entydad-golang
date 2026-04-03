@@ -39,6 +39,7 @@ Data: .Name, .Code, .Type, .NetDays, .DiscountDays, .DiscountPercentBps,
                     (dict "Value" "due_on_receipt" "Label" .Labels.TypeDueOnReceipt)
                     (dict "Value" "net" "Label" .Labels.TypeNet)
                     (dict "Value" "cod" "Label" .Labels.TypeCOD)
+                    (dict "Value" "proximate" "Label" .Labels.TypeProximate)
                 )
             )}}
             {{template "form-group" (dict
@@ -53,6 +54,24 @@ Data: .Name, .Code, .Type, .NetDays, .DiscountDays, .DiscountPercentBps,
                 )
             )}}
         </div>
+
+        <div class="form-row single" id="proximate-day-row" style="{{if ne .Type "proximate"}}display:none{{end}}">
+            <div class="form-group">
+                <label for="proximate_day">{{.Labels.ProximateDay}}</label>
+                <input type="number" class="form-control" id="proximate_day" name="proximate_day"
+                       value="{{.ProximateDay}}" min="1" max="28"
+                       placeholder="{{.Labels.ProximateDayPlaceholder}}">
+            </div>
+        </div>
+        <script>
+        (function() {
+            var sel = document.querySelector('[name="type"]');
+            var row = document.getElementById('proximate-day-row');
+            if (!sel || !row) return;
+            function toggle() { row.style.display = sel.value === 'proximate' ? '' : 'none'; }
+            sel.addEventListener('change', toggle);
+        })();
+        </script>
 
         <div class="form-row">
             {{template "form-group" (dict

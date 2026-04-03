@@ -390,6 +390,57 @@ func (r LocationRoutes) RouteMap() map[string]string {
 }
 
 // ---------------------------------------------------------------------------
+// LocationAreaRoutes
+// ---------------------------------------------------------------------------
+
+// LocationAreaRoutes holds all route paths for location area management.
+type LocationAreaRoutes struct {
+	DashboardURL     string `json:"dashboard_url"`
+	ListURL          string `json:"list_url"`
+	TableURL         string `json:"table_url"`
+	DetailURL        string `json:"detail_url"`
+	AddURL           string `json:"add_url"`
+	EditURL          string `json:"edit_url"`
+	DeleteURL        string `json:"delete_url"`
+	BulkDeleteURL    string `json:"bulk_delete_url"`
+	SetStatusURL     string `json:"set_status_url"`
+	BulkSetStatusURL string `json:"bulk_set_status_url"`
+}
+
+// DefaultLocationAreaRoutes returns a LocationAreaRoutes populated from the
+// package-level route constants.
+func DefaultLocationAreaRoutes() LocationAreaRoutes {
+	return LocationAreaRoutes{
+		DashboardURL:     LocationAreaDashboardURL,
+		ListURL:          LocationAreaListURL,
+		TableURL:         LocationAreaTableURL,
+		DetailURL:        LocationAreaDetailURL,
+		AddURL:           LocationAreaAddURL,
+		EditURL:          LocationAreaEditURL,
+		DeleteURL:        LocationAreaDeleteURL,
+		BulkDeleteURL:    LocationAreaBulkDeleteURL,
+		SetStatusURL:     LocationAreaSetStatusURL,
+		BulkSetStatusURL: LocationAreaBulkSetStatusURL,
+	}
+}
+
+// RouteMap returns a map of dot-notation keys to route path values.
+func (r LocationAreaRoutes) RouteMap() map[string]string {
+	return map[string]string{
+		"location_area.dashboard":       r.DashboardURL,
+		"location_area.list":            r.ListURL,
+		"location_area.table":           r.TableURL,
+		"location_area.detail":          r.DetailURL,
+		"location_area.add":             r.AddURL,
+		"location_area.edit":            r.EditURL,
+		"location_area.delete":          r.DeleteURL,
+		"location_area.bulk_delete":     r.BulkDeleteURL,
+		"location_area.set_status":      r.SetStatusURL,
+		"location_area.bulk_set_status": r.BulkSetStatusURL,
+	}
+}
+
+// ---------------------------------------------------------------------------
 // PermissionRoutes
 // ---------------------------------------------------------------------------
 

@@ -26,15 +26,15 @@ type PaymentTermOption = clientaction.PaymentTermOption
 
 // ModuleDeps holds all dependencies for the client module.
 type ModuleDeps struct {
-	Routes           entydad.ClientRoutes
-	CommonLabels     pyeza.CommonLabels
-	SharedLabels     entydad.SharedLabels
-	Labels           entydad.ClientLabels
+	Routes               entydad.ClientRoutes
+	CommonLabels         pyeza.CommonLabels
+	SharedLabels         entydad.SharedLabels
+	Labels               entydad.ClientLabels
 	DashboardLabels      entydad.ClientDashboardLabels
 	DashboardTitleLabels entydad.DashboardLabels
 	TableLabels          types.TableLabels
-	GetListPageData func(ctx context.Context, req *clientpb.GetClientListPageDataRequest) (*clientpb.GetClientListPageDataResponse, error)
-	GetInUseIDs     func(ctx context.Context, ids []string) (map[string]bool, error)
+	GetListPageData      func(ctx context.Context, req *clientpb.GetClientListPageDataRequest) (*clientpb.GetClientListPageDataResponse, error)
+	GetInUseIDs          func(ctx context.Context, ids []string) (map[string]bool, error)
 	// Client CRUD
 	CreateClient func(ctx context.Context, req *clientpb.CreateClientRequest) (*clientpb.CreateClientResponse, error)
 	ReadClient   func(ctx context.Context, req *clientpb.ReadClientRequest) (*clientpb.ReadClientResponse, error)
@@ -51,7 +51,8 @@ type ModuleDeps struct {
 	// Revenue listing (for detail view)
 	ListRevenues func(ctx context.Context, collection string) ([]map[string]any, error)
 	// Subscription listing (for detail view)
-	ListSubscriptions func(ctx context.Context, req *subscriptionpb.ListSubscriptionsRequest) (*subscriptionpb.ListSubscriptionsResponse, error)
+	ListSubscriptions           func(ctx context.Context, req *subscriptionpb.ListSubscriptionsRequest) (*subscriptionpb.ListSubscriptionsResponse, error)
+	GetSubscriptionListPageData func(ctx context.Context, req *subscriptionpb.GetSubscriptionListPageDataRequest) (*subscriptionpb.GetSubscriptionListPageDataResponse, error)
 	// Subscription URLs (cross-module, from centymo).
 	SubscriptionAddURL    string
 	SubscriptionDetailURL string
@@ -111,19 +112,20 @@ func NewModule(deps *ModuleDeps) *Module {
 		TableLabels:     deps.TableLabels,
 	}
 	detailDeps := &clientdetail.DetailViewDeps{
-		Routes:               deps.Routes,
-		ReadClient:           deps.ReadClient,
-		ListCategories:       deps.ListCategories,
-		ListClientCategories: deps.ListClientCategories,
-		ListRevenues:         deps.ListRevenues,
-		ListSubscriptions:     deps.ListSubscriptions,
-		SubscriptionAddURL:    deps.SubscriptionAddURL,
+		Routes:                      deps.Routes,
+		ReadClient:                  deps.ReadClient,
+		ListCategories:              deps.ListCategories,
+		ListClientCategories:        deps.ListClientCategories,
+		ListRevenues:                deps.ListRevenues,
+		ListSubscriptions:           deps.ListSubscriptions,
+		GetSubscriptionListPageData: deps.GetSubscriptionListPageData,
+		SubscriptionAddURL:          deps.SubscriptionAddURL,
 		SubscriptionDetailURL: deps.SubscriptionDetailURL,
 		SubscriptionEditURL:   deps.SubscriptionEditURL,
 		SubscriptionDeleteURL: deps.SubscriptionDeleteURL,
-		Labels:               deps.Labels,
-		CommonLabels:         deps.CommonLabels,
-		TableLabels:          deps.TableLabels,
+		Labels:                deps.Labels,
+		CommonLabels:          deps.CommonLabels,
+		TableLabels:           deps.TableLabels,
 		AttachmentOps: attachment.AttachmentOps{
 			UploadFile:       deps.UploadFile,
 			ListAttachments:  deps.ListAttachments,
