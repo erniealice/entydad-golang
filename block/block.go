@@ -22,10 +22,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/erniealice/espyna-golang/consumer"
-	"github.com/erniealice/espyna-golang/contrib/postgres/reference"
-	"github.com/erniealice/espyna-golang/registry"
-	entityid "github.com/erniealice/espyna-golang/registry/entityid"
+	centymo "github.com/erniealice/centymo-golang"
 	"github.com/erniealice/entydad-golang"
 	clientmod "github.com/erniealice/entydad-golang/views/client"
 	clienttagmod "github.com/erniealice/entydad-golang/views/clienttag"
@@ -38,6 +35,10 @@ import (
 	usermod "github.com/erniealice/entydad-golang/views/user"
 	userdashboard "github.com/erniealice/entydad-golang/views/user/dashboard"
 	workspacemod "github.com/erniealice/entydad-golang/views/workspace"
+	"github.com/erniealice/espyna-golang/consumer"
+	"github.com/erniealice/espyna-golang/contrib/postgres/reference"
+	"github.com/erniealice/espyna-golang/registry"
+	entityid "github.com/erniealice/espyna-golang/registry/entityid"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
 	paymenttermpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/payment_term"
 	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
@@ -210,16 +211,16 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 					}
 					return opts, nil
 				},
-				ListRevenues:       db.ListSimple,
-				SubscriptionAddURL:    "/action/subscriptions/add",
-				SubscriptionDetailURL: "/app/subscriptions/{id}",
-				SubscriptionEditURL:   "/action/subscriptions/edit/{id}",
-				SubscriptionDeleteURL: "/action/subscriptions/delete",
-				UploadFile:         uploadFile,
-				ListAttachments:  listAttachments,
-				CreateAttachment: createAttachment,
-				DeleteAttachment: deleteAttachment,
-				NewID:            newAttachmentID,
+				ListRevenues:          db.ListSimple,
+				SubscriptionAddURL:    routes.Subscription.AddURL,
+				SubscriptionDetailURL: routes.Subscription.DetailURL,
+				SubscriptionEditURL:   routes.Subscription.EditURL,
+				SubscriptionDeleteURL: routes.Subscription.DeleteURL,
+				UploadFile:            uploadFile,
+				ListAttachments:       listAttachments,
+				CreateAttachment:      createAttachment,
+				DeleteAttachment:      deleteAttachment,
+				NewID:                 newAttachmentID,
 			}
 			if uc.Common != nil && uc.Common.Category != nil {
 				clientDeps.ListCategories = uc.Common.Category.ListCategories.Execute
@@ -247,12 +248,12 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 				DashboardLabels: labels.UserDashboard,
 				UserRoleLabels:  labels.UserRole,
 				TableLabels:     ctx.Table,
-				GetListPageData:              uc.Entity.User.GetUserListPageData.Execute,
-				GetUserRolesMap:              getUserRolesMap,
-				CreateUser:                   uc.Entity.User.CreateUser.Execute,
-				ReadUser:                     uc.Entity.User.ReadUser.Execute,
-				UpdateUser:                   uc.Entity.User.UpdateUser.Execute,
-				DeleteUser:                   uc.Entity.User.DeleteUser.Execute,
+				GetListPageData: uc.Entity.User.GetUserListPageData.Execute,
+				GetUserRolesMap: getUserRolesMap,
+				CreateUser:      uc.Entity.User.CreateUser.Execute,
+				ReadUser:        uc.Entity.User.ReadUser.Execute,
+				UpdateUser:      uc.Entity.User.UpdateUser.Execute,
+				DeleteUser:      uc.Entity.User.DeleteUser.Execute,
 				SetActive: func(fctx context.Context, id string, active bool) error {
 					_, err := db.Update(fctx, "user", id, map[string]any{"active": active})
 					return err
@@ -286,12 +287,12 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 				RolePermissionLabels: labels.RolePermission,
 				RoleUserLabels:       labels.RoleUser,
 				TableLabels:          ctx.Table,
-				GetListPageData:         uc.Entity.Role.GetRoleListPageData.Execute,
-				GetInUseIDs:             refChecker.GetRoleInUseIDs,
-				CreateRole:              uc.Entity.Role.CreateRole.Execute,
-				ReadRole:                uc.Entity.Role.ReadRole.Execute,
-				UpdateRole:              uc.Entity.Role.UpdateRole.Execute,
-				DeleteRole:              uc.Entity.Role.DeleteRole.Execute,
+				GetListPageData:      uc.Entity.Role.GetRoleListPageData.Execute,
+				GetInUseIDs:          refChecker.GetRoleInUseIDs,
+				CreateRole:           uc.Entity.Role.CreateRole.Execute,
+				ReadRole:             uc.Entity.Role.ReadRole.Execute,
+				UpdateRole:           uc.Entity.Role.UpdateRole.Execute,
+				DeleteRole:           uc.Entity.Role.DeleteRole.Execute,
 				SetActive: func(fctx context.Context, id string, active bool) error {
 					_, err := db.Update(fctx, "role", id, map[string]any{"active": active})
 					return err
@@ -538,15 +539,16 @@ type blockLabels struct {
 
 // blockRoutes holds the subset of entydad route structs needed by Block().
 type blockRoutes struct {
-	Client      entydad.ClientRoutes
-	ClientTag   entydad.ClientTagRoutes
-	PaymentTerm entydad.PaymentTermRoutes
-	User        entydad.UserRoutes
-	Role        entydad.RoleRoutes
-	Location    entydad.LocationRoutes
-	Permission  entydad.PermissionRoutes
-	Workspace   entydad.WorkspaceRoutes
-	Supplier    entydad.SupplierRoutes
+	Client       entydad.ClientRoutes
+	ClientTag    entydad.ClientTagRoutes
+	PaymentTerm  entydad.PaymentTermRoutes
+	Subscription centymo.SubscriptionRoutes
+	User         entydad.UserRoutes
+	Role         entydad.RoleRoutes
+	Location     entydad.LocationRoutes
+	Permission   entydad.PermissionRoutes
+	Workspace    entydad.WorkspaceRoutes
+	Supplier     entydad.SupplierRoutes
 }
 
 // loadBlockLabels loads all entydad typed label structs from lyngua.
@@ -612,6 +614,9 @@ func loadBlockRoutes(t *lynguaV1.TranslationProvider, businessType string) block
 
 	r.PaymentTerm = entydad.DefaultPaymentTermRoutes()
 	_ = t.LoadPathIfExists("en", businessType, "route.json", "payment_term", &r.PaymentTerm)
+
+	r.Subscription = centymo.DefaultSubscriptionRoutes()
+	_ = t.LoadPathIfExists("en", businessType, "route.json", "subscription", &r.Subscription)
 
 	r.User = entydad.DefaultUserRoutes()
 	_ = t.LoadPathIfExists("en", businessType, "route.json", "user", &r.User)
