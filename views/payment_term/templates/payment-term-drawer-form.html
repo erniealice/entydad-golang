@@ -1,0 +1,123 @@
+{{/*
+Payment term drawer form -- loaded into #sheetContent via HTMX.
+Used by both Add and Edit actions.
+Data: .Name, .Code, .Type, .NetDays, .DiscountDays, .DiscountPercentBps,
+      .EntityScope, .IsDefault, .Description, .DisplayOrder, .Active,
+      .ID, .FormAction, .IsEdit, .Labels, .CommonLabels
+*/}}
+{{define "payment-term-drawer-form"}}
+<form hx-post="{{.FormAction}}" hx-swap="none" hx-on::after-request="Sheet.handleResponse(event)">
+    {{if .ID}}<input type="hidden" name="id" value="{{.ID}}">{{end}}
+
+    <div class="sheet-body">
+
+        <div class="form-row">
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "name"
+                "Label" .Labels.Name
+                "Value" .Name
+                "Required" true
+                "Placeholder" .Labels.NamePlaceholder
+            )}}
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "code"
+                "Label" .Labels.Code
+                "Value" .Code
+                "Placeholder" .Labels.CodePlaceholder
+            )}}
+        </div>
+
+        <div class="form-row">
+            {{template "form-group" (dict
+                "Type" "select"
+                "Name" "type"
+                "Label" .Labels.Type
+                "Value" .Type
+                "Options" (list
+                    (dict "Value" "due_on_receipt" "Label" .Labels.TypeDueOnReceipt)
+                    (dict "Value" "net" "Label" .Labels.TypeNet)
+                    (dict "Value" "cod" "Label" .Labels.TypeCOD)
+                )
+            )}}
+            {{template "form-group" (dict
+                "Type" "select"
+                "Name" "entity_scope"
+                "Label" .Labels.EntityScope
+                "Value" .EntityScope
+                "Options" (list
+                    (dict "Value" "both" "Label" .Labels.ScopesBoth)
+                    (dict "Value" "supplier_only" "Label" .Labels.ScopesSupplierOnly)
+                    (dict "Value" "client_only" "Label" .Labels.ScopesClientOnly)
+                )
+            )}}
+        </div>
+
+        <div class="form-row">
+            {{template "form-group" (dict
+                "Type" "number"
+                "Name" "net_days"
+                "Label" .Labels.NetDays
+                "Value" .NetDays
+                "Min" "0"
+            )}}
+            {{template "form-group" (dict
+                "Type" "number"
+                "Name" "discount_days"
+                "Label" .Labels.DiscountDays
+                "Value" .DiscountDays
+                "Min" "0"
+            )}}
+        </div>
+
+        <div class="form-row">
+            {{template "form-group" (dict
+                "Type" "number"
+                "Name" "discount_percent_bps"
+                "Label" .Labels.DiscountPercentBps
+                "Value" .DiscountPercentBps
+                "Min" "0"
+            )}}
+            {{template "form-group" (dict
+                "Type" "number"
+                "Name" "display_order"
+                "Label" .Labels.DisplayOrder
+                "Value" .DisplayOrder
+                "Min" "0"
+            )}}
+        </div>
+
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "textarea"
+                "Name" "description"
+                "Label" .Labels.Description
+                "Value" .Description
+                "Placeholder" .Labels.DescriptionPlaceholder
+            )}}
+        </div>
+
+        <div class="form-row single">
+            {{template "toggle" (dict
+                "Name" "is_default"
+                "Label" .Labels.IsDefault
+                "Checked" .IsDefault
+                "Value" "true"
+            )}}
+        </div>
+
+        <div class="form-row single">
+            {{template "toggle" (dict
+                "Name" "active"
+                "Label" .Labels.Active
+                "Checked" .Active
+                "Value" "true"
+            )}}
+        </div>
+
+    </div>
+
+    {{template "sheet-form-footer" (dict "CommonLabels" .CommonLabels "ShowCancel" true "IsEdit" .IsEdit)}}
+</form>
+{{end}}

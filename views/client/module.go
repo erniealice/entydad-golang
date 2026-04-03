@@ -21,6 +21,9 @@ import (
 	"github.com/erniealice/hybra-golang/views/auditlog"
 )
 
+// PaymentTermOption is re-exported from action for use by callers wiring ModuleDeps.
+type PaymentTermOption = clientaction.PaymentTermOption
+
 // ModuleDeps holds all dependencies for the client module.
 type ModuleDeps struct {
 	Routes           entydad.ClientRoutes
@@ -38,6 +41,8 @@ type ModuleDeps struct {
 	UpdateClient func(ctx context.Context, req *clientpb.UpdateClientRequest) (*clientpb.UpdateClientResponse, error)
 	DeleteClient func(ctx context.Context, req *clientpb.DeleteClientRequest) (*clientpb.DeleteClientResponse, error)
 	SetActive    func(ctx context.Context, id string, active bool) error
+	// Payment terms dropdown
+	ListPaymentTerms func(ctx context.Context) ([]*clientaction.PaymentTermOption, error)
 	// Categories (client tags)
 	ListCategories       func(ctx context.Context, req *categorypb.ListCategoriesRequest) (*categorypb.ListCategoriesResponse, error)
 	ListClientCategories func(ctx context.Context, req *clientcategorypb.ListClientCategoriesRequest) (*clientcategorypb.ListClientCategoriesResponse, error)
@@ -47,6 +52,11 @@ type ModuleDeps struct {
 	ListRevenues func(ctx context.Context, collection string) ([]map[string]any, error)
 	// Subscription listing (for detail view)
 	ListSubscriptions func(ctx context.Context, req *subscriptionpb.ListSubscriptionsRequest) (*subscriptionpb.ListSubscriptionsResponse, error)
+	// Subscription URLs (cross-module, from centymo).
+	SubscriptionAddURL    string
+	SubscriptionDetailURL string
+	SubscriptionEditURL   string
+	SubscriptionDeleteURL string
 
 	// Attachment operations
 	UploadFile       func(ctx context.Context, bucket, key string, content []byte, contentType string) error
@@ -85,6 +95,7 @@ func NewModule(deps *ModuleDeps) *Module {
 		UpdateClient:         deps.UpdateClient,
 		DeleteClient:         deps.DeleteClient,
 		SetClientActive:      deps.SetActive,
+		ListPaymentTerms:     deps.ListPaymentTerms,
 		ListCategories:       deps.ListCategories,
 		ListClientCategories: deps.ListClientCategories,
 		CreateClientCategory: deps.CreateClientCategory,
@@ -105,9 +116,14 @@ func NewModule(deps *ModuleDeps) *Module {
 		ListCategories:       deps.ListCategories,
 		ListClientCategories: deps.ListClientCategories,
 		ListRevenues:         deps.ListRevenues,
-		ListSubscriptions:    deps.ListSubscriptions,
+		ListSubscriptions:     deps.ListSubscriptions,
+		SubscriptionAddURL:    deps.SubscriptionAddURL,
+		SubscriptionDetailURL: deps.SubscriptionDetailURL,
+		SubscriptionEditURL:   deps.SubscriptionEditURL,
+		SubscriptionDeleteURL: deps.SubscriptionDeleteURL,
 		Labels:               deps.Labels,
 		CommonLabels:         deps.CommonLabels,
+		TableLabels:          deps.TableLabels,
 		AttachmentOps: attachment.AttachmentOps{
 			UploadFile:       deps.UploadFile,
 			ListAttachments:  deps.ListAttachments,

@@ -19,6 +19,10 @@ import (
 
 // FormLabels holds i18n labels for the drawer form template.
 type FormLabels struct {
+	Name                     string
+	NamePlaceholder          string
+	CompanyDetails           string
+	Representative           string
 	FirstName                string
 	FirstNamePlaceholder     string
 	LastName                 string
@@ -28,14 +32,6 @@ type FormLabels struct {
 	Mobile                   string
 	MobilePlaceholder        string
 	Active                   string
-	CompanyName              string
-	CompanyNamePlaceholder   string
-	CustomerType             string
-	SelectTypePlaceholder    string
-	TypeRetail               string
-	TypeWholesale            string
-	TypeVIP                  string
-	DateOfBirth              string
 	StreetAddress            string
 	StreetAddressPlaceholder string
 	City                     string
@@ -46,10 +42,25 @@ type FormLabels struct {
 	PostalCodePlaceholder    string
 	Notes                    string
 	NotesPlaceholder         string
+	PaymentTerms             string
+	SelectPaymentTerm        string
 	Tags                     string
 	TagsPlaceholder          string
 	TagsSearchPlaceholder    string
 	TagsNoResults            string
+}
+
+// PaymentTermOption is a minimal struct for rendering payment term options in the form.
+type PaymentTermOption struct {
+	Id   string
+	Name string
+}
+
+// SelectOption is the dict-compatible struct expected by the pyeza form-group select component.
+type SelectOption struct {
+	Value    string
+	Label    string
+	Selected bool
 }
 
 // TagOption represents a tag available for selection in the form.
@@ -68,26 +79,28 @@ type SelectedTag struct {
 
 // FormData is the template data for the client drawer form.
 type FormData struct {
-	FormAction    string
-	IsEdit        bool
-	ID            string
-	FirstName     string
-	LastName      string
-	Email         string
-	Mobile        string
-	Active        bool
-	CompanyName   string
-	CustomerType  string
-	DateOfBirth   string
-	StreetAddress string
-	City          string
-	Province      string
-	PostalCode    string
-	Notes         string
-	TagOptions    []TagOption
-	SelectedTags  []SelectedTag
-	Labels        FormLabels
-	CommonLabels  any
+	FormAction                 string
+	IsEdit                     bool
+	ID                         string
+	Mode                       string
+	Name                       string
+	FirstName                  string
+	LastName                   string
+	Email                      string
+	Mobile                     string
+	Active                     bool
+	StreetAddress              string
+	City                       string
+	Province                   string
+	PostalCode                 string
+	Notes                      string
+	PaymentTerms               []*PaymentTermOption
+	SelectedPaymentTermID      string
+	PaymentTermSelectOptions   []SelectOption
+	TagOptions                 []TagOption
+	SelectedTags               []SelectedTag
+	Labels                     FormLabels
+	CommonLabels               any
 }
 
 // Deps holds dependencies for client action handlers.
@@ -98,6 +111,8 @@ type Deps struct {
 	UpdateClient    func(ctx context.Context, req *clientpb.UpdateClientRequest) (*clientpb.UpdateClientResponse, error)
 	DeleteClient    func(ctx context.Context, req *clientpb.DeleteClientRequest) (*clientpb.DeleteClientResponse, error)
 	SetClientActive func(ctx context.Context, id string, active bool) error
+	// Payment terms dropdown
+	ListPaymentTerms func(ctx context.Context) ([]*PaymentTermOption, error)
 	// Tag-related deps for multi-select tags on the client form
 	ListCategories       func(ctx context.Context, req *categorypb.ListCategoriesRequest) (*categorypb.ListCategoriesResponse, error)
 	ListClientCategories func(ctx context.Context, req *clientcategorypb.ListClientCategoriesRequest) (*clientcategorypb.ListClientCategoriesResponse, error)
@@ -107,6 +122,10 @@ type Deps struct {
 
 func formLabels(t func(string) string) FormLabels {
 	return FormLabels{
+		Name:                     t("client.form.name"),
+		NamePlaceholder:          t("client.form.namePlaceholder"),
+		CompanyDetails:           t("client.form.companyDetails"),
+		Representative:           t("client.form.representative"),
 		FirstName:                t("client.form.firstName"),
 		FirstNamePlaceholder:     t("client.form.firstNamePlaceholder"),
 		LastName:                 t("client.form.lastName"),
@@ -116,14 +135,6 @@ func formLabels(t func(string) string) FormLabels {
 		Mobile:                   t("client.form.phone"),
 		MobilePlaceholder:        t("client.form.phonePlaceholder"),
 		Active:                   t("client.form.active"),
-		CompanyName:              t("client.form.companyName"),
-		CompanyNamePlaceholder:   t("client.form.companyNamePlaceholder"),
-		CustomerType:             t("client.form.customerType"),
-		SelectTypePlaceholder:    t("client.form.selectTypePlaceholder"),
-		TypeRetail:               t("client.form.typeRetail"),
-		TypeWholesale:            t("client.form.typeWholesale"),
-		TypeVIP:                  t("client.form.typeVIP"),
-		DateOfBirth:              t("client.form.dateOfBirth"),
 		StreetAddress:            t("client.form.streetAddress"),
 		StreetAddressPlaceholder: t("client.form.streetAddressPlaceholder"),
 		City:                     t("client.form.city"),
@@ -134,11 +145,40 @@ func formLabels(t func(string) string) FormLabels {
 		PostalCodePlaceholder:    t("client.form.postalCodePlaceholder"),
 		Notes:                    t("client.form.notes"),
 		NotesPlaceholder:         t("client.form.notesPlaceholder"),
+		PaymentTerms:             t("client.form.paymentTerms"),
+		SelectPaymentTerm:        t("client.form.selectPaymentTerm"),
 		Tags:                     t("client.form.tags"),
 		TagsPlaceholder:          t("client.form.tagsPlaceholder"),
 		TagsSearchPlaceholder:    t("client.form.tagsSearchPlaceholder"),
 		TagsNoResults:            t("client.form.tagsNoResults"),
 	}
+}
+
+// buildPaymentTermSelectOptions converts a slice of PaymentTermOption into the SelectOption
+// format expected by the pyeza form-group select component.
+func buildPaymentTermSelectOptions(terms []*PaymentTermOption, selectedID string) []SelectOption {
+	opts := make([]SelectOption, 0, len(terms))
+	for _, t := range terms {
+		opts = append(opts, SelectOption{
+			Value:    t.Id,
+			Label:    t.Name,
+			Selected: t.Id == selectedID,
+		})
+	}
+	return opts
+}
+
+// loadPaymentTerms fetches the payment term options. Returns nil slice on error (graceful degradation).
+func loadPaymentTerms(ctx context.Context, deps *Deps) []*PaymentTermOption {
+	if deps.ListPaymentTerms == nil {
+		return nil
+	}
+	terms, err := deps.ListPaymentTerms(ctx)
+	if err != nil {
+		log.Printf("Failed to load payment terms: %v", err)
+		return nil
+	}
+	return terms
 }
 
 // loadTagData returns available tag options and the pre-selected tags for the form.
@@ -284,13 +324,18 @@ func NewAddAction(deps *Deps) view.View {
 			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		if viewCtx.Request.Method == http.MethodGet {
+			mode := viewCtx.Request.URL.Query().Get("mode")
 			tagOptions, _ := loadTagData(ctx, deps, "")
+			paymentTerms := loadPaymentTerms(ctx, deps)
 			return view.OK("client-drawer-form", &FormData{
-				FormAction:   deps.Routes.AddURL,
-				Active:       true,
-				TagOptions:   tagOptions,
-				Labels:       formLabels(viewCtx.T),
-				CommonLabels: nil, // injected by ViewAdapter
+				FormAction:               deps.Routes.AddURL,
+				Active:                   true,
+				Mode:                     mode,
+				PaymentTerms:             paymentTerms,
+				PaymentTermSelectOptions: buildPaymentTermSelectOptions(paymentTerms, ""),
+				TagOptions:               tagOptions,
+				Labels:                   formLabels(viewCtx.T),
+				CommonLabels:             nil, // injected by ViewAdapter
 			})
 		}
 
@@ -305,14 +350,13 @@ func NewAddAction(deps *Deps) view.View {
 		resp, err := deps.CreateClient(ctx, &clientpb.CreateClientRequest{
 			Data: &clientpb.Client{
 				Active:        active,
-				CompanyName:   optionalString(r.FormValue("company_name")),
-				CustomerType:  optionalString(r.FormValue("customer_type")),
-				DateOfBirth:   optionalString(r.FormValue("date_of_birth")),
+				Name:          optionalString(r.FormValue("name")),
 				StreetAddress: optionalString(r.FormValue("street_address")),
 				City:          optionalString(r.FormValue("city")),
 				Province:      optionalString(r.FormValue("province")),
 				PostalCode:    optionalString(r.FormValue("postal_code")),
 				Notes:         optionalString(r.FormValue("notes")),
+				PaymentTermId: optionalString(r.FormValue("payment_term_id")),
 				User: &userpb.User{
 					FirstName:    r.FormValue("first_name"),
 					LastName:     r.FormValue("last_name"),
@@ -350,6 +394,7 @@ func NewEditAction(deps *Deps) view.View {
 		id := viewCtx.Request.PathValue("id")
 
 		if viewCtx.Request.Method == http.MethodGet {
+			mode := viewCtx.Request.URL.Query().Get("mode")
 			resp, err := deps.ReadClient(ctx, &clientpb.ReadClientRequest{
 				Data: &clientpb.Client{Id: id},
 			})
@@ -361,28 +406,32 @@ func NewEditAction(deps *Deps) view.View {
 			c := resp.GetData()[0]
 			u := c.GetUser()
 			tagOptions, selectedTags := loadTagData(ctx, deps, id)
+			paymentTerms := loadPaymentTerms(ctx, deps)
+			selectedPaymentTermID := c.GetPaymentTermId()
 
 			return view.OK("client-drawer-form", &FormData{
-				FormAction:    route.ResolveURL(deps.Routes.EditURL, "id", id),
-				IsEdit:        true,
-				ID:            id,
-				FirstName:     u.GetFirstName(),
-				LastName:      u.GetLastName(),
-				Email:         u.GetEmailAddress(),
-				Mobile:        u.GetMobileNumber(),
-				Active:        c.GetActive(),
-				CompanyName:   c.GetCompanyName(),
-				CustomerType:  c.GetCustomerType(),
-				DateOfBirth:   c.GetDateOfBirth(),
-				StreetAddress: c.GetStreetAddress(),
-				City:          c.GetCity(),
-				Province:      c.GetProvince(),
-				PostalCode:    c.GetPostalCode(),
-				Notes:         c.GetNotes(),
-				TagOptions:    tagOptions,
-				SelectedTags:  selectedTags,
-				Labels:        formLabels(viewCtx.T),
-				CommonLabels:  nil, // injected by ViewAdapter
+				FormAction:               route.ResolveURL(deps.Routes.EditURL, "id", id),
+				IsEdit:                   true,
+				ID:                       id,
+				Mode:                     mode,
+				Name:                     c.GetName(),
+				FirstName:                u.GetFirstName(),
+				LastName:                 u.GetLastName(),
+				Email:                    u.GetEmailAddress(),
+				Mobile:                   u.GetMobileNumber(),
+				Active:                   c.GetActive(),
+				StreetAddress:            c.GetStreetAddress(),
+				City:                     c.GetCity(),
+				Province:                 c.GetProvince(),
+				PostalCode:               c.GetPostalCode(),
+				Notes:                    c.GetNotes(),
+				PaymentTerms:             paymentTerms,
+				SelectedPaymentTermID:    selectedPaymentTermID,
+				PaymentTermSelectOptions: buildPaymentTermSelectOptions(paymentTerms, selectedPaymentTermID),
+				TagOptions:               tagOptions,
+				SelectedTags:             selectedTags,
+				Labels:                   formLabels(viewCtx.T),
+				CommonLabels:             nil, // injected by ViewAdapter
 			})
 		}
 
@@ -398,14 +447,13 @@ func NewEditAction(deps *Deps) view.View {
 			Data: &clientpb.Client{
 				Id:            id,
 				Active:        active,
-				CompanyName:   optionalString(r.FormValue("company_name")),
-				CustomerType:  optionalString(r.FormValue("customer_type")),
-				DateOfBirth:   optionalString(r.FormValue("date_of_birth")),
+				Name:          optionalString(r.FormValue("name")),
 				StreetAddress: optionalString(r.FormValue("street_address")),
 				City:          optionalString(r.FormValue("city")),
 				Province:      optionalString(r.FormValue("province")),
 				PostalCode:    optionalString(r.FormValue("postal_code")),
 				Notes:         optionalString(r.FormValue("notes")),
+				PaymentTermId: optionalString(r.FormValue("payment_term_id")),
 				User: &userpb.User{
 					FirstName:    r.FormValue("first_name"),
 					LastName:     r.FormValue("last_name"),

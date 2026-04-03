@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/url"
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/erniealice/hybra-golang/views/attachment"
 	"github.com/erniealice/hybra-golang/views/auditlog"
@@ -19,7 +21,6 @@ import (
 	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
 
 	categorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
-	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
 	clientpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client"
 	clientcategorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client_category"
 	subscriptionpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/subscription"
@@ -32,7 +33,11 @@ type DetailViewDeps struct {
 	ListCategories       func(ctx context.Context, req *categorypb.ListCategoriesRequest) (*categorypb.ListCategoriesResponse, error)
 	ListClientCategories func(ctx context.Context, req *clientcategorypb.ListClientCategoriesRequest) (*clientcategorypb.ListClientCategoriesResponse, error)
 	ListRevenues         func(ctx context.Context, collection string) ([]map[string]any, error)
-	ListSubscriptions    func(ctx context.Context, req *subscriptionpb.ListSubscriptionsRequest) (*subscriptionpb.ListSubscriptionsResponse, error)
+	ListSubscriptions      func(ctx context.Context, req *subscriptionpb.ListSubscriptionsRequest) (*subscriptionpb.ListSubscriptionsResponse, error)
+	SubscriptionAddURL     string
+	SubscriptionDetailURL  string
+	SubscriptionEditURL    string
+	SubscriptionDeleteURL  string
 	Labels               entydad.ClientLabels
 	CommonLabels         pyeza.CommonLabels
 	TableLabels          types.TableLabels
@@ -79,20 +84,21 @@ type SubscriptionRow struct {
 // PageData holds the data for the client detail page.
 type PageData struct {
 	types.PageData
-	ContentTemplate string
-	Client          *clientpb.Client
-	Labels          entydad.ClientLabels
-	ActiveTab       string
-	TabItems        []pyeza.TabItem
-	ClientName      string
-	ClientEmail     string
-	ClientPhone     string
+	ContentTemplate    string
+	Client             *clientpb.Client
+	Labels             entydad.ClientLabels
+	ActiveTab          string
+	TabItems           []pyeza.TabItem
+	EditURL            string
+	SubscriptionAddURL string
+	ClientName          string
+	RepresentativeName  string
+	ClientEmail         string
+	ClientPhone         string
 	ClientStatus    string
 	StatusVariant   string
 	// CRM fields
-	CompanyName   string
-	CustomerType  string
-	DateOfBirth   string
+	Name          string
 	StreetAddress string
 	City          string
 	Province      string
@@ -101,25 +107,17 @@ type PageData struct {
 	FullAddress   string
 	Tags          []TagChip
 	// Has* booleans for conditional rendering in templates
-	HasCompany  bool
-	HasPersonal bool
-	HasAddress  bool
-	HasNotes    bool
-	HasTags     bool
+	HasName    bool
+	HasAddress bool
+	HasNotes   bool
+	HasTags    bool
 	// Purchase history
 	PurchaseStats PurchaseStats
 	Orders        []OrderRow
 	HasOrders     bool
-	// Attachments
-	AttachmentTable     *types.TableConfig
-	AttachmentUploadURL string
-	// Audit history tab
-	AuditEntries    []auditlog.AuditEntryView
-	AuditHasNext    bool
-	AuditNextCursor string
-	AuditHistoryURL string
-	// Subscriptions tab
-	Subscriptions []SubscriptionRow
+	// Engagements tab
+	Subscriptions    []SubscriptionRow
+	EngagementsTable *types.TableConfig
 }
 
 // NewView creates the client detail view.
@@ -129,7 +127,7 @@ func NewView(deps *DetailViewDeps) view.View {
 
 		activeTab := viewCtx.Request.URL.Query().Get("tab")
 		if activeTab == "" {
-			activeTab = "basic"
+			activeTab = "info"
 		}
 
 		resp, err := deps.ReadClient(ctx, &clientpb.ReadClientRequest{
@@ -148,9 +146,11 @@ func NewView(deps *DetailViewDeps) view.View {
 		u := client.GetUser()
 
 		clientName := clientDisplayName(client)
+		representativeName := ""
 		clientEmail := ""
 		clientPhone := ""
 		if u != nil {
+			representativeName = strings.TrimSpace(u.GetFirstName() + " " + u.GetLastName())
 			clientEmail = u.GetEmailAddress()
 			clientPhone = u.GetMobileNumber()
 		}
@@ -167,9 +167,7 @@ func NewView(deps *DetailViewDeps) view.View {
 		tabItems := buildTabItems(id, deps)
 
 		// CRM fields
-		companyName := client.GetCompanyName()
-		customerType := client.GetCustomerType()
-		dateOfBirth := client.GetDateOfBirth()
+		name := client.GetName()
 		streetAddress := client.GetStreetAddress()
 		city := client.GetCity()
 		province := client.GetProvince()
@@ -177,8 +175,7 @@ func NewView(deps *DetailViewDeps) view.View {
 		notes := client.GetNotes()
 		fullAddress := buildFullAddress(streetAddress, city, province, postalCode)
 
-		hasCompany := companyName != "" || customerType != ""
-		hasPersonal := dateOfBirth != ""
+		hasName := name != ""
 		hasAddress := streetAddress != "" || city != "" || province != "" || postalCode != ""
 		hasNotes := notes != ""
 
@@ -201,34 +198,42 @@ func NewView(deps *DetailViewDeps) view.View {
 				HeaderIcon:     "icon-user",
 				CommonLabels:   deps.CommonLabels,
 			},
-			ContentTemplate: "client-detail-content",
-			Client:          client,
-			Labels:          deps.Labels,
-			ActiveTab:       activeTab,
-			TabItems:        tabItems,
-			ClientName:      clientName,
+			ContentTemplate:    "client-detail-content",
+			Client:             client,
+			Labels:             deps.Labels,
+			ActiveTab:          activeTab,
+			TabItems:           tabItems,
+			EditURL:            route.ResolveURL(deps.Routes.EditURL, "id", id),
+			SubscriptionAddURL: deps.SubscriptionAddURL + "?client_id=" + id + "&client_name=" + url.QueryEscape(clientName),
+			ClientName:          clientName,
+			RepresentativeName:  representativeName,
 			ClientEmail:     clientEmail,
 			ClientPhone:     clientPhone,
 			ClientStatus:    clientStatus,
 			StatusVariant:   statusVariant,
-			CompanyName:     companyName,
-			CustomerType:    customerType,
-			DateOfBirth:     dateOfBirth,
-			StreetAddress:   streetAddress,
-			City:            city,
-			Province:        province,
-			PostalCode:      postalCode,
-			Notes:           notes,
-			FullAddress:     fullAddress,
-			Tags:            tags,
-			HasCompany:      hasCompany,
-			HasPersonal:     hasPersonal,
-			HasAddress:      hasAddress,
-			HasNotes:        hasNotes,
-			HasTags:         hasTags,
+			Name:          name,
+			StreetAddress: streetAddress,
+			City:          city,
+			Province:      province,
+			PostalCode:    postalCode,
+			Notes:         notes,
+			FullAddress:   fullAddress,
+			Tags:          tags,
+			HasName:       hasName,
+			HasAddress:    hasAddress,
+			HasNotes:      hasNotes,
+			HasTags:       hasTags,
 			PurchaseStats:   stats,
 			Orders:          orders,
 			HasOrders:       hasOrders,
+		}
+
+		// Load tab-specific data for the active tab on full page load
+		switch activeTab {
+		case "engagements":
+			subs := loadClientSubscriptions(ctx, deps, id)
+			pageData.Subscriptions = subs
+			pageData.EngagementsTable = buildEngagementsTable(subs, pageData.SubscriptionAddURL, id, clientName, deps)
 		}
 
 		// KB help content
@@ -241,23 +246,6 @@ func NewView(deps *DetailViewDeps) view.View {
 			}
 		}
 
-		// Load attachment data when attachments tab is active
-		if activeTab == "attachments" {
-			if deps.ListAttachments != nil {
-				cfg := attachmentConfig(deps)
-				resp, err := deps.ListAttachments(ctx, cfg.EntityType, id)
-				if err != nil {
-					log.Printf("Failed to list attachments: %v", err)
-				}
-				var items []*attachmentpb.Attachment
-				if resp != nil {
-					items = resp.GetData()
-				}
-				pageData.AttachmentTable = attachment.BuildTable(items, cfg, id)
-			}
-			pageData.AttachmentUploadURL = route.ResolveURL(deps.Routes.AttachmentUploadURL, "id", id)
-		}
-
 		return view.OK("client-detail", pageData)
 	})
 }
@@ -267,11 +255,10 @@ func buildTabItems(id string, deps *DetailViewDeps) []pyeza.TabItem {
 	base := route.ResolveURL(routes.DetailURL, "id", id)
 	action := route.ResolveURL(routes.TabActionURL, "id", id, "tab", "")
 	return []pyeza.TabItem{
-		{Key: "basic", Label: deps.Labels.Detail.Tabs.Info, Href: base + "?tab=basic", HxGet: action + "basic", Icon: "icon-info"},
-		{Key: "history", Label: deps.Labels.Detail.Tabs.PurchaseHistory, Href: base + "?tab=history", HxGet: action + "history", Icon: "icon-shopping-bag"},
-		{Key: "subscriptions", Label: "Subscriptions", Href: base + "?tab=subscriptions", HxGet: action + "subscriptions", Icon: "icon-file-text"},
-		{Key: "attachments", Label: deps.Labels.Detail.Tabs.Attachments, Href: base + "?tab=attachments", HxGet: action + "attachments", Icon: "icon-paperclip"},
-		{Key: "audit-history", Label: "History", Href: base + "?tab=audit-history", HxGet: action + "audit-history", Icon: "icon-clock"},
+		{Key: "info", Label: deps.Labels.Detail.Tabs.Info, Href: base + "?tab=info", HxGet: action + "info", Icon: "icon-info"},
+		{Key: "representative", Label: deps.Labels.Detail.Tabs.Representative, Href: base + "?tab=representative", HxGet: action + "representative", Icon: "icon-user"},
+		{Key: "engagements", Label: deps.Labels.Detail.Tabs.Engagements, Href: base + "?tab=engagements", HxGet: action + "engagements", Icon: "icon-file-text"},
+		{Key: "history", Label: deps.Labels.Detail.Tabs.History, Href: base + "?tab=history", HxGet: action + "history", Icon: "icon-shopping-bag"},
 	}
 }
 
@@ -281,7 +268,7 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 		id := viewCtx.Request.PathValue("id")
 		tab := viewCtx.Request.PathValue("tab")
 		if tab == "" {
-			tab = "basic"
+			tab = "info"
 		}
 
 		resp, err := deps.ReadClient(ctx, &clientpb.ReadClientRequest{
@@ -300,9 +287,11 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 		u := client.GetUser()
 
 		clientName := clientDisplayName(client)
+		representativeName := ""
 		clientEmail := ""
 		clientPhone := ""
 		if u != nil {
+			representativeName = strings.TrimSpace(u.GetFirstName() + " " + u.GetLastName())
 			clientEmail = u.GetEmailAddress()
 			clientPhone = u.GetMobileNumber()
 		}
@@ -321,86 +310,50 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 				CacheVersion: viewCtx.CacheVersion,
 				CommonLabels: deps.CommonLabels,
 			},
-			Client:        client,
-			Labels:        deps.Labels,
-			ActiveTab:     tab,
-			TabItems:      buildTabItems(id, deps),
-			ClientName:    clientName,
-			ClientEmail:   clientEmail,
-			ClientPhone:   clientPhone,
-			ClientStatus:  clientStatus,
-			StatusVariant: statusVariant,
+			Client:             client,
+			Labels:             deps.Labels,
+			ActiveTab:          tab,
+			TabItems:           buildTabItems(id, deps),
+			ClientName:          clientName,
+			RepresentativeName:  representativeName,
+			ClientEmail:         clientEmail,
+			ClientPhone:         clientPhone,
+			ClientStatus:        clientStatus,
+			StatusVariant:       statusVariant,
+			EditURL:            route.ResolveURL(deps.Routes.EditURL, "id", id),
+			SubscriptionAddURL: deps.SubscriptionAddURL + "?client_id=" + id + "&client_name=" + url.QueryEscape(clientName),
 		}
 
 		switch tab {
-		case "basic":
-			pageData.CompanyName = client.GetCompanyName()
-			pageData.CustomerType = client.GetCustomerType()
-			pageData.DateOfBirth = client.GetDateOfBirth()
+		case "info":
+			pageData.Name = client.GetName()
 			pageData.StreetAddress = client.GetStreetAddress()
 			pageData.City = client.GetCity()
 			pageData.Province = client.GetProvince()
 			pageData.PostalCode = client.GetPostalCode()
 			pageData.Notes = client.GetNotes()
 			pageData.FullAddress = buildFullAddress(pageData.StreetAddress, pageData.City, pageData.Province, pageData.PostalCode)
-			pageData.HasCompany = pageData.CompanyName != "" || pageData.CustomerType != ""
-			pageData.HasPersonal = pageData.DateOfBirth != ""
+			pageData.HasName = pageData.Name != ""
 			pageData.HasAddress = pageData.StreetAddress != "" || pageData.City != "" || pageData.Province != "" || pageData.PostalCode != ""
 			pageData.HasNotes = pageData.Notes != ""
 			pageData.Tags = loadClientTags(ctx, deps, id)
 			pageData.HasTags = len(pageData.Tags) > 0
+		case "representative":
+			// user fields already on client via GetUser()
+		case "engagements":
+			pageData.Subscriptions = loadClientSubscriptions(ctx, deps, id)
+			pageData.EngagementsTable = buildEngagementsTable(pageData.Subscriptions, pageData.SubscriptionAddURL, id, clientName, deps)
 		case "history":
 			pageData.PurchaseStats, pageData.Orders = loadPurchaseHistory(ctx, deps, id)
 			pageData.HasOrders = len(pageData.Orders) > 0
-		case "subscriptions":
-			pageData.Subscriptions = loadClientSubscriptions(ctx, deps, id)
-		case "attachments":
-			if deps.ListAttachments != nil {
-				cfg := attachmentConfig(deps)
-				resp, err := deps.ListAttachments(ctx, cfg.EntityType, id)
-				if err != nil {
-					log.Printf("Failed to list attachments: %v", err)
-				}
-				var items []*attachmentpb.Attachment
-				if resp != nil {
-					items = resp.GetData()
-				}
-				pageData.AttachmentTable = attachment.BuildTable(items, cfg, id)
-			}
-			pageData.AttachmentUploadURL = route.ResolveURL(deps.Routes.AttachmentUploadURL, "id", id)
-		case "audit-history":
-			if deps.ListAuditHistory != nil {
-				cursor := viewCtx.Request.URL.Query().Get("cursor")
-				auditResp, err := deps.ListAuditHistory(ctx, &auditlog.ListAuditRequest{
-					EntityType:  "client",
-					EntityID:    id,
-					Limit:       20,
-					CursorToken: cursor,
-				})
-				if err != nil {
-					log.Printf("Failed to load audit history: %v", err)
-				}
-				if auditResp != nil {
-					pageData.AuditEntries = auditResp.Entries
-					pageData.AuditHasNext = auditResp.HasNext
-					pageData.AuditNextCursor = auditResp.NextCursor
-				}
-			}
-			pageData.AuditHistoryURL = route.ResolveURL(deps.Routes.TabActionURL, "id", id, "tab", "") + "audit-history"
 		}
 
-		templateName := "client-tab-" + tab
-		if tab == "attachments" {
-			templateName = "attachment-tab"
-		}
-		if tab == "audit-history" {
-			templateName = "audit-history-tab"
-		}
-		return view.OK(templateName, pageData)
+		return view.OK("client-tab-"+tab, pageData)
 	})
 }
 
-// loadClientSubscriptions fetches active subscriptions for a client.
+// loadClientSubscriptions fetches active subscriptions for a client
+// using the ListSubscriptions use case with a client_id filter.
 func loadClientSubscriptions(ctx context.Context, deps *DetailViewDeps, clientID string) []SubscriptionRow {
 	if deps.ListSubscriptions == nil {
 		return nil
@@ -412,8 +365,9 @@ func loadClientSubscriptions(ctx context.Context, deps *DetailViewDeps, clientID
 					Field: "client_id",
 					FilterType: &categorypb.TypedFilter_StringFilter{
 						StringFilter: &categorypb.StringFilter{
-							Value:    clientID,
-							Operator: categorypb.StringOperator_STRING_EQUALS,
+							Value:         clientID,
+							Operator:      categorypb.StringOperator_STRING_EQUALS,
+							CaseSensitive: true,
 						},
 					},
 				},
@@ -433,19 +387,107 @@ func loadClientSubscriptions(ctx context.Context, deps *DetailViewDeps, clientID
 		if pp := s.GetPricePlan(); pp != nil {
 			planName = pp.GetName()
 		}
+		// Format dates: prefer string field, fall back to timestamp
+		dateStart := s.GetDateStartString()
+		if dateStart == "" && s.GetDateStart() > 0 {
+			dateStart = time.UnixMilli(s.GetDateStart()).Format("2006-01-02")
+		}
+		dateEnd := s.GetDateEndString()
+		if dateEnd == "" && s.GetDateEnd() > 0 {
+			dateEnd = time.UnixMilli(s.GetDateEnd()).Format("2006-01-02")
+		}
 		rows = append(rows, SubscriptionRow{
 			ID:        s.GetId(),
 			Name:      s.GetName(),
 			Plan:      planName,
-			DateStart: s.GetDateStartString(),
-			DateEnd:   s.GetDateEndString(),
+			DateStart: dateStart,
+			DateEnd:   dateEnd,
 		})
 	}
 	return rows
 }
 
-// clientDisplayName returns the client's display name from the embedded user.
+// clientDisplayName returns the client's display name.
+// buildEngagementsTable builds a TableConfig for the engagements tab.
+func buildEngagementsTable(rows []SubscriptionRow, addURL string, clientID string, clientName string, deps *DetailViewDeps) *types.TableConfig {
+	if len(rows) == 0 {
+		return nil
+	}
+
+	columns := []types.TableColumn{
+		{Key: "name", Label: "Name", Sortable: true},
+		{Key: "plan", Label: "Package", Sortable: true},
+		{Key: "start_date", Label: "Start Date", Sortable: true, Width: "140px"},
+		{Key: "end_date", Label: "End Date", Sortable: true, Width: "140px"},
+	}
+
+	// Build locked client query params for edit URLs
+	clientParams := "?client_id=" + clientID + "&client_name=" + url.QueryEscape(clientName)
+
+	var tableRows []types.TableRow
+	for _, r := range rows {
+		editURL := route.ResolveURL(deps.SubscriptionEditURL, "id", r.ID) + clientParams
+		detailURL := route.ResolveURL(deps.SubscriptionDetailURL, "id", r.ID)
+
+		tableRows = append(tableRows, types.TableRow{
+			ID: r.ID,
+			Cells: []types.TableCell{
+				{Type: "text", Value: r.Name},
+				{Type: "text", Value: r.Plan},
+				{Type: "text", Value: r.DateStart},
+				{Type: "text", Value: r.DateEnd},
+			},
+			DataAttrs: map[string]string{
+				"name": r.Name,
+				"plan": r.Plan,
+			},
+			Actions: []types.TableAction{
+				{Type: "view", Label: "View", Action: "view", Href: detailURL},
+				{Type: "edit", Label: "Edit", Action: "edit", URL: editURL, DrawerTitle: r.Name},
+				{Type: "delete", Label: "Delete", Action: "delete", URL: deps.SubscriptionDeleteURL, ItemName: r.Name, ConfirmTitle: "Delete Engagement", ConfirmMessage: "Are you sure you want to delete " + r.Name + "?"},
+			},
+		})
+	}
+
+	types.ApplyColumnStyles(columns, tableRows)
+
+	tc := &types.TableConfig{
+		ID:                   "engagements-table",
+		Columns:              columns,
+		Rows:                 tableRows,
+		Labels:               deps.TableLabels,
+		ShowSearch:           true,
+		ShowActions:          true,
+		ShowSort:             true,
+		ShowColumns:          true,
+		ShowDensity:          true,
+		ShowEntries:          true,
+		DefaultSortColumn:    "name",
+		DefaultSortDirection: "asc",
+		EmptyState: types.TableEmptyState{
+			Title:   "No engagements",
+			Message: "No engagements found for this client.",
+		},
+	}
+
+	if addURL != "" {
+		tc.PrimaryAction = &types.PrimaryAction{
+			Label:     deps.Labels.Detail.Tabs.Engagements,
+			ActionURL: addURL,
+			Icon:      "icon-plus",
+		}
+	}
+
+	types.ApplyTableSettings(tc)
+	return tc
+}
+
+// clientDisplayName returns the client's display name.
+// Prefers client.name, falls back to user first+last name, then email.
 func clientDisplayName(c *clientpb.Client) string {
+	if name := c.GetName(); name != "" {
+		return name
+	}
 	if u := c.GetUser(); u != nil {
 		first := u.GetFirstName()
 		last := u.GetLastName()

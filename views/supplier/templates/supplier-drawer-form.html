@@ -3,7 +3,7 @@ Supplier drawer form -- loaded into #sheetContent via HTMX.
 Used by both Add and Edit actions.
 Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
       .StreetAddress, .City, .Province, .PostalCode, .Country,
-      .DefaultCurrency, .PaymentTerms, .LeadTimeDays, .CreditLimit,
+      .DefaultCurrency, .PaymentTerms, .SelectedPaymentTermID, .LeadTimeDays, .CreditLimit,
       .Status, .Website, .Notes, .FirstName, .LastName, .Email, .Phone,
       .Active, .ID, .FormAction, .IsEdit, .Labels, .CommonLabels
 */}}
@@ -98,19 +98,15 @@ Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
         {{template "form-section" (dict "Title" .Labels.SectionFinancial)}}
 
         <div class="form-row">
-            {{template "form-group" (dict
-                "Type" "select"
-                "Name" "payment_terms"
-                "Label" .Labels.PaymentTerms
-                "Value" .PaymentTerms
-                "Placeholder" .Labels.PaymentTermsPlaceholder
-                "Options" (list
-                    (dict "Value" "immediate" "Label" .Labels.TermsImmediate "Selected" (eq .PaymentTerms "immediate"))
-                    (dict "Value" "net_30" "Label" .Labels.TermsNet30 "Selected" (eq .PaymentTerms "net_30"))
-                    (dict "Value" "net_60" "Label" .Labels.TermsNet60 "Selected" (eq .PaymentTerms "net_60"))
-                    (dict "Value" "2_10_net_30" "Label" .Labels.Terms2_10Net30 "Selected" (eq .PaymentTerms "2_10_net_30"))
-                )
-            )}}
+            <div class="form-group">
+                <label class="form-label">{{.Labels.PaymentTerms}}</label>
+                <select name="payment_term_id" class="form-control">
+                    <option value="">{{.Labels.SelectPaymentTerm}}</option>
+                    {{range .PaymentTerms}}
+                    <option value="{{.Id}}" {{if eq .Id $.SelectedPaymentTermID}}selected{{end}}>{{.Name}}</option>
+                    {{end}}
+                </select>
+            </div>
             {{template "form-group" (dict
                 "Type" "number"
                 "Name" "credit_limit"

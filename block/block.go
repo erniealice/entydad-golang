@@ -24,10 +24,13 @@ import (
 
 	"github.com/erniealice/espyna-golang/consumer"
 	"github.com/erniealice/espyna-golang/contrib/postgres/reference"
+	"github.com/erniealice/espyna-golang/registry"
+	entityid "github.com/erniealice/espyna-golang/registry/entityid"
 	"github.com/erniealice/entydad-golang"
 	clientmod "github.com/erniealice/entydad-golang/views/client"
 	clienttagmod "github.com/erniealice/entydad-golang/views/clienttag"
 	locationmod "github.com/erniealice/entydad-golang/views/location"
+	paymenttermmod "github.com/erniealice/entydad-golang/views/payment_term"
 	permissionmod "github.com/erniealice/entydad-golang/views/permission"
 	rolemod "github.com/erniealice/entydad-golang/views/role"
 	roleusers "github.com/erniealice/entydad-golang/views/role/users"
@@ -36,6 +39,7 @@ import (
 	userdashboard "github.com/erniealice/entydad-golang/views/user/dashboard"
 	workspacemod "github.com/erniealice/entydad-golang/views/workspace"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
+	paymenttermpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/payment_term"
 	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
 	pyeza "github.com/erniealice/pyeza-golang"
 )
@@ -62,15 +66,16 @@ func handleFunc(r pyeza.RouteRegistrar, method, path string, handler http.Handle
 type BlockOption func(*blockConfig)
 
 type blockConfig struct {
-	enableAll  bool
-	client     bool
-	clientTag  bool
-	user       bool
-	role       bool
-	location   bool
-	permission bool
-	workspace  bool
-	supplier   bool
+	enableAll   bool
+	client      bool
+	clientTag   bool
+	paymentTerm bool
+	user        bool
+	role        bool
+	location    bool
+	permission  bool
+	workspace   bool
+	supplier    bool
 }
 
 // WithClient enables the Client module in Block().
@@ -78,6 +83,9 @@ func WithClient() BlockOption { return func(c *blockConfig) { c.client = true } 
 
 // WithClientTag enables the ClientTag module in Block().
 func WithClientTag() BlockOption { return func(c *blockConfig) { c.clientTag = true } }
+
+// WithPaymentTerm enables the PaymentTerm module in Block().
+func WithPaymentTerm() BlockOption { return func(c *blockConfig) { c.paymentTerm = true } }
 
 // WithUser enables the User module in Block().
 func WithUser() BlockOption { return func(c *blockConfig) { c.user = true } }
@@ -186,8 +194,28 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 					_, err := db.Update(fctx, "client", id, map[string]any{"active": active})
 					return err
 				},
-				ListRevenues:     db.ListSimple,
-				UploadFile:       uploadFile,
+				ListPaymentTerms: func(fctx context.Context) ([]*clientmod.PaymentTermOption, error) {
+					rows, err := db.ListSimple(fctx, "payment_term")
+					if err != nil {
+						return nil, err
+					}
+					opts := make([]*clientmod.PaymentTermOption, 0, len(rows))
+					for _, row := range rows {
+						id, _ := row["id"].(string)
+						name, _ := row["name"].(string)
+						if id == "" {
+							continue
+						}
+						opts = append(opts, &clientmod.PaymentTermOption{Id: id, Name: name})
+					}
+					return opts, nil
+				},
+				ListRevenues:       db.ListSimple,
+				SubscriptionAddURL:    "/action/subscriptions/add",
+				SubscriptionDetailURL: "/app/subscriptions/{id}",
+				SubscriptionEditURL:   "/action/subscriptions/edit/{id}",
+				SubscriptionDeleteURL: "/action/subscriptions/delete",
+				UploadFile:         uploadFile,
 				ListAttachments:  listAttachments,
 				CreateAttachment: createAttachment,
 				DeleteAttachment: deleteAttachment,
@@ -379,6 +407,22 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 					_, err := db.Update(fctx, "supplier", id, map[string]any{"active": active, "status": status})
 					return err
 				},
+				ListPaymentTerms: func(fctx context.Context) ([]*suppliermod.PaymentTermOption, error) {
+					rows, err := db.ListSimple(fctx, "payment_term")
+					if err != nil {
+						return nil, err
+					}
+					opts := make([]*suppliermod.PaymentTermOption, 0, len(rows))
+					for _, row := range rows {
+						id, _ := row["id"].(string)
+						name, _ := row["name"].(string)
+						if id == "" {
+							continue
+						}
+						opts = append(opts, &suppliermod.PaymentTermOption{Id: id, Name: name})
+					}
+					return opts, nil
+				},
 				UploadFile:       uploadFile,
 				ListAttachments:  listAttachments,
 				CreateAttachment: createAttachment,
@@ -420,6 +464,33 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 			clienttagmod.NewModule(clienttagDeps).RegisterRoutes(ctx.Routes)
 		}
 
+		if cfg.enableAll || cfg.paymentTerm {
+			if ctx.SqlDB == nil {
+				log.Println("entydad.Block: warning: SqlDB is nil — skipping payment_term module")
+			} else {
+				repoAny, err := registry.CreateRepository("postgresql", entityid.PaymentTerm, ctx.SqlDB, entityid.PaymentTerm)
+				if err != nil {
+					return fmt.Errorf("entydad.Block: failed to create payment_term repository: %w", err)
+				}
+				ptRepo, ok := repoAny.(paymenttermpb.PaymentTermDomainServiceServer)
+				if !ok {
+					return fmt.Errorf("entydad.Block: payment_term repository does not implement PaymentTermDomainServiceServer")
+				}
+				paymenttermmod.NewModule(&paymenttermmod.ModuleDeps{
+					Routes:            routes.PaymentTerm,
+					CommonLabels:      ctx.Common,
+					SharedLabels:      labels.Shared,
+					Labels:            labels.PaymentTerm,
+					TableLabels:       ctx.Table,
+					GetListPageData:   ptRepo.GetPaymentTermListPageData,
+					CreatePaymentTerm: ptRepo.CreatePaymentTerm,
+					ReadPaymentTerm:   ptRepo.ReadPaymentTerm,
+					UpdatePaymentTerm: ptRepo.UpdatePaymentTerm,
+					DeletePaymentTerm: ptRepo.DeletePaymentTerm,
+				}).RegisterRoutes(ctx.Routes)
+			}
+		}
+
 		log.Println("  ✓ Entity domain initialized (entydad.Block)")
 		return nil
 	}
@@ -452,6 +523,7 @@ type blockLabels struct {
 	Client          entydad.ClientLabels
 	ClientDashboard entydad.ClientDashboardLabels
 	ClientTag       entydad.ClientTagLabels
+	PaymentTerm     entydad.PaymentTermLabels
 	User            entydad.UserLabels
 	UserDashboard   entydad.UserDashboardLabels
 	UserRole        entydad.UserRoleLabels
@@ -466,14 +538,15 @@ type blockLabels struct {
 
 // blockRoutes holds the subset of entydad route structs needed by Block().
 type blockRoutes struct {
-	Client     entydad.ClientRoutes
-	ClientTag  entydad.ClientTagRoutes
-	User       entydad.UserRoutes
-	Role       entydad.RoleRoutes
-	Location   entydad.LocationRoutes
-	Permission entydad.PermissionRoutes
-	Workspace  entydad.WorkspaceRoutes
-	Supplier   entydad.SupplierRoutes
+	Client      entydad.ClientRoutes
+	ClientTag   entydad.ClientTagRoutes
+	PaymentTerm entydad.PaymentTermRoutes
+	User        entydad.UserRoutes
+	Role        entydad.RoleRoutes
+	Location    entydad.LocationRoutes
+	Permission  entydad.PermissionRoutes
+	Workspace   entydad.WorkspaceRoutes
+	Supplier    entydad.SupplierRoutes
 }
 
 // loadBlockLabels loads all entydad typed label structs from lyngua.
@@ -488,6 +561,7 @@ func loadBlockLabels(t *lynguaV1.TranslationProvider, businessType string) block
 	}
 	_ = t.LoadPathIfExists("en", businessType, "client.json", "client.dashboard", &l.ClientDashboard)
 	_ = t.LoadPathIfExists("en", businessType, "client_tag.json", "", &l.ClientTag)
+	_ = t.LoadPathIfExists("en", businessType, "payment_term.json", "", &l.PaymentTerm)
 
 	if err := t.LoadPath("en", businessType, "user.json", "", &l.User); err != nil {
 		log.Printf("entydad.Block: warning: failed to load user labels: %v", err)
@@ -535,6 +609,9 @@ func loadBlockRoutes(t *lynguaV1.TranslationProvider, businessType string) block
 
 	r.ClientTag = entydad.DefaultClientTagRoutes()
 	_ = t.LoadPathIfExists("en", businessType, "route.json", "client_tag", &r.ClientTag)
+
+	r.PaymentTerm = entydad.DefaultPaymentTermRoutes()
+	_ = t.LoadPathIfExists("en", businessType, "route.json", "payment_term", &r.PaymentTerm)
 
 	r.User = entydad.DefaultUserRoutes()
 	_ = t.LoadPathIfExists("en", businessType, "route.json", "user", &r.User)

@@ -6,6 +6,7 @@ import (
 	"log"
 	"math"
 	"strconv"
+	"strings"
 
 	espynahttp "github.com/erniealice/espyna-golang/contrib/http"
 	pyeza "github.com/erniealice/pyeza-golang"
@@ -38,11 +39,11 @@ type PageData struct {
 }
 
 var clientAllowedSortCols = []string{
-	"date_created", "date_modified", "u.first_name", "u.last_name",
-	"u.email_address", "u.mobile_number",
+	"date_created", "date_modified", "name",
+	"u.first_name", "u.last_name", "u.email_address",
 }
 
-var clientSearchFields = []string{"u.first_name", "u.last_name", "u.email_address", "u.mobile_number"}
+var clientSearchFields = []string{"name", "u.first_name", "u.last_name", "u.email_address"}
 
 // NewView creates the client list view (full page).
 func NewView(deps *ListViewDeps) view.View {
@@ -207,9 +208,8 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 
 func clientColumns(l entydad.ClientLabels) []types.TableColumn {
 	return []types.TableColumn{
-		{Key: "u.first_name", Label: l.Columns.ClientName, Sortable: true, Filterable: true, FilterType: types.FilterTypeString},
-		{Key: "u.email_address", Label: l.Form.Email, Sortable: true, Filterable: true, FilterType: types.FilterTypeString},
-		{Key: "u.mobile_number", Label: l.Form.Phone, Sortable: false, Filterable: true, FilterType: types.FilterTypeString},
+		{Key: "name", Label: l.Columns.ClientName, Sortable: true, Filterable: true, FilterType: types.FilterTypeString},
+		{Key: "representative", Label: l.Columns.Representative, Sortable: true, Filterable: true, FilterType: types.FilterTypeString},
 		{Key: "date_created", Label: l.Columns.DateCreated, Sortable: true, Filterable: true, FilterType: types.FilterTypeDate, Width: "180px"},
 	}
 }
@@ -228,29 +228,35 @@ func buildTableRows(clients []*clientpb.Client, status string, l entydad.ClientL
 
 		id := c.GetId()
 		u := c.GetUser()
-		name := c.GetCompanyName()
-		if name == "" {
-			name = u.GetFirstName() + " " + u.GetLastName()
+		name := c.GetName()
+		repName := ""
+		repEmail := ""
+		if u != nil {
+			first := u.GetFirstName()
+			last := u.GetLastName()
+			repName = strings.TrimSpace(first + " " + last)
+			repEmail = u.GetEmailAddress()
 		}
-		email := u.GetEmailAddress()
-		phone := u.GetMobileNumber()
+		displayName := name
+		if displayName == "" {
+			displayName = repName
+		}
 		isInUse := inUseIDs[id]
 
 		rows = append(rows, types.TableRow{
 			ID: id,
 			Cells: []types.TableCell{
-				{Type: "text", Value: name},
-				{Type: "text", Value: email},
-				{Type: "text", Value: phone},
+				{Type: "text", Value: displayName},
+				{Type: "single-person", Person: &types.PersonData{Name: repName, Email: repEmail}},
 				types.DateTimeCell(c.GetDateCreatedString(), types.DateReadable),
 			},
 			DataAttrs: map[string]string{
-				"name":      name,
-				"email":     email,
+				"name":      displayName,
+				"email":     repEmail,
 				"status":    recordStatus,
 				"deletable": strconv.FormatBool(!isInUse),
 			},
-			Actions: buildRowActions(id, name, active, isInUse, l, sl, routes, perms),
+			Actions: buildRowActions(id, displayName, active, isInUse, l, sl, routes, perms),
 		})
 	}
 	return rows

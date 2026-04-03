@@ -15,6 +15,12 @@ import (
 	"github.com/erniealice/entydad-golang"
 )
 
+// PaymentTermOption is a minimal struct for rendering payment term options in the form.
+type PaymentTermOption struct {
+	Id   string
+	Name string
+}
+
 // FormLabels holds i18n labels for the drawer form template.
 type FormLabels struct {
 	CompanyName        string
@@ -75,50 +81,49 @@ type FormLabels struct {
 	StatusBlocked string
 	StatusOnHold  string
 
-	TermsImmediate string
-	TermsNet30     string
-	TermsNet60     string
-	Terms2_10Net30 string
+	SelectPaymentTerm string
 }
 
 // FormData is the template data for the supplier drawer form.
 type FormData struct {
-	FormAction         string
-	IsEdit             bool
-	ID                 string
-	CompanyName        string
-	SupplierType       string
-	TaxID              string
-	RegistrationNumber string
-	StreetAddress      string
-	City               string
-	Province           string
-	PostalCode         string
-	Country            string
-	DefaultCurrency    string
-	PaymentTerms       string
-	LeadTimeDays       string
-	CreditLimit        string
-	Status             string
-	Website            string
-	Notes              string
-	FirstName          string
-	LastName           string
-	Email              string
-	Phone              string
-	Active             bool
-	Labels             FormLabels
-	CommonLabels       any
+	FormAction            string
+	IsEdit                bool
+	ID                    string
+	CompanyName           string
+	SupplierType          string
+	TaxID                 string
+	RegistrationNumber    string
+	StreetAddress         string
+	City                  string
+	Province              string
+	PostalCode            string
+	Country               string
+	DefaultCurrency       string
+	PaymentTerms          []*PaymentTermOption
+	SelectedPaymentTermID string
+	LeadTimeDays          string
+	CreditLimit           string
+	Status                string
+	Website               string
+	Notes                 string
+	FirstName             string
+	LastName              string
+	Email                 string
+	Phone                 string
+	Active                bool
+	Labels                FormLabels
+	CommonLabels          any
 }
 
 // Deps holds dependencies for supplier action handlers.
 type Deps struct {
-	Routes            entydad.SupplierRoutes
-	CreateSupplier    func(ctx context.Context, req *supplierpb.CreateSupplierRequest) (*supplierpb.CreateSupplierResponse, error)
-	ReadSupplier      func(ctx context.Context, req *supplierpb.ReadSupplierRequest) (*supplierpb.ReadSupplierResponse, error)
-	UpdateSupplier    func(ctx context.Context, req *supplierpb.UpdateSupplierRequest) (*supplierpb.UpdateSupplierResponse, error)
-	DeleteSupplier    func(ctx context.Context, req *supplierpb.DeleteSupplierRequest) (*supplierpb.DeleteSupplierResponse, error)
-	SetSupplierActive func(ctx context.Context, id string, active bool) error
+	Routes             entydad.SupplierRoutes
+	CreateSupplier     func(ctx context.Context, req *supplierpb.CreateSupplierRequest) (*supplierpb.CreateSupplierResponse, error)
+	ReadSupplier       func(ctx context.Context, req *supplierpb.ReadSupplierRequest) (*supplierpb.ReadSupplierResponse, error)
+	UpdateSupplier     func(ctx context.Context, req *supplierpb.UpdateSupplierRequest) (*supplierpb.UpdateSupplierResponse, error)
+	DeleteSupplier     func(ctx context.Context, req *supplierpb.DeleteSupplierRequest) (*supplierpb.DeleteSupplierResponse, error)
+	SetSupplierActive  func(ctx context.Context, id string, active bool) error
+	ListPaymentTerms   func(ctx context.Context) ([]*PaymentTermOption, error)
 }
 
 func formLabels(t func(string) string) FormLabels {
@@ -181,10 +186,7 @@ func formLabels(t func(string) string) FormLabels {
 		StatusBlocked: t("supplier.form.statusBlocked"),
 		StatusOnHold:  t("supplier.form.statusOnHold"),
 
-		TermsImmediate: t("supplier.form.termsImmediate"),
-		TermsNet30:     t("supplier.form.termsNet30"),
-		TermsNet60:     t("supplier.form.termsNet60"),
-		Terms2_10Net30: t("supplier.form.terms2_10Net30"),
+		SelectPaymentTerm: t("supplier.form.selectPaymentTerm"),
 	}
 }
 
@@ -221,6 +223,19 @@ func optionalFloat64(s string) *float64 {
 	return &v
 }
 
+// loadPaymentTerms fetches the payment term options. Returns nil slice on error (graceful degradation).
+func loadPaymentTerms(ctx context.Context, deps *Deps) []*PaymentTermOption {
+	if deps.ListPaymentTerms == nil {
+		return nil
+	}
+	terms, err := deps.ListPaymentTerms(ctx)
+	if err != nil {
+		log.Printf("Failed to load payment terms: %v", err)
+		return nil
+	}
+	return terms
+}
+
 // NewAddAction creates the supplier add action (GET = form, POST = create).
 func NewAddAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
@@ -233,6 +248,7 @@ func NewAddAction(deps *Deps) view.View {
 				FormAction:   deps.Routes.AddURL,
 				Active:       true,
 				Status:       "active",
+				PaymentTerms: loadPaymentTerms(ctx, deps),
 				Labels:       formLabels(viewCtx.T),
 				CommonLabels: nil, // injected by ViewAdapter
 			})
@@ -259,7 +275,7 @@ func NewAddAction(deps *Deps) view.View {
 				PostalCode:         optionalString(r.FormValue("postal_code")),
 				Country:            optionalString(r.FormValue("country")),
 				DefaultCurrency:    optionalString(r.FormValue("default_currency")),
-				PaymentTerms:       optionalString(r.FormValue("payment_terms")),
+				PaymentTermId:      optionalString(r.FormValue("payment_term_id")),
 				LeadTimeDays:       optionalInt32(r.FormValue("lead_time_days")),
 				CreditLimit:        optionalFloat64(r.FormValue("credit_limit")),
 				Status:             optionalString(r.FormValue("status")),
@@ -334,32 +350,33 @@ func NewEditAction(deps *Deps) view.View {
 			}
 
 			return view.OK("supplier-drawer-form", &FormData{
-				FormAction:         route.ResolveURL(deps.Routes.EditURL, "id", id),
-				IsEdit:             true,
-				ID:                 id,
-				CompanyName:        s.GetCompanyName(),
-				SupplierType:       s.GetSupplierType(),
-				TaxID:              s.GetTaxId(),
-				RegistrationNumber: s.GetRegistrationNumber(),
-				StreetAddress:      s.GetStreetAddress(),
-				City:               s.GetCity(),
-				Province:           s.GetProvince(),
-				PostalCode:         s.GetPostalCode(),
-				Country:            s.GetCountry(),
-				DefaultCurrency:    s.GetDefaultCurrency(),
-				PaymentTerms:       s.GetPaymentTerms(),
-				LeadTimeDays:       leadTimeDays,
-				CreditLimit:        creditLimit,
-				Status:             status,
-				Website:            s.GetWebsite(),
-				Notes:              s.GetNotes(),
-				FirstName:          firstName,
-				LastName:           lastName,
-				Email:              email,
-				Phone:              phone,
-				Active:             s.GetActive(),
-				Labels:             formLabels(viewCtx.T),
-				CommonLabels:       nil, // injected by ViewAdapter
+				FormAction:            route.ResolveURL(deps.Routes.EditURL, "id", id),
+				IsEdit:                true,
+				ID:                    id,
+				CompanyName:           s.GetCompanyName(),
+				SupplierType:          s.GetSupplierType(),
+				TaxID:                 s.GetTaxId(),
+				RegistrationNumber:    s.GetRegistrationNumber(),
+				StreetAddress:         s.GetStreetAddress(),
+				City:                  s.GetCity(),
+				Province:              s.GetProvince(),
+				PostalCode:            s.GetPostalCode(),
+				Country:               s.GetCountry(),
+				DefaultCurrency:       s.GetDefaultCurrency(),
+				PaymentTerms:          loadPaymentTerms(ctx, deps),
+				SelectedPaymentTermID: s.GetPaymentTermId(),
+				LeadTimeDays:          leadTimeDays,
+				CreditLimit:           creditLimit,
+				Status:                status,
+				Website:               s.GetWebsite(),
+				Notes:                 s.GetNotes(),
+				FirstName:             firstName,
+				LastName:              lastName,
+				Email:                 email,
+				Phone:                 phone,
+				Active:                s.GetActive(),
+				Labels:                formLabels(viewCtx.T),
+				CommonLabels:          nil, // injected by ViewAdapter
 			})
 		}
 
@@ -385,7 +402,7 @@ func NewEditAction(deps *Deps) view.View {
 				PostalCode:         optionalString(r.FormValue("postal_code")),
 				Country:            optionalString(r.FormValue("country")),
 				DefaultCurrency:    optionalString(r.FormValue("default_currency")),
-				PaymentTerms:       optionalString(r.FormValue("payment_terms")),
+				PaymentTermId:      optionalString(r.FormValue("payment_term_id")),
 				LeadTimeDays:       optionalInt32(r.FormValue("lead_time_days")),
 				CreditLimit:        optionalFloat64(r.FormValue("credit_limit")),
 				Status:             optionalString(r.FormValue("status")),

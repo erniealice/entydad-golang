@@ -134,6 +134,14 @@ const (
 	ClientTagDeleteURL     = "/action/clients/tags/delete"
 	ClientTagBulkDeleteURL = "/action/clients/tags/bulk-delete"
 
+	// Payment Term routes (shared settings, canonical under /clients/)
+	PaymentTermListURL       = "/app/clients/settings/payment-terms/list"
+	PaymentTermTableURL      = "/action/clients/settings/payment-terms/table"
+	PaymentTermAddURL        = "/action/clients/settings/payment-terms/add"
+	PaymentTermEditURL       = "/action/clients/settings/payment-terms/edit/{id}"
+	PaymentTermDeleteURL     = "/action/clients/settings/payment-terms/delete"
+	PaymentTermBulkDeleteURL = "/action/clients/settings/payment-terms/bulk-delete"
+
 	// Auth routes (all prefixed with /auth/)
 	AuthLoginURL             = "/auth/login"
 	AuthLoginPostURL         = "/auth/login"

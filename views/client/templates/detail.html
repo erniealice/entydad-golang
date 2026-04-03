@@ -13,38 +13,28 @@
 
     {{/* --- Tab Body --- */}}
     <div id="tabContent" class="detail-body" role="tabpanel" aria-labelledby="tab-{{.ActiveTab}}">
-        {{if eq .ActiveTab "basic"}}
-        {{template "client-tab-basic" .}}
+        {{if eq .ActiveTab "info"}}
+        {{template "client-tab-info" .}}
+        {{else if eq .ActiveTab "representative"}}
+        {{template "client-tab-representative" .}}
+        {{else if eq .ActiveTab "engagements"}}
+        {{template "client-tab-engagements" .}}
         {{else if eq .ActiveTab "history"}}
         {{template "client-tab-history" .}}
-        {{else if eq .ActiveTab "subscriptions"}}
-        {{template "client-tab-subscriptions" .}}
-        {{else if eq .ActiveTab "attachments"}}
-        {{template "attachment-tab" .}}
         {{end}}
     </div>
 </div>
+{{template "sheet-form" .}}
+<script src="/assets/js/pyeza/sheet.js?v={{.CacheVersion}}"></script>
 {{end}}
 
-{{/* Basic Information Tab */}}
-{{define "client-tab-basic"}}
+{{/* Info Tab */}}
+{{define "client-tab-info"}}
 <div class="tab-scroll">
     <h2 class="visually-hidden">{{.Labels.Detail.Profile.Title}}</h2>
     {{/* --- Profile Section --- */}}
     <h4 class="detail-section-title">{{.Labels.Detail.Profile.Title}}</h4>
     <div class="detail-info-grid">
-        <div class="detail-info-item">
-            <span class="detail-info-label">{{.Labels.Detail.Name}}</span>
-            <span class="detail-info-value">{{.ClientName}}</span>
-        </div>
-        <div class="detail-info-item">
-            <span class="detail-info-label">{{.Labels.Form.Email}}</span>
-            <span class="detail-info-value">{{if .ClientEmail}}{{.ClientEmail}}{{else}}&mdash;{{end}}</span>
-        </div>
-        <div class="detail-info-item">
-            <span class="detail-info-label">{{.Labels.Form.Phone}}</span>
-            <span class="detail-info-value">{{if .ClientPhone}}{{.ClientPhone}}{{else}}&mdash;{{end}}</span>
-        </div>
         <div class="detail-info-item">
             <span class="detail-info-label">{{.Labels.Detail.CompanyDetails.Status}}</span>
             <span>
@@ -56,75 +46,40 @@
     </div>
 
     {{/* --- Company Section --- */}}
-    {{if .HasCompany}}
     <h4 class="detail-section-title detail-section-title--spaced">{{.Labels.Detail.Company.Title}}</h4>
     <div class="detail-info-grid">
-        {{if .CompanyName}}
         <div class="detail-info-item">
-            <span class="detail-info-label">{{.Labels.Form.CompanyName}}</span>
-            <span class="detail-info-value">{{.CompanyName}}</span>
+            <span class="detail-info-label">{{.Labels.Form.Name}}</span>
+            <span class="detail-info-value">{{if .Name}}{{.Name}}{{else}}&mdash;{{end}}</span>
         </div>
-        {{end}}
-        {{if .CustomerType}}
-        <div class="detail-info-item">
-            <span class="detail-info-label">{{.Labels.Form.CustomerType}}</span>
-            <span class="detail-info-value client-customer-type">{{.CustomerType}}</span>
-        </div>
-        {{end}}
     </div>
-    {{end}}
-
-    {{/* --- Personal Section --- */}}
-    {{if .HasPersonal}}
-    <h4 class="detail-section-title detail-section-title--spaced">{{.Labels.Detail.Personal.Title}}</h4>
-    <div class="detail-info-grid">
-        {{if .DateOfBirth}}
-        <div class="detail-info-item">
-            <span class="detail-info-label">{{.Labels.Form.DateOfBirth}}</span>
-            <span class="detail-info-value">{{.DateOfBirth}}</span>
-        </div>
-        {{end}}
-    </div>
-    {{end}}
 
     {{/* --- Address Section --- */}}
-    {{if .HasAddress}}
     <h4 class="detail-section-title detail-section-title--spaced">{{.Labels.Detail.Address.Title}}</h4>
     <div class="detail-info-grid">
-        {{if .StreetAddress}}
         <div class="detail-info-item">
             <span class="detail-info-label">{{.Labels.Form.StreetAddress}}</span>
-            <span class="detail-info-value">{{.StreetAddress}}</span>
+            <span class="detail-info-value">{{if .StreetAddress}}{{.StreetAddress}}{{else}}&mdash;{{end}}</span>
         </div>
-        {{end}}
-        {{if .City}}
         <div class="detail-info-item">
             <span class="detail-info-label">{{.Labels.Form.City}}</span>
-            <span class="detail-info-value">{{.City}}</span>
+            <span class="detail-info-value">{{if .City}}{{.City}}{{else}}&mdash;{{end}}</span>
         </div>
-        {{end}}
-        {{if .Province}}
         <div class="detail-info-item">
             <span class="detail-info-label">{{.Labels.Form.Province}}</span>
-            <span class="detail-info-value">{{.Province}}</span>
+            <span class="detail-info-value">{{if .Province}}{{.Province}}{{else}}&mdash;{{end}}</span>
         </div>
-        {{end}}
-        {{if .PostalCode}}
         <div class="detail-info-item">
             <span class="detail-info-label">{{.Labels.Form.PostalCode}}</span>
-            <span class="detail-info-value">{{.PostalCode}}</span>
+            <span class="detail-info-value">{{if .PostalCode}}{{.PostalCode}}{{else}}&mdash;{{end}}</span>
         </div>
-        {{end}}
     </div>
-    {{end}}
 
     {{/* --- Notes Section --- */}}
-    {{if .HasNotes}}
     <h4 class="detail-section-title detail-section-title--spaced">{{.Labels.Detail.NotesSection.Title}}</h4>
     <div class="client-notes-content">
-        {{.Notes}}
+        {{if .Notes}}{{.Notes}}{{else}}&mdash;{{end}}
     </div>
-    {{end}}
 
     {{/* --- Tags Section --- */}}
     <h4 class="detail-section-title detail-section-title--spaced">{{.Labels.Detail.Tags.Title}}</h4>
@@ -137,40 +92,71 @@
     {{else}}
     <p class="client-tags-empty">{{.Labels.Detail.Tags.NoTags}}</p>
     {{end}}
+
+    {{/* --- Edit Button --- */}}
+    <div class="detail-tab-actions detail-tab-actions--bottom">
+        <button class="btn btn--sm btn--outline"
+                hx-get="{{.EditURL}}?mode=info"
+                hx-target="#sheetContent"
+                hx-swap="innerHTML"
+                onclick="Sheet.open()">
+            <span class="icon icon-edit"></span> {{.CommonLabels.Buttons.Edit}}
+        </button>
+    </div>
 </div>
 {{end}}
 
-{{/* Subscriptions Tab */}}
-{{define "client-tab-subscriptions"}}
+{{/* Representative Tab */}}
+{{define "client-tab-representative"}}
 <div class="tab-scroll">
-    <h4 class="detail-section-title">Client Engagements</h4>
-    {{if .Subscriptions}}
-    <div class="purchase-orders-table">
-        <table id="subscriptions-table">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Package</th>
-                    <th>Start Date</th>
-                    <th>End Date</th>
-                </tr>
-            </thead>
-            <tbody>
-                {{range .Subscriptions}}
-                <tr data-id="{{.ID}}">
-                    <td>{{.Name}}</td>
-                    <td>{{.Plan}}</td>
-                    <td>{{.DateStart}}</td>
-                    <td>{{.DateEnd}}</td>
-                </tr>
-                {{end}}
-            </tbody>
-        </table>
+    <h2 class="visually-hidden">{{.Labels.Detail.Representative}}</h2>
+    <h4 class="detail-section-title">{{.Labels.Detail.Representative}}</h4>
+    <div class="detail-info-grid">
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Detail.Name}}</span>
+            <span class="detail-info-value">{{if .RepresentativeName}}{{.RepresentativeName}}{{else}}&mdash;{{end}}</span>
+        </div>
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Form.Email}}</span>
+            <span class="detail-info-value">{{if .ClientEmail}}{{.ClientEmail}}{{else}}&mdash;{{end}}</span>
+        </div>
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Form.Phone}}</span>
+            <span class="detail-info-value">{{if .ClientPhone}}{{.ClientPhone}}{{else}}&mdash;{{end}}</span>
+        </div>
     </div>
+
+    {{/* --- Edit Button --- */}}
+    <div class="detail-tab-actions detail-tab-actions--bottom">
+        <button class="btn btn--sm btn--outline"
+                hx-get="{{.EditURL}}?mode=representative"
+                hx-target="#sheetContent"
+                hx-swap="innerHTML"
+                onclick="Sheet.open()">
+            <span class="icon icon-edit"></span> {{.CommonLabels.Buttons.Edit}}
+        </button>
+    </div>
+</div>
+{{end}}
+
+{{/* Engagements Tab */}}
+{{define "client-tab-engagements"}}
+<div class="tab-scroll tab-scroll--table">
+    {{if .EngagementsTable}}
+        {{template "table-card" .EngagementsTable}}
     {{else}}
-    <div class="coming-soon-panel">
-        <p class="coming-soon-text">No engagements found for this client.</p>
-    </div>
+        <div class="detail-tab-actions">
+            <button class="btn btn--sm btn--primary"
+                    hx-get="{{.SubscriptionAddURL}}"
+                    hx-target="#sheetContent"
+                    hx-swap="innerHTML"
+                    onclick="Sheet.open()">
+                <span class="icon icon-plus"></span> {{.Labels.Detail.Tabs.Engagements}}
+            </button>
+        </div>
+        <div class="coming-soon-panel">
+            <p class="coming-soon-text">No engagements found for this client.</p>
+        </div>
     {{end}}
 </div>
 {{end}}

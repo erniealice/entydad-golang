@@ -2,7 +2,7 @@
 Client drawer form — loaded into #sheetContent via HTMX.
 Used by both Add and Edit actions.
 Data: .FirstName, .LastName, .Email, .Mobile, .Active, .ID, .FormAction, .IsEdit,
-      .CompanyName, .CustomerType, .DateOfBirth, .StreetAddress, .City, .Province,
+      .Name, .StreetAddress, .City, .Province,
       .PostalCode, .Notes, .TagOptions, .SelectedTags, .Labels, .CommonLabels
 */}}
 {{define "client-drawer-form"}}
@@ -10,79 +10,17 @@ Data: .FirstName, .LastName, .Email, .Mobile, .Active, .ID, .FormAction, .IsEdit
     {{if .ID}}<input type="hidden" name="id" value="{{.ID}}">{{end}}
 
     <div class="sheet-body">
-        {{/* --- Contact Info --- */}}
-        <div class="form-row">
-            {{template "form-group" (dict
-                "Type" "text"
-                "Name" "first_name"
-                "Label" .Labels.FirstName
-                "Value" .FirstName
-                "Required" true
-                "Placeholder" .Labels.FirstNamePlaceholder
-            )}}
-            {{template "form-group" (dict
-                "Type" "text"
-                "Name" "last_name"
-                "Label" .Labels.LastName
-                "Value" .LastName
-                "Required" true
-                "Placeholder" .Labels.LastNamePlaceholder
-            )}}
-        </div>
-
-        <div class="form-row single">
-            {{template "form-group" (dict
-                "Type" "email"
-                "Name" "email_address"
-                "Label" .Labels.Email
-                "Value" .Email
-                "Required" true
-                "Placeholder" .Labels.EmailPlaceholder
-            )}}
-        </div>
-
-        <div class="form-row single">
-            {{template "form-group" (dict
-                "Type" "tel"
-                "Name" "mobile_number"
-                "Label" .Labels.Mobile
-                "Value" .Mobile
-                "Placeholder" .Labels.MobilePlaceholder
-            )}}
-        </div>
-
+        {{if ne .Mode "representative"}}
         {{/* --- Company Section --- */}}
-        {{template "form-section" (dict "Title" .Labels.CompanyName)}}
+        {{template "form-section" (dict "Title" .Labels.CompanyDetails)}}
 
-        <div class="form-row">
-            {{template "form-group" (dict
-                "Type" "text"
-                "Name" "company_name"
-                "Label" .Labels.CompanyName
-                "Value" .CompanyName
-                "Placeholder" .Labels.CompanyNamePlaceholder
-            )}}
-            {{template "form-group" (dict
-                "Type" "select"
-                "Name" "customer_type"
-                "Label" .Labels.CustomerType
-                "Value" .CustomerType
-                "Placeholder" .Labels.SelectTypePlaceholder
-                "Options" (list
-                    (dict "Value" "retail" "Label" .Labels.TypeRetail "Selected" (eq .CustomerType "retail"))
-                    (dict "Value" "wholesale" "Label" .Labels.TypeWholesale "Selected" (eq .CustomerType "wholesale"))
-                    (dict "Value" "vip" "Label" .Labels.TypeVIP "Selected" (eq .CustomerType "vip"))
-                )
-            )}}
-        </div>
-
-        {{/* --- Personal Section --- */}}
         <div class="form-row single">
             {{template "form-group" (dict
-                "Type" "date"
-                "Name" "date_of_birth"
-                "Label" .Labels.DateOfBirth
-                "Value" .DateOfBirth
+                "Type" "text"
+                "Name" "name"
+                "Label" .Labels.Name
+                "Value" .Name
+                "Placeholder" .Labels.NamePlaceholder
             )}}
         </div>
 
@@ -125,7 +63,54 @@ Data: .FirstName, .LastName, .Email, .Mobile, .Active, .ID, .FormAction, .IsEdit
                 "Placeholder" .Labels.PostalCodePlaceholder
             )}}
         </div>
+        {{end}}
 
+        {{if ne .Mode "info"}}
+        {{/* --- Representative Section --- */}}
+        {{template "form-section" (dict "Title" .Labels.Representative)}}
+
+        <div class="form-row">
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "first_name"
+                "Label" .Labels.FirstName
+                "Value" .FirstName
+                "Required" true
+                "Placeholder" .Labels.FirstNamePlaceholder
+            )}}
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "last_name"
+                "Label" .Labels.LastName
+                "Value" .LastName
+                "Required" true
+                "Placeholder" .Labels.LastNamePlaceholder
+            )}}
+        </div>
+
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "email"
+                "Name" "email_address"
+                "Label" .Labels.Email
+                "Value" .Email
+                "Required" true
+                "Placeholder" .Labels.EmailPlaceholder
+            )}}
+        </div>
+
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "tel"
+                "Name" "mobile_number"
+                "Label" .Labels.Mobile
+                "Value" .Mobile
+                "Placeholder" .Labels.MobilePlaceholder
+            )}}
+        </div>
+        {{end}}
+
+        {{if ne .Mode "representative"}}
         {{/* --- Notes Section --- */}}
         <div class="form-row single">
             {{template "form-group" (dict
@@ -137,6 +122,19 @@ Data: .FirstName, .LastName, .Email, .Mobile, .Active, .ID, .FormAction, .IsEdit
                 "Rows" 3
             )}}
         </div>
+
+        {{/* --- Payment Terms --- */}}
+        {{if .PaymentTermSelectOptions}}
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "select"
+                "Name" "payment_term_id"
+                "Label" .Labels.PaymentTerms
+                "Placeholder" .Labels.SelectPaymentTerm
+                "Options" .PaymentTermSelectOptions
+            )}}
+        </div>
+        {{end}}
 
         {{/* --- Tags Section --- */}}
         {{if .TagOptions}}
@@ -155,6 +153,7 @@ Data: .FirstName, .LastName, .Email, .Mobile, .Active, .ID, .FormAction, .IsEdit
                 )}}
             </div>
         </div>
+        {{end}}
         {{end}}
 
         {{/* --- Active Toggle --- */}}

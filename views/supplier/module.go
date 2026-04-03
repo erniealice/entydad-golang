@@ -18,6 +18,9 @@ import (
 	purchaseorderpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/expenditure/purchase_order"
 )
 
+// PaymentTermOption is re-exported from action for use by callers wiring ModuleDeps.
+type PaymentTermOption = supplieraction.PaymentTermOption
+
 // ModuleDeps holds all dependencies for the supplier module.
 type ModuleDeps struct {
 	Routes          entydad.SupplierRoutes
@@ -28,11 +31,12 @@ type ModuleDeps struct {
 	GetListPageData func(ctx context.Context, req *supplierpb.GetSupplierListPageDataRequest) (*supplierpb.GetSupplierListPageDataResponse, error)
 	GetInUseIDs     func(ctx context.Context, ids []string) (map[string]bool, error)
 	// Supplier CRUD
-	CreateSupplier func(ctx context.Context, req *supplierpb.CreateSupplierRequest) (*supplierpb.CreateSupplierResponse, error)
-	ReadSupplier   func(ctx context.Context, req *supplierpb.ReadSupplierRequest) (*supplierpb.ReadSupplierResponse, error)
-	UpdateSupplier func(ctx context.Context, req *supplierpb.UpdateSupplierRequest) (*supplierpb.UpdateSupplierResponse, error)
-	DeleteSupplier func(ctx context.Context, req *supplierpb.DeleteSupplierRequest) (*supplierpb.DeleteSupplierResponse, error)
-	SetActive      func(ctx context.Context, id string, active bool) error
+	CreateSupplier   func(ctx context.Context, req *supplierpb.CreateSupplierRequest) (*supplierpb.CreateSupplierResponse, error)
+	ReadSupplier     func(ctx context.Context, req *supplierpb.ReadSupplierRequest) (*supplierpb.ReadSupplierResponse, error)
+	UpdateSupplier   func(ctx context.Context, req *supplierpb.UpdateSupplierRequest) (*supplierpb.UpdateSupplierResponse, error)
+	DeleteSupplier   func(ctx context.Context, req *supplierpb.DeleteSupplierRequest) (*supplierpb.DeleteSupplierResponse, error)
+	SetActive        func(ctx context.Context, id string, active bool) error
+	ListPaymentTerms func(ctx context.Context) ([]*PaymentTermOption, error)
 
 	// Attachment operations
 	UploadFile       func(ctx context.Context, bucket, key string, content []byte, contentType string) error
@@ -73,6 +77,7 @@ func NewModule(deps *ModuleDeps) *Module {
 		UpdateSupplier:    deps.UpdateSupplier,
 		DeleteSupplier:    deps.DeleteSupplier,
 		SetSupplierActive: deps.SetActive,
+		ListPaymentTerms:  deps.ListPaymentTerms,
 	}
 	listDeps := &supplierlist.ListViewDeps{
 		Routes:          deps.Routes,

@@ -47,6 +47,9 @@ type ClientRoutes struct {
 
 	// Report routes
 	ReceivablesAgingURL string `json:"receivables_aging_url"`
+
+	// Settings routes
+	PaymentTermsURL string `json:"payment_terms_url"`
 }
 
 // DefaultClientRoutes returns a ClientRoutes populated from the package-level
@@ -70,6 +73,8 @@ func DefaultClientRoutes() ClientRoutes {
 		AttachmentDeleteURL: ClientAttachmentDeleteURL,
 
 		ReceivablesAgingURL: ReceivablesAgingURL,
+
+		PaymentTermsURL: PaymentTermListURL,
 	}
 }
 
@@ -93,6 +98,8 @@ func (r ClientRoutes) RouteMap() map[string]string {
 		"client.attachment.delete": r.AttachmentDeleteURL,
 
 		"client.receivables_aging": r.ReceivablesAgingURL,
+
+		"client.payment_terms": r.PaymentTermsURL,
 	}
 }
 
@@ -495,6 +502,9 @@ type SupplierRoutes struct {
 
 	// Report routes
 	PayablesAgingURL string `json:"payables_aging_url"`
+
+	// Settings routes
+	PaymentTermsURL string `json:"payment_terms_url"`
 }
 
 // DefaultSupplierRoutes returns a SupplierRoutes populated from the
@@ -516,6 +526,8 @@ func DefaultSupplierRoutes() SupplierRoutes {
 		AttachmentDeleteURL: SupplierAttachmentDeleteURL,
 
 		PayablesAgingURL: PayablesAgingURL,
+
+		PaymentTermsURL: PaymentTermListURL,
 	}
 }
 
@@ -537,6 +549,47 @@ func (r SupplierRoutes) RouteMap() map[string]string {
 		"supplier.attachment.delete": r.AttachmentDeleteURL,
 
 		"supplier.payables_aging": r.PayablesAgingURL,
+
+		"supplier.payment_terms": r.PaymentTermsURL,
+	}
+}
+
+// ---------------------------------------------------------------------------
+// PaymentTermRoutes
+// ---------------------------------------------------------------------------
+
+// PaymentTermRoutes holds all route paths for payment term management.
+type PaymentTermRoutes struct {
+	ListURL       string `json:"list_url"`
+	TableURL      string `json:"table_url"`
+	AddURL        string `json:"add_url"`
+	EditURL       string `json:"edit_url"`
+	DeleteURL     string `json:"delete_url"`
+	BulkDeleteURL string `json:"bulk_delete_url"`
+}
+
+// DefaultPaymentTermRoutes returns a PaymentTermRoutes populated from the
+// package-level route constants.
+func DefaultPaymentTermRoutes() PaymentTermRoutes {
+	return PaymentTermRoutes{
+		ListURL:       PaymentTermListURL,
+		TableURL:      PaymentTermTableURL,
+		AddURL:        PaymentTermAddURL,
+		EditURL:       PaymentTermEditURL,
+		DeleteURL:     PaymentTermDeleteURL,
+		BulkDeleteURL: PaymentTermBulkDeleteURL,
+	}
+}
+
+// RouteMap returns a map of dot-notation keys to route path values.
+func (r PaymentTermRoutes) RouteMap() map[string]string {
+	return map[string]string{
+		"payment_term.list":        r.ListURL,
+		"payment_term.table":       r.TableURL,
+		"payment_term.add":         r.AddURL,
+		"payment_term.edit":        r.EditURL,
+		"payment_term.delete":      r.DeleteURL,
+		"payment_term.bulk_delete": r.BulkDeleteURL,
 	}
 }
 

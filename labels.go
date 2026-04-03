@@ -37,8 +37,9 @@ type ClientButtonLabels struct {
 }
 
 type ClientColumnLabels struct {
-	ClientName  string `json:"clientName"`
-	DateCreated string `json:"dateCreated"`
+	ClientName     string `json:"clientName"`
+	Representative string `json:"representative"`
+	DateCreated    string `json:"dateCreated"`
 }
 
 type ClientEmptyLabels struct {
@@ -53,10 +54,10 @@ type ClientEmptyLabels struct {
 type ClientFormLabels struct {
 	Email                    string `json:"email"`
 	Phone                    string `json:"phone"`
-	CompanyName              string `json:"companyName"`
-	CompanyNamePlaceholder   string `json:"companyNamePlaceholder"`
-	CustomerType             string `json:"customerType"`
-	DateOfBirth              string `json:"dateOfBirth"`
+	Name                     string `json:"name"`
+	NamePlaceholder          string `json:"namePlaceholder"`
+	CompanyDetails           string `json:"companyDetails"`
+	Representative           string `json:"representative"`
 	StreetAddress            string `json:"streetAddress"`
 	StreetAddressPlaceholder string `json:"streetAddressPlaceholder"`
 	City                     string `json:"city"`
@@ -78,8 +79,8 @@ type ClientDetailLabels struct {
 	Actions         ClientDetailActionLabels    `json:"actions"`
 	Profile         ClientDetailSectionLabels   `json:"profile"`
 	Company         ClientDetailSectionLabels   `json:"company"`
-	Personal        ClientDetailSectionLabels   `json:"personal"`
 	Address         ClientDetailSectionLabels   `json:"address"`
+	Representative  string                      `json:"representative"`
 	NotesSection    ClientDetailSectionLabels   `json:"notesSection"`
 	Tags            ClientDetailTagLabels       `json:"tags"`
 	PurchaseHistory ClientPurchaseHistoryLabels `json:"purchaseHistory"`
@@ -121,9 +122,10 @@ type ClientPurchaseHistoryLabels struct {
 
 // ClientDetailTabLabels holds labels for the client detail page tabs.
 type ClientDetailTabLabels struct {
-	Info            string `json:"info"`
-	PurchaseHistory string `json:"purchaseHistory"`
-	Attachments     string `json:"attachments"`
+	Info           string `json:"info"`
+	Representative string `json:"representative"`
+	Engagements    string `json:"engagements"`
+	History        string `json:"history"`
 }
 
 type ClientDetailActionLabels struct {
@@ -1054,6 +1056,76 @@ type ClientTagConfirmLabels struct {
 	DeleteTitle   string `json:"deleteTitle"`
 	DeleteMessage string `json:"deleteMessage"`
 	CannotDelete  string `json:"cannotDelete"`
+}
+
+// ---------------------------------------------------------------------------
+// PaymentTerm labels
+// ---------------------------------------------------------------------------
+
+// PaymentTermLabels holds all translatable strings for the payment term module.
+type PaymentTermLabels struct {
+	Page    PaymentTermPageLabels    `json:"page"`
+	Buttons PaymentTermButtonLabels  `json:"buttons"`
+	Columns PaymentTermColumnLabels  `json:"columns"`
+	Empty   PaymentTermEmptyLabels   `json:"empty"`
+	Form    PaymentTermFormLabels    `json:"form"`
+	Actions PaymentTermActionLabels  `json:"actions"`
+}
+
+type PaymentTermPageLabels struct {
+	Heading  string `json:"heading"`
+	Subtitle string `json:"subtitle"`
+}
+
+type PaymentTermButtonLabels struct {
+	AddPaymentTerm string `json:"addPaymentTerm"`
+}
+
+type PaymentTermColumnLabels struct {
+	Name        string `json:"name"`
+	Code        string `json:"code"`
+	Type        string `json:"type"`
+	NetDays     string `json:"netDays"`
+	EntityScope string `json:"entityScope"`
+	IsDefault   string `json:"isDefault"`
+	Active      string `json:"active"`
+}
+
+type PaymentTermEmptyLabels struct {
+	Title   string `json:"title"`
+	Message string `json:"message"`
+}
+
+type PaymentTermFormLabels struct {
+	Name                   string `json:"name"`
+	NamePlaceholder        string `json:"namePlaceholder"`
+	Code                   string `json:"code"`
+	CodePlaceholder        string `json:"codePlaceholder"`
+	Type                   string `json:"type"`
+	NetDays                string `json:"netDays"`
+	DiscountDays           string `json:"discountDays"`
+	DiscountPercentBps     string `json:"discountPercentBps"`
+	EntityScope            string `json:"entityScope"`
+	IsDefault              string `json:"isDefault"`
+	Description            string `json:"description"`
+	DescriptionPlaceholder string `json:"descriptionPlaceholder"`
+	DisplayOrder           string `json:"displayOrder"`
+	Active                 string `json:"active"`
+
+	// Type select options
+	TypeDueOnReceipt string `json:"typeDueOnReceipt"`
+	TypeNet          string `json:"typeNet"`
+	TypeCOD          string `json:"typeCOD"`
+
+	// Entity scope select options
+	ScopesBoth         string `json:"scopesBoth"`
+	ScopesSupplierOnly string `json:"scopesSupplierOnly"`
+	ScopesClientOnly   string `json:"scopesClientOnly"`
+}
+
+type PaymentTermActionLabels struct {
+	Edit   string `json:"edit"`
+	Delete string `json:"delete"`
 }
 
 // ---------------------------------------------------------------------------
