@@ -48,8 +48,8 @@ func NewView(deps *Deps) view.View {
 				CacheVersion:   viewCtx.CacheVersion,
 				Title:          deps.Labels.Page.Heading,
 				CurrentPath:    viewCtx.CurrentPath,
-				ActiveNav:      "settings",
-				ActiveSubNav:   "payment-term",
+				ActiveNav:      "client",
+				ActiveSubNav:   "payment-terms",
 				HeaderTitle:    deps.Labels.Page.Heading,
 				HeaderSubtitle: deps.Labels.Page.Subtitle,
 				HeaderIcon:     "icon-clock",
@@ -178,7 +178,7 @@ func buildTableRows(items []*paymenttermpb.PaymentTerm, l entydad.PaymentTermLab
 		netDays := strconv.FormatInt(int64(pt.GetNetDays()), 10)
 		entityScope := pt.GetEntityScope()
 		isDefault := "no"
-		isDefaultVariant := "default"
+		isDefaultVariant := "inactive"
 		if pt.GetIsDefault() {
 			isDefault = "yes"
 			isDefaultVariant = "success"

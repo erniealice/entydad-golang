@@ -34,6 +34,7 @@ type ModuleDeps struct {
 type Module struct {
 	routes     entydad.ClientTagRoutes
 	List       view.View
+	Table      view.View
 	Add        view.View
 	Edit       view.View
 	Delete     view.View
@@ -43,6 +44,7 @@ type Module struct {
 func NewModule(deps *ModuleDeps) *Module {
 	actionDeps := &clienttagaction.Deps{
 		Routes:         deps.Routes,
+		CommonLabels:   deps.CommonLabels,
 		ListCategories: deps.ListCategories,
 		CreateCategory: deps.CreateCategory,
 		ReadCategory:   deps.ReadCategory,
@@ -50,19 +52,22 @@ func NewModule(deps *ModuleDeps) *Module {
 		DeleteCategory: deps.DeleteCategory,
 	}
 
+	listDeps := &clienttag.Deps{
+		Routes:               deps.Routes,
+		GetInUseIDs:          deps.GetInUseIDs,
+		ListCategories:       deps.ListCategories,
+		ListClientCategories: deps.ListClientCategories,
+		RefreshURL:           deps.Routes.TableURL,
+		Labels:               deps.Labels,
+		SharedLabels:         deps.SharedLabels,
+		CommonLabels:         deps.CommonLabels,
+		TableLabels:          deps.TableLabels,
+	}
+
 	return &Module{
-		routes: deps.Routes,
-		List: clienttag.NewView(&clienttag.Deps{
-			Routes:               deps.Routes,
-			GetInUseIDs:          deps.GetInUseIDs,
-			ListCategories:       deps.ListCategories,
-			ListClientCategories: deps.ListClientCategories,
-			RefreshURL:           deps.Routes.ListURL,
-			Labels:               deps.Labels,
-			SharedLabels:         deps.SharedLabels,
-			CommonLabels:         deps.CommonLabels,
-			TableLabels:          deps.TableLabels,
-		}),
+		routes:     deps.Routes,
+		List:       clienttag.NewView(listDeps),
+		Table:      clienttag.NewTableView(listDeps),
 		Add:        clienttagaction.NewAddAction(actionDeps),
 		Edit:       clienttagaction.NewEditAction(actionDeps),
 		Delete:     clienttagaction.NewDeleteAction(actionDeps),
@@ -72,6 +77,7 @@ func NewModule(deps *ModuleDeps) *Module {
 
 func (m *Module) RegisterRoutes(r view.RouteRegistrar) {
 	r.GET(m.routes.ListURL, m.List)
+	r.GET(m.routes.TableURL, m.Table)
 	r.GET(m.routes.AddURL, m.Add)
 	r.POST(m.routes.AddURL, m.Add)
 	r.GET(m.routes.EditURL, m.Edit)

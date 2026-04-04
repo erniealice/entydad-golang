@@ -55,7 +55,7 @@ func NewView(deps *Deps) view.View {
 				CacheVersion:   viewCtx.CacheVersion,
 				Title:          fmt.Sprintf("%s - %s", deps.Labels.Page.Heading, userName),
 				CurrentPath:    viewCtx.CurrentPath,
-				ActiveNav:      "users",
+				ActiveNav:      "user",
 				ActiveSubNav:   "users-active",
 				HeaderTitle:    fmt.Sprintf("%s: %s", deps.Labels.Page.Heading, userName),
 				HeaderSubtitle: deps.Labels.Page.Caption,

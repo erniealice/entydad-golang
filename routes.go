@@ -28,7 +28,7 @@ const (
 	UserSetStatusURL     = "/action/users/set-status"
 	UserBulkSetStatusURL = "/action/users/bulk-set-status"
 
-	LocationDetailURL           = "/app/locations/{id}"
+	LocationDetailURL           = "/app/locations/detail/{id}"
 	LocationListURL             = "/app/locations/list/{status}"
 	LocationTableURL            = "/action/locations/table/{status}"
 	LocationAddURL              = "/action/locations/add"
@@ -140,6 +140,7 @@ const (
 
 	// Client Tag (Category) routes
 	ClientTagListURL       = "/app/clients/settings/tags/list"
+	ClientTagTableURL      = "/action/clients/tags/table"
 	ClientTagAddURL        = "/action/clients/tags/add"
 	ClientTagEditURL       = "/action/clients/tags/edit/{id}"
 	ClientTagDeleteURL     = "/action/clients/tags/delete"

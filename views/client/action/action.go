@@ -410,7 +410,7 @@ func NewEditAction(deps *Deps) view.View {
 			selectedPaymentTermID := c.GetPaymentTermId()
 
 			return view.OK("client-drawer-form", &FormData{
-				FormAction:               route.ResolveURL(deps.Routes.EditURL, "id", id),
+				FormAction:               route.ResolveURL(deps.Routes.EditURL, "id", id) + "?mode=" + mode,
 				IsEdit:                   true,
 				ID:                       id,
 				Mode:                     mode,
@@ -441,27 +441,51 @@ func NewEditAction(deps *Deps) view.View {
 		}
 
 		r := viewCtx.Request
+		mode := r.URL.Query().Get("mode")
 		active := r.FormValue("active") == "true"
 
+		clientData := &clientpb.Client{Id: id}
+		userData := &userpb.User{}
+
+		switch mode {
+		case "info":
+			// Only update company-related fields; leave representative fields untouched
+			clientData.Active = active
+			clientData.Name = optionalString(r.FormValue("name"))
+			clientData.StreetAddress = optionalString(r.FormValue("street_address"))
+			clientData.City = optionalString(r.FormValue("city"))
+			clientData.Province = optionalString(r.FormValue("province"))
+			clientData.PostalCode = optionalString(r.FormValue("postal_code"))
+			clientData.Notes = optionalString(r.FormValue("notes"))
+			clientData.PaymentTermId = optionalString(r.FormValue("payment_term_id"))
+		case "representative":
+			// Only update representative (user) fields; leave company fields untouched
+			userData.FirstName = r.FormValue("first_name")
+			userData.LastName = r.FormValue("last_name")
+			userData.EmailAddress = r.FormValue("email_address")
+			userData.MobileNumber = r.FormValue("mobile_number")
+			userData.Active = active
+			clientData.User = userData
+		default:
+			// List page edit — update all fields
+			clientData.Active = active
+			clientData.Name = optionalString(r.FormValue("name"))
+			clientData.StreetAddress = optionalString(r.FormValue("street_address"))
+			clientData.City = optionalString(r.FormValue("city"))
+			clientData.Province = optionalString(r.FormValue("province"))
+			clientData.PostalCode = optionalString(r.FormValue("postal_code"))
+			clientData.Notes = optionalString(r.FormValue("notes"))
+			clientData.PaymentTermId = optionalString(r.FormValue("payment_term_id"))
+			userData.FirstName = r.FormValue("first_name")
+			userData.LastName = r.FormValue("last_name")
+			userData.EmailAddress = r.FormValue("email_address")
+			userData.MobileNumber = r.FormValue("mobile_number")
+			userData.Active = active
+			clientData.User = userData
+		}
+
 		_, err := deps.UpdateClient(ctx, &clientpb.UpdateClientRequest{
-			Data: &clientpb.Client{
-				Id:            id,
-				Active:        active,
-				Name:          optionalString(r.FormValue("name")),
-				StreetAddress: optionalString(r.FormValue("street_address")),
-				City:          optionalString(r.FormValue("city")),
-				Province:      optionalString(r.FormValue("province")),
-				PostalCode:    optionalString(r.FormValue("postal_code")),
-				Notes:         optionalString(r.FormValue("notes")),
-				PaymentTermId: optionalString(r.FormValue("payment_term_id")),
-				User: &userpb.User{
-					FirstName:    r.FormValue("first_name"),
-					LastName:     r.FormValue("last_name"),
-					EmailAddress: r.FormValue("email_address"),
-					MobileNumber: r.FormValue("mobile_number"),
-					Active:       active,
-				},
-			},
+			Data: clientData,
 		})
 		if err != nil {
 			log.Printf("Failed to update client %s: %v", id, err)
@@ -469,7 +493,23 @@ func NewEditAction(deps *Deps) view.View {
 		}
 
 		// Sync tags — multi-select sends comma-separated IDs in a single hidden input
-		syncTags(ctx, deps, id, parseTagIDs(r.FormValue("tags")))
+		// Skip when mode is "representative": that form doesn't render the tags field,
+		// so FormValue("tags") would be empty and wipe all existing tags.
+		if mode != "representative" {
+			syncTags(ctx, deps, id, parseTagIDs(r.FormValue("tags")))
+		}
+
+		// If mode is set, we're in the detail page context — redirect to the correct tab
+		if mode == "info" || mode == "representative" {
+			detailURL := route.ResolveURL(deps.Routes.DetailURL, "id", id) + "?tab=" + mode
+			return view.ViewResult{
+				StatusCode: http.StatusOK,
+				Headers: map[string]string{
+					"HX-Trigger":  `{"formSuccess":true}`,
+					"HX-Redirect": detailURL,
+				},
+			}
+		}
 
 		return entydad.HTMXSuccess("clients-table")
 	})

@@ -124,7 +124,7 @@ func NewView(deps *Deps) view.View {
 				CacheVersion:   viewCtx.CacheVersion,
 				Title:          l.Page.Heading,
 				CurrentPath:    viewCtx.CurrentPath,
-				ActiveNav:      "clients",
+				ActiveNav:      "client",
 				ActiveSubNav:   "tags",
 				HeaderTitle:    l.Page.Heading,
 				HeaderSubtitle: l.Page.Subtitle,
@@ -136,6 +136,90 @@ func NewView(deps *Deps) view.View {
 		}
 
 		return view.OK("client-tag-list", pageData)
+	})
+}
+
+// NewTableView creates a view that returns only the table-card HTML (used for HTMX refresh).
+func NewTableView(deps *Deps) view.View {
+	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		resp, err := deps.ListCategories(ctx, &categorypb.ListCategoriesRequest{})
+		if err != nil {
+			log.Printf("Failed to list client tags: %v", err)
+			return view.Error(fmt.Errorf("failed to load tags: %w", err))
+		}
+
+		customerCounts := make(map[string]int)
+		if deps.ListClientCategories != nil {
+			ccResp, err := deps.ListClientCategories(ctx, &clientcategorypb.ListClientCategoriesRequest{})
+			if err != nil {
+				log.Printf("Failed to list client categories for counts: %v", err)
+			} else {
+				for _, cc := range ccResp.GetData() {
+					customerCounts[cc.GetCategoryId()]++
+				}
+			}
+		}
+
+		var inUseIDs map[string]bool
+		if deps.GetInUseIDs != nil {
+			var itemIDs []string
+			for _, cat := range resp.GetData() {
+				if cat.GetModule() == "client" {
+					itemIDs = append(itemIDs, cat.GetId())
+				}
+			}
+			inUseIDs, _ = deps.GetInUseIDs(ctx, itemIDs)
+		}
+
+		l := deps.Labels
+		columns := []types.TableColumn{
+			{Key: "name", Label: l.Columns.TagName, Sortable: true},
+			{Key: "customers", Label: l.Columns.Customers, Sortable: false, Width: "120px"},
+			{Key: "description", Label: l.Columns.Description, Sortable: true},
+			{Key: "status", Label: l.Columns.Status, Sortable: true, Width: "120px"},
+		}
+
+		rows := buildTableRows(resp.GetData(), customerCounts, deps.Routes, inUseIDs, l)
+		types.ApplyColumnStyles(columns, rows)
+
+		bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
+		bulkCfg.Actions = []types.BulkAction{
+			{
+				Key:              "delete",
+				Label:            l.Actions.Delete,
+				Icon:             "icon-trash-2",
+				Variant:          "danger",
+				Endpoint:         deps.Routes.BulkDeleteURL,
+				ConfirmTitle:     l.Confirm.DeleteTitle,
+				ConfirmMessage:   l.Confirm.DeleteMessage,
+				RequiresDataAttr: "deletable",
+			},
+		}
+
+		tableConfig := &types.TableConfig{
+			ID:                   "client-tags-table",
+			RefreshURL:           deps.RefreshURL,
+			Columns:              columns,
+			Rows:                 rows,
+			ShowSearch:           true,
+			ShowActions:          true,
+			DefaultSortColumn:    "name",
+			DefaultSortDirection: "asc",
+			Labels:               deps.TableLabels,
+			EmptyState: types.TableEmptyState{
+				Title:   l.Empty.Title,
+				Message: l.Empty.Message,
+			},
+			PrimaryAction: &types.PrimaryAction{
+				Label:     l.Buttons.AddTag,
+				ActionURL: deps.Routes.AddURL,
+				Icon:      "icon-plus",
+			},
+			BulkActions: &bulkCfg,
+		}
+		types.ApplyTableSettings(tableConfig)
+
+		return view.OK("table-card", tableConfig)
 	})
 }
 

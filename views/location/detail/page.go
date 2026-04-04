@@ -152,7 +152,7 @@ func buildPageData(ctx context.Context, deps *DetailViewDeps, id, activeTab stri
 			CacheVersion:   viewCtx.CacheVersion,
 			Title:          name,
 			CurrentPath:    viewCtx.CurrentPath,
-			ActiveNav:      "locations",
+			ActiveNav:      "location",
 			ActiveSubNav:   "locations-active",
 			HeaderTitle:    name,
 			HeaderSubtitle: address,

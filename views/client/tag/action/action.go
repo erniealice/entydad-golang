@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strings"
 
+	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/view"
 
@@ -72,6 +73,7 @@ func resolveCode(code, name string) string {
 // Deps holds dependencies for client tag action handlers.
 type Deps struct {
 	Routes         entydad.ClientTagRoutes
+	CommonLabels   pyeza.CommonLabels
 	ListCategories func(ctx context.Context, req *categorypb.ListCategoriesRequest) (*categorypb.ListCategoriesResponse, error)
 	CreateCategory func(ctx context.Context, req *categorypb.CreateCategoryRequest) (*categorypb.CreateCategoryResponse, error)
 	ReadCategory   func(ctx context.Context, req *categorypb.ReadCategoryRequest) (*categorypb.ReadCategoryResponse, error)
@@ -112,7 +114,7 @@ func NewAddAction(deps *Deps) view.View {
 				FormAction:   deps.Routes.AddURL,
 				Active:       true,
 				Labels:       tagFormLabels(viewCtx.T),
-				CommonLabels: nil,
+				CommonLabels: deps.CommonLabels,
 			})
 		}
 
@@ -175,7 +177,7 @@ func NewEditAction(deps *Deps) view.View {
 				Description:  cat.GetDescription(),
 				Active:       cat.GetActive(),
 				Labels:       tagFormLabels(viewCtx.T),
-				CommonLabels: nil,
+				CommonLabels: deps.CommonLabels,
 			})
 		}
 

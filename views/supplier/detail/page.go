@@ -335,7 +335,7 @@ func buildPageData(supplier *supplierpb.Supplier, id, activeTab string, viewCtx 
 			CacheVersion:   viewCtx.CacheVersion,
 			Title:          displayName,
 			CurrentPath:    viewCtx.CurrentPath,
-			ActiveNav:      "suppliers",
+			ActiveNav:      "supplier",
 			HeaderTitle:    displayName,
 			HeaderSubtitle: supplierType,
 			HeaderIcon:     "icon-truck",

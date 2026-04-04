@@ -37,7 +37,7 @@ func NewView(deps *Deps) view.View {
 				CacheVersion: viewCtx.CacheVersion,
 				Title:        deps.DashboardLabels.ClientTitle,
 				CurrentPath:  viewCtx.CurrentPath,
-				ActiveNav:    "clients",
+				ActiveNav:    "client",
 				ActiveSubNav: "dashboard",
 				HeaderTitle:  deps.DashboardLabels.ClientTitle,
 				HeaderIcon:   "icon-users",

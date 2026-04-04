@@ -651,6 +651,7 @@ func (r PaymentTermRoutes) RouteMap() map[string]string {
 // ClientTagRoutes holds all route paths for client tag (category) management.
 type ClientTagRoutes struct {
 	ListURL       string `json:"list_url"`
+	TableURL      string `json:"table_url"`
 	AddURL        string `json:"add_url"`
 	EditURL       string `json:"edit_url"`
 	DeleteURL     string `json:"delete_url"`
@@ -662,6 +663,7 @@ type ClientTagRoutes struct {
 func DefaultClientTagRoutes() ClientTagRoutes {
 	return ClientTagRoutes{
 		ListURL:       ClientTagListURL,
+		TableURL:      ClientTagTableURL,
 		AddURL:        ClientTagAddURL,
 		EditURL:       ClientTagEditURL,
 		DeleteURL:     ClientTagDeleteURL,
@@ -673,6 +675,7 @@ func DefaultClientTagRoutes() ClientTagRoutes {
 func (r ClientTagRoutes) RouteMap() map[string]string {
 	return map[string]string{
 		"client_tag.list":        r.ListURL,
+		"client_tag.table":       r.TableURL,
 		"client_tag.add":         r.AddURL,
 		"client_tag.edit":        r.EditURL,
 		"client_tag.delete":      r.DeleteURL,

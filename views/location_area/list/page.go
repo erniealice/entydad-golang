@@ -79,7 +79,7 @@ func NewView(deps *ListViewDeps) view.View {
 				CacheVersion:   viewCtx.CacheVersion,
 				Title:          statusTitle(deps.Labels, status),
 				CurrentPath:    viewCtx.CurrentPath,
-				ActiveNav:      "locations",
+				ActiveNav:      "location",
 				ActiveSubNav:   "location-areas-" + status,
 				HeaderTitle:    statusTitle(deps.Labels, status),
 				HeaderSubtitle: statusSubtitle(deps.Labels, status),

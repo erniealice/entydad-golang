@@ -672,7 +672,7 @@ func loadBlockLabels(t *lynguaV1.TranslationProvider, businessType string) block
 	}
 	_ = t.LoadPathIfExists("en", businessType, "client.json", "client.dashboard", &l.ClientDashboard)
 	_ = t.LoadPathIfExists("en", businessType, "client_tag.json", "", &l.ClientTag)
-	_ = t.LoadPathIfExists("en", businessType, "payment_term.json", "", &l.PaymentTerm)
+	_ = t.LoadPathIfExists("en", businessType, "payment_term.json", "paymentTerm", &l.PaymentTerm)
 
 	if err := t.LoadPath("en", businessType, "user.json", "", &l.User); err != nil {
 		log.Printf("entydad.Block: warning: failed to load user labels: %v", err)
