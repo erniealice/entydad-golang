@@ -33,6 +33,9 @@
     font-weight: var(--font-weight-medium);
     margin-bottom: var(--spacing-lg);
 }
+.form-result--hidden {
+    display: none;
+}
 .form-result--success {
     background: var(--status-success-light);
     color: var(--status-success);

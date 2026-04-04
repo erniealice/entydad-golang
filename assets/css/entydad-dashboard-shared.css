@@ -79,7 +79,7 @@
 .entydad-activity-item {
     display: flex;
     align-items: flex-start;
-    gap: 0.875rem;
+    gap: var(--spacing-lg-tight, 0.875rem);
     padding: var(--spacing-lg);
     border-radius: var(--radius-lg);
     transition: background var(--transition-base);
