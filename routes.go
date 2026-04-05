@@ -117,6 +117,7 @@ const (
 	WorkspaceBulkDeleteURL    = "/action/workspaces/bulk-delete"
 	WorkspaceSetStatusURL     = "/action/workspaces/set-status"
 	WorkspaceBulkSetStatusURL = "/action/workspaces/bulk-set-status"
+	WorkspaceSwitchURL        = "/action/admin/switch-workspace"
 
 	// Client report routes
 	ReceivablesAgingURL = "/app/clients/reports/receivables-aging"

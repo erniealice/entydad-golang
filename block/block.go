@@ -37,7 +37,8 @@ import (
 	suppliermod "github.com/erniealice/entydad-golang/views/supplier"
 	usermod "github.com/erniealice/entydad-golang/views/user"
 	userdashboard "github.com/erniealice/entydad-golang/views/user/dashboard"
-	workspacemod "github.com/erniealice/entydad-golang/views/workspace"
+	workspacemod    "github.com/erniealice/entydad-golang/views/workspace"
+	workspaceaction "github.com/erniealice/entydad-golang/views/workspace/action"
 	"github.com/erniealice/espyna-golang/consumer"
 	"github.com/erniealice/espyna-golang/contrib/postgres/reference"
 	"github.com/erniealice/espyna-golang/registry"
@@ -496,6 +497,13 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 					return err
 				},
 			}).RegisterRoutes(ctx.Routes)
+
+			// Switch workspace (raw POST — uses session cookie, issues HX-Redirect)
+			if uc.Entity.Workspace.SwitchWorkspace != nil {
+				handleFunc(ctx.Routes, "POST", routes.Workspace.SwitchURL, workspaceaction.NewSwitchWorkspaceHandler(&workspaceaction.SwitchWorkspaceDeps{
+					SwitchWorkspace: uc.Entity.Workspace.SwitchWorkspace.Execute,
+				}))
+			}
 		}
 
 		if cfg.enableAll || cfg.supplier {

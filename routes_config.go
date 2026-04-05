@@ -499,6 +499,7 @@ type WorkspaceRoutes struct {
 	BulkDeleteURL    string `json:"bulk_delete_url"`
 	SetStatusURL     string `json:"set_status_url"`
 	BulkSetStatusURL string `json:"bulk_set_status_url"`
+	SwitchURL        string `json:"switch_url"`
 }
 
 // DefaultWorkspaceRoutes returns a WorkspaceRoutes populated from the
@@ -513,6 +514,7 @@ func DefaultWorkspaceRoutes() WorkspaceRoutes {
 		BulkDeleteURL:    WorkspaceBulkDeleteURL,
 		SetStatusURL:     WorkspaceSetStatusURL,
 		BulkSetStatusURL: WorkspaceBulkSetStatusURL,
+		SwitchURL:        WorkspaceSwitchURL,
 	}
 }
 
@@ -527,6 +529,7 @@ func (r WorkspaceRoutes) RouteMap() map[string]string {
 		"workspace.bulk_delete":     r.BulkDeleteURL,
 		"workspace.set_status":      r.SetStatusURL,
 		"workspace.bulk_set_status": r.BulkSetStatusURL,
+		"workspace.switch_url":      r.SwitchURL,
 	}
 }
 
