@@ -126,6 +126,7 @@ type ClientDetailTabLabels struct {
 	Representative string `json:"representative"`
 	Engagements    string `json:"engagements"`
 	History        string `json:"history"`
+	Statement      string `json:"statement"`
 }
 
 type ClientDetailActionLabels struct {
@@ -1103,6 +1104,8 @@ type SupplierDetailLabels struct {
 	AddressInfo   SupplierDetailSectionLabels `json:"addressInfo"`
 	// Tab label for attachments
 	AttachmentsTab string `json:"attachmentsTab"`
+	// Tab label for statement
+	StatementTab string `json:"statementTab"`
 	// Inline labels
 	DaysSuffix string `json:"daysSuffix"`
 	Website    string `json:"website"`

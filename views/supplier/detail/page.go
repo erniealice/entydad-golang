@@ -16,8 +16,9 @@ import (
 	"github.com/erniealice/entydad-golang"
 	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
 
-	supplierpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/supplier"
+	supplierpb      "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/supplier"
 	purchaseorderpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/expenditure/purchase_order"
+	suppstmtpb      "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/reporting/supplier_statement"
 )
 
 // DetailViewDeps holds view dependencies.
@@ -34,7 +35,8 @@ type DetailViewDeps struct {
 	// Audit log operations (embedded from hybra)
 	auditlog.AuditOps
 
-	ListPurchaseOrders func(ctx context.Context, req *purchaseorderpb.ListPurchaseOrdersRequest) (*purchaseorderpb.ListPurchaseOrdersResponse, error)
+	ListPurchaseOrders   func(ctx context.Context, req *purchaseorderpb.ListPurchaseOrdersRequest) (*purchaseorderpb.ListPurchaseOrdersResponse, error)
+	GetSupplierStatement func(ctx context.Context, req *suppstmtpb.SupplierStatementRequest) (*suppstmtpb.SupplierStatementResponse, error)
 }
 
 // PurchaseOrderRow holds display data for a single purchase order row.
@@ -97,6 +99,17 @@ type PageData struct {
 	AuditHistoryURL string
 	// Purchase Orders tab
 	PurchaseOrders []PurchaseOrderRow
+	// Statement tab
+	StatementSummary        *suppstmtpb.SupplierStatementSummary
+	StatementSummaryDisplay *StatementSummaryDisplay
+	StatementTable          *types.TableConfig
+}
+
+// StatementSummaryDisplay holds pre-formatted string values for the statement summary bar.
+type StatementSummaryDisplay struct {
+	OutstandingBalance string
+	TotalBilled        string
+	TotalPaid          string
 }
 
 // NewView creates the supplier detail view.
@@ -153,6 +166,24 @@ func NewView(deps *DetailViewDeps) view.View {
 							OrderDate:   po.GetOrderDateString(),
 						})
 					}
+				}
+			}
+		case "statement":
+			if deps.GetSupplierStatement != nil {
+				req := &suppstmtpb.SupplierStatementRequest{
+					SupplierId: id,
+				}
+				stmtResp, stmtErr := deps.GetSupplierStatement(ctx, req)
+				if stmtErr == nil && stmtResp.GetSuccess() {
+					pageData.StatementSummary = stmtResp.GetSummary()
+					if stmtResp.GetSummary() != nil {
+						pageData.StatementSummaryDisplay = &StatementSummaryDisplay{
+							OutstandingBalance: fmt.Sprintf("%.2f", float64(stmtResp.GetSummary().GetOutstandingBalance())/100),
+							TotalBilled:        fmt.Sprintf("%.2f", float64(stmtResp.GetSummary().GetTotalBilled())/100),
+							TotalPaid:          fmt.Sprintf("%.2f", float64(stmtResp.GetSummary().GetTotalPaid())/100),
+						}
+					}
+					pageData.StatementTable = buildSupplierStatementTable(stmtResp, deps.TableLabels)
 				}
 			}
 		case "attachments":
@@ -227,6 +258,25 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 					}
 				}
 			}
+		case "statement":
+			if deps.GetSupplierStatement != nil {
+				req := &suppstmtpb.SupplierStatementRequest{
+					SupplierId: id,
+				}
+				stmtResp, stmtErr := deps.GetSupplierStatement(ctx, req)
+				if stmtErr == nil && stmtResp.GetSuccess() {
+					pageData.StatementSummary = stmtResp.GetSummary()
+					if stmtResp.GetSummary() != nil {
+						pageData.StatementSummaryDisplay = &StatementSummaryDisplay{
+							OutstandingBalance: fmt.Sprintf("%.2f", float64(stmtResp.GetSummary().GetOutstandingBalance())/100),
+							TotalBilled:        fmt.Sprintf("%.2f", float64(stmtResp.GetSummary().GetTotalBilled())/100),
+							TotalPaid:          fmt.Sprintf("%.2f", float64(stmtResp.GetSummary().GetTotalPaid())/100),
+						}
+					}
+					pageData.StatementTable = buildSupplierStatementTable(stmtResp, deps.TableLabels)
+				}
+			}
+			return view.OK("supplier-tab-statement", pageData)
 		case "attachments":
 			loadAttachments(ctx, deps, id, pageData)
 		case "audit-history":
@@ -382,8 +432,80 @@ func buildTabItems(id string, deps *DetailViewDeps) []pyeza.TabItem {
 	return []pyeza.TabItem{
 		{Key: "info", Label: deps.Labels.Detail.InfoTab, Href: base + "?tab=info", HxGet: action + "info", Icon: "icon-info"},
 		{Key: "purchase-orders", Label: "Purchase Orders", Href: base + "?tab=purchase-orders", HxGet: action + "purchase-orders", Icon: "icon-shopping-cart"},
+		{Key: "statement", Label: deps.Labels.Detail.StatementTab, Href: base + "?tab=statement", HxGet: action + "statement", Icon: "icon-file-text"},
 		{Key: "attachments", Label: deps.Labels.Detail.AttachmentsTab, Href: base + "?tab=attachments", HxGet: action + "attachments", Icon: "icon-paperclip"},
 		{Key: "audit-history", Label: "History", Href: base + "?tab=audit-history", HxGet: action + "audit-history", Icon: "icon-clock"},
+	}
+}
+
+func buildSupplierStatementTable(resp *suppstmtpb.SupplierStatementResponse, tableLabels types.TableLabels) *types.TableConfig {
+	columns := []types.TableColumn{
+		{Key: "date", Label: "Date"},
+		{Key: "type", Label: "Type"},
+		{Key: "reference", Label: "Reference"},
+		{Key: "description", Label: "Description"},
+		{Key: "billed", Label: "Billed", Align: "right"},
+		{Key: "paid", Label: "Paid", Align: "right"},
+		{Key: "balance", Label: "Balance", Align: "right"},
+	}
+
+	var rows []types.TableRow
+	for _, entry := range resp.Entries {
+		billedStr := ""
+		if entry.Billed > 0 {
+			billedStr = fmt.Sprintf("%.2f", float64(entry.Billed)/100)
+		}
+		paidStr := ""
+		if entry.Paid > 0 {
+			paidStr = fmt.Sprintf("%.2f", float64(entry.Paid)/100)
+		}
+		entryType := entry.Type
+		if len(entryType) > 0 {
+			entryType = strings.ToUpper(entryType[:1]) + entryType[1:]
+		}
+		rows = append(rows, types.TableRow{
+			ID: entry.EntityId,
+			Cells: []types.TableCell{
+				{Value: entry.Date},
+				{Value: entryType},
+				{Value: entry.ReferenceNumber},
+				{Value: entry.Description},
+				{Value: billedStr},
+				{Value: paidStr},
+				{Value: fmt.Sprintf("%.2f", float64(entry.Balance)/100)},
+			},
+		})
+	}
+
+	if resp.Summary != nil {
+		s := resp.Summary
+		rows = append(rows, types.TableRow{
+			ID: "__totals__",
+			Cells: []types.TableCell{
+				{}, {}, {},
+				{Value: "TOTAL"},
+				{Value: fmt.Sprintf("%.2f", float64(s.TotalBilled)/100)},
+				{Value: fmt.Sprintf("%.2f", float64(s.TotalPaid)/100)},
+				{Value: fmt.Sprintf("%.2f", float64(s.OutstandingBalance)/100)},
+			},
+		})
+	}
+
+	return &types.TableConfig{
+		ID:              "supplierStatementTable",
+		NameColumnLabel: "Date",
+		Columns:         columns,
+		Rows:            rows,
+		ShowSearch:      false,
+		ShowFilters:     false,
+		ShowSort:        false,
+		ShowExport:      true,
+		ShowEntries:     true,
+		Labels:          tableLabels,
+		EmptyState: types.TableEmptyState{
+			Title:   "No Statement Entries",
+			Message: "There are no transactions for this supplier.",
+		},
 	}
 }
 

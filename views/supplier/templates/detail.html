@@ -17,6 +17,8 @@
         {{template "supplier-tab-info" .}}
         {{else if eq .ActiveTab "purchase-orders"}}
         {{template "supplier-tab-purchase-orders" .}}
+        {{else if eq .ActiveTab "statement"}}
+        {{template "supplier-tab-statement" .}}
         {{else if eq .ActiveTab "attachments"}}
         {{template "attachment-tab" .}}
         {{end}}
@@ -52,6 +54,41 @@
     </table>
     {{else}}
     <p class="text-muted">No purchase orders found for this supplier.</p>
+    {{end}}
+</div>
+{{end}}
+
+{{/* Supplier Statement Tab */}}
+{{define "supplier-tab-statement"}}
+<div class="tab-scroll tab-scroll--table">
+    {{if .StatementSummary}}
+    <div class="statement-summary-row" data-testid="statement-summary">
+        <div class="statement-stat-card statement-stat-card--highlight" data-testid="stat-outstanding-balance">
+            <span class="stat-label">Outstanding Balance</span>
+            <span class="stat-value">{{if .StatementSummaryDisplay}}{{.StatementSummaryDisplay.OutstandingBalance}}{{end}}</span>
+        </div>
+        <div class="statement-stat-card" data-testid="stat-total-billed">
+            <span class="stat-label">Total Billed</span>
+            <span class="stat-value">{{if .StatementSummaryDisplay}}{{.StatementSummaryDisplay.TotalBilled}}{{end}}</span>
+        </div>
+        <div class="statement-stat-card" data-testid="stat-total-paid">
+            <span class="stat-label">Total Paid</span>
+            <span class="stat-value">{{if .StatementSummaryDisplay}}{{.StatementSummaryDisplay.TotalPaid}}{{end}}</span>
+        </div>
+        <div class="statement-stat-card" data-testid="stat-bill-count">
+            <span class="stat-label">Bills</span>
+            <span class="stat-value">{{.StatementSummary.BillCount}}</span>
+        </div>
+    </div>
+    {{end}}
+
+    {{if .StatementTable}}
+        {{template "table-card" .StatementTable}}
+    {{else}}
+        <div class="coming-soon-panel">
+            <div class="coming-soon-title">No Statement Entries</div>
+            <p class="coming-soon-text">There are no transactions for this supplier.</p>
+        </div>
     {{end}}
 </div>
 {{end}}

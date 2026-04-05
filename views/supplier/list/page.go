@@ -19,13 +19,14 @@ import (
 
 // ListViewDeps holds view dependencies.
 type ListViewDeps struct {
-	Routes          entydad.SupplierRoutes
-	GetListPageData func(ctx context.Context, req *supplierpb.GetSupplierListPageDataRequest) (*supplierpb.GetSupplierListPageDataResponse, error)
-	GetInUseIDs     func(ctx context.Context, ids []string) (map[string]bool, error)
-	Labels          entydad.SupplierLabels
-	SharedLabels    entydad.SharedLabels
-	CommonLabels    pyeza.CommonLabels
-	TableLabels     types.TableLabels
+	Routes              entydad.SupplierRoutes
+	GetListPageData     func(ctx context.Context, req *supplierpb.GetSupplierListPageDataRequest) (*supplierpb.GetSupplierListPageDataResponse, error)
+	GetInUseIDs         func(ctx context.Context, ids []string) (map[string]bool, error)
+	GetSupplierBalances func(ctx context.Context) (map[string]int64, error)
+	Labels              entydad.SupplierLabels
+	SharedLabels        entydad.SharedLabels
+	CommonLabels        pyeza.CommonLabels
+	TableLabels         types.TableLabels
 }
 
 // PageData holds the data for the supplier list page.
@@ -121,9 +122,15 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string) (*
 		inUseIDs, _ = deps.GetInUseIDs(ctx, itemIDs)
 	}
 
+	// Fetch outstanding balances for all suppliers
+	var supplierBalances map[string]int64
+	if deps.GetSupplierBalances != nil {
+		supplierBalances, _ = deps.GetSupplierBalances(ctx)
+	}
+
 	l := deps.Labels
 	columns := supplierColumns(l)
-	rows := buildTableRows(resp.GetSupplierList(), status, l, deps.SharedLabels, deps.Routes, inUseIDs, perms)
+	rows := buildTableRows(resp.GetSupplierList(), status, l, deps.SharedLabels, deps.Routes, inUseIDs, supplierBalances, perms)
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
@@ -173,11 +180,12 @@ func supplierColumns(l entydad.SupplierLabels) []types.TableColumn {
 		{Key: "status", Label: l.Columns.Status, Sortable: true, Width: "120px"},
 		{Key: "payment_terms", Label: l.Columns.PaymentTerms, Sortable: true, Width: "140px"},
 		{Key: "contact_name", Label: l.Columns.ContactName, Sortable: true},
+		{Key: "outstanding_balance", Label: "Outstanding", Sortable: true, Align: "right", Width: "150px"},
 		{Key: "date_created", Label: l.Columns.DateCreated, Sortable: true, Width: "140px"},
 	}
 }
 
-func buildTableRows(suppliers []*supplierpb.Supplier, status string, l entydad.SupplierLabels, sl entydad.SharedLabels, routes entydad.SupplierRoutes, inUseIDs map[string]bool, perms *types.UserPermissions) []types.TableRow {
+func buildTableRows(suppliers []*supplierpb.Supplier, status string, l entydad.SupplierLabels, sl entydad.SharedLabels, routes entydad.SupplierRoutes, inUseIDs map[string]bool, balances map[string]int64, perms *types.UserPermissions) []types.TableRow {
 	rows := []types.TableRow{}
 	for _, s := range suppliers {
 		recordStatus := supplierStatus(s)
@@ -198,6 +206,11 @@ func buildTableRows(suppliers []*supplierpb.Supplier, status string, l entydad.S
 			contactName = u.GetFirstName() + " " + u.GetLastName()
 		}
 
+		balanceCell := types.TableCell{Type: "text", Value: "—"}
+		if balance, ok := balances[id]; ok && balance != 0 {
+			balanceCell = types.TableCell{Type: "money", Value: fmt.Sprintf("%.2f", float64(balance)/100)}
+		}
+
 		rows = append(rows, types.TableRow{
 			ID: id,
 			Cells: []types.TableCell{
@@ -207,6 +220,7 @@ func buildTableRows(suppliers []*supplierpb.Supplier, status string, l entydad.S
 				{Type: "badge", Value: recordStatus, Variant: statusVariant(recordStatus)},
 				{Type: "text", Value: paymentTerms},
 				{Type: "text", Value: contactName},
+				balanceCell,
 				types.DateTimeCell(dateCreated, types.DateReadable),
 			},
 			DataAttrs: map[string]string{

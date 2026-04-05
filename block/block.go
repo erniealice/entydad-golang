@@ -44,6 +44,8 @@ import (
 	entityid "github.com/erniealice/espyna-golang/registry/entityid"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
 	paymenttermpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/payment_term"
+	clientstmtpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/ledger/reporting/client_statement"
+	suppstmtpb   "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/reporting/supplier_statement"
 	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
 	pyeza "github.com/erniealice/pyeza-golang"
 )
@@ -172,6 +174,9 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 		hashPassword, _ := ctx.HashPassword.(func(password string) (string, error))
 		getUserRolesMap, _ := ctx.GetUserRolesMap.(func(ctx context.Context) (map[string][]entydad.RoleBadge, error))
 
+		// type-assert ledger reporting service (nil-safe)
+		ledgerReportingSvc, _ := ctx.LedgerReportingSvc.(consumer.LedgerReportingService)
+
 		// --- load labels from lyngua ---
 		labels := loadBlockLabels(translations, ctx.BusinessType)
 
@@ -219,6 +224,12 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 					return opts, nil
 				},
 				ListRevenues:          db.ListSimple,
+				GetClientStatement: func(fctx context.Context, req *clientstmtpb.ClientStatementRequest) (*clientstmtpb.ClientStatementResponse, error) {
+					if ledgerReportingSvc == nil {
+						return nil, nil
+					}
+					return ledgerReportingSvc.GetClientStatement(fctx, req)
+				},
 				SubscriptionAddURL:    routes.Subscription.AddURL,
 				SubscriptionDetailURL: routes.Subscription.DetailURL,
 				SubscriptionEditURL:   routes.Subscription.EditURL,
@@ -536,6 +547,14 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 			}
 			if uc.Expenditure != nil && uc.Expenditure.PurchaseOrder != nil && uc.Expenditure.PurchaseOrder.ListPurchaseOrders != nil {
 				supplierDeps.ListPurchaseOrders = uc.Expenditure.PurchaseOrder.ListPurchaseOrders.Execute
+			}
+			if ledgerReportingSvc != nil {
+				supplierDeps.GetSupplierStatement = func(fctx context.Context, req *suppstmtpb.SupplierStatementRequest) (*suppstmtpb.SupplierStatementResponse, error) {
+					return ledgerReportingSvc.GetSupplierStatement(fctx, req)
+				}
+				supplierDeps.GetSupplierBalances = func(fctx context.Context) (map[string]int64, error) {
+					return ledgerReportingSvc.GetSupplierBalances(fctx)
+				}
 			}
 			suppliermod.NewModule(supplierDeps).RegisterRoutes(ctx.Routes)
 		}

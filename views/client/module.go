@@ -12,10 +12,11 @@ import (
 	clientdashboard "github.com/erniealice/entydad-golang/views/client/dashboard"
 	clientdetail "github.com/erniealice/entydad-golang/views/client/detail"
 	clientlist "github.com/erniealice/entydad-golang/views/client/list"
-	categorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
+	categorypb   "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
-	clientpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client"
+	clientpb     "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client"
 	clientcategorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client_category"
+	clientstmtpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/ledger/reporting/client_statement"
 	subscriptionpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/subscription"
 	"github.com/erniealice/hybra-golang/views/attachment"
 	"github.com/erniealice/hybra-golang/views/auditlog"
@@ -50,6 +51,8 @@ type ModuleDeps struct {
 	DeleteClientCategory func(ctx context.Context, req *clientcategorypb.DeleteClientCategoryRequest) (*clientcategorypb.DeleteClientCategoryResponse, error)
 	// Revenue listing (for detail view)
 	ListRevenues func(ctx context.Context, collection string) ([]map[string]any, error)
+	// Client statement (for detail view)
+	GetClientStatement func(ctx context.Context, req *clientstmtpb.ClientStatementRequest) (*clientstmtpb.ClientStatementResponse, error)
 	// Subscription listing (for detail view)
 	ListSubscriptions           func(ctx context.Context, req *subscriptionpb.ListSubscriptionsRequest) (*subscriptionpb.ListSubscriptionsResponse, error)
 	GetSubscriptionListPageData func(ctx context.Context, req *subscriptionpb.GetSubscriptionListPageDataRequest) (*subscriptionpb.GetSubscriptionListPageDataResponse, error)
@@ -117,6 +120,7 @@ func NewModule(deps *ModuleDeps) *Module {
 		ListCategories:              deps.ListCategories,
 		ListClientCategories:        deps.ListClientCategories,
 		ListRevenues:                deps.ListRevenues,
+		GetClientStatement:          deps.GetClientStatement,
 		ListSubscriptions:           deps.ListSubscriptions,
 		GetSubscriptionListPageData: deps.GetSubscriptionListPageData,
 		SubscriptionAddURL:          deps.SubscriptionAddURL,

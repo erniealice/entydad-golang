@@ -135,6 +135,9 @@ const (
 	SupplierSetStatusURL        = "/action/suppliers/set-status"
 	SupplierBulkSetStatusURL    = "/action/suppliers/bulk-set-status"
 
+	// Supplier statement export
+	SupplierStatementExportURL = "/action/suppliers/{id}/statement/export"
+
 	// Supplier report routes
 	PayablesAgingURL = "/app/suppliers/reports/payables-aging"
 

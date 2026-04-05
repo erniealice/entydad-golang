@@ -2,6 +2,8 @@ package supplier
 
 import (
 	"context"
+	"log"
+	"net/http"
 
 	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/pyeza-golang/types"
@@ -11,9 +13,10 @@ import (
 	supplieraction "github.com/erniealice/entydad-golang/views/supplier/action"
 	supplierdetail "github.com/erniealice/entydad-golang/views/supplier/detail"
 	supplierlist "github.com/erniealice/entydad-golang/views/supplier/list"
-	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
-	supplierpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/supplier"
+	attachmentpb    "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
+	supplierpb      "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/supplier"
 	purchaseorderpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/expenditure/purchase_order"
+	suppstmtpb      "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/reporting/supplier_statement"
 	"github.com/erniealice/hybra-golang/views/attachment"
 	"github.com/erniealice/hybra-golang/views/auditlog"
 )
@@ -50,6 +53,12 @@ type ModuleDeps struct {
 
 	// Purchase orders
 	ListPurchaseOrders func(ctx context.Context, req *purchaseorderpb.ListPurchaseOrdersRequest) (*purchaseorderpb.ListPurchaseOrdersResponse, error)
+
+	// Supplier statement
+	GetSupplierStatement func(ctx context.Context, req *suppstmtpb.SupplierStatementRequest) (*suppstmtpb.SupplierStatementResponse, error)
+
+	// Outstanding balances for supplier list
+	GetSupplierBalances func(ctx context.Context) (map[string]int64, error)
 }
 
 // Module holds all constructed supplier views.
@@ -67,6 +76,7 @@ type Module struct {
 	BulkSetStatus    view.View
 	AttachmentUpload view.View
 	AttachmentDelete view.View
+	StatementExport  http.HandlerFunc
 }
 
 func NewModule(deps *ModuleDeps) *Module {
@@ -80,13 +90,14 @@ func NewModule(deps *ModuleDeps) *Module {
 		ListPaymentTerms:  deps.ListPaymentTerms,
 	}
 	listDeps := &supplierlist.ListViewDeps{
-		Routes:          deps.Routes,
-		GetListPageData: deps.GetListPageData,
-		GetInUseIDs:     deps.GetInUseIDs,
-		Labels:          deps.Labels,
-		SharedLabels:    deps.SharedLabels,
-		CommonLabels:    deps.CommonLabels,
-		TableLabels:     deps.TableLabels,
+		Routes:              deps.Routes,
+		GetListPageData:     deps.GetListPageData,
+		GetInUseIDs:         deps.GetInUseIDs,
+		Labels:              deps.Labels,
+		SharedLabels:        deps.SharedLabels,
+		CommonLabels:        deps.CommonLabels,
+		TableLabels:         deps.TableLabels,
+		GetSupplierBalances: deps.GetSupplierBalances,
 	}
 	detailDeps := &supplierdetail.DetailViewDeps{
 		Routes:       deps.Routes,
@@ -103,7 +114,8 @@ func NewModule(deps *ModuleDeps) *Module {
 		AuditOps: auditlog.AuditOps{
 			ListAuditHistory: deps.ListAuditHistory,
 		},
-		ListPurchaseOrders: deps.ListPurchaseOrders,
+		ListPurchaseOrders:   deps.ListPurchaseOrders,
+		GetSupplierStatement: deps.GetSupplierStatement,
 	}
 
 	return &Module{
@@ -120,7 +132,28 @@ func NewModule(deps *ModuleDeps) *Module {
 		BulkSetStatus:    supplieraction.NewBulkSetStatusAction(actionDeps),
 		AttachmentUpload: supplierdetail.NewAttachmentUploadAction(detailDeps),
 		AttachmentDelete: supplierdetail.NewAttachmentDeleteAction(detailDeps),
+		StatementExport:  supplierdetail.NewStatementExportHandler(detailDeps),
 	}
+}
+
+// routeRegistrarFull extends view.RouteRegistrar with HandleFunc support
+// for raw http.HandlerFunc routes (e.g., CSV exports).
+type routeRegistrarFull interface {
+	view.RouteRegistrar
+	HandleFunc(method, path string, handler http.HandlerFunc, middlewares ...string)
+}
+
+// handleFunc is a nil-safe helper that registers an http.HandlerFunc route if
+// the RouteRegistrar supports it, otherwise logs a warning and skips.
+func handleFunc(r view.RouteRegistrar, method, path string, handler http.HandlerFunc) {
+	if handler == nil {
+		return
+	}
+	if full, ok := r.(routeRegistrarFull); ok {
+		full.HandleFunc(method, path, handler)
+		return
+	}
+	log.Printf("supplier: RouteRegistrar does not support HandleFunc — skipping %s %s", method, path)
 }
 
 func (m *Module) RegisterRoutes(r view.RouteRegistrar) {
@@ -142,4 +175,6 @@ func (m *Module) RegisterRoutes(r view.RouteRegistrar) {
 		r.POST(m.routes.AttachmentUploadURL, m.AttachmentUpload)
 		r.POST(m.routes.AttachmentDeleteURL, m.AttachmentDelete)
 	}
+	// Statement CSV export
+	handleFunc(r, "GET", m.routes.StatementExportURL, m.StatementExport)
 }

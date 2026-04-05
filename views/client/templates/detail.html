@@ -21,6 +21,8 @@
         {{template "client-tab-engagements" .}}
         {{else if eq .ActiveTab "history"}}
         {{template "client-tab-history" .}}
+        {{else if eq .ActiveTab "statement"}}
+        {{template "client-tab-statement" .}}
         {{end}}
     </div>
 </div>
@@ -159,6 +161,41 @@
         </div>
         <div class="coming-soon-panel">
             <p class="coming-soon-text">No engagements found for this client.</p>
+        </div>
+    {{end}}
+</div>
+{{end}}
+
+{{/* Statement Tab */}}
+{{define "client-tab-statement"}}
+<div class="tab-scroll tab-scroll--table">
+    {{if .StatementSummary}}
+    <div class="statement-summary-row" data-testid="statement-summary">
+        <div class="statement-stat-card statement-stat-card--highlight" data-testid="stat-outstanding-balance">
+            <span class="stat-label">Outstanding Balance</span>
+            <span class="stat-value">{{if .StatementSummaryDisplay}}{{.StatementSummaryDisplay.OutstandingBalance}}{{end}}</span>
+        </div>
+        <div class="statement-stat-card" data-testid="stat-total-billed">
+            <span class="stat-label">Total Billed</span>
+            <span class="stat-value">{{if .StatementSummaryDisplay}}{{.StatementSummaryDisplay.TotalBilled}}{{end}}</span>
+        </div>
+        <div class="statement-stat-card" data-testid="stat-total-received">
+            <span class="stat-label">Total Received</span>
+            <span class="stat-value">{{if .StatementSummaryDisplay}}{{.StatementSummaryDisplay.TotalReceived}}{{end}}</span>
+        </div>
+        <div class="statement-stat-card" data-testid="stat-invoice-count">
+            <span class="stat-label">Invoices</span>
+            <span class="stat-value">{{.StatementSummary.InvoiceCount}}</span>
+        </div>
+    </div>
+    {{end}}
+
+    {{if .StatementTable}}
+        {{template "table-card" .StatementTable}}
+    {{else}}
+        <div class="coming-soon-panel">
+            <div class="coming-soon-title">No Statement Entries</div>
+            <p class="coming-soon-text">There are no transactions for this client.</p>
         </div>
     {{end}}
 </div>

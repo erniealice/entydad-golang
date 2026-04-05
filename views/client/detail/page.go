@@ -19,9 +19,10 @@ import (
 	"github.com/erniealice/entydad-golang"
 	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
 
-	categorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
-	clientpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client"
+	categorypb   "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
+	clientpb     "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client"
 	clientcategorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client_category"
+	clientstmtpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/ledger/reporting/client_statement"
 	subscriptionpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/subscription"
 )
 
@@ -32,6 +33,7 @@ type DetailViewDeps struct {
 	ListCategories        func(ctx context.Context, req *categorypb.ListCategoriesRequest) (*categorypb.ListCategoriesResponse, error)
 	ListClientCategories  func(ctx context.Context, req *clientcategorypb.ListClientCategoriesRequest) (*clientcategorypb.ListClientCategoriesResponse, error)
 	ListRevenues                func(ctx context.Context, collection string) ([]map[string]any, error)
+	GetClientStatement          func(ctx context.Context, req *clientstmtpb.ClientStatementRequest) (*clientstmtpb.ClientStatementResponse, error)
 	ListSubscriptions           func(ctx context.Context, req *subscriptionpb.ListSubscriptionsRequest) (*subscriptionpb.ListSubscriptionsResponse, error)
 	GetSubscriptionListPageData func(ctx context.Context, req *subscriptionpb.GetSubscriptionListPageDataRequest) (*subscriptionpb.GetSubscriptionListPageDataResponse, error)
 	SubscriptionAddURL    string
@@ -118,6 +120,18 @@ type PageData struct {
 	// Engagements tab
 	Subscriptions    []SubscriptionRow
 	EngagementsTable *types.TableConfig
+	// Statement tab
+	StatementEntries        []*clientstmtpb.StatementEntry
+	StatementSummary        *clientstmtpb.ClientStatementSummary
+	StatementSummaryDisplay *StatementSummaryDisplay
+	StatementTable          *types.TableConfig
+}
+
+// StatementSummaryDisplay holds pre-formatted string values for the statement summary bar.
+type StatementSummaryDisplay struct {
+	OutstandingBalance string
+	TotalBilled        string
+	TotalReceived      string
 }
 
 // NewView creates the client detail view.
@@ -234,6 +248,25 @@ func NewView(deps *DetailViewDeps) view.View {
 			subs := loadClientSubscriptions(ctx, deps, id)
 			pageData.Subscriptions = subs
 			pageData.EngagementsTable = buildEngagementsTable(subs, pageData.SubscriptionAddURL, id, clientName, deps)
+		case "statement":
+			if deps.GetClientStatement != nil {
+				req := &clientstmtpb.ClientStatementRequest{
+					ClientId: id,
+				}
+				resp, err := deps.GetClientStatement(ctx, req)
+				if err == nil && resp.Success {
+					pageData.StatementEntries = resp.Entries
+					pageData.StatementSummary = resp.Summary
+					if resp.Summary != nil {
+						pageData.StatementSummaryDisplay = &StatementSummaryDisplay{
+							OutstandingBalance: formatCentavos(resp.Summary.OutstandingBalance),
+							TotalBilled:        formatCentavos(resp.Summary.TotalBilled),
+							TotalReceived:      formatCentavos(resp.Summary.TotalReceived),
+						}
+					}
+					pageData.StatementTable = buildStatementTable(resp, deps.TableLabels)
+				}
+			}
 		}
 
 		// KB help content
@@ -259,6 +292,7 @@ func buildTabItems(id string, deps *DetailViewDeps) []pyeza.TabItem {
 		{Key: "representative", Label: deps.Labels.Detail.Tabs.Representative, Href: base + "?tab=representative", HxGet: action + "representative", Icon: "icon-user"},
 		{Key: "engagements", Label: deps.Labels.Detail.Tabs.Engagements, Href: base + "?tab=engagements", HxGet: action + "engagements", Icon: "icon-file-text"},
 		{Key: "history", Label: deps.Labels.Detail.Tabs.History, Href: base + "?tab=history", HxGet: action + "history", Icon: "icon-shopping-bag"},
+		{Key: "statement", Label: deps.Labels.Detail.Tabs.Statement, Href: base + "?tab=statement", HxGet: action + "statement", Icon: "icon-file-text"},
 	}
 }
 
@@ -346,6 +380,25 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 		case "history":
 			pageData.PurchaseStats, pageData.Orders = loadPurchaseHistory(ctx, deps, id)
 			pageData.HasOrders = len(pageData.Orders) > 0
+		case "statement":
+			if deps.GetClientStatement != nil {
+				req := &clientstmtpb.ClientStatementRequest{
+					ClientId: id,
+				}
+				resp, err := deps.GetClientStatement(ctx, req)
+				if err == nil && resp.Success {
+					pageData.StatementEntries = resp.Entries
+					pageData.StatementSummary = resp.Summary
+					if resp.Summary != nil {
+						pageData.StatementSummaryDisplay = &StatementSummaryDisplay{
+							OutstandingBalance: formatCentavos(resp.Summary.OutstandingBalance),
+							TotalBilled:        formatCentavos(resp.Summary.TotalBilled),
+							TotalReceived:      formatCentavos(resp.Summary.TotalReceived),
+						}
+					}
+					pageData.StatementTable = buildStatementTable(resp, deps.TableLabels)
+				}
+			}
 		}
 
 		return view.OK("client-tab-"+tab, pageData)
@@ -656,4 +709,93 @@ func loadPurchaseHistory(ctx context.Context, deps *DetailViewDeps, clientID str
 	}
 
 	return stats, orders
+}
+
+// formatCentavos converts a centavo integer to a decimal string (e.g., 1400000 -> "14000.00").
+func formatCentavos(amount int64) string {
+	return fmt.Sprintf("%.2f", float64(amount)/100)
+}
+
+// capitalizeType capitalizes the first letter of a type string.
+func capitalizeType(t string) string {
+	if len(t) == 0 {
+		return t
+	}
+	return strings.ToUpper(t[:1]) + t[1:]
+}
+
+// buildStatementTable builds a TableConfig for the statement tab.
+func buildStatementTable(resp *clientstmtpb.ClientStatementResponse, tableLabels types.TableLabels) *types.TableConfig {
+	columns := []types.TableColumn{
+		{Key: "date", Label: "Date", Sortable: true, Width: "120px"},
+		{Key: "type", Label: "Type", Sortable: true, Width: "100px"},
+		{Key: "reference", Label: "Reference", Sortable: true, Width: "140px"},
+		{Key: "description", Label: "Description", Sortable: true},
+		{Key: "billed", Label: "Billed", Sortable: true, Width: "130px", Align: "right"},
+		{Key: "received", Label: "Received", Sortable: true, Width: "130px", Align: "right"},
+		{Key: "balance", Label: "Balance", Sortable: true, Width: "130px", Align: "right"},
+	}
+
+	var rows []types.TableRow
+	for _, entry := range resp.Entries {
+		billedStr := ""
+		if entry.Billed > 0 {
+			billedStr = formatCentavos(entry.Billed)
+		}
+		receivedStr := ""
+		if entry.Received > 0 {
+			receivedStr = formatCentavos(entry.Received)
+		}
+		rows = append(rows, types.TableRow{
+			ID: entry.EntityId,
+			Cells: []types.TableCell{
+				{Type: "text", Value: entry.Date},
+				{Type: "text", Value: capitalizeType(entry.Type)},
+				{Type: "text", Value: entry.ReferenceNumber},
+				{Type: "text", Value: entry.Description},
+				{Type: "money", Value: billedStr},
+				{Type: "money", Value: receivedStr},
+				{Type: "money", Value: formatCentavos(entry.Balance)},
+			},
+		})
+	}
+
+	// Add summary/totals row if summary exists
+	if resp.Summary != nil {
+		s := resp.Summary
+		rows = append(rows, types.TableRow{
+			ID: "__totals__",
+			Cells: []types.TableCell{
+				{Type: "text", Value: ""},
+				{Type: "text", Value: ""},
+				{Type: "text", Value: ""},
+				{Type: "text", Value: "TOTAL"},
+				{Type: "money", Value: formatCentavos(s.TotalBilled)},
+				{Type: "money", Value: formatCentavos(s.TotalReceived)},
+				{Type: "money", Value: formatCentavos(s.OutstandingBalance)},
+			},
+		})
+	}
+
+	types.ApplyColumnStyles(columns, rows)
+
+	tc := &types.TableConfig{
+		ID:                   "clientStatementTable",
+		Columns:              columns,
+		Rows:                 rows,
+		Labels:               tableLabels,
+		ShowSearch:           false,
+		ShowSort:             false,
+		ShowExport:           true,
+		ShowEntries:          true,
+		DefaultSortColumn:    "date",
+		DefaultSortDirection: "asc",
+		EmptyState: types.TableEmptyState{
+			Title:   "No Statement Entries",
+			Message: "There are no transactions for this client.",
+		},
+	}
+
+	types.ApplyTableSettings(tc)
+	return tc
 }

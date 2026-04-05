@@ -551,6 +551,9 @@ type SupplierRoutes struct {
 	AttachmentUploadURL string `json:"attachment_upload_url"`
 	AttachmentDeleteURL string `json:"attachment_delete_url"`
 
+	// Statement export
+	StatementExportURL string `json:"statement_export_url"`
+
 	// Report routes
 	PayablesAgingURL string `json:"payables_aging_url"`
 
@@ -576,6 +579,8 @@ func DefaultSupplierRoutes() SupplierRoutes {
 		AttachmentUploadURL: SupplierAttachmentUploadURL,
 		AttachmentDeleteURL: SupplierAttachmentDeleteURL,
 
+		StatementExportURL: SupplierStatementExportURL,
+
 		PayablesAgingURL: PayablesAgingURL,
 
 		PaymentTermsURL: PaymentTermListURL,
@@ -598,6 +603,8 @@ func (r SupplierRoutes) RouteMap() map[string]string {
 
 		"supplier.attachment.upload": r.AttachmentUploadURL,
 		"supplier.attachment.delete": r.AttachmentDeleteURL,
+
+		"supplier.statement_export": r.StatementExportURL,
 
 		"supplier.payables_aging": r.PayablesAgingURL,
 
