@@ -16,6 +16,9 @@ import (
 
 // FormLabels holds i18n labels for the payment term drawer form.
 type FormLabels struct {
+	SectionInfo            string
+	SectionTerms           string
+	SectionSettings        string
 	Name                   string
 	NamePlaceholder        string
 	Code                   string
@@ -24,6 +27,11 @@ type FormLabels struct {
 	NetDays                string
 	DiscountDays           string
 	DiscountPercentBps     string
+	TypeHint               string
+	NetDaysHint            string
+	DiscountDaysHint       string
+	DiscountPercentBpsHint string
+	PriorityHint           string
 	EntityScope            string
 	IsDefault              string
 	Description            string
@@ -78,6 +86,9 @@ type Deps struct {
 
 func formLabels(t func(string) string) FormLabels {
 	return FormLabels{
+		SectionInfo:            t("paymentTerm.form.sectionInfo"),
+		SectionTerms:           t("paymentTerm.form.sectionTerms"),
+		SectionSettings:        t("paymentTerm.form.sectionSettings"),
 		Name:                   t("paymentTerm.form.name"),
 		NamePlaceholder:        t("paymentTerm.form.namePlaceholder"),
 		Code:                   t("paymentTerm.form.code"),
@@ -86,6 +97,11 @@ func formLabels(t func(string) string) FormLabels {
 		NetDays:                t("paymentTerm.form.netDays"),
 		DiscountDays:           t("paymentTerm.form.discountDays"),
 		DiscountPercentBps:     t("paymentTerm.form.discountPercentBps"),
+		TypeHint:               t("paymentTerm.form.typeHint"),
+		NetDaysHint:            t("paymentTerm.form.netDaysHint"),
+		DiscountDaysHint:       t("paymentTerm.form.discountDaysHint"),
+		DiscountPercentBpsHint: t("paymentTerm.form.discountPercentBpsHint"),
+		PriorityHint:           t("paymentTerm.form.priorityHint"),
 		EntityScope:            t("paymentTerm.form.entityScope"),
 		IsDefault:              t("paymentTerm.form.isDefault"),
 		Description:            t("paymentTerm.form.description"),

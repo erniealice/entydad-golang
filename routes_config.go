@@ -586,7 +586,7 @@ func DefaultSupplierRoutes() SupplierRoutes {
 
 		PayablesAgingURL: PayablesAgingURL,
 
-		PaymentTermsURL: PaymentTermListURL,
+		PaymentTermsURL: SupplierPaymentTermListURL,
 	}
 }
 
@@ -657,6 +657,52 @@ func (r PaymentTermRoutes) RouteMap() map[string]string {
 		"payment_term.bulk_delete":      r.BulkDeleteURL,
 		"payment_term.set_status":       r.SetStatusURL,
 		"payment_term.bulk_set_status":  r.BulkSetStatusURL,
+	}
+}
+
+// ---------------------------------------------------------------------------
+// SupplierPaymentTermRoutes
+// ---------------------------------------------------------------------------
+
+// SupplierPaymentTermRoutes holds payment term route paths for the supplier context.
+// These routes show only payment terms with entity_scope IN ('supplier', 'both').
+type SupplierPaymentTermRoutes struct {
+	ListURL          string `json:"list_url"`
+	TableURL         string `json:"table_url"`
+	AddURL           string `json:"add_url"`
+	EditURL          string `json:"edit_url"`
+	DeleteURL        string `json:"delete_url"`
+	BulkDeleteURL    string `json:"bulk_delete_url"`
+	SetStatusURL     string `json:"set_status_url"`
+	BulkSetStatusURL string `json:"bulk_set_status_url"`
+}
+
+// DefaultSupplierPaymentTermRoutes returns a SupplierPaymentTermRoutes from package-level constants.
+func DefaultSupplierPaymentTermRoutes() SupplierPaymentTermRoutes {
+	return SupplierPaymentTermRoutes{
+		ListURL:          SupplierPaymentTermListURL,
+		TableURL:         SupplierPaymentTermTableURL,
+		AddURL:           SupplierPaymentTermAddURL,
+		EditURL:          SupplierPaymentTermEditURL,
+		DeleteURL:        SupplierPaymentTermDeleteURL,
+		BulkDeleteURL:    SupplierPaymentTermBulkDeleteURL,
+		SetStatusURL:     SupplierPaymentTermSetStatusURL,
+		BulkSetStatusURL: SupplierPaymentTermBulkSetStatusURL,
+	}
+}
+
+// ToPaymentTermRoutes converts SupplierPaymentTermRoutes to a PaymentTermRoutes,
+// allowing the payment term module to be reused with supplier-context paths.
+func (r SupplierPaymentTermRoutes) ToPaymentTermRoutes() PaymentTermRoutes {
+	return PaymentTermRoutes{
+		ListURL:          r.ListURL,
+		TableURL:         r.TableURL,
+		AddURL:           r.AddURL,
+		EditURL:          r.EditURL,
+		DeleteURL:        r.DeleteURL,
+		BulkDeleteURL:    r.BulkDeleteURL,
+		SetStatusURL:     r.SetStatusURL,
+		BulkSetStatusURL: r.BulkSetStatusURL,
 	}
 }
 

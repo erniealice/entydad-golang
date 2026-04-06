@@ -21,11 +21,16 @@ type ModuleDeps struct {
 	Labels               entydad.PaymentTermLabels
 	TableLabels          types.TableLabels
 	GetListPageData      func(ctx context.Context, req *paymenttermpb.GetPaymentTermListPageDataRequest) (*paymenttermpb.GetPaymentTermListPageDataResponse, error)
+	GetInUseIDs          func(ctx context.Context, ids []string) (map[string]bool, error)
 	CreatePaymentTerm    func(ctx context.Context, req *paymenttermpb.CreatePaymentTermRequest) (*paymenttermpb.CreatePaymentTermResponse, error)
 	ReadPaymentTerm      func(ctx context.Context, req *paymenttermpb.ReadPaymentTermRequest) (*paymenttermpb.ReadPaymentTermResponse, error)
 	UpdatePaymentTerm    func(ctx context.Context, req *paymenttermpb.UpdatePaymentTermRequest) (*paymenttermpb.UpdatePaymentTermResponse, error)
 	DeletePaymentTerm    func(ctx context.Context, req *paymenttermpb.DeletePaymentTermRequest) (*paymenttermpb.DeletePaymentTermResponse, error)
 	SetPaymentTermActive func(ctx context.Context, id string, active bool) error
+	// Scope filters which payment terms are shown in the list page.
+	// Valid values: "client" (shows client + both), "supplier" (shows supplier + both).
+	// Leave empty to show all terms (used when registering a standalone settings page).
+	Scope string
 }
 
 // Module holds all constructed payment term views.
@@ -54,12 +59,14 @@ func NewModule(deps *ModuleDeps) *Module {
 
 	listDeps := &paymenttermlist.Deps{
 		GetListPageData: deps.GetListPageData,
+		GetInUseIDs:     deps.GetInUseIDs,
 		RefreshURL:      deps.Routes.TableURL,
 		Routes:          deps.Routes,
 		Labels:          deps.Labels,
 		SharedLabels:    deps.SharedLabels,
 		CommonLabels:    deps.CommonLabels,
 		TableLabels:     deps.TableLabels,
+		Scope:           deps.Scope,
 	}
 
 	return &Module{

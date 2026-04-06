@@ -8,10 +8,15 @@ Data: .Name, .Code, .Type, .NetDays, .DiscountDays, .DiscountPercentBps,
 {{define "payment-term-drawer-form"}}
 <form hx-post="{{.FormAction}}" hx-swap="none" hx-on::after-request="Sheet.handleResponse(event)">
     {{if .ID}}<input type="hidden" name="id" value="{{.ID}}">{{end}}
+    {{if .EntityScope}}<input type="hidden" name="entity_scope" value="{{.EntityScope}}">{{end}}
 
     <div class="sheet-body">
 
-        <div class="form-row">
+        {{/* --- Information Section --- */}}
+        {{template "form-section" (dict "Title" .Labels.SectionInfo)}}
+
+        {{/* Row 1: Name */}}
+        <div class="form-row single">
             {{template "form-group" (dict
                 "Type" "text"
                 "Name" "name"
@@ -20,6 +25,10 @@ Data: .Name, .Code, .Type, .NetDays, .DiscountDays, .DiscountPercentBps,
                 "Required" true
                 "Placeholder" .Labels.NamePlaceholder
             )}}
+        </div>
+
+        {{/* Row 2: Code */}}
+        <div class="form-row single">
             {{template "form-group" (dict
                 "Type" "text"
                 "Name" "code"
@@ -29,36 +38,41 @@ Data: .Name, .Code, .Type, .NetDays, .DiscountDays, .DiscountPercentBps,
             )}}
         </div>
 
-        <div class="form-row">
+        {{/* Row 3: Description */}}
+        <div class="form-row single">
             {{template "form-group" (dict
-                "Type" "select"
-                "Name" "type"
-                "Label" .Labels.Type
-                "Value" .Type
-                "Options" (list
-                    (dict "Value" "due_on_receipt" "Label" .Labels.TypeDueOnReceipt)
-                    (dict "Value" "net" "Label" .Labels.TypeNet)
-                    (dict "Value" "cod" "Label" .Labels.TypeCOD)
-                    (dict "Value" "proximate" "Label" .Labels.TypeProximate)
-                )
+                "Type" "textarea"
+                "Name" "description"
+                "Label" .Labels.Description
+                "Value" .Description
+                "Placeholder" .Labels.DescriptionPlaceholder
             )}}
-            {{template "form-group" (dict
-                "Type" "select"
-                "Name" "entity_scope"
-                "Label" .Labels.EntityScope
-                "Value" .EntityScope
-                "Options" (list
-                    (dict "Value" "both" "Label" .Labels.ScopesBoth)
-                    (dict "Value" "supplier_only" "Label" .Labels.ScopesSupplierOnly)
-                    (dict "Value" "client_only" "Label" .Labels.ScopesClientOnly)
-                )
-            )}}
+        </div>
+
+        {{/* --- Terms Section --- */}}
+        {{template "form-section" (dict "Title" .Labels.SectionTerms)}}
+
+        {{/* Row: Type (70%) + Net Days (30%) */}}
+        <div class="form-row" style="grid-template-columns: 7fr 3fr;">
+            <div class="form-group">
+                <label for="type" class="form-label">{{.Labels.Type}} <span class="form-info-icon" title="{{.Labels.TypeHint}}">{{template "icon-info" $}}</span></label>
+                <select name="type" id="type" class="form-select">
+                    <option value="due_on_receipt" {{if eq .Type "due_on_receipt"}}selected{{end}}>{{.Labels.TypeDueOnReceipt}}</option>
+                    <option value="net" {{if eq .Type "net"}}selected{{end}}>{{.Labels.TypeNet}}</option>
+                    <option value="cod" {{if eq .Type "cod"}}selected{{end}}>{{.Labels.TypeCOD}}</option>
+                    <option value="proximate" {{if eq .Type "proximate"}}selected{{end}}>{{.Labels.TypeProximate}}</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="net_days" class="form-label">{{.Labels.NetDays}} <span class="form-info-icon" title="{{.Labels.NetDaysHint}}">{{template "icon-info" $}}</span></label>
+                <input type="number" class="form-input" id="net_days" name="net_days" value="{{.NetDays}}" min="0">
+            </div>
         </div>
 
         <div class="form-row single" id="proximate-day-row" style="{{if ne .Type "proximate"}}display:none{{end}}">
             <div class="form-group">
-                <label for="proximate_day">{{.Labels.ProximateDay}}</label>
-                <input type="number" class="form-control" id="proximate_day" name="proximate_day"
+                <label for="proximate_day" class="form-label">{{.Labels.ProximateDay}}</label>
+                <input type="number" class="form-input" id="proximate_day" name="proximate_day"
                        value="{{.ProximateDay}}" min="1" max="28"
                        placeholder="{{.Labels.ProximateDayPlaceholder}}">
             </div>
@@ -73,66 +87,43 @@ Data: .Name, .Code, .Type, .NetDays, .DiscountDays, .DiscountPercentBps,
         })();
         </script>
 
+        {{/* Row: Discount Days + Discount Rate */}}
         <div class="form-row">
-            {{template "form-group" (dict
-                "Type" "number"
-                "Name" "net_days"
-                "Label" .Labels.NetDays
-                "Value" .NetDays
-                "Min" "0"
-            )}}
-            {{template "form-group" (dict
-                "Type" "number"
-                "Name" "discount_days"
-                "Label" .Labels.DiscountDays
-                "Value" .DiscountDays
-                "Min" "0"
-            )}}
+            <div class="form-group">
+                <label for="discount_days" class="form-label">{{.Labels.DiscountDays}} <span class="form-info-icon" title="{{.Labels.DiscountDaysHint}}">{{template "icon-info" $}}</span></label>
+                <input type="number" class="form-input" id="discount_days" name="discount_days" value="{{.DiscountDays}}" min="0">
+            </div>
+            <div class="form-group">
+                <label for="discount_percent_bps" class="form-label">{{.Labels.DiscountPercentBps}} <span class="form-info-icon" title="{{.Labels.DiscountPercentBpsHint}}">{{template "icon-info" $}}</span></label>
+                <input type="number" class="form-input" id="discount_percent_bps" name="discount_percent_bps" value="{{.DiscountPercentBps}}" min="0">
+            </div>
         </div>
 
-        <div class="form-row">
-            {{template "form-group" (dict
-                "Type" "number"
-                "Name" "discount_percent_bps"
-                "Label" .Labels.DiscountPercentBps
-                "Value" .DiscountPercentBps
-                "Min" "0"
-            )}}
-            {{template "form-group" (dict
-                "Type" "number"
-                "Name" "display_order"
-                "Label" .Labels.DisplayOrder
-                "Value" .DisplayOrder
-                "Min" "0"
-            )}}
-        </div>
+        {{/* --- Settings Section --- */}}
+        {{template "form-section" (dict "Title" .Labels.SectionSettings)}}
 
-        <div class="form-row single">
-            {{template "form-group" (dict
-                "Type" "textarea"
-                "Name" "description"
-                "Label" .Labels.Description
-                "Value" .Description
-                "Placeholder" .Labels.DescriptionPlaceholder
-            )}}
-        </div>
-
-        <div class="form-row single">
-            {{template "toggle" (dict
-                "Name" "is_default"
-                "Label" .Labels.IsDefault
-                "Checked" .IsDefault
-                "Value" "true"
-            )}}
-        </div>
-
-        <div class="form-row single">
-            {{template "toggle" (dict
-                "Name" "active"
-                "Label" .Labels.Active
-                "Checked" .Active
-                "Value" "true"
-            )}}
+        {{/* Settings: Priority (30%) + Default (35%) + Active (35%) */}}
+        <div class="form-row form-row-settings">
+            <div class="form-group">
+                <label for="display_order" class="form-label">{{.Labels.DisplayOrder}} <span class="form-info-icon" title="{{.Labels.PriorityHint}}">{{template "icon-info" $}}</span></label>
+                <input type="number" class="form-input" id="display_order" name="display_order" value="{{.DisplayOrder}}" min="0">
+            </div>
+            <div class="form-group form-group-toggle">
+                <label class="form-label">{{.Labels.IsDefault}}</label>
+                {{template "toggle" (dict
+                    "Name" "is_default"
+                    "Checked" .IsDefault
+                    "Value" "true"
+                )}}
+            </div>
+            <div class="form-group form-group-toggle">
+                <label class="form-label">{{.Labels.Active}}</label>
+                {{template "toggle" (dict
+                    "Name" "active"
+                    "Checked" .Active
+                    "Value" "true"
+                )}}
+            </div>
         </div>
 
     </div>

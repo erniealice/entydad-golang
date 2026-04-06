@@ -1215,6 +1215,9 @@ type PaymentTermEmptyLabels struct {
 }
 
 type PaymentTermFormLabels struct {
+	SectionInfo            string `json:"sectionInfo"`
+	SectionTerms           string `json:"sectionTerms"`
+	SectionSettings        string `json:"sectionSettings"`
 	Name                   string `json:"name"`
 	NamePlaceholder        string `json:"namePlaceholder"`
 	Code                   string `json:"code"`
@@ -1223,6 +1226,11 @@ type PaymentTermFormLabels struct {
 	NetDays                string `json:"netDays"`
 	DiscountDays           string `json:"discountDays"`
 	DiscountPercentBps     string `json:"discountPercentBps"`
+	TypeHint               string `json:"typeHint"`
+	NetDaysHint            string `json:"netDaysHint"`
+	DiscountDaysHint       string `json:"discountDaysHint"`
+	DiscountPercentBpsHint string `json:"discountPercentBpsHint"`
+	PriorityHint           string `json:"priorityHint"`
 	EntityScope            string `json:"entityScope"`
 	IsDefault              string `json:"isDefault"`
 	Description            string `json:"description"`

@@ -28,12 +28,17 @@ var paymentTermTypeLabels = map[string]string{
 // Deps holds view dependencies.
 type Deps struct {
 	GetListPageData func(ctx context.Context, req *paymenttermpb.GetPaymentTermListPageDataRequest) (*paymenttermpb.GetPaymentTermListPageDataResponse, error)
+	GetInUseIDs     func(ctx context.Context, ids []string) (map[string]bool, error)
 	RefreshURL      string
 	Routes          entydad.PaymentTermRoutes
 	Labels          entydad.PaymentTermLabels
 	SharedLabels    entydad.SharedLabels
 	CommonLabels    pyeza.CommonLabels
 	TableLabels     types.TableLabels
+	// Scope filters which payment terms are shown. Valid values: "client", "supplier".
+	// When set, only terms with entity_scope == Scope or entity_scope == "both" are shown.
+	// Leave empty to show all terms (no filtering).
+	Scope string
 }
 
 // PageData holds the data for the payment term list page.
@@ -51,12 +56,17 @@ func NewView(deps *Deps) view.View {
 			return view.Error(err)
 		}
 
+		activeNav := "client"
+		if deps.Scope == "supplier" {
+			activeNav = "supplier"
+		}
+
 		pageData := &PageData{
 			PageData: types.PageData{
 				CacheVersion:   viewCtx.CacheVersion,
 				Title:          deps.Labels.Page.Heading,
 				CurrentPath:    viewCtx.CurrentPath,
-				ActiveNav:      "client",
+				ActiveNav:      activeNav,
 				ActiveSubNav:   "payment-terms",
 				HeaderTitle:    deps.Labels.Page.Heading,
 				HeaderSubtitle: deps.Labels.Page.Subtitle,
@@ -107,9 +117,32 @@ func buildTableConfig(ctx context.Context, deps *Deps) (*types.TableConfig, erro
 		}
 	}
 
+	// Filter by entity scope if a scope is specified.
+	allTerms := resp.GetPaymentTermList()
+	filteredTerms := allTerms
+	if deps.Scope != "" {
+		filteredTerms = make([]*paymenttermpb.PaymentTerm, 0, len(allTerms))
+		for _, pt := range allTerms {
+			scope := pt.GetEntityScope()
+			if scope == deps.Scope || scope == "both" {
+				filteredTerms = append(filteredTerms, pt)
+			}
+		}
+	}
+
+	// Check which items are in use
+	var inUseIDs map[string]bool
+	if deps.GetInUseIDs != nil {
+		var itemIDs []string
+		for _, item := range filteredTerms {
+			itemIDs = append(itemIDs, item.GetId())
+		}
+		inUseIDs, _ = deps.GetInUseIDs(ctx, itemIDs)
+	}
+
 	l := deps.Labels
 	columns := paymentTermColumns(l)
-	rows := buildTableRows(resp.GetPaymentTermList(), l, deps.SharedLabels, deps.Routes, perms)
+	rows := buildTableRows(filteredTerms, l, deps.SharedLabels, deps.Routes, inUseIDs, perms)
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
@@ -172,7 +205,7 @@ func paymentTermTypeLabel(code string) string {
 	return code
 }
 
-func buildTableRows(items []*paymenttermpb.PaymentTerm, l entydad.PaymentTermLabels, sl entydad.SharedLabels, routes entydad.PaymentTermRoutes, perms *types.UserPermissions) []types.TableRow {
+func buildTableRows(items []*paymenttermpb.PaymentTerm, l entydad.PaymentTermLabels, sl entydad.SharedLabels, routes entydad.PaymentTermRoutes, inUseIDs map[string]bool, perms *types.UserPermissions) []types.TableRow {
 	rows := []types.TableRow{}
 	for _, pt := range items {
 		id := pt.GetId()
@@ -234,15 +267,22 @@ func buildTableRows(items []*paymenttermpb.PaymentTerm, l entydad.PaymentTermLab
 				DisabledTooltip: sl.Badges.NoPermission,
 			})
 		}
-		actions = append(actions, types.TableAction{
-			Type:            "delete",
-			Label:           l.Actions.Delete,
-			Action:          "delete",
-			URL:             routes.DeleteURL,
-			ItemName:        name,
-			Disabled:        !perms.Can("payment_term", "delete"),
-			DisabledTooltip: sl.Badges.NoPermission,
-		})
+		isInUse := inUseIDs[id]
+		deleteAction := types.TableAction{
+			Type:     "delete",
+			Label:    l.Actions.Delete,
+			Action:   "delete",
+			URL:      routes.DeleteURL,
+			ItemName: name,
+		}
+		if isInUse {
+			deleteAction.Disabled = true
+			deleteAction.DisabledTooltip = sl.Errors.CannotDeleteInUse
+		} else if !perms.Can("payment_term", "delete") {
+			deleteAction.Disabled = true
+			deleteAction.DisabledTooltip = sl.Badges.NoPermission
+		}
+		actions = append(actions, deleteAction)
 
 		rows = append(rows, types.TableRow{
 			ID: id,
@@ -255,10 +295,13 @@ func buildTableRows(items []*paymenttermpb.PaymentTerm, l entydad.PaymentTermLab
 				{Type: "badge", Value: activeStatus, Variant: activeVariant},
 			},
 			DataAttrs: map[string]string{
-				"name":   name,
-				"code":   code,
-				"type":   termType,
-				"status": recordStatus,
+				"name":          name,
+				"code":          code,
+				"type":          termType,
+				"status":        recordStatus,
+				"deletable":     strconv.FormatBool(!isInUse),
+				"deactivatable": strconv.FormatBool(active),
+				"activatable":   strconv.FormatBool(!active),
 			},
 			Actions: actions,
 		})
@@ -269,33 +312,36 @@ func buildTableRows(items []*paymenttermpb.PaymentTerm, l entydad.PaymentTermLab
 func buildBulkActions(l entydad.PaymentTermLabels, sl entydad.SharedLabels, cl pyeza.CommonLabels, routes entydad.PaymentTermRoutes) []types.BulkAction {
 	return []types.BulkAction{
 		{
-			Key:             "deactivate",
-			Label:           l.Actions.Deactivate,
-			Icon:            "icon-clock-off",
-			Variant:         "warning",
-			Endpoint:        routes.BulkSetStatusURL,
-			ConfirmTitle:    l.Actions.Deactivate,
-			ConfirmMessage:  sl.Confirm.BulkDeactivate,
-			ExtraParamsJSON: `{"target_status":"inactive"}`,
+			Key:              "deactivate",
+			Label:            l.Actions.Deactivate,
+			Icon:             "icon-clock-off",
+			Variant:          "warning",
+			Endpoint:         routes.BulkSetStatusURL,
+			ConfirmTitle:     l.Actions.Deactivate,
+			ConfirmMessage:   sl.Confirm.BulkDeactivate,
+			ExtraParamsJSON:  `{"target_status":"inactive"}`,
+			RequiresDataAttr: "deactivatable",
 		},
 		{
-			Key:             "activate",
-			Label:           l.Actions.Activate,
-			Icon:            "icon-clock",
-			Variant:         "primary",
-			Endpoint:        routes.BulkSetStatusURL,
-			ConfirmTitle:    l.Actions.Activate,
-			ConfirmMessage:  sl.Confirm.BulkActivate,
-			ExtraParamsJSON: `{"target_status":"active"}`,
+			Key:              "activate",
+			Label:            l.Actions.Activate,
+			Icon:             "icon-clock",
+			Variant:          "primary",
+			Endpoint:         routes.BulkSetStatusURL,
+			ConfirmTitle:     l.Actions.Activate,
+			ConfirmMessage:   sl.Confirm.BulkActivate,
+			ExtraParamsJSON:  `{"target_status":"active"}`,
+			RequiresDataAttr: "activatable",
 		},
 		{
-			Key:            "delete",
-			Label:          cl.Bulk.Delete,
-			Icon:           "icon-trash-2",
-			Variant:        "danger",
-			Endpoint:       routes.BulkDeleteURL,
-			ConfirmTitle:   cl.Bulk.Delete,
-			ConfirmMessage: sl.Confirm.BulkDelete,
+			Key:              "delete",
+			Label:            cl.Bulk.Delete,
+			Icon:             "icon-trash-2",
+			Variant:          "danger",
+			Endpoint:         routes.BulkDeleteURL,
+			ConfirmTitle:     cl.Bulk.Delete,
+			ConfirmMessage:   sl.Confirm.BulkDelete,
+			RequiresDataAttr: "deletable",
 		},
 	}
 }

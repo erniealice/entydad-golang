@@ -152,7 +152,7 @@ const (
 	ClientTagSetStatusURL     = "/action/clients/tags/set-status"
 	ClientTagBulkSetStatusURL = "/action/clients/tags/bulk-set-status"
 
-	// Payment Term routes (shared settings, canonical under /clients/)
+	// Payment Term routes — client context (shows client + both scopes)
 	PaymentTermListURL          = "/app/clients/settings/payment-terms/list"
 	PaymentTermTableURL         = "/action/clients/settings/payment-terms/table"
 	PaymentTermAddURL           = "/action/clients/settings/payment-terms/add"
@@ -161,6 +161,16 @@ const (
 	PaymentTermBulkDeleteURL    = "/action/clients/settings/payment-terms/bulk-delete"
 	PaymentTermSetStatusURL     = "/action/clients/settings/payment-terms/set-status"
 	PaymentTermBulkSetStatusURL = "/action/clients/settings/payment-terms/bulk-set-status"
+
+	// Payment Term routes — supplier context (shows supplier + both scopes)
+	SupplierPaymentTermListURL          = "/app/suppliers/settings/payment-terms/list"
+	SupplierPaymentTermTableURL         = "/action/suppliers/settings/payment-terms/table"
+	SupplierPaymentTermAddURL           = "/action/suppliers/settings/payment-terms/add"
+	SupplierPaymentTermEditURL          = "/action/suppliers/settings/payment-terms/edit/{id}"
+	SupplierPaymentTermDeleteURL        = "/action/suppliers/settings/payment-terms/delete"
+	SupplierPaymentTermBulkDeleteURL    = "/action/suppliers/settings/payment-terms/bulk-delete"
+	SupplierPaymentTermSetStatusURL     = "/action/suppliers/settings/payment-terms/set-status"
+	SupplierPaymentTermBulkSetStatusURL = "/action/suppliers/settings/payment-terms/bulk-set-status"
 
 	// Auth routes (all prefixed with /auth/)
 	AuthLoginURL             = "/auth/login"

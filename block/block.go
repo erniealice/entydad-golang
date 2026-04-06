@@ -219,7 +219,12 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 					for _, row := range rows {
 						id, _ := row["id"].(string)
 						name, _ := row["name"].(string)
+						scope, _ := row["entity_scope"].(string)
 						if id == "" {
+							continue
+						}
+						// Client context: show terms scoped to "client" or "both"
+						if scope != "client" && scope != "both" {
 							continue
 						}
 						opts = append(opts, &clientmod.PaymentTermOption{Id: id, Name: name})
@@ -556,7 +561,12 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 					for _, row := range rows {
 						id, _ := row["id"].(string)
 						name, _ := row["name"].(string)
+						scope, _ := row["entity_scope"].(string)
 						if id == "" {
+							continue
+						}
+						// Supplier context: show terms scoped to "supplier" or "both"
+						if scope != "supplier" && scope != "both" {
 							continue
 						}
 						opts = append(opts, &suppliermod.PaymentTermOption{Id: id, Name: name})
@@ -636,21 +646,41 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 				if !ok {
 					return fmt.Errorf("entydad.Block: payment_term repository does not implement PaymentTermDomainServiceServer")
 				}
+				setPaymentTermActive := func(fctx context.Context, id string, active bool) error {
+					_, err := db.Update(fctx, "payment_term", id, map[string]any{"active": active})
+					return err
+				}
+				// Client-context payment term list: shows terms with entity_scope IN ('client', 'both')
 				paymenttermmod.NewModule(&paymenttermmod.ModuleDeps{
-					Routes:            routes.PaymentTerm,
-					CommonLabels:      ctx.Common,
-					SharedLabels:      labels.Shared,
-					Labels:            labels.PaymentTerm,
-					TableLabels:       ctx.Table,
-					GetListPageData:   ptRepo.GetPaymentTermListPageData,
-					CreatePaymentTerm: ptRepo.CreatePaymentTerm,
-					ReadPaymentTerm:   ptRepo.ReadPaymentTerm,
-					UpdatePaymentTerm: ptRepo.UpdatePaymentTerm,
-					DeletePaymentTerm: ptRepo.DeletePaymentTerm,
-					SetPaymentTermActive: func(fctx context.Context, id string, active bool) error {
-						_, err := db.Update(fctx, "payment_term", id, map[string]any{"active": active})
-						return err
-					},
+					Routes:               routes.PaymentTerm,
+					CommonLabels:         ctx.Common,
+					SharedLabels:         labels.Shared,
+					Labels:               labels.PaymentTerm,
+					TableLabels:          ctx.Table,
+					GetListPageData:      ptRepo.GetPaymentTermListPageData,
+					GetInUseIDs:         refChecker.GetPaymentTermInUseIDs,
+					CreatePaymentTerm:    ptRepo.CreatePaymentTerm,
+					ReadPaymentTerm:      ptRepo.ReadPaymentTerm,
+					UpdatePaymentTerm:    ptRepo.UpdatePaymentTerm,
+					DeletePaymentTerm:    ptRepo.DeletePaymentTerm,
+					SetPaymentTermActive: setPaymentTermActive,
+					Scope:                "client",
+				}).RegisterRoutes(ctx.Routes)
+				// Supplier-context payment term list: shows terms with entity_scope IN ('supplier', 'both')
+				paymenttermmod.NewModule(&paymenttermmod.ModuleDeps{
+					Routes:               routes.SupplierPaymentTerm.ToPaymentTermRoutes(),
+					CommonLabels:         ctx.Common,
+					SharedLabels:         labels.Shared,
+					Labels:               labels.PaymentTerm,
+					TableLabels:          ctx.Table,
+					GetListPageData:      ptRepo.GetPaymentTermListPageData,
+					GetInUseIDs:         refChecker.GetPaymentTermInUseIDs,
+					CreatePaymentTerm:    ptRepo.CreatePaymentTerm,
+					ReadPaymentTerm:      ptRepo.ReadPaymentTerm,
+					UpdatePaymentTerm:    ptRepo.UpdatePaymentTerm,
+					DeletePaymentTerm:    ptRepo.DeletePaymentTerm,
+					SetPaymentTermActive: setPaymentTermActive,
+					Scope:                "supplier",
 				}).RegisterRoutes(ctx.Routes)
 			}
 		}
@@ -720,17 +750,18 @@ type blockLabels struct {
 
 // blockRoutes holds the subset of entydad route structs needed by Block().
 type blockRoutes struct {
-	Client       entydad.ClientRoutes
-	ClientTag    entydad.ClientTagRoutes
-	PaymentTerm  entydad.PaymentTermRoutes
-	Subscription centymo.SubscriptionRoutes
-	User         entydad.UserRoutes
-	Role         entydad.RoleRoutes
-	Location     entydad.LocationRoutes
-	LocationArea entydad.LocationAreaRoutes
-	Permission   entydad.PermissionRoutes
-	Workspace    entydad.WorkspaceRoutes
-	Supplier     entydad.SupplierRoutes
+	Client              entydad.ClientRoutes
+	ClientTag           entydad.ClientTagRoutes
+	PaymentTerm         entydad.PaymentTermRoutes
+	SupplierPaymentTerm entydad.SupplierPaymentTermRoutes
+	Subscription        centymo.SubscriptionRoutes
+	User                entydad.UserRoutes
+	Role                entydad.RoleRoutes
+	Location            entydad.LocationRoutes
+	LocationArea        entydad.LocationAreaRoutes
+	Permission          entydad.PermissionRoutes
+	Workspace           entydad.WorkspaceRoutes
+	Supplier            entydad.SupplierRoutes
 }
 
 // loadBlockLabels loads all entydad typed label structs from lyngua.
@@ -798,6 +829,9 @@ func loadBlockRoutes(t *lynguaV1.TranslationProvider, businessType string) block
 
 	r.PaymentTerm = entydad.DefaultPaymentTermRoutes()
 	_ = t.LoadPathIfExists("en", businessType, "route.json", "payment_term", &r.PaymentTerm)
+
+	r.SupplierPaymentTerm = entydad.DefaultSupplierPaymentTermRoutes()
+	_ = t.LoadPathIfExists("en", businessType, "route.json", "supplier_payment_term", &r.SupplierPaymentTerm)
 
 	r.Subscription = centymo.DefaultSubscriptionRoutes()
 	_ = t.LoadPathIfExists("en", businessType, "route.json", "subscription", &r.Subscription)
