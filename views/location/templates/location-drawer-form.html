@@ -39,6 +39,18 @@ Data: .Name, .Address, .Description, .Timezone, .Active, .ID, .FormAction, .IsEd
             )}}
         </div>
 
+        {{if .LocationAreaSelectOptions}}
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "select"
+                "Name" "location_area_id"
+                "Label" .Labels.Area
+                "Placeholder" .Labels.AreaPlaceholder
+                "Options" .LocationAreaSelectOptions
+            )}}
+        </div>
+        {{end}}
+
         <div class="form-row single">
             {{template "auto-complete" (dict
                 "ID" "timezone-select"

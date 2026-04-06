@@ -31,6 +31,8 @@ type ModuleDeps struct {
 	UpdateLocation  func(ctx context.Context, req *locationpb.UpdateLocationRequest) (*locationpb.UpdateLocationResponse, error)
 	DeleteLocation  func(ctx context.Context, req *locationpb.DeleteLocationRequest) (*locationpb.DeleteLocationResponse, error)
 	SetActive       func(ctx context.Context, id string, active bool) error
+	// ListLocationAreas is optional — if provided, the area dropdown appears in the form.
+	ListLocationAreas func(ctx context.Context) ([]locationaction.LocationAreaOption, error)
 
 	// Attachment operations
 	UploadFile       func(ctx context.Context, bucket, key string, content []byte, contentType string) error
@@ -68,6 +70,7 @@ func NewModule(deps *ModuleDeps) *Module {
 		DeleteLocation:    deps.DeleteLocation,
 		SetLocationActive: deps.SetActive,
 		GetInUseIDs:       deps.GetInUseIDs,
+		ListLocationAreas: deps.ListLocationAreas,
 		Routes:            deps.Routes,
 		Labels:            deps.Labels,
 	}

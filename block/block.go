@@ -27,6 +27,7 @@ import (
 	clientmod "github.com/erniealice/entydad-golang/views/client"
 	clienttagmod "github.com/erniealice/entydad-golang/views/clienttag"
 	locationmod "github.com/erniealice/entydad-golang/views/location"
+	locationaction "github.com/erniealice/entydad-golang/views/location/action"
 	locationareamod "github.com/erniealice/entydad-golang/views/location_area"
 	locationareaaction "github.com/erniealice/entydad-golang/views/location_area/action"
 	locationarealist "github.com/erniealice/entydad-golang/views/location_area/list"
@@ -342,7 +343,7 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 			if uc.Entity.Location == nil {
 				return fmt.Errorf("entydad.Block: location use cases not initialized")
 			}
-			locationmod.NewModule(&locationmod.ModuleDeps{
+			locationDeps := &locationmod.ModuleDeps{
 				Routes:          routes.Location,
 				CommonLabels:    ctx.Common,
 				SharedLabels:    labels.Shared,
@@ -363,7 +364,30 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 				CreateAttachment: createAttachment,
 				DeleteAttachment: deleteAttachment,
 				NewID:            newAttachmentID,
-			}).RegisterRoutes(ctx.Routes)
+			}
+			if crudDB, hasCRUD := db.(CRUDSource); hasCRUD {
+				locationDeps.ListLocationAreas = func(fctx context.Context) ([]locationaction.LocationAreaOption, error) {
+					rows, err := crudDB.ListSimple(fctx, "location_area")
+					if err != nil {
+						return nil, err
+					}
+					opts := make([]locationaction.LocationAreaOption, 0, len(rows))
+					for _, row := range rows {
+						active, _ := row["active"].(bool)
+						if !active {
+							continue
+						}
+						id, _ := row["id"].(string)
+						name, _ := row["name"].(string)
+						if id == "" {
+							continue
+						}
+						opts = append(opts, locationaction.LocationAreaOption{ID: id, Name: name})
+					}
+					return opts, nil
+				}
+			}
+			locationmod.NewModule(locationDeps).RegisterRoutes(ctx.Routes)
 		}
 
 		if cfg.enableAll || cfg.locationArea {

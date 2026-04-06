@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"sort"
 
 	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/view"
@@ -13,18 +14,33 @@ import (
 	"github.com/erniealice/entydad-golang"
 )
 
+// LocationAreaOption is a single location area available for selection.
+type LocationAreaOption struct {
+	ID   string
+	Name string
+}
+
+// SelectOption is the dict-compatible struct expected by the pyeza form-group select component.
+type SelectOption struct {
+	Value    string
+	Label    string
+	Selected bool
+}
+
 // FormData is the template data for the location drawer form.
 type FormData struct {
-	FormAction   string
-	IsEdit       bool
-	ID           string
-	Name         string
-	Address      string
-	Description  string
-	Timezone     string
-	Active       bool
-	Labels       entydad.LocationFormLabels
-	CommonLabels any
+	FormAction                string
+	IsEdit                    bool
+	ID                        string
+	Name                      string
+	Address                   string
+	Description               string
+	Timezone                  string
+	Active                    bool
+	SelectedLocationAreaID    string
+	LocationAreaSelectOptions []SelectOption
+	Labels                    entydad.LocationFormLabels
+	CommonLabels              any
 }
 
 // Deps holds dependencies for location action handlers.
@@ -35,8 +51,41 @@ type Deps struct {
 	DeleteLocation    func(ctx context.Context, req *locationpb.DeleteLocationRequest) (*locationpb.DeleteLocationResponse, error)
 	SetLocationActive func(ctx context.Context, id string, active bool) error
 	GetInUseIDs       func(ctx context.Context, ids []string) (map[string]bool, error)
+	// ListLocationAreas loads active location areas for the area dropdown.
+	// If nil, the area field is omitted from the form.
+	ListLocationAreas func(ctx context.Context) ([]LocationAreaOption, error)
 	Routes            entydad.LocationRoutes
 	Labels            entydad.LocationLabels
+}
+
+// buildAreaSelectOptions converts location area options to the select component format.
+// Options are sorted alphabetically by label.
+func buildAreaSelectOptions(areas []LocationAreaOption, selectedID string) []SelectOption {
+	sort.Slice(areas, func(i, j int) bool {
+		return areas[i].Name < areas[j].Name
+	})
+	opts := make([]SelectOption, 0, len(areas))
+	for _, a := range areas {
+		opts = append(opts, SelectOption{
+			Value:    a.ID,
+			Label:    a.Name,
+			Selected: a.ID == selectedID,
+		})
+	}
+	return opts
+}
+
+// loadAreaOptions fetches location areas if the dep is present; returns nil on no dep or error.
+func loadAreaOptions(ctx context.Context, deps *Deps, selectedID string) []SelectOption {
+	if deps.ListLocationAreas == nil {
+		return nil
+	}
+	areas, err := deps.ListLocationAreas(ctx)
+	if err != nil {
+		log.Printf("Failed to list location areas: %v", err)
+		return nil
+	}
+	return buildAreaSelectOptions(areas, selectedID)
 }
 
 // NewAddAction creates the location add action (GET = form, POST = create).
@@ -47,12 +96,14 @@ func NewAddAction(deps *Deps) view.View {
 			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		if viewCtx.Request.Method == http.MethodGet {
+			areaOpts := loadAreaOptions(ctx, deps, "")
 			return view.OK("location-drawer-form", &FormData{
-				FormAction:   deps.Routes.AddURL,
-				Active:       true,
-				Timezone:     "Asia/Manila",
-				Labels:       deps.Labels.Form,
-				CommonLabels: nil, // injected by ViewAdapter
+				FormAction:                deps.Routes.AddURL,
+				Active:                    true,
+				Timezone:                  "Asia/Manila",
+				LocationAreaSelectOptions: areaOpts,
+				Labels:                    deps.Labels.Form,
+				CommonLabels:              nil, // injected by ViewAdapter
 			})
 		}
 
@@ -68,14 +119,19 @@ func NewAddAction(deps *Deps) view.View {
 		if tz == "" {
 			tz = "Asia/Manila"
 		}
+		areaID := r.FormValue("location_area_id")
+		locData := &locationpb.Location{
+			Name:        r.FormValue("name"),
+			Address:     r.FormValue("address"),
+			Description: &desc,
+			Timezone:    &tz,
+			Active:      active,
+		}
+		if areaID != "" {
+			locData.LocationAreaId = &areaID
+		}
 		_, err := deps.CreateLocation(ctx, &locationpb.CreateLocationRequest{
-			Data: &locationpb.Location{
-				Name:        r.FormValue("name"),
-				Address:     r.FormValue("address"),
-				Description: &desc,
-				Timezone:    &tz,
-				Active:      active,
-			},
+			Data: locData,
 		})
 		if err != nil {
 			log.Printf("Failed to create location: %v", err)
@@ -110,17 +166,21 @@ func NewEditAction(deps *Deps) view.View {
 			if tz == "" {
 				tz = "Asia/Manila"
 			}
+			selectedAreaID := loc.GetLocationAreaId()
+			areaOpts := loadAreaOptions(ctx, deps, selectedAreaID)
 			return view.OK("location-drawer-form", &FormData{
-				FormAction:   route.ResolveURL(deps.Routes.EditURL, "id", id),
-				IsEdit:       true,
-				ID:           id,
-				Name:         loc.GetName(),
-				Address:      loc.GetAddress(),
-				Description:  loc.GetDescription(),
-				Timezone:     tz,
-				Active:       loc.GetActive(),
-				Labels:       deps.Labels.Form,
-				CommonLabels: nil, // injected by ViewAdapter
+				FormAction:                route.ResolveURL(deps.Routes.EditURL, "id", id),
+				IsEdit:                    true,
+				ID:                        id,
+				Name:                      loc.GetName(),
+				Address:                   loc.GetAddress(),
+				Description:               loc.GetDescription(),
+				Timezone:                  tz,
+				Active:                    loc.GetActive(),
+				SelectedLocationAreaID:    selectedAreaID,
+				LocationAreaSelectOptions: areaOpts,
+				Labels:                    deps.Labels.Form,
+				CommonLabels:              nil, // injected by ViewAdapter
 			})
 		}
 
@@ -136,15 +196,20 @@ func NewEditAction(deps *Deps) view.View {
 		if tz == "" {
 			tz = "Asia/Manila"
 		}
+		areaID := r.FormValue("location_area_id")
+		locData := &locationpb.Location{
+			Id:          id,
+			Name:        r.FormValue("name"),
+			Address:     r.FormValue("address"),
+			Description: &desc,
+			Timezone:    &tz,
+			Active:      active,
+		}
+		if areaID != "" {
+			locData.LocationAreaId = &areaID
+		}
 		_, err := deps.UpdateLocation(ctx, &locationpb.UpdateLocationRequest{
-			Data: &locationpb.Location{
-				Id:          id,
-				Name:        r.FormValue("name"),
-				Address:     r.FormValue("address"),
-				Description: &desc,
-				Timezone:    &tz,
-				Active:      active,
-			},
+			Data: locData,
 		})
 		if err != nil {
 			log.Printf("Failed to update location %s: %v", id, err)

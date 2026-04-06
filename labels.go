@@ -314,6 +314,8 @@ type LocationFormLabels struct {
 	Description            string `json:"description"`
 	DescriptionPlaceholder string `json:"descriptionPlaceholder"`
 	Timezone               string `json:"timezone"`
+	Area                   string `json:"area"`
+	AreaPlaceholder        string `json:"areaPlaceholder"`
 	Active                 string `json:"active"`
 }
 
