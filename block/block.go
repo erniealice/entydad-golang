@@ -45,6 +45,7 @@ import (
 	"github.com/erniealice/espyna-golang/registry"
 	entityid "github.com/erniealice/espyna-golang/registry/entityid"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
+	categorypb   "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
 	paymenttermpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/payment_term"
 	clientstmtpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/ledger/reporting/client_statement"
 	suppstmtpb   "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/reporting/supplier_statement"
@@ -597,6 +598,10 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 				CommonLabels: ctx.Common,
 				TableLabels:  ctx.Table,
 				GetInUseIDs:  refChecker.GetCategoryInUseIDs,
+				SetCategoryActive: func(fctx context.Context, id string, active bool) error {
+					_, err := db.Update(fctx, "category", id, map[string]any{"active": active})
+					return err
+				},
 			}
 			if uc.Common != nil && uc.Common.Category != nil {
 				clienttagDeps.ListCategories = uc.Common.Category.ListCategories.Execute
@@ -604,6 +609,14 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 				clienttagDeps.ReadCategory = uc.Common.Category.ReadCategory.Execute
 				clienttagDeps.UpdateCategory = uc.Common.Category.UpdateCategory.Execute
 				clienttagDeps.DeleteCategory = uc.Common.Category.DeleteCategory.Execute
+			}
+			if ctx.SqlDB != nil {
+				repoAny, err := registry.CreateRepository("postgresql", entityid.Category, ctx.SqlDB, "category")
+				if err == nil {
+					if pgd, ok := repoAny.(categoryListPageDataGetter); ok {
+						clienttagDeps.GetCategoryListPageData = pgd.GetCategoryListPageData
+					}
+				}
 			}
 			if uc.Entity.ClientCategory != nil {
 				clienttagDeps.ListClientCategories = uc.Entity.ClientCategory.ListClientCategories.Execute
@@ -634,6 +647,10 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 					ReadPaymentTerm:   ptRepo.ReadPaymentTerm,
 					UpdatePaymentTerm: ptRepo.UpdatePaymentTerm,
 					DeletePaymentTerm: ptRepo.DeletePaymentTerm,
+					SetPaymentTermActive: func(fctx context.Context, id string, active bool) error {
+						_, err := db.Update(fctx, "payment_term", id, map[string]any{"active": active})
+						return err
+					},
 				}).RegisterRoutes(ctx.Routes)
 			}
 		}
@@ -641,6 +658,13 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 		log.Println("  ✓ Entity domain initialized (entydad.Block)")
 		return nil
 	}
+}
+
+// categoryListPageDataGetter is a local interface satisfied by the PostgresCategoryRepository
+// concrete type, allowing GetCategoryListPageData to be called via type assertion without
+// importing the espyna postgres adapter package.
+type categoryListPageDataGetter interface {
+	GetCategoryListPageData(ctx context.Context) ([]*categorypb.Category, error)
 }
 
 // UpdateableSource extends entydad.DataSource with the Update method that

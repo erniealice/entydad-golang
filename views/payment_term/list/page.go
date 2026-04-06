@@ -17,6 +17,14 @@ import (
 	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
 )
 
+// paymentTermTypeLabels maps payment term type codes to human-readable labels.
+var paymentTermTypeLabels = map[string]string{
+	"DUE_ON_RECEIPT": "Due on Receipt",
+	"NET":            "Net",
+	"COD":            "Cash on Delivery",
+	"PROXIMATE":      "Proximate",
+}
+
 // Deps holds view dependencies.
 type Deps struct {
 	GetListPageData func(ctx context.Context, req *paymenttermpb.GetPaymentTermListPageDataRequest) (*paymenttermpb.GetPaymentTermListPageDataResponse, error)
@@ -105,17 +113,7 @@ func buildTableConfig(ctx context.Context, deps *Deps) (*types.TableConfig, erro
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
-	bulkCfg.Actions = []types.BulkAction{
-		{
-			Key:            "delete",
-			Label:          deps.CommonLabels.Bulk.Delete,
-			Icon:           "icon-trash-2",
-			Variant:        "danger",
-			Endpoint:       deps.Routes.BulkDeleteURL,
-			ConfirmTitle:   deps.CommonLabels.Bulk.Delete,
-			ConfirmMessage: deps.SharedLabels.Confirm.BulkDelete,
-		},
-	}
+	bulkCfg.Actions = buildBulkActions(deps.Labels, deps.SharedLabels, deps.CommonLabels, deps.Routes)
 
 	refreshURL := deps.RefreshURL
 	if refreshURL == "" {
@@ -160,12 +158,18 @@ func paymentTermColumns(l entydad.PaymentTermLabels) []types.TableColumn {
 	return []types.TableColumn{
 		{Key: "name", Label: l.Columns.Name, Sortable: true, Width: "200px"},
 		{Key: "code", Label: l.Columns.Code, Sortable: true, Width: "120px"},
-		{Key: "type", Label: l.Columns.Type, Sortable: true, Width: "120px"},
+		{Key: "type", Label: l.Columns.Type, Sortable: true, Width: "160px"},
 		{Key: "net_days", Label: l.Columns.NetDays, Sortable: true, Width: "80px"},
-		{Key: "entity_scope", Label: l.Columns.EntityScope, Sortable: true, Width: "120px"},
 		{Key: "is_default", Label: l.Columns.IsDefault, Sortable: true, Width: "80px"},
-		{Key: "active", Label: l.Columns.Active, Sortable: true, Width: "80px"},
+		{Key: "status", Label: l.Columns.Status, Sortable: true, Width: "100px"},
 	}
+}
+
+func paymentTermTypeLabel(code string) string {
+	if label, ok := paymentTermTypeLabels[code]; ok {
+		return label
+	}
+	return code
 }
 
 func buildTableRows(items []*paymenttermpb.PaymentTerm, l entydad.PaymentTermLabels, sl entydad.SharedLabels, routes entydad.PaymentTermRoutes, perms *types.UserPermissions) []types.TableRow {
@@ -176,59 +180,122 @@ func buildTableRows(items []*paymenttermpb.PaymentTerm, l entydad.PaymentTermLab
 		code := pt.GetCode()
 		termType := pt.GetType()
 		netDays := strconv.FormatInt(int64(pt.GetNetDays()), 10)
-		entityScope := pt.GetEntityScope()
-		isDefault := "no"
-		isDefaultVariant := "inactive"
+		isDefault := "No"
+		isDefaultVariant := "default"
 		if pt.GetIsDefault() {
-			isDefault = "yes"
+			isDefault = "Yes"
 			isDefaultVariant = "success"
 		}
-		activeStatus := "inactive"
+		active := pt.GetActive()
+		activeStatus := "Inactive"
 		activeVariant := "warning"
-		if pt.GetActive() {
-			activeStatus = "active"
+		if active {
+			activeStatus = "Active"
 			activeVariant = "success"
 		}
+		recordStatus := "inactive"
+		if active {
+			recordStatus = "active"
+		}
+
+		actions := []types.TableAction{
+			{
+				Type:            "edit",
+				Label:           l.Actions.Edit,
+				Action:          "edit",
+				URL:             route.ResolveURL(routes.EditURL, "id", id),
+				DrawerTitle:     l.Actions.Edit,
+				Disabled:        !perms.Can("payment_term", "update"),
+				DisabledTooltip: sl.Badges.NoPermission,
+			},
+		}
+		if active {
+			actions = append(actions, types.TableAction{
+				Type:            "deactivate",
+				Label:           l.Actions.Deactivate,
+				Action:          "deactivate",
+				URL:             routes.SetStatusURL + "?status=inactive",
+				ItemName:        name,
+				ConfirmTitle:    l.Actions.Deactivate,
+				ConfirmMessage:  fmt.Sprintf(sl.Confirm.Deactivate, name),
+				Disabled:        !perms.Can("payment_term", "update"),
+				DisabledTooltip: sl.Badges.NoPermission,
+			})
+		} else {
+			actions = append(actions, types.TableAction{
+				Type:            "activate",
+				Label:           l.Actions.Activate,
+				Action:          "activate",
+				URL:             routes.SetStatusURL + "?status=active",
+				ItemName:        name,
+				ConfirmTitle:    l.Actions.Activate,
+				ConfirmMessage:  fmt.Sprintf(sl.Confirm.Activate, name),
+				Disabled:        !perms.Can("payment_term", "update"),
+				DisabledTooltip: sl.Badges.NoPermission,
+			})
+		}
+		actions = append(actions, types.TableAction{
+			Type:            "delete",
+			Label:           l.Actions.Delete,
+			Action:          "delete",
+			URL:             routes.DeleteURL,
+			ItemName:        name,
+			Disabled:        !perms.Can("payment_term", "delete"),
+			DisabledTooltip: sl.Badges.NoPermission,
+		})
 
 		rows = append(rows, types.TableRow{
 			ID: id,
 			Cells: []types.TableCell{
 				{Type: "text", Value: name},
 				{Type: "text", Value: code},
-				{Type: "text", Value: termType},
+				{Type: "text", Value: paymentTermTypeLabel(termType)},
 				{Type: "text", Value: netDays},
-				{Type: "text", Value: entityScope},
 				{Type: "badge", Value: isDefault, Variant: isDefaultVariant},
 				{Type: "badge", Value: activeStatus, Variant: activeVariant},
 			},
 			DataAttrs: map[string]string{
-				"name":         name,
-				"code":         code,
-				"type":         termType,
-				"entity_scope": entityScope,
-				"active":       activeStatus,
+				"name":   name,
+				"code":   code,
+				"type":   termType,
+				"status": recordStatus,
 			},
-			Actions: []types.TableAction{
-				{
-					Type:            "edit",
-					Label:           l.Actions.Edit,
-					Action:          "edit",
-					URL:             route.ResolveURL(routes.EditURL, "id", id),
-					DrawerTitle:     l.Actions.Edit,
-					Disabled:        !perms.Can("payment_term", "update"),
-					DisabledTooltip: sl.Badges.NoPermission,
-				},
-				{
-					Type:            "delete",
-					Label:           l.Actions.Delete,
-					Action:          "delete",
-					URL:             routes.DeleteURL,
-					ItemName:        name,
-					Disabled:        !perms.Can("payment_term", "delete"),
-					DisabledTooltip: sl.Badges.NoPermission,
-				},
-			},
+			Actions: actions,
 		})
 	}
 	return rows
+}
+
+func buildBulkActions(l entydad.PaymentTermLabels, sl entydad.SharedLabels, cl pyeza.CommonLabels, routes entydad.PaymentTermRoutes) []types.BulkAction {
+	return []types.BulkAction{
+		{
+			Key:             "deactivate",
+			Label:           l.Actions.Deactivate,
+			Icon:            "icon-clock-off",
+			Variant:         "warning",
+			Endpoint:        routes.BulkSetStatusURL,
+			ConfirmTitle:    l.Actions.Deactivate,
+			ConfirmMessage:  sl.Confirm.BulkDeactivate,
+			ExtraParamsJSON: `{"target_status":"inactive"}`,
+		},
+		{
+			Key:             "activate",
+			Label:           l.Actions.Activate,
+			Icon:            "icon-clock",
+			Variant:         "primary",
+			Endpoint:        routes.BulkSetStatusURL,
+			ConfirmTitle:    l.Actions.Activate,
+			ConfirmMessage:  sl.Confirm.BulkActivate,
+			ExtraParamsJSON: `{"target_status":"active"}`,
+		},
+		{
+			Key:            "delete",
+			Label:          cl.Bulk.Delete,
+			Icon:           "icon-trash-2",
+			Variant:        "danger",
+			Endpoint:       routes.BulkDeleteURL,
+			ConfirmTitle:   cl.Bulk.Delete,
+			ConfirmMessage: sl.Confirm.BulkDelete,
+		},
+	}
 }

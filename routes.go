@@ -143,20 +143,24 @@ const (
 	PayablesAgingURL = "/app/suppliers/reports/payables-aging"
 
 	// Client Tag (Category) routes
-	ClientTagListURL       = "/app/clients/settings/tags/list"
-	ClientTagTableURL      = "/action/clients/tags/table"
-	ClientTagAddURL        = "/action/clients/tags/add"
-	ClientTagEditURL       = "/action/clients/tags/edit/{id}"
-	ClientTagDeleteURL     = "/action/clients/tags/delete"
-	ClientTagBulkDeleteURL = "/action/clients/tags/bulk-delete"
+	ClientTagListURL          = "/app/clients/settings/tags/list"
+	ClientTagTableURL         = "/action/clients/tags/table"
+	ClientTagAddURL           = "/action/clients/tags/add"
+	ClientTagEditURL          = "/action/clients/tags/edit/{id}"
+	ClientTagDeleteURL        = "/action/clients/tags/delete"
+	ClientTagBulkDeleteURL    = "/action/clients/tags/bulk-delete"
+	ClientTagSetStatusURL     = "/action/clients/tags/set-status"
+	ClientTagBulkSetStatusURL = "/action/clients/tags/bulk-set-status"
 
 	// Payment Term routes (shared settings, canonical under /clients/)
-	PaymentTermListURL       = "/app/clients/settings/payment-terms/list"
-	PaymentTermTableURL      = "/action/clients/settings/payment-terms/table"
-	PaymentTermAddURL        = "/action/clients/settings/payment-terms/add"
-	PaymentTermEditURL       = "/action/clients/settings/payment-terms/edit/{id}"
-	PaymentTermDeleteURL     = "/action/clients/settings/payment-terms/delete"
-	PaymentTermBulkDeleteURL = "/action/clients/settings/payment-terms/bulk-delete"
+	PaymentTermListURL          = "/app/clients/settings/payment-terms/list"
+	PaymentTermTableURL         = "/action/clients/settings/payment-terms/table"
+	PaymentTermAddURL           = "/action/clients/settings/payment-terms/add"
+	PaymentTermEditURL          = "/action/clients/settings/payment-terms/edit/{id}"
+	PaymentTermDeleteURL        = "/action/clients/settings/payment-terms/delete"
+	PaymentTermBulkDeleteURL    = "/action/clients/settings/payment-terms/bulk-delete"
+	PaymentTermSetStatusURL     = "/action/clients/settings/payment-terms/set-status"
+	PaymentTermBulkSetStatusURL = "/action/clients/settings/payment-terms/bulk-set-status"
 
 	// Auth routes (all prefixed with /auth/)
 	AuthLoginURL             = "/auth/login"

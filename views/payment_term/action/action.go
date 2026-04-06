@@ -68,11 +68,12 @@ type FormData struct {
 
 // Deps holds dependencies for payment term action handlers.
 type Deps struct {
-	Routes            entydad.PaymentTermRoutes
-	CreatePaymentTerm func(ctx context.Context, req *paymenttermpb.CreatePaymentTermRequest) (*paymenttermpb.CreatePaymentTermResponse, error)
-	ReadPaymentTerm   func(ctx context.Context, req *paymenttermpb.ReadPaymentTermRequest) (*paymenttermpb.ReadPaymentTermResponse, error)
-	UpdatePaymentTerm func(ctx context.Context, req *paymenttermpb.UpdatePaymentTermRequest) (*paymenttermpb.UpdatePaymentTermResponse, error)
-	DeletePaymentTerm func(ctx context.Context, req *paymenttermpb.DeletePaymentTermRequest) (*paymenttermpb.DeletePaymentTermResponse, error)
+	Routes               entydad.PaymentTermRoutes
+	CreatePaymentTerm    func(ctx context.Context, req *paymenttermpb.CreatePaymentTermRequest) (*paymenttermpb.CreatePaymentTermResponse, error)
+	ReadPaymentTerm      func(ctx context.Context, req *paymenttermpb.ReadPaymentTermRequest) (*paymenttermpb.ReadPaymentTermResponse, error)
+	UpdatePaymentTerm    func(ctx context.Context, req *paymenttermpb.UpdatePaymentTermRequest) (*paymenttermpb.UpdatePaymentTermResponse, error)
+	DeletePaymentTerm    func(ctx context.Context, req *paymenttermpb.DeletePaymentTermRequest) (*paymenttermpb.DeletePaymentTermResponse, error)
+	SetPaymentTermActive func(ctx context.Context, id string, active bool) error
 }
 
 func formLabels(t func(string) string) FormLabels {
@@ -342,6 +343,69 @@ func NewBulkDeleteAction(deps *Deps) view.View {
 			})
 			if err != nil {
 				log.Printf("Failed to delete payment term %s: %v", id, err)
+			}
+		}
+
+		return entydad.HTMXSuccess("payment-terms-table")
+	})
+}
+
+// NewSetStatusAction creates the payment term activate/deactivate action (POST only).
+func NewSetStatusAction(deps *Deps) view.View {
+	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("payment_term", "update") {
+			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+		}
+
+		id := viewCtx.Request.URL.Query().Get("id")
+		targetStatus := viewCtx.Request.URL.Query().Get("status")
+
+		if id == "" {
+			_ = viewCtx.Request.ParseForm()
+			id = viewCtx.Request.FormValue("id")
+			targetStatus = viewCtx.Request.FormValue("status")
+		}
+		if id == "" {
+			return entydad.HTMXError(viewCtx.T("shared.errors.idRequired"))
+		}
+		if targetStatus != "active" && targetStatus != "inactive" {
+			return entydad.HTMXError(viewCtx.T("shared.errors.invalidStatus"))
+		}
+
+		if err := deps.SetPaymentTermActive(ctx, id, targetStatus == "active"); err != nil {
+			log.Printf("Failed to update payment term status %s: %v", id, err)
+			return entydad.HTMXError(err.Error())
+		}
+
+		return entydad.HTMXSuccess("payment-terms-table")
+	})
+}
+
+// NewBulkSetStatusAction creates the payment term bulk activate/deactivate action (POST only).
+func NewBulkSetStatusAction(deps *Deps) view.View {
+	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("payment_term", "update") {
+			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+		}
+
+		_ = viewCtx.Request.ParseMultipartForm(32 << 20)
+
+		ids := viewCtx.Request.Form["id"]
+		targetStatus := viewCtx.Request.FormValue("target_status")
+
+		if len(ids) == 0 {
+			return entydad.HTMXError(viewCtx.T("shared.errors.noIdsProvided"))
+		}
+		if targetStatus != "active" && targetStatus != "inactive" {
+			return entydad.HTMXError(viewCtx.T("shared.errors.invalidTargetStatus"))
+		}
+
+		active := targetStatus == "active"
+		for _, id := range ids {
+			if err := deps.SetPaymentTermActive(ctx, id, active); err != nil {
+				log.Printf("Failed to update payment term status %s: %v", id, err)
 			}
 		}
 

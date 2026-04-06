@@ -72,13 +72,14 @@ func resolveCode(code, name string) string {
 
 // Deps holds dependencies for client tag action handlers.
 type Deps struct {
-	Routes         entydad.ClientTagRoutes
-	CommonLabels   pyeza.CommonLabels
-	ListCategories func(ctx context.Context, req *categorypb.ListCategoriesRequest) (*categorypb.ListCategoriesResponse, error)
-	CreateCategory func(ctx context.Context, req *categorypb.CreateCategoryRequest) (*categorypb.CreateCategoryResponse, error)
-	ReadCategory   func(ctx context.Context, req *categorypb.ReadCategoryRequest) (*categorypb.ReadCategoryResponse, error)
-	UpdateCategory func(ctx context.Context, req *categorypb.UpdateCategoryRequest) (*categorypb.UpdateCategoryResponse, error)
-	DeleteCategory func(ctx context.Context, req *categorypb.DeleteCategoryRequest) (*categorypb.DeleteCategoryResponse, error)
+	Routes           entydad.ClientTagRoutes
+	CommonLabels     pyeza.CommonLabels
+	ListCategories   func(ctx context.Context, req *categorypb.ListCategoriesRequest) (*categorypb.ListCategoriesResponse, error)
+	CreateCategory   func(ctx context.Context, req *categorypb.CreateCategoryRequest) (*categorypb.CreateCategoryResponse, error)
+	ReadCategory     func(ctx context.Context, req *categorypb.ReadCategoryRequest) (*categorypb.ReadCategoryResponse, error)
+	UpdateCategory   func(ctx context.Context, req *categorypb.UpdateCategoryRequest) (*categorypb.UpdateCategoryResponse, error)
+	DeleteCategory   func(ctx context.Context, req *categorypb.DeleteCategoryRequest) (*categorypb.DeleteCategoryResponse, error)
+	SetCategoryActive func(ctx context.Context, id string, active bool) error
 }
 
 // isDuplicateTagName checks if a tag name already exists among client-module categories,
@@ -252,6 +253,59 @@ func NewBulkDeleteAction(deps *Deps) view.View {
 			})
 			if err != nil {
 				log.Printf("Failed to delete client tag %s: %v", id, err)
+			}
+		}
+
+		return entydad.HTMXSuccess("client-tags-table")
+	})
+}
+
+// NewSetStatusAction creates the client tag activate/deactivate action (POST only).
+func NewSetStatusAction(deps *Deps) view.View {
+	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		id := viewCtx.Request.URL.Query().Get("id")
+		targetStatus := viewCtx.Request.URL.Query().Get("status")
+
+		if id == "" {
+			_ = viewCtx.Request.ParseForm()
+			id = viewCtx.Request.FormValue("id")
+			targetStatus = viewCtx.Request.FormValue("status")
+		}
+		if id == "" {
+			return entydad.HTMXError(viewCtx.T("shared.errors.idRequired"))
+		}
+		if targetStatus != "active" && targetStatus != "inactive" {
+			return entydad.HTMXError(viewCtx.T("shared.errors.invalidStatus"))
+		}
+
+		if err := deps.SetCategoryActive(ctx, id, targetStatus == "active"); err != nil {
+			log.Printf("Failed to update client tag status %s: %v", id, err)
+			return entydad.HTMXError(err.Error())
+		}
+
+		return entydad.HTMXSuccess("client-tags-table")
+	})
+}
+
+// NewBulkSetStatusAction creates the client tag bulk activate/deactivate action (POST only).
+func NewBulkSetStatusAction(deps *Deps) view.View {
+	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		_ = viewCtx.Request.ParseMultipartForm(32 << 20)
+
+		ids := viewCtx.Request.Form["id"]
+		targetStatus := viewCtx.Request.FormValue("target_status")
+
+		if len(ids) == 0 {
+			return entydad.HTMXError(viewCtx.T("shared.errors.noIdsProvided"))
+		}
+		if targetStatus != "active" && targetStatus != "inactive" {
+			return entydad.HTMXError(viewCtx.T("shared.errors.invalidTargetStatus"))
+		}
+
+		active := targetStatus == "active"
+		for _, id := range ids {
+			if err := deps.SetCategoryActive(ctx, id, active); err != nil {
+				log.Printf("Failed to update client tag status %s: %v", id, err)
 			}
 		}
 

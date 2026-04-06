@@ -1165,8 +1165,10 @@ type ClientTagEmptyLabels struct {
 }
 
 type ClientTagActionLabels struct {
-	Edit   string `json:"edit"`
-	Delete string `json:"delete"`
+	Edit       string `json:"edit"`
+	Delete     string `json:"delete"`
+	Activate   string `json:"activate"`
+	Deactivate string `json:"deactivate"`
 }
 
 type ClientTagConfirmLabels struct {
@@ -1199,13 +1201,12 @@ type PaymentTermButtonLabels struct {
 }
 
 type PaymentTermColumnLabels struct {
-	Name        string `json:"name"`
-	Code        string `json:"code"`
-	Type        string `json:"type"`
-	NetDays     string `json:"netDays"`
-	EntityScope string `json:"entityScope"`
-	IsDefault   string `json:"isDefault"`
-	Active      string `json:"active"`
+	Name      string `json:"name"`
+	Code      string `json:"code"`
+	Type      string `json:"type"`
+	NetDays   string `json:"netDays"`
+	IsDefault string `json:"isDefault"`
+	Status    string `json:"status"`
 }
 
 type PaymentTermEmptyLabels struct {
@@ -1244,8 +1245,10 @@ type PaymentTermFormLabels struct {
 }
 
 type PaymentTermActionLabels struct {
-	Edit   string `json:"edit"`
-	Delete string `json:"delete"`
+	Edit       string `json:"edit"`
+	Delete     string `json:"delete"`
+	Activate   string `json:"activate"`
+	Deactivate string `json:"deactivate"`
 }
 
 // ---------------------------------------------------------------------------

@@ -15,37 +15,41 @@ import (
 
 // ModuleDeps holds all dependencies for the payment term module.
 type ModuleDeps struct {
-	Routes            entydad.PaymentTermRoutes
-	CommonLabels      pyeza.CommonLabels
-	SharedLabels      entydad.SharedLabels
-	Labels            entydad.PaymentTermLabels
-	TableLabels       types.TableLabels
-	GetListPageData   func(ctx context.Context, req *paymenttermpb.GetPaymentTermListPageDataRequest) (*paymenttermpb.GetPaymentTermListPageDataResponse, error)
-	CreatePaymentTerm func(ctx context.Context, req *paymenttermpb.CreatePaymentTermRequest) (*paymenttermpb.CreatePaymentTermResponse, error)
-	ReadPaymentTerm   func(ctx context.Context, req *paymenttermpb.ReadPaymentTermRequest) (*paymenttermpb.ReadPaymentTermResponse, error)
-	UpdatePaymentTerm func(ctx context.Context, req *paymenttermpb.UpdatePaymentTermRequest) (*paymenttermpb.UpdatePaymentTermResponse, error)
-	DeletePaymentTerm func(ctx context.Context, req *paymenttermpb.DeletePaymentTermRequest) (*paymenttermpb.DeletePaymentTermResponse, error)
+	Routes               entydad.PaymentTermRoutes
+	CommonLabels         pyeza.CommonLabels
+	SharedLabels         entydad.SharedLabels
+	Labels               entydad.PaymentTermLabels
+	TableLabels          types.TableLabels
+	GetListPageData      func(ctx context.Context, req *paymenttermpb.GetPaymentTermListPageDataRequest) (*paymenttermpb.GetPaymentTermListPageDataResponse, error)
+	CreatePaymentTerm    func(ctx context.Context, req *paymenttermpb.CreatePaymentTermRequest) (*paymenttermpb.CreatePaymentTermResponse, error)
+	ReadPaymentTerm      func(ctx context.Context, req *paymenttermpb.ReadPaymentTermRequest) (*paymenttermpb.ReadPaymentTermResponse, error)
+	UpdatePaymentTerm    func(ctx context.Context, req *paymenttermpb.UpdatePaymentTermRequest) (*paymenttermpb.UpdatePaymentTermResponse, error)
+	DeletePaymentTerm    func(ctx context.Context, req *paymenttermpb.DeletePaymentTermRequest) (*paymenttermpb.DeletePaymentTermResponse, error)
+	SetPaymentTermActive func(ctx context.Context, id string, active bool) error
 }
 
 // Module holds all constructed payment term views.
 type Module struct {
-	routes     entydad.PaymentTermRoutes
-	List       view.View
-	Table      view.View
-	Add        view.View
-	Edit       view.View
-	Delete     view.View
-	BulkDelete view.View
+	routes        entydad.PaymentTermRoutes
+	List          view.View
+	Table         view.View
+	Add           view.View
+	Edit          view.View
+	Delete        view.View
+	BulkDelete    view.View
+	SetStatus     view.View
+	BulkSetStatus view.View
 }
 
 // NewModule creates a new payment term module with all views wired up.
 func NewModule(deps *ModuleDeps) *Module {
 	actionDeps := &paymenttermaction.Deps{
-		Routes:            deps.Routes,
-		CreatePaymentTerm: deps.CreatePaymentTerm,
-		ReadPaymentTerm:   deps.ReadPaymentTerm,
-		UpdatePaymentTerm: deps.UpdatePaymentTerm,
-		DeletePaymentTerm: deps.DeletePaymentTerm,
+		Routes:               deps.Routes,
+		CreatePaymentTerm:    deps.CreatePaymentTerm,
+		ReadPaymentTerm:      deps.ReadPaymentTerm,
+		UpdatePaymentTerm:    deps.UpdatePaymentTerm,
+		DeletePaymentTerm:    deps.DeletePaymentTerm,
+		SetPaymentTermActive: deps.SetPaymentTermActive,
 	}
 
 	listDeps := &paymenttermlist.Deps{
@@ -59,13 +63,15 @@ func NewModule(deps *ModuleDeps) *Module {
 	}
 
 	return &Module{
-		routes:     deps.Routes,
-		List:       paymenttermlist.NewView(listDeps),
-		Table:      paymenttermlist.NewTableView(listDeps),
-		Add:        paymenttermaction.NewAddAction(actionDeps),
-		Edit:       paymenttermaction.NewEditAction(actionDeps),
-		Delete:     paymenttermaction.NewDeleteAction(actionDeps),
-		BulkDelete: paymenttermaction.NewBulkDeleteAction(actionDeps),
+		routes:        deps.Routes,
+		List:          paymenttermlist.NewView(listDeps),
+		Table:         paymenttermlist.NewTableView(listDeps),
+		Add:           paymenttermaction.NewAddAction(actionDeps),
+		Edit:          paymenttermaction.NewEditAction(actionDeps),
+		Delete:        paymenttermaction.NewDeleteAction(actionDeps),
+		BulkDelete:    paymenttermaction.NewBulkDeleteAction(actionDeps),
+		SetStatus:     paymenttermaction.NewSetStatusAction(actionDeps),
+		BulkSetStatus: paymenttermaction.NewBulkSetStatusAction(actionDeps),
 	}
 }
 
@@ -79,4 +85,6 @@ func (m *Module) RegisterRoutes(r view.RouteRegistrar) {
 	r.POST(m.routes.EditURL, m.Edit)
 	r.POST(m.routes.DeleteURL, m.Delete)
 	r.POST(m.routes.BulkDeleteURL, m.BulkDelete)
+	r.POST(m.routes.SetStatusURL, m.SetStatus)
+	r.POST(m.routes.BulkSetStatusURL, m.BulkSetStatus)
 }
