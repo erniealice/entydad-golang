@@ -39,6 +39,8 @@ type ClientButtonLabels struct {
 type ClientColumnLabels struct {
 	ClientName     string `json:"clientName"`
 	Representative string `json:"representative"`
+	Category       string `json:"category"`
+	PaymentTerm    string `json:"paymentTerm"`
 	DateCreated    string `json:"dateCreated"`
 }
 
@@ -1363,6 +1365,7 @@ func MapTableLabels(common pyeza.CommonLabels) types.TableLabels {
 		Columns:            common.Table.Columns,
 		Export:             common.Table.Export,
 		DensityLabel:       common.Table.Density.Title,
+		DensityDense:       common.Table.Density.Dense,
 		DensityDefault:     common.Table.Density.Default,
 		DensityComfortable: common.Table.Density.Comfortable,
 		DensityCompact:     common.Table.Density.Compact,

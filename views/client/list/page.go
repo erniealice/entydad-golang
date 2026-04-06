@@ -14,6 +14,7 @@ import (
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
 
+	commonpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
 	clientpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client"
 
 	"github.com/erniealice/entydad-golang"
@@ -122,6 +123,19 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 	perms := view.GetUserPermissions(ctx)
 
 	listParams := espynahttp.ToListParams(p, clientSearchFields)
+
+	// Inject status filter for server-side pagination
+	activeValue := status != "inactive"
+	if listParams.Filters == nil {
+		listParams.Filters = &commonpb.FilterRequest{}
+	}
+	listParams.Filters.Filters = append(listParams.Filters.Filters, &commonpb.TypedFilter{
+		Field: "c.active",
+		FilterType: &commonpb.TypedFilter_BooleanFilter{
+			BooleanFilter: &commonpb.BooleanFilter{Value: activeValue},
+		},
+	})
+
 	resp, err := deps.GetListPageData(ctx, &clientpb.GetClientListPageDataRequest{
 		Search:     listParams.Search,
 		Filters:    listParams.Filters,
@@ -210,7 +224,8 @@ func clientColumns(l entydad.ClientLabels) []types.TableColumn {
 	return []types.TableColumn{
 		{Key: "name", Label: l.Columns.ClientName, Sortable: true, Filterable: true, FilterType: types.FilterTypeString},
 		{Key: "representative", Label: l.Columns.Representative, Sortable: true, Filterable: true, FilterType: types.FilterTypeString},
-		{Key: "date_created", Label: l.Columns.DateCreated, Sortable: true, Filterable: true, FilterType: types.FilterTypeDate, Width: "180px"},
+		{Key: "category", Label: l.Columns.Category, Width: "200px"},
+		{Key: "payment_term", Label: l.Columns.PaymentTerm, Width: "130px"},
 	}
 }
 
@@ -221,9 +236,6 @@ func buildTableRows(clients []*clientpb.Client, status string, l entydad.ClientL
 		recordStatus := "active"
 		if !active {
 			recordStatus = "inactive"
-		}
-		if recordStatus != status {
-			continue
 		}
 
 		id := c.GetId()
@@ -243,12 +255,28 @@ func buildTableRows(clients []*clientpb.Client, status string, l entydad.ClientL
 		}
 		isInUse := inUseIDs[id]
 
+		// Build category chip cell
+		var catLabels []string
+		for _, cc := range c.GetCategories() {
+			if n := cc.GetCategory().GetName(); n != "" {
+				catLabels = append(catLabels, n)
+			}
+		}
+		categoryCell := types.BuildChipCellFromLabels(catLabels, 3)
+
+		// Build payment term badge cell
+		ptCell := types.TableCell{Type: "text", Value: ""}
+		if pt := c.GetPaymentTerm(); pt != nil && pt.GetName() != "" {
+			ptCell = types.TableCell{Type: "badge", Value: pt.GetName(), Variant: "default"}
+		}
+
 		rows = append(rows, types.TableRow{
 			ID: id,
 			Cells: []types.TableCell{
 				{Type: "text", Value: displayName},
 				{Type: "single-person", Person: &types.PersonData{Name: repName, Email: repEmail}},
-				types.DateTimeCell(c.GetDateCreatedString(), types.DateReadable),
+				categoryCell,
+				ptCell,
 			},
 			DataAttrs: map[string]string{
 				"name":      displayName,

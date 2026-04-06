@@ -12,6 +12,7 @@ import (
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
 
+	commonpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
 	userpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/user"
 
 	"github.com/erniealice/entydad-golang"
@@ -120,6 +121,19 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 	perms := view.GetUserPermissions(ctx)
 
 	listParams := espynahttp.ToListParams(p, userSearchFields)
+
+	// Inject status filter for server-side pagination
+	activeValue := status != "inactive"
+	if listParams.Filters == nil {
+		listParams.Filters = &commonpb.FilterRequest{}
+	}
+	listParams.Filters.Filters = append(listParams.Filters.Filters, &commonpb.TypedFilter{
+		Field: "active",
+		FilterType: &commonpb.TypedFilter_BooleanFilter{
+			BooleanFilter: &commonpb.BooleanFilter{Value: activeValue},
+		},
+	})
+
 	resp, err := deps.GetListPageData(ctx, &userpb.GetUserListPageDataRequest{
 		Search:     listParams.Search,
 		Filters:    listParams.Filters,
@@ -220,9 +234,6 @@ func buildTableRows(users []*userpb.User, status string, l entydad.UserLabels, s
 		recordStatus := "active"
 		if !active {
 			recordStatus = "inactive"
-		}
-		if recordStatus != status {
-			continue
 		}
 
 		id := u.GetId()

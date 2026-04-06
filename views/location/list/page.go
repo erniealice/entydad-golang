@@ -13,6 +13,7 @@ import (
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
 
+	commonpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
 	locationpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/location"
 
 	"github.com/erniealice/entydad-golang"
@@ -39,10 +40,10 @@ type PageData struct {
 }
 
 var locationAllowedSortCols = []string{
-	"date_created", "name", "city", "country",
+	"name", "address", "timezone",
 }
 
-var locationSearchFields = []string{"name", "city", "address_line_1"}
+var locationSearchFields = []string{"name", "address"}
 
 // NewView creates the location list view (full page).
 func NewView(deps *ListViewDeps) view.View {
@@ -121,6 +122,19 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 	perms := view.GetUserPermissions(ctx)
 
 	listParams := espynahttp.ToListParams(p, locationSearchFields)
+
+	// Inject status filter for server-side pagination
+	activeValue := status != "inactive"
+	if listParams.Filters == nil {
+		listParams.Filters = &commonpb.FilterRequest{}
+	}
+	listParams.Filters.Filters = append(listParams.Filters.Filters, &commonpb.TypedFilter{
+		Field: "l.active",
+		FilterType: &commonpb.TypedFilter_BooleanFilter{
+			BooleanFilter: &commonpb.BooleanFilter{Value: activeValue},
+		},
+	})
+
 	resp, err := deps.GetListPageData(ctx, &locationpb.GetLocationListPageDataRequest{
 		Search:     listParams.Search,
 		Filters:    listParams.Filters,
@@ -183,8 +197,8 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 		ShowExport:           true,
 		ShowDensity:          true,
 		ShowEntries:          true,
-		DefaultSortColumn:    "date_created",
-		DefaultSortDirection: "desc",
+		DefaultSortColumn:    "name",
+		DefaultSortDirection: "asc",
 		Labels:               deps.TableLabels,
 		EmptyState: types.TableEmptyState{
 			Title:   statusEmptyTitle(l, status),
@@ -212,11 +226,9 @@ func locationColumns(l entydad.LocationLabels) []types.TableColumn {
 	}
 	return []types.TableColumn{
 		{Key: "name", Label: l.Columns.Name, Sortable: true, Filterable: true, FilterType: types.FilterTypeString},
-		{Key: "city", Label: l.Columns.City, Sortable: true, Filterable: true, FilterType: types.FilterTypeString},
-		{Key: "country", Label: l.Columns.Country, Sortable: true, Filterable: true, FilterType: types.FilterTypeString},
+		{Key: "address", Label: l.Columns.Address, Sortable: true, Filterable: true, FilterType: types.FilterTypeString},
 		{Key: "timezone", Label: tzLabel, Sortable: true, Width: "160px"},
 		{Key: "location_area", Label: "Area", Sortable: true, Width: "160px"},
-		{Key: "date_created", Label: l.Columns.DateCreated, Sortable: true, Filterable: true, FilterType: types.FilterTypeDate},
 	}
 }
 
@@ -227,9 +239,6 @@ func buildTableRows(locations []*locationpb.Location, status string, l entydad.L
 		recordStatus := "active"
 		if !active {
 			recordStatus = "inactive"
-		}
-		if recordStatus != status {
-			continue
 		}
 
 		id := loc.GetId()
@@ -280,10 +289,8 @@ func buildTableRows(locations []*locationpb.Location, status string, l entydad.L
 			Cells: []types.TableCell{
 				{Type: "text", Value: name},
 				{Type: "text", Value: address},
-				{Type: "text", Value: ""},
 				{Type: "text", Value: loc.GetTimezone()},
-				{Type: "text", Value: loc.GetLocationAreaId()},
-				types.DateTimeCell(loc.GetDateCreatedString(), types.DateReadable),
+				{Type: "text", Value: loc.GetDescription()},
 			},
 			DataAttrs: map[string]string{
 				"name":      name,

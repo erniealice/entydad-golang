@@ -4,13 +4,16 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math"
 	"strconv"
 
+	espynahttp "github.com/erniealice/espyna-golang/contrib/http"
 	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
 
+	commonpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
 	supplierpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/supplier"
 
 	"github.com/erniealice/entydad-golang"
@@ -36,6 +39,12 @@ type PageData struct {
 	Table           *types.TableConfig
 }
 
+var supplierAllowedSortCols = []string{
+	"date_created", "date_modified", "company_name", "status",
+}
+
+var supplierSearchFields = []string{"company_name", "internal_id", "u.first_name", "u.last_name", "u.email_address"}
+
 // NewView creates the supplier list view (full page).
 func NewView(deps *ListViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
@@ -44,7 +53,12 @@ func NewView(deps *ListViewDeps) view.View {
 			status = "active"
 		}
 
-		tableConfig, err := buildTableConfig(ctx, deps, status)
+		p, err := espynahttp.ParseTableParams(viewCtx.Request, supplierAllowedSortCols)
+		if err != nil {
+			return view.Error(err)
+		}
+
+		tableConfig, err := buildTableConfig(ctx, deps, status, p)
 		if err != nil {
 			return view.Error(err)
 		}
@@ -89,7 +103,12 @@ func NewTableView(deps *ListViewDeps) view.View {
 			status = "active"
 		}
 
-		tableConfig, err := buildTableConfig(ctx, deps, status)
+		p, err := espynahttp.ParseTableParams(viewCtx.Request, supplierAllowedSortCols)
+		if err != nil {
+			return view.Error(err)
+		}
+
+		tableConfig, err := buildTableConfig(ctx, deps, status, p)
 		if err != nil {
 			return view.Error(err)
 		}
@@ -99,13 +118,34 @@ func NewTableView(deps *ListViewDeps) view.View {
 }
 
 // buildTableConfig fetches supplier data and builds the table configuration.
-func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string) (*types.TableConfig, error) {
+func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p espynahttp.TableQueryParams) (*types.TableConfig, error) {
 	perms := view.GetUserPermissions(ctx)
+
+	listParams := espynahttp.ToListParams(p, supplierSearchFields)
+
+	// Inject status filter for server-side pagination
+	if listParams.Filters == nil {
+		listParams.Filters = &commonpb.FilterRequest{}
+	}
+	listParams.Filters.Filters = append(listParams.Filters.Filters, &commonpb.TypedFilter{
+		Field: "s.status",
+		FilterType: &commonpb.TypedFilter_StringFilter{
+			StringFilter: &commonpb.StringFilter{
+				Value:    status,
+				Operator: commonpb.StringOperator_STRING_EQUALS,
+			},
+		},
+	})
 
 	var resp *supplierpb.GetSupplierListPageDataResponse
 	if deps.GetListPageData != nil {
 		var err error
-		resp, err = deps.GetListPageData(ctx, &supplierpb.GetSupplierListPageDataRequest{})
+		resp, err = deps.GetListPageData(ctx, &supplierpb.GetSupplierListPageDataRequest{
+			Search:     listParams.Search,
+			Filters:    listParams.Filters,
+			Sort:       listParams.Sort,
+			Pagination: listParams.Pagination,
+		})
 		if err != nil {
 			log.Printf("Failed to list suppliers: %v", err)
 			return nil, fmt.Errorf("failed to load suppliers: %w", err)
@@ -138,6 +178,24 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string) (*
 
 	refreshURL := route.ResolveURL(deps.Routes.TableURL, "status", status)
 
+	// Build ServerPagination
+	totalRows := int(resp.GetPagination().GetTotalItems())
+	sp := &types.ServerPagination{
+		Enabled:           true,
+		Mode:              "offset",
+		CurrentPage:       p.Page,
+		PageSize:          p.PageSize,
+		TotalRows:         totalRows,
+		TotalPages:        int(math.Ceil(float64(totalRows) / float64(p.PageSize))),
+		SearchQuery:       p.Search,
+		SortColumn:        p.SortColumn,
+		SortDirection:     p.SortDir,
+		FiltersJSON:       p.FiltersRaw,
+		PaginationURL:     refreshURL,
+		PaginationBodyURL: refreshURL,
+	}
+	sp.BuildDisplay()
+
 	tableConfig := &types.TableConfig{
 		ID:                   "suppliers-table",
 		RefreshURL:           refreshURL,
@@ -165,7 +223,8 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string) (*
 			Disabled:        !perms.Can("supplier", "create"),
 			DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
 		},
-		BulkActions: &bulkCfg,
+		BulkActions:      &bulkCfg,
+		ServerPagination: sp,
 	}
 	types.ApplyTableSettings(tableConfig)
 
@@ -189,9 +248,6 @@ func buildTableRows(suppliers []*supplierpb.Supplier, status string, l entydad.S
 	rows := []types.TableRow{}
 	for _, s := range suppliers {
 		recordStatus := supplierStatus(s)
-		if recordStatus != status {
-			continue
-		}
 
 		id := s.GetId()
 		companyName := s.GetCompanyName()

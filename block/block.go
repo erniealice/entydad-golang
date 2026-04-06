@@ -430,9 +430,7 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 						}
 						return &locationarealist.LocationAreaListResult{Items: items, TotalItems: len(items)}, nil
 					},
-					GetInUseIDs: func(fctx context.Context, ids []string) (map[string]bool, error) {
-						return nil, nil
-					},
+					GetInUseIDs: refChecker.GetLocationAreaInUseIDs,
 					CreateLocationArea: func(fctx context.Context, name, description string, active bool) (string, error) {
 						row, err := crudDB.Create(fctx, "location_area", map[string]any{
 							"name":        name,

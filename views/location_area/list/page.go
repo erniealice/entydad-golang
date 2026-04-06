@@ -214,9 +214,6 @@ func buildTableRows(items []*LocationAreaItem, status string, l entydad.Location
 		if !active {
 			recordStatus = "inactive"
 		}
-		if recordStatus != status {
-			continue
-		}
 
 		id := item.ID
 		name := item.Name
