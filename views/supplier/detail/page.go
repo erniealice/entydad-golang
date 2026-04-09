@@ -431,7 +431,7 @@ func buildTabItems(id string, deps *DetailViewDeps) []pyeza.TabItem {
 	action := route.ResolveURL(routes.TabActionURL, "id", id, "tab", "")
 	return []pyeza.TabItem{
 		{Key: "info", Label: deps.Labels.Detail.InfoTab, Href: base + "?tab=info", HxGet: action + "info", Icon: "icon-info"},
-		{Key: "purchase-orders", Label: "Purchase Orders", Href: base + "?tab=purchase-orders", HxGet: action + "purchase-orders", Icon: "icon-shopping-cart"},
+		{Key: "purchase-orders", Label: deps.Labels.Detail.PurchaseOrders.Title, Href: base + "?tab=purchase-orders", HxGet: action + "purchase-orders", Icon: "icon-shopping-cart"},
 		{Key: "statement", Label: deps.Labels.Detail.StatementTab, Href: base + "?tab=statement", HxGet: action + "statement", Icon: "icon-file-text"},
 		{Key: "attachments", Label: deps.Labels.Detail.AttachmentsTab, Href: base + "?tab=attachments", HxGet: action + "attachments", Icon: "icon-paperclip"},
 		{Key: "audit-history", Label: "History", Href: base + "?tab=audit-history", HxGet: action + "audit-history", Icon: "icon-clock"},

@@ -227,8 +227,8 @@ func locationColumns(l entydad.LocationLabels) []types.TableColumn {
 	return []types.TableColumn{
 		{Key: "name", Label: l.Columns.Name, Sortable: true, Filterable: true, FilterType: types.FilterTypeString},
 		{Key: "address", Label: l.Columns.Address, Sortable: true, Filterable: true, FilterType: types.FilterTypeString},
-		{Key: "timezone", Label: tzLabel, Sortable: true, Width: "160px"},
-		{Key: "location_area", Label: "Area", Sortable: true, Width: "160px"},
+		{Key: "timezone", Label: tzLabel, Sortable: true, WidthClass: "col-5xl"},
+		{Key: "location_area", Label: "Area", Sortable: true, WidthClass: "col-5xl"},
 	}
 }
 

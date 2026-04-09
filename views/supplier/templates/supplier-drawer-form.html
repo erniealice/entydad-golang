@@ -99,8 +99,8 @@ Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
 
         <div class="form-row">
             <div class="form-group">
-                <label class="form-label">{{.Labels.PaymentTerms}}</label>
-                <select name="payment_term_id" class="form-control">
+                <label for="payment_term_id" class="form-label">{{.Labels.PaymentTerms}}</label>
+                <select name="payment_term_id" id="payment_term_id" class="form-control">
                     <option value="">{{.Labels.SelectPaymentTerm}}</option>
                     {{range .PaymentTerms}}
                     <option value="{{.Id}}" {{if eq .Id $.SelectedPaymentTermID}}selected{{end}}>{{.Name}}</option>

@@ -150,7 +150,7 @@
 .auth-form-input:focus-visible {
     outline: none;
     border-color: var(--accent-primary);
-    box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb, 59, 130, 246), 0.1);
+    box-shadow: 0 0 0 3px var(--accent-primary-light);
 }
 
 .auth-form-input::placeholder {

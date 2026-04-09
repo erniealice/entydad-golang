@@ -95,6 +95,16 @@ type ClientDetailLabels struct {
 	ColAmount            string `json:"colAmount"`
 	ColStatus            string `json:"colStatus"`
 	PurchaseHistoryEmpty string `json:"purchaseHistoryEmpty"`
+	// Engagements empty state
+	EmptyEngagements string `json:"emptyEngagements"`
+	// Statement tab stat card labels
+	OutstandingBalance string `json:"outstandingBalance"`
+	TotalBilled        string `json:"totalBilled"`
+	TotalReceived      string `json:"totalReceived"`
+	Invoices           string `json:"invoices"`
+	// Statement empty state
+	EmptyStatementTitle   string `json:"emptyStatementTitle"`
+	EmptyStatementMessage string `json:"emptyStatementMessage"`
 }
 
 type ClientCompanyDetailLabels struct {
@@ -1113,11 +1123,32 @@ type SupplierDetailLabels struct {
 	// Inline labels
 	DaysSuffix string `json:"daysSuffix"`
 	Website    string `json:"website"`
+	// Purchase Orders tab labels
+	PurchaseOrders SupplierPurchaseOrdersLabels `json:"purchaseOrders"`
+	// Statement tab stat card labels
+	OutstandingBalance string `json:"outstandingBalance"`
+	TotalBilled        string `json:"totalBilled"`
+	TotalPaid          string `json:"totalPaid"`
+	Bills              string `json:"bills"`
+	// Statement empty state
+	EmptyStatementTitle   string `json:"emptyStatementTitle"`
+	EmptyStatementMessage string `json:"emptyStatementMessage"`
 }
 
 // SupplierDetailSectionLabels holds a title for a detail page section.
 type SupplierDetailSectionLabels struct {
 	Title string `json:"title"`
+}
+
+// SupplierPurchaseOrdersLabels holds labels for the purchase orders tab on the supplier detail page.
+type SupplierPurchaseOrdersLabels struct {
+	Title        string `json:"title"`
+	ColPONumber  string `json:"colPONumber"`
+	ColOrderDate string `json:"colOrderDate"`
+	ColAmount    string `json:"colAmount"`
+	ColCurrency  string `json:"colCurrency"`
+	ColStatus    string `json:"colStatus"`
+	EmptyPO      string `json:"emptyPO"`
 }
 
 type SupplierActionLabels struct {

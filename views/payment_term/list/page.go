@@ -189,12 +189,12 @@ func buildTableConfig(ctx context.Context, deps *Deps) (*types.TableConfig, erro
 
 func paymentTermColumns(l entydad.PaymentTermLabels) []types.TableColumn {
 	return []types.TableColumn{
-		{Key: "name", Label: l.Columns.Name, Sortable: true, Width: "200px"},
-		{Key: "code", Label: l.Columns.Code, Sortable: true, Width: "120px"},
-		{Key: "type", Label: l.Columns.Type, Sortable: true, Width: "160px"},
-		{Key: "net_days", Label: l.Columns.NetDays, Sortable: true, Width: "80px"},
-		{Key: "is_default", Label: l.Columns.IsDefault, Sortable: true, Width: "80px"},
-		{Key: "status", Label: l.Columns.Status, Sortable: true, Width: "100px"},
+		{Key: "name", Label: l.Columns.Name, Sortable: true, WidthClass: "col-7xl"},
+		{Key: "code", Label: l.Columns.Code, Sortable: true, WidthClass: "col-2xl"},
+		{Key: "type", Label: l.Columns.Type, Sortable: true, WidthClass: "col-5xl"},
+		{Key: "net_days", Label: l.Columns.NetDays, Sortable: true, WidthClass: "col-md"},
+		{Key: "is_default", Label: l.Columns.IsDefault, Sortable: true, WidthClass: "col-md"},
+		{Key: "status", Label: l.Columns.Status, Sortable: true, WidthClass: "col-lg"},
 	}
 }
 

@@ -216,8 +216,8 @@ func roleColumns(l entydad.UserRoleLabels) []types.TableColumn {
 	return []types.TableColumn{
 		{Key: "roleName", Label: l.Columns.RoleName, Sortable: true},
 		{Key: "description", Label: l.Columns.Description, Sortable: true},
-		{Key: "color", Label: l.Columns.Color, Sortable: true, Width: "120px"},
-		{Key: "dateAssigned", Label: l.Columns.DateAssigned, Sortable: true, Width: "180px"},
+		{Key: "color", Label: l.Columns.Color, Sortable: true, WidthClass: "col-2xl"},
+		{Key: "dateAssigned", Label: l.Columns.DateAssigned, Sortable: true, WidthClass: "col-6xl"},
 	}
 }
 

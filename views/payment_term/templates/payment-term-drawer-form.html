@@ -53,7 +53,7 @@ Data: .Name, .Code, .Type, .NetDays, .DiscountDays, .DiscountPercentBps,
         {{template "form-section" (dict "Title" .Labels.SectionTerms)}}
 
         {{/* Row: Type (70%) + Net Days (30%) */}}
-        <div class="form-row" style="grid-template-columns: 7fr 3fr;">
+        <div class="form-row form-row--70-30">
             <div class="form-group">
                 <label for="type" class="form-label">{{.Labels.Type}} <span class="form-info-icon" title="{{.Labels.TypeHint}}">{{template "icon-info" $}}</span></label>
                 <select name="type" id="type" class="form-select">
@@ -69,7 +69,7 @@ Data: .Name, .Code, .Type, .NetDays, .DiscountDays, .DiscountPercentBps,
             </div>
         </div>
 
-        <div class="form-row single" id="proximate-day-row" style="{{if ne .Type "proximate"}}display:none{{end}}">
+        <div class="form-row single" id="proximate-day-row" {{if ne .Type "proximate"}}hidden{{end}}>
             <div class="form-group">
                 <label for="proximate_day" class="form-label">{{.Labels.ProximateDay}}</label>
                 <input type="number" class="form-input" id="proximate_day" name="proximate_day"

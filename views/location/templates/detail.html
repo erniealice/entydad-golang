@@ -35,7 +35,7 @@
 <div class="tab-scroll">
     <h2 class="visually-hidden">{{.Labels.Detail.BasicInfo.Title}}</h2>
     <h4 class="detail-section-title">{{.Labels.Detail.BasicInfo.Title}}</h4>
-    <div id="info-result" class="form-result" style="display:none;" aria-live="polite" aria-atomic="true" data-success-message="{{.Labels.Detail.UpdateSuccess}}" data-error-message="{{.Labels.Detail.UpdateError}}"></div>
+    <div id="info-result" class="form-result" hidden aria-live="polite" aria-atomic="true" data-success-message="{{.Labels.Detail.UpdateSuccess}}" data-error-message="{{.Labels.Detail.UpdateError}}"></div>
     <form id="info-edit-form"
           hx-post="{{.EditDetailURL}}"
           hx-swap="none"
@@ -82,7 +82,7 @@
         </div>
 
         <div class="form-section-gap">
-            <button type="submit" class="btn btn--primary btn--sm">
+            <button type="submit" class="btn btn-primary btn-sm">
                 {{template "icon-save"}}
                 <span>{{.Labels.Detail.BasicInfo.Save}}</span>
             </button>

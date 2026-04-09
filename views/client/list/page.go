@@ -224,8 +224,8 @@ func clientColumns(l entydad.ClientLabels) []types.TableColumn {
 	return []types.TableColumn{
 		{Key: "name", Label: l.Columns.ClientName, Sortable: true, Filterable: true, FilterType: types.FilterTypeString},
 		{Key: "representative", Label: l.Columns.Representative, Sortable: true, Filterable: true, FilterType: types.FilterTypeString},
-		{Key: "category", Label: l.Columns.Category, Width: "200px"},
-		{Key: "payment_term", Label: l.Columns.PaymentTerm, Width: "130px"},
+		{Key: "category", Label: l.Columns.Category, WidthClass: "col-7xl"},
+		{Key: "payment_term", Label: l.Columns.PaymentTerm, WidthClass: "col-3xl"},
 	}
 }
 

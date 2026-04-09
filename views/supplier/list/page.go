@@ -234,13 +234,13 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 func supplierColumns(l entydad.SupplierLabels) []types.TableColumn {
 	return []types.TableColumn{
 		{Key: "company_name", Label: l.Columns.CompanyName, Sortable: true},
-		{Key: "supplier_type", Label: l.Columns.SupplierType, Sortable: true, Width: "130px"},
-		{Key: "internal_id", Label: l.Columns.InternalID, Sortable: true, Width: "130px"},
-		{Key: "status", Label: l.Columns.Status, Sortable: true, Width: "120px"},
-		{Key: "payment_terms", Label: l.Columns.PaymentTerms, Sortable: true, Width: "140px"},
+		{Key: "supplier_type", Label: l.Columns.SupplierType, Sortable: true, WidthClass: "col-3xl"},
+		{Key: "internal_id", Label: l.Columns.InternalID, Sortable: true, WidthClass: "col-3xl"},
+		{Key: "status", Label: l.Columns.Status, Sortable: true, WidthClass: "col-2xl"},
+		{Key: "payment_terms", Label: l.Columns.PaymentTerms, Sortable: true, WidthClass: "col-3xl"},
 		{Key: "contact_name", Label: l.Columns.ContactName, Sortable: true},
-		{Key: "outstanding_balance", Label: "Outstanding", Sortable: true, Align: "right", Width: "150px"},
-		{Key: "date_created", Label: l.Columns.DateCreated, Sortable: true, Width: "140px"},
+		{Key: "outstanding_balance", Label: "Outstanding", Sortable: true, Align: "right", WidthClass: "col-4xl"},
+		{Key: "date_created", Label: l.Columns.DateCreated, Sortable: true, WidthClass: "col-3xl"},
 	}
 }
 

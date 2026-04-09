@@ -289,8 +289,8 @@ func buildPermissionsTable(ctx context.Context, deps *DetailViewDeps, roleID str
 	columns := []types.TableColumn{
 		{Key: "permissionName", Label: l.Columns.PermissionName, Sortable: true},
 		{Key: "code", Label: l.Columns.Code, Sortable: true},
-		{Key: "type", Label: l.Columns.Type, Sortable: true, Width: "120px"},
-		{Key: "dateAssigned", Label: l.Columns.DateAssigned, Sortable: true, Width: "180px"},
+		{Key: "type", Label: l.Columns.Type, Sortable: true, WidthClass: "col-2xl"},
+		{Key: "dateAssigned", Label: l.Columns.DateAssigned, Sortable: true, WidthClass: "col-6xl"},
 	}
 
 	rows := []types.TableRow{}
@@ -398,7 +398,7 @@ func buildUsersTable(ctx context.Context, deps *DetailViewDeps, roleID string, p
 	columns := []types.TableColumn{
 		{Key: "userName", Label: l.Columns.UserName, Sortable: true},
 		{Key: "email", Label: l.Columns.Email, Sortable: true},
-		{Key: "dateAssigned", Label: l.Columns.DateAssigned, Sortable: true, Width: "180px"},
+		{Key: "dateAssigned", Label: l.Columns.DateAssigned, Sortable: true, WidthClass: "col-6xl"},
 	}
 
 	rows := []types.TableRow{}

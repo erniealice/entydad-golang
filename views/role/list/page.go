@@ -196,12 +196,12 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, p espynahttp.Tabl
 
 func roleColumns(l entydad.RoleLabels) []types.TableColumn {
 	return []types.TableColumn{
-		{Key: "name", Label: l.Columns.Name, Sortable: true, Filterable: true, FilterType: types.FilterTypeString, MinWidth: "150px"},
-		{Key: "description", Label: l.Columns.Description, Sortable: false, Filterable: true, FilterType: types.FilterTypeString, MinWidth: "150px"},
-		{Key: "color", Label: l.Columns.Color, Sortable: false, Width: "120px"},
-		{Key: "permissions", Label: l.Columns.Permissions, Sortable: false, Width: "120px", Align: "center"},
-		{Key: "status", Label: l.Columns.Status, Sortable: false, Width: "120px"},
-		{Key: "date_created", Label: l.Columns.DateCreated, Sortable: true, Filterable: true, FilterType: types.FilterTypeDate, Width: "180px"},
+		{Key: "name", Label: l.Columns.Name, Sortable: true, Filterable: true, FilterType: types.FilterTypeString, MinWidth: "9.375rem"},
+		{Key: "description", Label: l.Columns.Description, Sortable: false, Filterable: true, FilterType: types.FilterTypeString, MinWidth: "9.375rem"},
+		{Key: "color", Label: l.Columns.Color, Sortable: false, WidthClass: "col-2xl"},
+		{Key: "permissions", Label: l.Columns.Permissions, Sortable: false, WidthClass: "col-2xl", Align: "center"},
+		{Key: "status", Label: l.Columns.Status, Sortable: false, WidthClass: "col-2xl"},
+		{Key: "date_created", Label: l.Columns.DateCreated, Sortable: true, Filterable: true, FilterType: types.FilterTypeDate, WidthClass: "col-6xl"},
 	}
 }
 

@@ -209,8 +209,8 @@ func workspaceColumns(l entydad.WorkspaceLabels) []types.TableColumn {
 	return []types.TableColumn{
 		{Key: "name", Label: l.Columns.Name, Sortable: true},
 		{Key: "description", Label: l.Columns.Description, Sortable: true},
-		{Key: "private", Label: l.Columns.Private, Sortable: true, Width: "120px"},
-		{Key: "status", Label: l.Columns.Status, Sortable: true, Width: "120px"},
+		{Key: "private", Label: l.Columns.Private, Sortable: true, WidthClass: "col-2xl"},
+		{Key: "status", Label: l.Columns.Status, Sortable: true, WidthClass: "col-2xl"},
 	}
 }
 

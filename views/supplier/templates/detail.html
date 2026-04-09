@@ -28,16 +28,16 @@
 
 {{define "supplier-tab-purchase-orders"}}
 <div class="tab-content-section">
-    <h4>Purchase Orders</h4>
+    <h4>{{.Labels.Detail.PurchaseOrders.Title}}</h4>
     {{if .PurchaseOrders}}
-    <table class="data-table">
+    <table class="data-table" id="supplier-purchase-orders-table">
         <thead>
             <tr>
-                <th>PO Number</th>
-                <th>Order Date</th>
-                <th>Amount</th>
-                <th>Currency</th>
-                <th>Status</th>
+                <th>{{.Labels.Detail.PurchaseOrders.ColPONumber}}</th>
+                <th>{{.Labels.Detail.PurchaseOrders.ColOrderDate}}</th>
+                <th>{{.Labels.Detail.PurchaseOrders.ColAmount}}</th>
+                <th>{{.Labels.Detail.PurchaseOrders.ColCurrency}}</th>
+                <th>{{.Labels.Detail.PurchaseOrders.ColStatus}}</th>
             </tr>
         </thead>
         <tbody>
@@ -45,7 +45,7 @@
             <tr data-id="{{.ID}}">
                 <td>{{.PONumber}}</td>
                 <td>{{.OrderDate}}</td>
-                <td style="text-align:right">{{.TotalAmount}}</td>
+                <td class="text-right">{{.TotalAmount}}</td>
                 <td>{{.Currency}}</td>
                 <td><span class="badge {{if eq .Status "approved"}}badge-success{{else if eq .Status "draft"}}badge-default{{else if eq .Status "pending"}}badge-warning{{else if eq .Status "cancelled"}}badge-danger{{else}}badge-info{{end}}">{{.Status}}</span></td>
             </tr>
@@ -53,7 +53,7 @@
         </tbody>
     </table>
     {{else}}
-    <p class="text-muted">No purchase orders found for this supplier.</p>
+    <p class="text-muted">{{.Labels.Detail.PurchaseOrders.EmptyPO}}</p>
     {{end}}
 </div>
 {{end}}
@@ -64,19 +64,19 @@
     {{if .StatementSummary}}
     <div class="statement-summary-row" data-testid="statement-summary">
         <div class="statement-stat-card statement-stat-card--highlight" data-testid="stat-outstanding-balance">
-            <span class="stat-label">Outstanding Balance</span>
+            <span class="stat-label">{{.Labels.Detail.OutstandingBalance}}</span>
             <span class="stat-value">{{if .StatementSummaryDisplay}}{{.StatementSummaryDisplay.OutstandingBalance}}{{end}}</span>
         </div>
         <div class="statement-stat-card" data-testid="stat-total-billed">
-            <span class="stat-label">Total Billed</span>
+            <span class="stat-label">{{.Labels.Detail.TotalBilled}}</span>
             <span class="stat-value">{{if .StatementSummaryDisplay}}{{.StatementSummaryDisplay.TotalBilled}}{{end}}</span>
         </div>
         <div class="statement-stat-card" data-testid="stat-total-paid">
-            <span class="stat-label">Total Paid</span>
+            <span class="stat-label">{{.Labels.Detail.TotalPaid}}</span>
             <span class="stat-value">{{if .StatementSummaryDisplay}}{{.StatementSummaryDisplay.TotalPaid}}{{end}}</span>
         </div>
         <div class="statement-stat-card" data-testid="stat-bill-count">
-            <span class="stat-label">Bills</span>
+            <span class="stat-label">{{.Labels.Detail.Bills}}</span>
             <span class="stat-value">{{.StatementSummary.BillCount}}</span>
         </div>
     </div>
@@ -86,8 +86,8 @@
         {{template "table-card" .StatementTable}}
     {{else}}
         <div class="coming-soon-panel">
-            <div class="coming-soon-title">No Statement Entries</div>
-            <p class="coming-soon-text">There are no transactions for this supplier.</p>
+            <div class="coming-soon-title">{{.Labels.Detail.EmptyStatementTitle}}</div>
+            <p class="coming-soon-text">{{.Labels.Detail.EmptyStatementMessage}}</p>
         </div>
     {{end}}
 </div>

@@ -219,11 +219,11 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 
 func userColumns(l entydad.UserLabels) []types.TableColumn {
 	return []types.TableColumn{
-		{Key: "first_name", Label: l.Columns.Name, Sortable: true, Filterable: true, FilterType: types.FilterTypeString, MinWidth: "150px"},
-		{Key: "email_address", Label: l.Columns.Email, Sortable: true, Filterable: true, FilterType: types.FilterTypeString, MinWidth: "180px"},
-		{Key: "role", Label: l.Columns.Roles, Sortable: false, MinWidth: "120px"},
-		{Key: "date_created", Label: l.Columns.DateCreated, Sortable: true, Filterable: true, FilterType: types.FilterTypeDate, Width: "180px"},
-		{Key: "status", Label: l.Columns.Status, Sortable: true, Filterable: false, Width: "120px"},
+		{Key: "first_name", Label: l.Columns.Name, Sortable: true, Filterable: true, FilterType: types.FilterTypeString, MinWidth: "9.375rem"},
+		{Key: "email_address", Label: l.Columns.Email, Sortable: true, Filterable: true, FilterType: types.FilterTypeString, MinWidth: "11.25rem"},
+		{Key: "role", Label: l.Columns.Roles, Sortable: false, MinWidth: "7.5rem"},
+		{Key: "date_created", Label: l.Columns.DateCreated, Sortable: true, Filterable: true, FilterType: types.FilterTypeDate, WidthClass: "col-6xl"},
+		{Key: "status", Label: l.Columns.Status, Sortable: true, Filterable: false, WidthClass: "col-2xl"},
 	}
 }
 

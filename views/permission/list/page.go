@@ -142,10 +142,10 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string) (*
 func permissionColumns(l entydad.PermissionLabels) []types.TableColumn {
 	return []types.TableColumn{
 		{Key: "name", Label: l.Columns.Name, Sortable: true},
-		{Key: "entity", Label: l.Columns.Entity, Sortable: true, Width: "140px"},
+		{Key: "entity", Label: l.Columns.Entity, Sortable: true, WidthClass: "col-3xl"},
 		{Key: "permission_code", Label: l.Columns.PermissionCode, Sortable: true},
-		{Key: "permission_type", Label: l.Columns.Type, Sortable: true, Width: "120px"},
-		{Key: "status", Label: l.Columns.Status, Sortable: true, Width: "120px"},
+		{Key: "permission_type", Label: l.Columns.Type, Sortable: true, WidthClass: "col-2xl"},
+		{Key: "status", Label: l.Columns.Status, Sortable: true, WidthClass: "col-2xl"},
 	}
 }
 

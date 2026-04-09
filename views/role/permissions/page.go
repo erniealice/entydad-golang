@@ -143,8 +143,8 @@ func permissionColumns(l entydad.RolePermissionLabels) []types.TableColumn {
 	return []types.TableColumn{
 		{Key: "permissionName", Label: l.Columns.PermissionName, Sortable: true},
 		{Key: "code", Label: l.Columns.Code, Sortable: true},
-		{Key: "type", Label: l.Columns.Type, Sortable: true, Width: "120px"},
-		{Key: "dateAssigned", Label: l.Columns.DateAssigned, Sortable: true, Width: "180px"},
+		{Key: "type", Label: l.Columns.Type, Sortable: true, WidthClass: "col-2xl"},
+		{Key: "dateAssigned", Label: l.Columns.DateAssigned, Sortable: true, WidthClass: "col-6xl"},
 	}
 }
 

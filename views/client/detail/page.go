@@ -470,8 +470,8 @@ func buildEngagementsTable(rows []SubscriptionRow, addURL string, clientID strin
 	columns := []types.TableColumn{
 		{Key: "name", Label: "Name", Sortable: true},
 		{Key: "plan", Label: "Package", Sortable: true},
-		{Key: "start_date", Label: "Start Date", Sortable: true, Width: "140px"},
-		{Key: "end_date", Label: "End Date", Sortable: true, Width: "140px"},
+		{Key: "start_date", Label: "Start Date", Sortable: true, WidthClass: "col-3xl"},
+		{Key: "end_date", Label: "End Date", Sortable: true, WidthClass: "col-3xl"},
 	}
 
 	// Build locked client query params for edit URLs
@@ -727,13 +727,13 @@ func capitalizeType(t string) string {
 // buildStatementTable builds a TableConfig for the statement tab.
 func buildStatementTable(resp *clientstmtpb.ClientStatementResponse, tableLabels types.TableLabels) *types.TableConfig {
 	columns := []types.TableColumn{
-		{Key: "date", Label: "Date", Sortable: true, Width: "120px"},
-		{Key: "type", Label: "Type", Sortable: true, Width: "100px"},
-		{Key: "reference", Label: "Reference", Sortable: true, Width: "140px"},
+		{Key: "date", Label: "Date", Sortable: true, WidthClass: "col-2xl"},
+		{Key: "type", Label: "Type", Sortable: true, WidthClass: "col-lg"},
+		{Key: "reference", Label: "Reference", Sortable: true, WidthClass: "col-3xl"},
 		{Key: "description", Label: "Description", Sortable: true},
-		{Key: "billed", Label: "Billed", Sortable: true, Width: "130px", Align: "right"},
-		{Key: "received", Label: "Received", Sortable: true, Width: "130px", Align: "right"},
-		{Key: "balance", Label: "Balance", Sortable: true, Width: "130px", Align: "right"},
+		{Key: "billed", Label: "Billed", Sortable: true, WidthClass: "col-3xl", Align: "right"},
+		{Key: "received", Label: "Received", Sortable: true, WidthClass: "col-3xl", Align: "right"},
+		{Key: "balance", Label: "Balance", Sortable: true, WidthClass: "col-3xl", Align: "right"},
 	}
 
 	var rows []types.TableRow
