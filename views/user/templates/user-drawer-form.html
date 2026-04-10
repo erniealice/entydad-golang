@@ -4,7 +4,7 @@ Used by both Add and Edit actions.
 Data: .FirstName, .LastName, .Email, .Mobile, .Active, .ID, .FormAction, .IsEdit, .CommonLabels
 */}}
 {{define "user-drawer-form"}}
-<form hx-post="{{.FormAction}}" hx-swap="none" hx-on::after-request="Sheet.handleResponse(event)">
+<form hx-post="{{.FormAction}}" hx-swap="none" hx-on::after-request="lf.Sheet.handleResponse(event)">
     {{if .ID}}<input type="hidden" name="id" value="{{.ID}}">{{end}}
 
     <div class="sheet-body">
@@ -61,7 +61,7 @@ Data: .FirstName, .LastName, .Email, .Mobile, .Active, .ID, .FormAction, .IsEdit
                         </button>
                     </div>
                     <div class="password-actions-row">
-                        <button type="button" class="btn-generate-password" id="generatePasswordBtn">
+                        <button type="button" class="btn-generate-password" id="generatePasswordBtn" data-testid="generate-password-btn">
                             <span class="btn-generate-icon">{{template "icon-dice"}}</span>
                             {{.Labels.PasswordGenerate}}
                         </button>

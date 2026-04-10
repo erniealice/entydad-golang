@@ -39,7 +39,7 @@
     <form id="info-edit-form"
           hx-post="{{.EditDetailURL}}"
           hx-swap="none"
-          hx-on::after-request="handleInfoUpdate(event)">
+          hx-on::after-request="lf.handleInfoUpdate(event)">
 
         <div class="form-row single">
             {{template "form-group" (dict
@@ -82,7 +82,7 @@
         </div>
 
         <div class="form-section-gap">
-            <button type="submit" class="btn btn-primary btn-sm">
+            <button type="submit" class="btn btn-primary btn-sm" data-testid="location-info-save-btn">
                 {{template "icon-save"}}
                 <span>{{.Labels.Detail.BasicInfo.Save}}</span>
             </button>
@@ -90,7 +90,8 @@
     </form>
 </div>
 <script>
-function handleInfoUpdate(evt) {
+window.lf = window.lf || {};
+lf.handleInfoUpdate = function(evt) {
     var el = document.getElementById('info-result');
     if (!el) return;
     el.style.display = 'block';
@@ -103,7 +104,7 @@ function handleInfoUpdate(evt) {
         el.textContent = msg;
     }
     setTimeout(function() { el.style.display = 'none'; }, 5000);
-}
+};
 </script>
 {{end}}
 

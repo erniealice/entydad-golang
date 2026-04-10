@@ -8,7 +8,7 @@ Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
       .Active, .ID, .FormAction, .IsEdit, .Labels, .CommonLabels
 */}}
 {{define "supplier-drawer-form"}}
-<form hx-post="{{.FormAction}}" hx-swap="none" hx-on::after-request="Sheet.handleResponse(event)">
+<form hx-post="{{.FormAction}}" hx-swap="none" hx-on::after-request="lf.Sheet.handleResponse(event)">
     {{if .ID}}<input type="hidden" name="id" value="{{.ID}}">{{end}}
 
     <div class="sheet-body">

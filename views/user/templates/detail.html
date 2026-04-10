@@ -26,8 +26,6 @@
         {{end}}
     </div>
 </div>
-{{template "sheet-form" .}}
-<script src="/assets/js/pyeza/sheet.js?v={{.CacheVersion}}"></script>
 {{end}}
 
 {{/* =============================================
@@ -41,7 +39,7 @@
     <form id="info-edit-form"
           hx-post="{{.EditURL}}"
           hx-swap="none"
-          hx-on::after-request="handleInfoUpdate(event)">
+          hx-on::after-request="lf.handleInfoUpdate(event)">
 
         <div class="form-row">
             {{template "form-group" (dict
@@ -93,7 +91,7 @@
         </div>
 
         <div class="form-section-gap">
-            <button type="submit" class="btn btn-primary btn-sm">
+            <button type="submit" class="btn btn-primary btn-sm" data-testid="user-info-save-btn">
                 {{template "icon-save"}}
                 <span>{{.Labels.Detail.BasicInfo.Save}}</span>
             </button>
@@ -101,7 +99,8 @@
     </form>
 </div>
 <script>
-function handleInfoUpdate(evt) {
+window.lf = window.lf || {};
+lf.handleInfoUpdate = function(evt) {
     var el = document.getElementById('info-result');
     if (!el) return;
     if (evt.detail.successful) {
@@ -113,7 +112,7 @@ function handleInfoUpdate(evt) {
         el.textContent = msg;
     }
     setTimeout(function() { el.classList.add('form-result--hidden'); }, 5000);
-}
+};
 </script>
 {{end}}
 
@@ -154,21 +153,21 @@ function handleInfoUpdate(evt) {
     <form id="reset-password-form"
           hx-post="{{.ResetPasswordURL}}"
           hx-swap="none"
-          hx-on::after-request="handlePasswordReset(event)">
+          hx-on::after-request="lf.handlePasswordReset(event)">
         <div id="password-result" class="form-result form-result--hidden" aria-live="polite" aria-atomic="true" data-success-message="{{.Labels.Detail.PasswordUpdated}}" data-error-message="{{.Labels.Detail.PasswordFailed}}"></div>
         <div class="form-row single password-form-row">
             <div class="form-group">
                 <div class="password-field-wrapper">
                     <div class="input-icon-wrapper icon-both">
                         <span class="input-icon">{{template "icon-lock"}}</span>
-                        <input type="password" id="security-password" name="password" class="form-input" placeholder="{{.Labels.Detail.NewPasswordPlaceholder}}" autocomplete="new-password" required>
+                        <input type="password" id="security-password" name="password" class="form-input" placeholder="{{.Labels.Detail.NewPasswordPlaceholder}}" aria-label="{{.Labels.Detail.NewPasswordPlaceholder}}" autocomplete="new-password" required>
                         <button type="button" class="password-toggle-btn" data-target="security-password" aria-label="{{.Labels.Detail.TogglePasswordVisibility}}">
                             <span class="eye-icon">{{template "icon-eye"}}</span>
                             <span class="eye-off-icon" hidden>{{template "icon-eye-off"}}</span>
                         </button>
                     </div>
                     <div class="password-actions-row">
-                        <button type="button" class="btn-generate-password" id="securityGenerateBtn">
+                        <button type="button" class="btn-generate-password" id="securityGenerateBtn" data-testid="security-generate-password-btn">
                             <span class="btn-generate-icon">{{template "icon-dice"}}</span>
                             {{.Labels.Detail.GeneratePassword}}
                         </button>
@@ -177,7 +176,7 @@ function handleInfoUpdate(evt) {
             </div>
         </div>
         <div class="form-section-gap">
-            <button type="submit" class="btn btn-primary btn-sm">
+            <button type="submit" class="btn btn-primary btn-sm" data-testid="user-security-save-btn">
                 {{template "icon-save"}}
                 <span>{{.Labels.Detail.Security.ResetPassword}}</span>
             </button>
@@ -248,7 +247,7 @@ function handleInfoUpdate(evt) {
     }
 })();
 
-function handlePasswordReset(evt) {
+lf.handlePasswordReset = function(evt) {
     var el = document.getElementById('password-result');
     if (!el) return;
     if (evt.detail.successful) {
@@ -261,6 +260,6 @@ function handlePasswordReset(evt) {
         el.textContent = msg;
     }
     setTimeout(function() { el.classList.add('form-result--hidden'); }, 5000);
-}
+};
 </script>
 {{end}}

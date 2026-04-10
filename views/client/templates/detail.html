@@ -26,8 +26,6 @@
         {{end}}
     </div>
 </div>
-{{template "sheet-form" .}}
-<script src="/assets/js/pyeza/sheet.js?v={{.CacheVersion}}"></script>
 {{end}}
 
 {{/* Info Tab */}}
@@ -102,7 +100,7 @@
                 hx-get="{{.EditURL}}?mode=info"
                 hx-target="#sheetContent"
                 hx-swap="innerHTML"
-                onclick="Sheet.open()">
+                onclick="lf.Sheet.open()">
             <span class="icon icon-edit"></span> {{.CommonLabels.Buttons.Edit}}
         </button>
     </div>
@@ -136,7 +134,7 @@
                 hx-get="{{.EditURL}}?mode=representative"
                 hx-target="#sheetContent"
                 hx-swap="innerHTML"
-                onclick="Sheet.open()">
+                onclick="lf.Sheet.open()">
             <span class="icon icon-edit"></span> {{.CommonLabels.Buttons.Edit}}
         </button>
     </div>
@@ -155,7 +153,7 @@
                     hx-get="{{.SubscriptionAddURL}}"
                     hx-target="#sheetContent"
                     hx-swap="innerHTML"
-                    onclick="Sheet.open()">
+                    onclick="lf.Sheet.open()">
                 <span class="icon icon-plus"></span> {{.Labels.Detail.Tabs.Engagements}}
             </button>
         </div>

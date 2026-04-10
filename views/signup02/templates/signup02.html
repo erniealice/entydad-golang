@@ -12,7 +12,8 @@
     <link rel="stylesheet" href="/assets/css/entydad/entydad-signup02.css?v={{.CacheVersion}}">
 </head>
 <body>
-    <main>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <main id="main-content">
     {{template "signup02-content" .}}
 
     <!-- Carousel JavaScript -->
@@ -79,7 +80,8 @@
                 }
             });
         }
-        window.updatePasswordStrength = updatePasswordStrength;
+        window.lf = window.lf || {};
+        window.lf.updatePasswordStrength = updatePasswordStrength;
     })();
     </script>
     </main>
@@ -198,7 +200,7 @@
                             placeholder="{{.Labels.PasswordPlaceholder}}"
                             required
                             autocomplete="new-password"
-                            oninput="updatePasswordStrength(this.value)"
+                            oninput="lf.updatePasswordStrength(this.value)"
                         >
                         <!-- Password strength indicator -->
                         <div class="password-strength" id="passwordStrength" aria-label="{{.Labels.PasswordStrength}}">
