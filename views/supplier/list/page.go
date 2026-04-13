@@ -136,6 +136,16 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 			},
 		},
 	})
+	// Exclude soft-deleted suppliers from every status list.
+	// Supplier uses both `status` (active/blocked/on_hold) and `active` (bool).
+	// DeleteSupplier flips `active` to false but leaves `status` intact, so a
+	// status-only filter still surfaces deleted rows.
+	listParams.Filters.Filters = append(listParams.Filters.Filters, &commonpb.TypedFilter{
+		Field: "s.active",
+		FilterType: &commonpb.TypedFilter_BooleanFilter{
+			BooleanFilter: &commonpb.BooleanFilter{Value: true},
+		},
+	})
 
 	var resp *supplierpb.GetSupplierListPageDataResponse
 	if deps.GetListPageData != nil {

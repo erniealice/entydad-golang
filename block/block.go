@@ -545,11 +545,14 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 					return nil, nil
 				},
 				SetActive: func(fctx context.Context, id string, active bool) error {
+					// `active` is the soft-delete flag; status transitions (active↔blocked)
+					// must NOT flip it, otherwise deactivated suppliers look identical to
+					// deleted ones. Only DeleteSupplier should set active=false.
 					status := "blocked"
 					if active {
 						status = "active"
 					}
-					_, err := db.Update(fctx, "supplier", id, map[string]any{"active": active, "status": status})
+					_, err := db.Update(fctx, "supplier", id, map[string]any{"active": true, "status": status})
 					return err
 				},
 				ListPaymentTerms: func(fctx context.Context) ([]*suppliermod.PaymentTermOption, error) {
