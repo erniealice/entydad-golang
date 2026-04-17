@@ -1031,6 +1031,7 @@ type SupplierColumnLabels struct {
 	SupplierType string `json:"supplierType"`
 	InternalID   string `json:"internalId"`
 	Status       string `json:"status"`
+	Category     string `json:"category"`
 	PaymentTerms string `json:"paymentTerms"`
 	ContactName  string `json:"contactName"`
 	DateCreated  string `json:"dateCreated"`
@@ -1209,6 +1210,54 @@ type ClientTagConfirmLabels struct {
 }
 
 // ---------------------------------------------------------------------------
+// Supplier Tag labels
+// ---------------------------------------------------------------------------
+
+// SupplierTagLabels holds all translatable strings for the supplier tag module.
+type SupplierTagLabels struct {
+	Page    SupplierTagPageLabels    `json:"page"`
+	Buttons SupplierTagButtonLabels  `json:"buttons"`
+	Columns SupplierTagColumnLabels  `json:"columns"`
+	Empty   SupplierTagEmptyLabels   `json:"empty"`
+	Actions SupplierTagActionLabels  `json:"actions"`
+	Confirm SupplierTagConfirmLabels `json:"confirm"`
+}
+
+type SupplierTagPageLabels struct {
+	Heading  string `json:"heading"`
+	Subtitle string `json:"subtitle"`
+}
+
+type SupplierTagButtonLabels struct {
+	AddTag string `json:"addTag"`
+}
+
+type SupplierTagColumnLabels struct {
+	TagName     string `json:"tagName"`
+	Suppliers   string `json:"suppliers"`
+	Description string `json:"description"`
+	Status      string `json:"status"`
+}
+
+type SupplierTagEmptyLabels struct {
+	Title   string `json:"title"`
+	Message string `json:"message"`
+}
+
+type SupplierTagActionLabels struct {
+	Edit       string `json:"edit"`
+	Delete     string `json:"delete"`
+	Activate   string `json:"activate"`
+	Deactivate string `json:"deactivate"`
+}
+
+type SupplierTagConfirmLabels struct {
+	DeleteTitle   string `json:"deleteTitle"`
+	DeleteMessage string `json:"deleteMessage"`
+	CannotDelete  string `json:"cannotDelete"`
+}
+
+// ---------------------------------------------------------------------------
 // PaymentTerm labels
 // ---------------------------------------------------------------------------
 
@@ -1345,8 +1394,9 @@ type SharedBadgeLabels struct {
 
 // DashboardLabels holds translatable strings for dashboard pages.
 type DashboardLabels struct {
-	ClientTitle string `json:"clientTitle"`
-	UserTitle   string `json:"userTitle"`
+	ClientTitle   string `json:"clientTitle"`
+	UserTitle     string `json:"userTitle"`
+	SupplierTitle string `json:"supplierTitle"`
 }
 
 // ClientDashboardLabels holds translatable strings for the client dashboard.
@@ -1361,6 +1411,21 @@ type ClientDashboardLabels struct {
 	FilterYear     string `json:"filterYear"`
 	RecentActivity string `json:"recentActivity"`
 	ViewAll        string `json:"viewAll"`
+}
+
+// SupplierDashboardLabels holds translatable strings for the supplier dashboard.
+type SupplierDashboardLabels struct {
+	TotalSuppliers   string `json:"totalSuppliers"`
+	Active           string `json:"active"`
+	Blocked          string `json:"blocked"`
+	OnHold           string `json:"onHold"`
+	SupplierActivity string `json:"supplierActivity"`
+	TopSuppliers     string `json:"topSuppliers"`
+	FilterWeek       string `json:"filterWeek"`
+	FilterMonth      string `json:"filterMonth"`
+	FilterYear       string `json:"filterYear"`
+	RecentActivity   string `json:"recentActivity"`
+	ViewAll          string `json:"viewAll"`
 }
 
 // UserDashboardLabels holds translatable strings for the user dashboard.

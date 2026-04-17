@@ -26,6 +26,7 @@ import (
 	"github.com/erniealice/entydad-golang"
 	clientmod "github.com/erniealice/entydad-golang/views/client"
 	clienttagmod "github.com/erniealice/entydad-golang/views/clienttag"
+	suppliertagmod "github.com/erniealice/entydad-golang/views/suppliertag"
 	locationmod "github.com/erniealice/entydad-golang/views/location"
 	locationaction "github.com/erniealice/entydad-golang/views/location/action"
 	locationareamod "github.com/erniealice/entydad-golang/views/location_area"
@@ -78,6 +79,7 @@ type blockConfig struct {
 	enableAll    bool
 	client       bool
 	clientTag    bool
+	supplierTag  bool
 	paymentTerm  bool
 	user         bool
 	role         bool
@@ -93,6 +95,9 @@ func WithClient() BlockOption { return func(c *blockConfig) { c.client = true } 
 
 // WithClientTag enables the ClientTag module in Block().
 func WithClientTag() BlockOption { return func(c *blockConfig) { c.clientTag = true } }
+
+// WithSupplierTag enables the SupplierTag module in Block().
+func WithSupplierTag() BlockOption { return func(c *blockConfig) { c.supplierTag = true } }
 
 // WithPaymentTerm enables the PaymentTerm module in Block().
 func WithPaymentTerm() BlockOption { return func(c *blockConfig) { c.paymentTerm = true } }
@@ -259,6 +264,11 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 			if uc.Subscription != nil && uc.Subscription.Subscription != nil {
 				clientDeps.ListSubscriptions = uc.Subscription.Subscription.ListSubscriptions.Execute
 				clientDeps.GetSubscriptionListPageData = uc.Subscription.Subscription.GetSubscriptionListPageData.Execute
+			}
+			if ledgerReportingSvc != nil {
+				clientDeps.GetClientBalances = func(fctx context.Context) (map[string]int64, error) {
+					return ledgerReportingSvc.GetClientBalances(fctx)
+				}
 			}
 			clientmod.NewModule(clientDeps).RegisterRoutes(ctx.Routes)
 		}
@@ -536,14 +546,14 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 
 		if cfg.enableAll || cfg.supplier {
 			supplierDeps := &suppliermod.ModuleDeps{
-				Routes:       routes.Supplier,
-				CommonLabels: ctx.Common,
-				SharedLabels: labels.Shared,
-				Labels:       labels.Supplier,
-				TableLabels:  ctx.Table,
-				GetInUseIDs: func(fctx context.Context, ids []string) (map[string]bool, error) {
-					return nil, nil
-				},
+				Routes:               routes.Supplier,
+				CommonLabels:         ctx.Common,
+				SharedLabels:         labels.Shared,
+				Labels:               labels.Supplier,
+				DashboardLabels:      labels.SupplierDashboard,
+				DashboardTitleLabels: labels.Dashboard,
+				TableLabels:          ctx.Table,
+				GetInUseIDs: refChecker.GetSupplierInUseIDs,
 				SetActive: func(fctx context.Context, id string, active bool) error {
 					// `active` is the soft-delete flag; status transitions (active↔blocked)
 					// must NOT flip it, otherwise deactivated suppliers look identical to
@@ -600,6 +610,15 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 					return ledgerReportingSvc.GetSupplierBalances(fctx)
 				}
 			}
+			// Tag-related deps for supplier form multi-select
+			if uc.Common != nil && uc.Common.Category != nil {
+				supplierDeps.ListCategories = uc.Common.Category.ListCategories.Execute
+			}
+			if uc.Entity.SupplierCategory != nil {
+				supplierDeps.ListSupplierCategories = uc.Entity.SupplierCategory.ListSupplierCategories.Execute
+				supplierDeps.CreateSupplierCategory = uc.Entity.SupplierCategory.CreateSupplierCategory.Execute
+				supplierDeps.DeleteSupplierCategory = uc.Entity.SupplierCategory.DeleteSupplierCategory.Execute
+			}
 			suppliermod.NewModule(supplierDeps).RegisterRoutes(ctx.Routes)
 		}
 
@@ -635,6 +654,40 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 				clienttagDeps.ListClientCategories = uc.Entity.ClientCategory.ListClientCategories.Execute
 			}
 			clienttagmod.NewModule(clienttagDeps).RegisterRoutes(ctx.Routes)
+		}
+
+		if cfg.enableAll || cfg.supplierTag {
+			suppliertagDeps := &suppliertagmod.ModuleDeps{
+				Routes:       routes.SupplierTag,
+				Labels:       labels.SupplierTag,
+				SharedLabels: labels.Shared,
+				CommonLabels: ctx.Common,
+				TableLabels:  ctx.Table,
+				GetInUseIDs:  refChecker.GetCategoryInUseIDs,
+				SetCategoryActive: func(fctx context.Context, id string, active bool) error {
+					_, err := db.Update(fctx, "category", id, map[string]any{"active": active})
+					return err
+				},
+			}
+			if uc.Common != nil && uc.Common.Category != nil {
+				suppliertagDeps.ListCategories = uc.Common.Category.ListCategories.Execute
+				suppliertagDeps.CreateCategory = uc.Common.Category.CreateCategory.Execute
+				suppliertagDeps.ReadCategory = uc.Common.Category.ReadCategory.Execute
+				suppliertagDeps.UpdateCategory = uc.Common.Category.UpdateCategory.Execute
+				suppliertagDeps.DeleteCategory = uc.Common.Category.DeleteCategory.Execute
+			}
+			if ctx.SqlDB != nil {
+				repoAny, err := registry.CreateRepository("postgresql", entityid.Category, ctx.SqlDB, "category")
+				if err == nil {
+					if pgd, ok := repoAny.(categoryListPageDataGetter); ok {
+						suppliertagDeps.GetCategoryListPageData = pgd.GetCategoryListPageData
+					}
+				}
+			}
+			if uc.Entity.SupplierCategory != nil {
+				suppliertagDeps.ListSupplierCategories = uc.Entity.SupplierCategory.ListSupplierCategories.Execute
+			}
+			suppliertagmod.NewModule(suppliertagDeps).RegisterRoutes(ctx.Routes)
 		}
 
 		if cfg.enableAll || cfg.paymentTerm {
@@ -737,6 +790,7 @@ type blockLabels struct {
 	Client          entydad.ClientLabels
 	ClientDashboard entydad.ClientDashboardLabels
 	ClientTag       entydad.ClientTagLabels
+	SupplierTag     entydad.SupplierTagLabels
 	PaymentTerm     entydad.PaymentTermLabels
 	User            entydad.UserLabels
 	UserDashboard   entydad.UserDashboardLabels
@@ -748,13 +802,15 @@ type blockLabels struct {
 	LocationArea    entydad.LocationAreaLabels
 	Permission      entydad.PermissionLabels
 	Workspace       entydad.WorkspaceLabels
-	Supplier        entydad.SupplierLabels
+	Supplier          entydad.SupplierLabels
+	SupplierDashboard entydad.SupplierDashboardLabels
 }
 
 // blockRoutes holds the subset of entydad route structs needed by Block().
 type blockRoutes struct {
 	Client              entydad.ClientRoutes
 	ClientTag           entydad.ClientTagRoutes
+	SupplierTag         entydad.SupplierTagRoutes
 	PaymentTerm         entydad.PaymentTermRoutes
 	SupplierPaymentTerm entydad.SupplierPaymentTermRoutes
 	Subscription        centymo.SubscriptionRoutes
@@ -779,6 +835,7 @@ func loadBlockLabels(t *lynguaV1.TranslationProvider, businessType string) block
 	}
 	_ = t.LoadPathIfExists("en", businessType, "client.json", "client.dashboard", &l.ClientDashboard)
 	_ = t.LoadPathIfExists("en", businessType, "client_tag.json", "", &l.ClientTag)
+	_ = t.LoadPathIfExists("en", businessType, "supplier_tag.json", "", &l.SupplierTag)
 	_ = t.LoadPathIfExists("en", businessType, "payment_term.json", "paymentTerm", &l.PaymentTerm)
 
 	if err := t.LoadPath("en", businessType, "user.json", "", &l.User); err != nil {
@@ -812,6 +869,7 @@ func loadBlockLabels(t *lynguaV1.TranslationProvider, businessType string) block
 	if err := t.LoadPath("en", businessType, "supplier.json", "supplier", &l.Supplier); err != nil {
 		log.Printf("entydad.Block: warning: failed to load supplier labels: %v", err)
 	}
+	_ = t.LoadPathIfExists("en", businessType, "supplier.json", "supplier.dashboard", &l.SupplierDashboard)
 	if err := t.LoadPath("en", businessType, "shared.json", "", &l.Shared); err != nil {
 		log.Printf("entydad.Block: warning: failed to load shared labels: %v", err)
 	}
@@ -829,6 +887,9 @@ func loadBlockRoutes(t *lynguaV1.TranslationProvider, businessType string) block
 
 	r.ClientTag = entydad.DefaultClientTagRoutes()
 	_ = t.LoadPathIfExists("en", businessType, "route.json", "client_tag", &r.ClientTag)
+
+	r.SupplierTag = entydad.DefaultSupplierTagRoutes()
+	_ = t.LoadPathIfExists("en", businessType, "route.json", "supplier_tag", &r.SupplierTag)
 
 	r.PaymentTerm = entydad.DefaultPaymentTermRoutes()
 	_ = t.LoadPathIfExists("en", businessType, "route.json", "payment_term", &r.PaymentTerm)

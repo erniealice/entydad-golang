@@ -11,10 +11,13 @@ import (
 
 	"github.com/erniealice/entydad-golang"
 	supplieraction "github.com/erniealice/entydad-golang/views/supplier/action"
+	supplierdashboard "github.com/erniealice/entydad-golang/views/supplier/dashboard"
 	supplierdetail "github.com/erniealice/entydad-golang/views/supplier/detail"
 	supplierlist "github.com/erniealice/entydad-golang/views/supplier/list"
+	categorypb      "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
 	attachmentpb    "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
 	supplierpb      "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/supplier"
+	suppliercategorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/supplier_category"
 	purchaseorderpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/expenditure/purchase_order"
 	suppstmtpb      "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/reporting/supplier_statement"
 	"github.com/erniealice/hybra-golang/views/attachment"
@@ -26,11 +29,13 @@ type PaymentTermOption = supplieraction.PaymentTermOption
 
 // ModuleDeps holds all dependencies for the supplier module.
 type ModuleDeps struct {
-	Routes          entydad.SupplierRoutes
-	CommonLabels    pyeza.CommonLabels
-	SharedLabels    entydad.SharedLabels
-	Labels          entydad.SupplierLabels
-	TableLabels     types.TableLabels
+	Routes               entydad.SupplierRoutes
+	CommonLabels         pyeza.CommonLabels
+	SharedLabels         entydad.SharedLabels
+	Labels               entydad.SupplierLabels
+	DashboardLabels      entydad.SupplierDashboardLabels
+	DashboardTitleLabels entydad.DashboardLabels
+	TableLabels          types.TableLabels
 	GetListPageData func(ctx context.Context, req *supplierpb.GetSupplierListPageDataRequest) (*supplierpb.GetSupplierListPageDataResponse, error)
 	GetInUseIDs     func(ctx context.Context, ids []string) (map[string]bool, error)
 	// Supplier CRUD
@@ -59,11 +64,18 @@ type ModuleDeps struct {
 
 	// Outstanding balances for supplier list
 	GetSupplierBalances func(ctx context.Context) (map[string]int64, error)
+
+	// Tag-related deps for multi-select tags on the supplier form
+	ListCategories         func(ctx context.Context, req *categorypb.ListCategoriesRequest) (*categorypb.ListCategoriesResponse, error)
+	ListSupplierCategories func(ctx context.Context, req *suppliercategorypb.ListSupplierCategoriesRequest) (*suppliercategorypb.ListSupplierCategoriesResponse, error)
+	CreateSupplierCategory func(ctx context.Context, req *suppliercategorypb.CreateSupplierCategoryRequest) (*suppliercategorypb.CreateSupplierCategoryResponse, error)
+	DeleteSupplierCategory func(ctx context.Context, req *suppliercategorypb.DeleteSupplierCategoryRequest) (*suppliercategorypb.DeleteSupplierCategoryResponse, error)
 }
 
 // Module holds all constructed supplier views.
 type Module struct {
 	routes           entydad.SupplierRoutes
+	Dashboard        view.View
 	List             view.View
 	Table            view.View
 	Detail           view.View
@@ -81,13 +93,17 @@ type Module struct {
 
 func NewModule(deps *ModuleDeps) *Module {
 	actionDeps := &supplieraction.Deps{
-		Routes:            deps.Routes,
-		CreateSupplier:    deps.CreateSupplier,
-		ReadSupplier:      deps.ReadSupplier,
-		UpdateSupplier:    deps.UpdateSupplier,
-		DeleteSupplier:    deps.DeleteSupplier,
-		SetSupplierActive: deps.SetActive,
-		ListPaymentTerms:  deps.ListPaymentTerms,
+		Routes:                 deps.Routes,
+		CreateSupplier:         deps.CreateSupplier,
+		ReadSupplier:           deps.ReadSupplier,
+		UpdateSupplier:         deps.UpdateSupplier,
+		DeleteSupplier:         deps.DeleteSupplier,
+		SetSupplierActive:      deps.SetActive,
+		ListPaymentTerms:       deps.ListPaymentTerms,
+		ListCategories:         deps.ListCategories,
+		ListSupplierCategories: deps.ListSupplierCategories,
+		CreateSupplierCategory: deps.CreateSupplierCategory,
+		DeleteSupplierCategory: deps.DeleteSupplierCategory,
 	}
 	listDeps := &supplierlist.ListViewDeps{
 		Routes:              deps.Routes,
@@ -114,12 +130,19 @@ func NewModule(deps *ModuleDeps) *Module {
 		AuditOps: auditlog.AuditOps{
 			ListAuditHistory: deps.ListAuditHistory,
 		},
-		ListPurchaseOrders:   deps.ListPurchaseOrders,
-		GetSupplierStatement: deps.GetSupplierStatement,
+		ListPurchaseOrders:     deps.ListPurchaseOrders,
+		GetSupplierStatement:   deps.GetSupplierStatement,
+		ListCategories:         deps.ListCategories,
+		ListSupplierCategories: deps.ListSupplierCategories,
 	}
 
 	return &Module{
-		routes:           deps.Routes,
+		routes: deps.Routes,
+		Dashboard: supplierdashboard.NewView(&supplierdashboard.Deps{
+			DashboardLabels: deps.DashboardTitleLabels,
+			Dashboard:       deps.DashboardLabels,
+			CommonLabels:    deps.CommonLabels,
+		}),
 		List:             supplierlist.NewView(listDeps),
 		Table:            supplierlist.NewTableView(listDeps),
 		Detail:           supplierdetail.NewView(detailDeps),
@@ -157,6 +180,7 @@ func handleFunc(r view.RouteRegistrar, method, path string, handler http.Handler
 }
 
 func (m *Module) RegisterRoutes(r view.RouteRegistrar) {
+	r.GET(m.routes.DashboardURL, m.Dashboard)
 	r.GET(m.routes.ListURL, m.List)
 	r.GET(m.routes.TableURL, m.Table)
 	r.GET(m.routes.DetailURL, m.Detail)

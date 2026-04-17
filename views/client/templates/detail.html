@@ -23,6 +23,10 @@
         {{template "client-tab-history" .}}
         {{else if eq .ActiveTab "statement"}}
         {{template "client-tab-statement" .}}
+        {{else if eq .ActiveTab "attachments"}}
+        {{template "attachment-tab" .}}
+        {{else if eq .ActiveTab "audit-history"}}
+        {{template "audit-history-tab" .}}
         {{end}}
     </div>
 </div>
@@ -171,15 +175,15 @@
     <div class="statement-summary-row" data-testid="statement-summary">
         <div class="statement-stat-card statement-stat-card--highlight" data-testid="stat-outstanding-balance">
             <span class="stat-label">{{.Labels.Detail.OutstandingBalance}}</span>
-            <span class="stat-value">{{if .StatementSummaryDisplay}}{{.StatementSummaryDisplay.OutstandingBalance}}{{end}}</span>
+            <span class="stat-value">{{if .StatementSummaryDisplay}}{{template "table-cell-money" .StatementSummaryDisplay.OutstandingBalance}}{{end}}</span>
         </div>
         <div class="statement-stat-card" data-testid="stat-total-billed">
             <span class="stat-label">{{.Labels.Detail.TotalBilled}}</span>
-            <span class="stat-value">{{if .StatementSummaryDisplay}}{{.StatementSummaryDisplay.TotalBilled}}{{end}}</span>
+            <span class="stat-value">{{if .StatementSummaryDisplay}}{{template "table-cell-money" .StatementSummaryDisplay.TotalBilled}}{{end}}</span>
         </div>
         <div class="statement-stat-card" data-testid="stat-total-received">
             <span class="stat-label">{{.Labels.Detail.TotalReceived}}</span>
-            <span class="stat-value">{{if .StatementSummaryDisplay}}{{.StatementSummaryDisplay.TotalReceived}}{{end}}</span>
+            <span class="stat-value">{{if .StatementSummaryDisplay}}{{template "table-cell-money" .StatementSummaryDisplay.TotalReceived}}{{end}}</span>
         </div>
         <div class="statement-stat-card" data-testid="stat-invoice-count">
             <span class="stat-label">{{.Labels.Detail.Invoices}}</span>
@@ -207,7 +211,7 @@
     <div class="purchase-stats-row">
         <div class="purchase-stat-card" data-testid="stat-lifetime-spend">
             <span class="stat-label">{{.Labels.Detail.PurchaseHistory.LifetimeSpend}}</span>
-            <span class="stat-value">{{.PurchaseStats.LifetimeSpend}}</span>
+            <span class="stat-value">{{template "table-cell-money" .PurchaseStats.LifetimeSpend}}</span>
         </div>
         <div class="purchase-stat-card" data-testid="stat-total-orders">
             <span class="stat-label">{{.Labels.Detail.PurchaseHistory.TotalOrders}}</span>
@@ -215,7 +219,7 @@
         </div>
         <div class="purchase-stat-card" data-testid="stat-avg-order">
             <span class="stat-label">{{.Labels.Detail.PurchaseHistory.AvgOrderValue}}</span>
-            <span class="stat-value">{{.PurchaseStats.AvgOrderValue}}</span>
+            <span class="stat-value">{{template "table-cell-money" .PurchaseStats.AvgOrderValue}}</span>
         </div>
         <div class="purchase-stat-card" data-testid="stat-last-order">
             <span class="stat-label">{{.Labels.Detail.PurchaseHistory.LastPurchase}}</span>

@@ -58,9 +58,9 @@ type TagChip struct {
 
 // PurchaseStats holds aggregated purchase statistics for a client.
 type PurchaseStats struct {
-	LifetimeSpend string
+	LifetimeSpend types.TableCell
 	TotalOrders   int
-	AvgOrderValue string
+	AvgOrderValue types.TableCell
 	LastPurchase  string
 }
 
@@ -125,13 +125,21 @@ type PageData struct {
 	StatementSummary        *clientstmtpb.ClientStatementSummary
 	StatementSummaryDisplay *StatementSummaryDisplay
 	StatementTable          *types.TableConfig
+	// Attachments tab
+	AttachmentTable     *types.TableConfig
+	AttachmentUploadURL string
+	// Audit history tab
+	AuditEntries    []auditlog.AuditEntryView
+	AuditHasNext    bool
+	AuditNextCursor string
+	AuditHistoryURL string
 }
 
-// StatementSummaryDisplay holds pre-formatted string values for the statement summary bar.
+// StatementSummaryDisplay holds pre-formatted money cells for the statement summary bar.
 type StatementSummaryDisplay struct {
-	OutstandingBalance string
-	TotalBilled        string
-	TotalReceived      string
+	OutstandingBalance types.TableCell
+	TotalBilled        types.TableCell
+	TotalReceived      types.TableCell
 }
 
 // NewView creates the client detail view.
@@ -259,14 +267,35 @@ func NewView(deps *DetailViewDeps) view.View {
 					pageData.StatementSummary = resp.Summary
 					if resp.Summary != nil {
 						pageData.StatementSummaryDisplay = &StatementSummaryDisplay{
-							OutstandingBalance: formatCentavos(resp.Summary.OutstandingBalance),
-							TotalBilled:        formatCentavos(resp.Summary.TotalBilled),
-							TotalReceived:      formatCentavos(resp.Summary.TotalReceived),
+							OutstandingBalance: types.MoneyCell(float64(resp.Summary.OutstandingBalance), "", true),
+							TotalBilled:        types.MoneyCell(float64(resp.Summary.TotalBilled), "", true),
+							TotalReceived:      types.MoneyCell(float64(resp.Summary.TotalReceived), "", true),
 						}
 					}
 					pageData.StatementTable = buildStatementTable(resp, deps.TableLabels)
 				}
 			}
+		case "attachments":
+			loadAttachments(ctx, deps, id, pageData)
+		case "audit-history":
+			if deps.ListAuditHistory != nil {
+				cursor := viewCtx.Request.URL.Query().Get("cursor")
+				auditResp, err := deps.ListAuditHistory(ctx, &auditlog.ListAuditRequest{
+					EntityType:  "client",
+					EntityID:    id,
+					Limit:       20,
+					CursorToken: cursor,
+				})
+				if err != nil {
+					log.Printf("Failed to load audit history: %v", err)
+				}
+				if auditResp != nil {
+					pageData.AuditEntries = auditResp.Entries
+					pageData.AuditHasNext = auditResp.HasNext
+					pageData.AuditNextCursor = auditResp.NextCursor
+				}
+			}
+			pageData.AuditHistoryURL = route.ResolveURL(deps.Routes.TabActionURL, "id", id, "tab", "") + "audit-history"
 		}
 
 		// KB help content
@@ -293,6 +322,8 @@ func buildTabItems(id string, deps *DetailViewDeps) []pyeza.TabItem {
 		{Key: "engagements", Label: deps.Labels.Detail.Tabs.Engagements, Href: base + "?tab=engagements", HxGet: action + "engagements", Icon: "icon-file-text"},
 		{Key: "history", Label: deps.Labels.Detail.Tabs.History, Href: base + "?tab=history", HxGet: action + "history", Icon: "icon-shopping-bag"},
 		{Key: "statement", Label: deps.Labels.Detail.Tabs.Statement, Href: base + "?tab=statement", HxGet: action + "statement", Icon: "icon-file-text"},
+		{Key: "attachments", Label: "Attachments", Href: base + "?tab=attachments", HxGet: action + "attachments", Icon: "icon-paperclip"},
+		{Key: "audit-history", Label: "History", Href: base + "?tab=audit-history", HxGet: action + "audit-history", Icon: "icon-clock"},
 	}
 }
 
@@ -391,17 +422,45 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 					pageData.StatementSummary = resp.Summary
 					if resp.Summary != nil {
 						pageData.StatementSummaryDisplay = &StatementSummaryDisplay{
-							OutstandingBalance: formatCentavos(resp.Summary.OutstandingBalance),
-							TotalBilled:        formatCentavos(resp.Summary.TotalBilled),
-							TotalReceived:      formatCentavos(resp.Summary.TotalReceived),
+							OutstandingBalance: types.MoneyCell(float64(resp.Summary.OutstandingBalance), "", true),
+							TotalBilled:        types.MoneyCell(float64(resp.Summary.TotalBilled), "", true),
+							TotalReceived:      types.MoneyCell(float64(resp.Summary.TotalReceived), "", true),
 						}
 					}
 					pageData.StatementTable = buildStatementTable(resp, deps.TableLabels)
 				}
 			}
+		case "attachments":
+			loadAttachments(ctx, deps, id, pageData)
+		case "audit-history":
+			if deps.ListAuditHistory != nil {
+				cursor := viewCtx.Request.URL.Query().Get("cursor")
+				auditResp, err := deps.ListAuditHistory(ctx, &auditlog.ListAuditRequest{
+					EntityType:  "client",
+					EntityID:    id,
+					Limit:       20,
+					CursorToken: cursor,
+				})
+				if err != nil {
+					log.Printf("Failed to load audit history: %v", err)
+				}
+				if auditResp != nil {
+					pageData.AuditEntries = auditResp.Entries
+					pageData.AuditHasNext = auditResp.HasNext
+					pageData.AuditNextCursor = auditResp.NextCursor
+				}
+			}
+			pageData.AuditHistoryURL = route.ResolveURL(deps.Routes.TabActionURL, "id", id, "tab", "") + "audit-history"
 		}
 
-		return view.OK("client-tab-"+tab, pageData)
+		templateName := "client-tab-" + tab
+		if tab == "attachments" {
+			templateName = "attachment-tab"
+		}
+		if tab == "audit-history" {
+			templateName = "audit-history-tab"
+		}
+		return view.OK(templateName, pageData)
 	})
 }
 
@@ -614,8 +673,8 @@ func loadClientTags(ctx context.Context, deps *DetailViewDeps, clientID string) 
 // and returns sorted order rows (most recent first).
 func loadPurchaseHistory(ctx context.Context, deps *DetailViewDeps, clientID string) (PurchaseStats, []OrderRow) {
 	empty := PurchaseStats{
-		LifetimeSpend: "PHP 0.00",
-		AvgOrderValue: "PHP 0.00",
+		LifetimeSpend: types.MoneyCell(0, "PHP", false),
+		AvgOrderValue: types.MoneyCell(0, "PHP", false),
 		LastPurchase:  "N/A",
 	}
 
@@ -702,18 +761,13 @@ func loadPurchaseHistory(ctx context.Context, deps *DetailViewDeps, clientID str
 	}
 
 	stats := PurchaseStats{
-		LifetimeSpend: fmt.Sprintf("PHP %.2f", totalSpend),
+		LifetimeSpend: types.MoneyCell(totalSpend, "PHP", false),
 		TotalOrders:   totalOrders,
-		AvgOrderValue: fmt.Sprintf("PHP %.2f", avgOrder),
+		AvgOrderValue: types.MoneyCell(avgOrder, "PHP", false),
 		LastPurchase:  lastPurchase,
 	}
 
 	return stats, orders
-}
-
-// formatCentavos converts a centavo integer to a decimal string (e.g., 1400000 -> "14000.00").
-func formatCentavos(amount int64) string {
-	return fmt.Sprintf("%.2f", float64(amount)/100)
 }
 
 // capitalizeType capitalizes the first letter of a type string.
@@ -738,13 +792,13 @@ func buildStatementTable(resp *clientstmtpb.ClientStatementResponse, tableLabels
 
 	var rows []types.TableRow
 	for _, entry := range resp.Entries {
-		billedStr := ""
+		var billedCell types.TableCell
 		if entry.Billed > 0 {
-			billedStr = formatCentavos(entry.Billed)
+			billedCell = types.MoneyCell(float64(entry.Billed), "", true)
 		}
-		receivedStr := ""
+		var receivedCell types.TableCell
 		if entry.Received > 0 {
-			receivedStr = formatCentavos(entry.Received)
+			receivedCell = types.MoneyCell(float64(entry.Received), "", true)
 		}
 		rows = append(rows, types.TableRow{
 			ID: entry.EntityId,
@@ -753,9 +807,9 @@ func buildStatementTable(resp *clientstmtpb.ClientStatementResponse, tableLabels
 				{Type: "text", Value: capitalizeType(entry.Type)},
 				{Type: "text", Value: entry.ReferenceNumber},
 				{Type: "text", Value: entry.Description},
-				{Type: "money", Value: billedStr},
-				{Type: "money", Value: receivedStr},
-				{Type: "money", Value: formatCentavos(entry.Balance)},
+				billedCell,
+				receivedCell,
+				types.MoneyCell(float64(entry.Balance), "", true),
 			},
 		})
 	}
@@ -770,9 +824,9 @@ func buildStatementTable(resp *clientstmtpb.ClientStatementResponse, tableLabels
 				{Type: "text", Value: ""},
 				{Type: "text", Value: ""},
 				{Type: "text", Value: "TOTAL"},
-				{Type: "money", Value: formatCentavos(s.TotalBilled)},
-				{Type: "money", Value: formatCentavos(s.TotalReceived)},
-				{Type: "money", Value: formatCentavos(s.OutstandingBalance)},
+				types.MoneyCell(float64(s.TotalBilled), "", true),
+				types.MoneyCell(float64(s.TotalReceived), "", true),
+				types.MoneyCell(float64(s.OutstandingBalance), "", true),
 			},
 		})
 	}

@@ -6,11 +6,14 @@ import (
 	"math"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/view"
 
+	categorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
 	supplierpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/supplier"
+	suppliercategorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/supplier_category"
 	userpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/user"
 
 	"github.com/erniealice/entydad-golang"
@@ -20,6 +23,19 @@ import (
 type PaymentTermOption struct {
 	Id   string
 	Name string
+}
+
+// TagOption represents a tag available for selection in the form.
+type TagOption struct {
+	Value    string
+	Label    string
+	Selected bool
+}
+
+// SelectedTag represents a pre-selected tag for chip rendering in the multi-select.
+type SelectedTag struct {
+	Value string
+	Label string
 }
 
 // FormLabels holds i18n labels for the drawer form template.
@@ -83,6 +99,11 @@ type FormLabels struct {
 	StatusOnHold  string
 
 	SelectPaymentTerm string
+
+	Tags                  string
+	TagsPlaceholder       string
+	TagsSearchPlaceholder string
+	TagsNoResults         string
 }
 
 // FormData is the template data for the supplier drawer form.
@@ -114,6 +135,8 @@ type FormData struct {
 	Active                bool
 	Labels                FormLabels
 	CommonLabels          any
+	TagOptions            []TagOption
+	SelectedTags          []SelectedTag
 }
 
 // Deps holds dependencies for supplier action handlers.
@@ -125,6 +148,12 @@ type Deps struct {
 	DeleteSupplier    func(ctx context.Context, req *supplierpb.DeleteSupplierRequest) (*supplierpb.DeleteSupplierResponse, error)
 	SetSupplierActive func(ctx context.Context, id string, active bool) error
 	ListPaymentTerms  func(ctx context.Context) ([]*PaymentTermOption, error)
+
+	// Tag-related deps for multi-select tags on the supplier form
+	ListCategories         func(ctx context.Context, req *categorypb.ListCategoriesRequest) (*categorypb.ListCategoriesResponse, error)
+	ListSupplierCategories func(ctx context.Context, req *suppliercategorypb.ListSupplierCategoriesRequest) (*suppliercategorypb.ListSupplierCategoriesResponse, error)
+	CreateSupplierCategory func(ctx context.Context, req *suppliercategorypb.CreateSupplierCategoryRequest) (*suppliercategorypb.CreateSupplierCategoryResponse, error)
+	DeleteSupplierCategory func(ctx context.Context, req *suppliercategorypb.DeleteSupplierCategoryRequest) (*suppliercategorypb.DeleteSupplierCategoryResponse, error)
 }
 
 func formLabels(t func(string) string) FormLabels {
@@ -188,6 +217,11 @@ func formLabels(t func(string) string) FormLabels {
 		StatusOnHold:  t("supplier.form.statusOnHold"),
 
 		SelectPaymentTerm: t("supplier.form.selectPaymentTerm"),
+
+		Tags:                  t("supplier.form.tags"),
+		TagsPlaceholder:       t("supplier.form.tagsPlaceholder"),
+		TagsSearchPlaceholder: t("supplier.form.tagsSearchPlaceholder"),
+		TagsNoResults:         t("supplier.form.tagsNoResults"),
 	}
 }
 
@@ -238,6 +272,124 @@ func loadPaymentTerms(ctx context.Context, deps *Deps) []*PaymentTermOption {
 	return terms
 }
 
+// loadTagData returns available tag options and the pre-selected tags for the form.
+func loadTagData(ctx context.Context, deps *Deps, supplierID string) ([]TagOption, []SelectedTag) {
+	if deps.ListCategories == nil {
+		return nil, nil
+	}
+
+	catResp, err := deps.ListCategories(ctx, &categorypb.ListCategoriesRequest{})
+	if err != nil {
+		log.Printf("Failed to load supplier tag options: %v", err)
+		return nil, nil
+	}
+
+	assigned := make(map[string]bool)
+	if supplierID != "" && deps.ListSupplierCategories != nil {
+		scResp, err := deps.ListSupplierCategories(ctx, &suppliercategorypb.ListSupplierCategoriesRequest{})
+		if err != nil {
+			log.Printf("Failed to load supplier categories: %v", err)
+		} else {
+			for _, sc := range scResp.GetData() {
+				if sc.GetSupplierId() == supplierID {
+					assigned[sc.GetCategoryId()] = true
+				}
+			}
+		}
+	}
+
+	var options []TagOption
+	var selected []SelectedTag
+	for _, cat := range catResp.GetData() {
+		if cat.GetModule() != "supplier" || !cat.GetActive() {
+			continue
+		}
+		isAssigned := assigned[cat.GetId()]
+		options = append(options, TagOption{
+			Value:    cat.GetId(),
+			Label:    cat.GetName(),
+			Selected: isAssigned,
+		})
+		if isAssigned {
+			selected = append(selected, SelectedTag{
+				Value: cat.GetId(),
+				Label: cat.GetName(),
+			})
+		}
+	}
+	return options, selected
+}
+
+// syncTags reconciles the submitted tag IDs with existing supplier_category junction records.
+func syncTags(ctx context.Context, deps *Deps, supplierID string, submittedTagIDs []string) {
+	if deps.ListSupplierCategories == nil || deps.CreateSupplierCategory == nil || deps.DeleteSupplierCategory == nil {
+		return
+	}
+
+	scResp, err := deps.ListSupplierCategories(ctx, &suppliercategorypb.ListSupplierCategoriesRequest{})
+	if err != nil {
+		log.Printf("Failed to list supplier categories for sync: %v", err)
+		return
+	}
+
+	current := make(map[string]string)
+	for _, sc := range scResp.GetData() {
+		if sc.GetSupplierId() == supplierID {
+			current[sc.GetCategoryId()] = sc.GetId()
+		}
+	}
+
+	desired := make(map[string]bool)
+	for _, tagID := range submittedTagIDs {
+		if tagID != "" {
+			desired[tagID] = true
+		}
+	}
+
+	for tagID := range desired {
+		if _, exists := current[tagID]; !exists {
+			_, err := deps.CreateSupplierCategory(ctx, &suppliercategorypb.CreateSupplierCategoryRequest{
+				Data: &suppliercategorypb.SupplierCategory{
+					SupplierId: supplierID,
+					CategoryId: tagID,
+					Active:     true,
+				},
+			})
+			if err != nil {
+				log.Printf("Failed to assign tag %s to supplier %s: %v", tagID, supplierID, err)
+			}
+		}
+	}
+
+	for tagID, junctionID := range current {
+		if !desired[tagID] {
+			_, err := deps.DeleteSupplierCategory(ctx, &suppliercategorypb.DeleteSupplierCategoryRequest{
+				Data: &suppliercategorypb.SupplierCategory{Id: junctionID},
+			})
+			if err != nil {
+				log.Printf("Failed to remove tag %s from supplier %s: %v", tagID, supplierID, err)
+			}
+		}
+	}
+}
+
+// parseTagIDs splits a comma-separated string of tag IDs from the multi-select
+// hidden input into a slice of individual IDs.
+func parseTagIDs(csv string) []string {
+	if csv == "" {
+		return nil
+	}
+	parts := strings.Split(csv, ",")
+	var ids []string
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			ids = append(ids, p)
+		}
+	}
+	return ids
+}
+
 // NewAddAction creates the supplier add action (GET = form, POST = create).
 func NewAddAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
@@ -246,6 +398,7 @@ func NewAddAction(deps *Deps) view.View {
 			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		if viewCtx.Request.Method == http.MethodGet {
+			tagOptions, _ := loadTagData(ctx, deps, "")
 			return view.OK("supplier-drawer-form", &FormData{
 				FormAction:   deps.Routes.AddURL,
 				Active:       true,
@@ -253,6 +406,7 @@ func NewAddAction(deps *Deps) view.View {
 				PaymentTerms: loadPaymentTerms(ctx, deps),
 				Labels:       formLabels(viewCtx.T),
 				CommonLabels: nil, // injected by ViewAdapter
+				TagOptions:   tagOptions,
 			})
 		}
 
@@ -264,7 +418,7 @@ func NewAddAction(deps *Deps) view.View {
 		r := viewCtx.Request
 		active := r.FormValue("active") == "true"
 
-		_, err := deps.CreateSupplier(ctx, &supplierpb.CreateSupplierRequest{
+		resp, err := deps.CreateSupplier(ctx, &supplierpb.CreateSupplierRequest{
 			Data: &supplierpb.Supplier{
 				Active:             active,
 				CompanyName:        r.FormValue("company_name"),
@@ -295,6 +449,10 @@ func NewAddAction(deps *Deps) view.View {
 		if err != nil {
 			log.Printf("Failed to create supplier: %v", err)
 			return entydad.HTMXError(err.Error())
+		}
+
+		if resp != nil && len(resp.GetData()) > 0 {
+			syncTags(ctx, deps, resp.GetData()[0].GetId(), parseTagIDs(r.FormValue("tags")))
 		}
 
 		return entydad.HTMXSuccess("suppliers-table")
@@ -351,6 +509,7 @@ func NewEditAction(deps *Deps) view.View {
 				creditLimit = strconv.FormatFloat(float64(cl)/100.0, 'f', 2, 64)
 			}
 
+			tagOptions, selectedTags := loadTagData(ctx, deps, id)
 			return view.OK("supplier-drawer-form", &FormData{
 				FormAction:            route.ResolveURL(deps.Routes.EditURL, "id", id),
 				IsEdit:                true,
@@ -379,6 +538,8 @@ func NewEditAction(deps *Deps) view.View {
 				Active:                s.GetActive(),
 				Labels:                formLabels(viewCtx.T),
 				CommonLabels:          nil, // injected by ViewAdapter
+				TagOptions:            tagOptions,
+				SelectedTags:          selectedTags,
 			})
 		}
 
@@ -423,6 +584,8 @@ func NewEditAction(deps *Deps) view.View {
 			log.Printf("Failed to update supplier %s: %v", id, err)
 			return entydad.HTMXError(err.Error())
 		}
+
+		syncTags(ctx, deps, id, parseTagIDs(r.FormValue("tags")))
 
 		return entydad.HTMXSuccess("suppliers-table")
 	})

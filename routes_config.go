@@ -45,6 +45,9 @@ type ClientRoutes struct {
 	AttachmentUploadURL string `json:"attachment_upload_url"`
 	AttachmentDeleteURL string `json:"attachment_delete_url"`
 
+	// Statement export
+	StatementExportURL string `json:"statement_export_url"`
+
 	// Report routes
 	ReceivablesAgingURL string `json:"receivables_aging_url"`
 
@@ -72,6 +75,8 @@ func DefaultClientRoutes() ClientRoutes {
 		AttachmentUploadURL: ClientAttachmentUploadURL,
 		AttachmentDeleteURL: ClientAttachmentDeleteURL,
 
+		StatementExportURL: ClientStatementExportURL,
+
 		ReceivablesAgingURL: ReceivablesAgingURL,
 
 		PaymentTermsURL: PaymentTermListURL,
@@ -96,6 +101,8 @@ func (r ClientRoutes) RouteMap() map[string]string {
 
 		"client.attachment.upload": r.AttachmentUploadURL,
 		"client.attachment.delete": r.AttachmentDeleteURL,
+
+		"client.statement_export": r.StatementExportURL,
 
 		"client.receivables_aging": r.ReceivablesAgingURL,
 
@@ -539,6 +546,7 @@ func (r WorkspaceRoutes) RouteMap() map[string]string {
 
 // SupplierRoutes holds all route paths for supplier management.
 type SupplierRoutes struct {
+	DashboardURL     string `json:"dashboard_url"`
 	ListURL          string `json:"list_url"`
 	TableURL         string `json:"table_url"`
 	AddURL           string `json:"add_url"`
@@ -568,6 +576,7 @@ type SupplierRoutes struct {
 // package-level route constants.
 func DefaultSupplierRoutes() SupplierRoutes {
 	return SupplierRoutes{
+		DashboardURL:     SupplierDashboardURL,
 		ListURL:          SupplierListURL,
 		TableURL:         SupplierTableURL,
 		AddURL:           SupplierAddURL,
@@ -593,6 +602,7 @@ func DefaultSupplierRoutes() SupplierRoutes {
 // RouteMap returns a map of dot-notation keys to route path values.
 func (r SupplierRoutes) RouteMap() map[string]string {
 	return map[string]string{
+		"supplier.dashboard":       r.DashboardURL,
 		"supplier.list":            r.ListURL,
 		"supplier.table":           r.TableURL,
 		"supplier.add":             r.AddURL,
@@ -748,6 +758,44 @@ func (r ClientTagRoutes) RouteMap() map[string]string {
 		"client_tag.bulk_delete":      r.BulkDeleteURL,
 		"client_tag.set_status":       r.SetStatusURL,
 		"client_tag.bulk_set_status":  r.BulkSetStatusURL,
+	}
+}
+
+// SupplierTagRoutes holds all route paths for supplier tag (category) management.
+type SupplierTagRoutes struct {
+	ListURL          string `json:"list_url"`
+	TableURL         string `json:"table_url"`
+	AddURL           string `json:"add_url"`
+	EditURL          string `json:"edit_url"`
+	DeleteURL        string `json:"delete_url"`
+	BulkDeleteURL    string `json:"bulk_delete_url"`
+	SetStatusURL     string `json:"set_status_url"`
+	BulkSetStatusURL string `json:"bulk_set_status_url"`
+}
+
+func DefaultSupplierTagRoutes() SupplierTagRoutes {
+	return SupplierTagRoutes{
+		ListURL:          SupplierTagListURL,
+		TableURL:         SupplierTagTableURL,
+		AddURL:           SupplierTagAddURL,
+		EditURL:          SupplierTagEditURL,
+		DeleteURL:        SupplierTagDeleteURL,
+		BulkDeleteURL:    SupplierTagBulkDeleteURL,
+		SetStatusURL:     SupplierTagSetStatusURL,
+		BulkSetStatusURL: SupplierTagBulkSetStatusURL,
+	}
+}
+
+func (r SupplierTagRoutes) RouteMap() map[string]string {
+	return map[string]string{
+		"supplier_tag.list":            r.ListURL,
+		"supplier_tag.table":           r.TableURL,
+		"supplier_tag.add":             r.AddURL,
+		"supplier_tag.edit":            r.EditURL,
+		"supplier_tag.delete":          r.DeleteURL,
+		"supplier_tag.bulk_delete":     r.BulkDeleteURL,
+		"supplier_tag.set_status":      r.SetStatusURL,
+		"supplier_tag.bulk_set_status": r.BulkSetStatusURL,
 	}
 }
 

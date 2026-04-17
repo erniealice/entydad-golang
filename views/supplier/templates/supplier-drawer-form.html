@@ -219,6 +219,26 @@ Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
             )}}
         </div>
 
+        {{/* --- Tags Section --- */}}
+        {{if .TagOptions}}
+        <div class="form-row single">
+            <div class="form-group">
+                <label class="form-label">{{.Labels.Tags}}</label>
+                {{template "multi-select" (dict
+                    "ID" "supplier-tags"
+                    "Name" "tags"
+                    "Label" .Labels.Tags
+                    "Placeholder" .Labels.TagsPlaceholder
+                    "SearchPlaceholder" .Labels.TagsSearchPlaceholder
+                    "Options" .TagOptions
+                    "Selected" .SelectedTags
+                    "NoResults" .Labels.TagsNoResults
+                    "MaxVisibleChips" 3
+                )}}
+            </div>
+        </div>
+        {{end}}
+
         {{/* --- Active Toggle --- */}}
         <div class="form-row single">
             {{template "toggle" (dict

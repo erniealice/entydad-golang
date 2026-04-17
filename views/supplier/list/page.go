@@ -247,6 +247,7 @@ func supplierColumns(l entydad.SupplierLabels) []types.TableColumn {
 		{Key: "supplier_type", Label: l.Columns.SupplierType, Sortable: true, WidthClass: "col-3xl"},
 		{Key: "internal_id", Label: l.Columns.InternalID, Sortable: true, WidthClass: "col-3xl"},
 		{Key: "status", Label: l.Columns.Status, Sortable: true, WidthClass: "col-2xl"},
+		{Key: "category", Label: l.Columns.Category, WidthClass: "col-7xl"},
 		{Key: "payment_terms", Label: l.Columns.PaymentTerms, Sortable: true, WidthClass: "col-3xl"},
 		{Key: "contact_name", Label: l.Columns.ContactName, Sortable: true},
 		{Key: "outstanding_balance", Label: "Outstanding", Sortable: true, Align: "right", WidthClass: "col-4xl"},
@@ -274,8 +275,18 @@ func buildTableRows(suppliers []*supplierpb.Supplier, status string, l entydad.S
 
 		balanceCell := types.TableCell{Type: "text", Value: "—"}
 		if balance, ok := balances[id]; ok && balance != 0 {
-			balanceCell = types.TableCell{Type: "money", Value: fmt.Sprintf("%.2f", float64(balance)/100)}
+			balanceCell = types.MoneyCell(float64(balance), "", true)
 		}
+
+		var catLabels []string
+		for _, sc := range s.GetCategories() {
+			if cat := sc.GetCategory(); cat != nil {
+				if n := cat.GetName(); n != "" {
+					catLabels = append(catLabels, n)
+				}
+			}
+		}
+		categoryCell := types.BuildChipCellFromLabels(catLabels, 3)
 
 		rows = append(rows, types.TableRow{
 			ID: id,
@@ -284,6 +295,7 @@ func buildTableRows(suppliers []*supplierpb.Supplier, status string, l entydad.S
 				{Type: "text", Value: supplierType},
 				{Type: "text", Value: internalID},
 				{Type: "badge", Value: recordStatus, Variant: statusVariant(recordStatus)},
+				categoryCell,
 				{Type: "text", Value: paymentTerms},
 				{Type: "text", Value: contactName},
 				balanceCell,

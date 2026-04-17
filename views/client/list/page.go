@@ -23,13 +23,14 @@ import (
 
 // ListViewDeps holds view dependencies.
 type ListViewDeps struct {
-	Routes          entydad.ClientRoutes
-	GetListPageData func(ctx context.Context, req *clientpb.GetClientListPageDataRequest) (*clientpb.GetClientListPageDataResponse, error)
-	GetInUseIDs     func(ctx context.Context, ids []string) (map[string]bool, error)
-	Labels          entydad.ClientLabels
-	SharedLabels    entydad.SharedLabels
-	CommonLabels    pyeza.CommonLabels
-	TableLabels     types.TableLabels
+	Routes             entydad.ClientRoutes
+	GetListPageData    func(ctx context.Context, req *clientpb.GetClientListPageDataRequest) (*clientpb.GetClientListPageDataResponse, error)
+	GetInUseIDs        func(ctx context.Context, ids []string) (map[string]bool, error)
+	GetClientBalances  func(ctx context.Context) (map[string]int64, error)
+	Labels             entydad.ClientLabels
+	SharedLabels       entydad.SharedLabels
+	CommonLabels       pyeza.CommonLabels
+	TableLabels        types.TableLabels
 }
 
 // PageData holds the data for the client list page.
@@ -157,9 +158,14 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 		inUseIDs, _ = deps.GetInUseIDs(ctx, itemIDs)
 	}
 
+	var clientBalances map[string]int64
+	if deps.GetClientBalances != nil {
+		clientBalances, _ = deps.GetClientBalances(ctx)
+	}
+
 	l := deps.Labels
 	columns := clientColumns(l)
-	rows := buildTableRows(resp.GetClientList(), status, l, deps.SharedLabels, deps.Routes, inUseIDs, perms)
+	rows := buildTableRows(resp.GetClientList(), status, l, deps.SharedLabels, deps.Routes, inUseIDs, clientBalances, perms)
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
@@ -226,10 +232,11 @@ func clientColumns(l entydad.ClientLabels) []types.TableColumn {
 		{Key: "representative", Label: l.Columns.Representative, Sortable: true, Filterable: true, FilterType: types.FilterTypeString},
 		{Key: "category", Label: l.Columns.Category, WidthClass: "col-7xl"},
 		{Key: "payment_term", Label: l.Columns.PaymentTerm, WidthClass: "col-3xl"},
+		{Key: "outstanding_balance", Label: "Outstanding", Sortable: false, Align: "right", WidthClass: "col-4xl"},
 	}
 }
 
-func buildTableRows(clients []*clientpb.Client, status string, l entydad.ClientLabels, sl entydad.SharedLabels, routes entydad.ClientRoutes, inUseIDs map[string]bool, perms *types.UserPermissions) []types.TableRow {
+func buildTableRows(clients []*clientpb.Client, status string, l entydad.ClientLabels, sl entydad.SharedLabels, routes entydad.ClientRoutes, inUseIDs map[string]bool, balances map[string]int64, perms *types.UserPermissions) []types.TableRow {
 	rows := []types.TableRow{}
 	for _, c := range clients {
 		active := c.GetActive()
@@ -270,6 +277,12 @@ func buildTableRows(clients []*clientpb.Client, status string, l entydad.ClientL
 			ptCell = types.TableCell{Type: "badge", Value: pt.GetName(), Variant: "default"}
 		}
 
+		// Build outstanding balance cell
+		balanceCell := types.TableCell{Type: "text", Value: "—"}
+		if balance, ok := balances[id]; ok && balance != 0 {
+			balanceCell = types.MoneyCell(float64(balance), "", true)
+		}
+
 		rows = append(rows, types.TableRow{
 			ID: id,
 			Cells: []types.TableCell{
@@ -277,6 +290,7 @@ func buildTableRows(clients []*clientpb.Client, status string, l entydad.ClientL
 				{Type: "single-person", Person: &types.PersonData{Name: repName, Email: repEmail}},
 				categoryCell,
 				ptCell,
+				balanceCell,
 			},
 			DataAttrs: map[string]string{
 				"name":      displayName,

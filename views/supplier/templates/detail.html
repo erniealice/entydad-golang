@@ -35,8 +35,7 @@
             <tr>
                 <th>{{.Labels.Detail.PurchaseOrders.ColPONumber}}</th>
                 <th>{{.Labels.Detail.PurchaseOrders.ColOrderDate}}</th>
-                <th>{{.Labels.Detail.PurchaseOrders.ColAmount}}</th>
-                <th>{{.Labels.Detail.PurchaseOrders.ColCurrency}}</th>
+                <th class="text-right">{{.Labels.Detail.PurchaseOrders.ColAmount}}</th>
                 <th>{{.Labels.Detail.PurchaseOrders.ColStatus}}</th>
             </tr>
         </thead>
@@ -45,8 +44,7 @@
             <tr data-id="{{.ID}}">
                 <td>{{.PONumber}}</td>
                 <td>{{.OrderDate}}</td>
-                <td class="text-right">{{.TotalAmount}}</td>
-                <td>{{.Currency}}</td>
+                <td class="text-right">{{template "table-cell-money" .TotalAmount}}</td>
                 <td><span class="badge {{if eq .Status "approved"}}badge-success{{else if eq .Status "draft"}}badge-default{{else if eq .Status "pending"}}badge-warning{{else if eq .Status "cancelled"}}badge-danger{{else}}badge-info{{end}}">{{.Status}}</span></td>
             </tr>
             {{end}}
@@ -65,15 +63,15 @@
     <div class="statement-summary-row" data-testid="statement-summary">
         <div class="statement-stat-card statement-stat-card--highlight" data-testid="stat-outstanding-balance">
             <span class="stat-label">{{.Labels.Detail.OutstandingBalance}}</span>
-            <span class="stat-value">{{if .StatementSummaryDisplay}}{{.StatementSummaryDisplay.OutstandingBalance}}{{end}}</span>
+            <span class="stat-value">{{if .StatementSummaryDisplay}}{{template "table-cell-money" .StatementSummaryDisplay.OutstandingBalance}}{{end}}</span>
         </div>
         <div class="statement-stat-card" data-testid="stat-total-billed">
             <span class="stat-label">{{.Labels.Detail.TotalBilled}}</span>
-            <span class="stat-value">{{if .StatementSummaryDisplay}}{{.StatementSummaryDisplay.TotalBilled}}{{end}}</span>
+            <span class="stat-value">{{if .StatementSummaryDisplay}}{{template "table-cell-money" .StatementSummaryDisplay.TotalBilled}}{{end}}</span>
         </div>
         <div class="statement-stat-card" data-testid="stat-total-paid">
             <span class="stat-label">{{.Labels.Detail.TotalPaid}}</span>
-            <span class="stat-value">{{if .StatementSummaryDisplay}}{{.StatementSummaryDisplay.TotalPaid}}{{end}}</span>
+            <span class="stat-value">{{if .StatementSummaryDisplay}}{{template "table-cell-money" .StatementSummaryDisplay.TotalPaid}}{{end}}</span>
         </div>
         <div class="statement-stat-card" data-testid="stat-bill-count">
             <span class="stat-label">{{.Labels.Detail.Bills}}</span>
@@ -157,10 +155,10 @@
             <span class="detail-info-value">{{.PaymentTerms}}</span>
         </div>
         {{end}}
-        {{if .CreditLimit}}
+        {{if .CreditLimit.Value}}
         <div class="detail-info-item">
             <span class="detail-info-label">{{.Labels.Form.CreditLimit}}</span>
-            <span class="detail-info-value">{{.CreditLimit}}</span>
+            <span class="detail-info-value">{{template "table-cell-money" .CreditLimit}}</span>
         </div>
         {{end}}
         {{if .DefaultCurrency}}
@@ -242,6 +240,15 @@
     <h4 class="detail-section-title detail-section-title--spaced">{{.Labels.Form.Notes}}</h4>
     <div class="supplier-notes-content">
         {{.Notes}}
+    </div>
+    {{end}}
+
+    {{/* --- Tags --- */}}
+    {{if .Tags}}
+    <div class="detail-tags">
+        {{range .Tags}}
+        <span class="chip">{{.Name}}</span>
+        {{end}}
     </div>
     {{end}}
 </div>

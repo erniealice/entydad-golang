@@ -16,10 +16,17 @@ import (
 	"github.com/erniealice/entydad-golang"
 	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
 
-	supplierpb      "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/supplier"
-	purchaseorderpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/expenditure/purchase_order"
-	suppstmtpb      "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/reporting/supplier_statement"
+	categorypb         "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
+	supplierpb         "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/supplier"
+	suppliercategorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/supplier_category"
+	purchaseorderpb    "github.com/erniealice/esqyma/pkg/schema/v1/domain/expenditure/purchase_order"
+	suppstmtpb         "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/reporting/supplier_statement"
 )
+
+// TagChip holds display data for a single tag chip on the supplier detail page.
+type TagChip struct {
+	Name string
+}
 
 // DetailViewDeps holds view dependencies.
 type DetailViewDeps struct {
@@ -37,6 +44,9 @@ type DetailViewDeps struct {
 
 	ListPurchaseOrders   func(ctx context.Context, req *purchaseorderpb.ListPurchaseOrdersRequest) (*purchaseorderpb.ListPurchaseOrdersResponse, error)
 	GetSupplierStatement func(ctx context.Context, req *suppstmtpb.SupplierStatementRequest) (*suppstmtpb.SupplierStatementResponse, error)
+
+	ListCategories         func(ctx context.Context, req *categorypb.ListCategoriesRequest) (*categorypb.ListCategoriesResponse, error)
+	ListSupplierCategories func(ctx context.Context, req *suppliercategorypb.ListSupplierCategoriesRequest) (*suppliercategorypb.ListSupplierCategoriesResponse, error)
 }
 
 // PurchaseOrderRow holds display data for a single purchase order row.
@@ -44,8 +54,7 @@ type PurchaseOrderRow struct {
 	ID          string
 	PONumber    string
 	Status      string
-	TotalAmount string
-	Currency    string
+	TotalAmount types.TableCell
 	OrderDate   string
 }
 
@@ -69,7 +78,7 @@ type PageData struct {
 	ContactPhone string
 	// Financial info
 	PaymentTerms       string
-	CreditLimit        string
+	CreditLimit        types.TableCell
 	DefaultCurrency    string
 	LeadTimeDays       string
 	TaxID              string
@@ -103,13 +112,15 @@ type PageData struct {
 	StatementSummary        *suppstmtpb.SupplierStatementSummary
 	StatementSummaryDisplay *StatementSummaryDisplay
 	StatementTable          *types.TableConfig
+	// Tags
+	Tags []TagChip
 }
 
-// StatementSummaryDisplay holds pre-formatted string values for the statement summary bar.
+// StatementSummaryDisplay holds pre-formatted money cells for the statement summary bar.
 type StatementSummaryDisplay struct {
-	OutstandingBalance string
-	TotalBilled        string
-	TotalPaid          string
+	OutstandingBalance types.TableCell
+	TotalBilled        types.TableCell
+	TotalPaid          types.TableCell
 }
 
 // NewView creates the supplier detail view.
@@ -138,6 +149,27 @@ func NewView(deps *DetailViewDeps) view.View {
 
 		pageData := buildPageData(supplier, id, activeTab, viewCtx, deps)
 
+		// Load supplier tags
+		var tagChips []TagChip
+		if deps.ListCategories != nil && deps.ListSupplierCategories != nil {
+			catResp, catErr := deps.ListCategories(ctx, &categorypb.ListCategoriesRequest{})
+			scResp, scErr := deps.ListSupplierCategories(ctx, &suppliercategorypb.ListSupplierCategoriesRequest{})
+			if catErr == nil && scErr == nil {
+				assignedCatIDs := make(map[string]bool)
+				for _, sc := range scResp.GetData() {
+					if sc.GetSupplierId() == id {
+						assignedCatIDs[sc.GetCategoryId()] = true
+					}
+				}
+				for _, cat := range catResp.GetData() {
+					if cat.GetModule() == "supplier" && cat.GetActive() && assignedCatIDs[cat.GetId()] {
+						tagChips = append(tagChips, TagChip{Name: cat.GetName()})
+					}
+				}
+			}
+		}
+		pageData.Tags = tagChips
+
 		// KB help content
 		if viewCtx.Translations != nil {
 			if provider, ok := viewCtx.Translations.(*lynguaV1.TranslationProvider); ok {
@@ -161,8 +193,7 @@ func NewView(deps *DetailViewDeps) view.View {
 							ID:          po.GetId(),
 							PONumber:    po.GetPoNumber(),
 							Status:      po.GetStatus(),
-							TotalAmount: fmt.Sprintf("%.2f", float64(po.GetTotalAmount())/100.0),
-							Currency:    po.GetCurrency(),
+							TotalAmount: types.MoneyCell(float64(po.GetTotalAmount()), po.GetCurrency(), true),
 							OrderDate:   po.GetOrderDateString(),
 						})
 					}
@@ -178,9 +209,9 @@ func NewView(deps *DetailViewDeps) view.View {
 					pageData.StatementSummary = stmtResp.GetSummary()
 					if stmtResp.GetSummary() != nil {
 						pageData.StatementSummaryDisplay = &StatementSummaryDisplay{
-							OutstandingBalance: fmt.Sprintf("%.2f", float64(stmtResp.GetSummary().GetOutstandingBalance())/100),
-							TotalBilled:        fmt.Sprintf("%.2f", float64(stmtResp.GetSummary().GetTotalBilled())/100),
-							TotalPaid:          fmt.Sprintf("%.2f", float64(stmtResp.GetSummary().GetTotalPaid())/100),
+							OutstandingBalance: types.MoneyCell(float64(stmtResp.GetSummary().GetOutstandingBalance()), "", true),
+							TotalBilled:        types.MoneyCell(float64(stmtResp.GetSummary().GetTotalBilled()), "", true),
+							TotalPaid:          types.MoneyCell(float64(stmtResp.GetSummary().GetTotalPaid()), "", true),
 						}
 					}
 					pageData.StatementTable = buildSupplierStatementTable(stmtResp, deps.TableLabels)
@@ -251,8 +282,7 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 							ID:          po.GetId(),
 							PONumber:    po.GetPoNumber(),
 							Status:      po.GetStatus(),
-							TotalAmount: fmt.Sprintf("%.2f", float64(po.GetTotalAmount())/100.0),
-							Currency:    po.GetCurrency(),
+							TotalAmount: types.MoneyCell(float64(po.GetTotalAmount()), po.GetCurrency(), true),
 							OrderDate:   po.GetOrderDateString(),
 						})
 					}
@@ -268,9 +298,9 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 					pageData.StatementSummary = stmtResp.GetSummary()
 					if stmtResp.GetSummary() != nil {
 						pageData.StatementSummaryDisplay = &StatementSummaryDisplay{
-							OutstandingBalance: fmt.Sprintf("%.2f", float64(stmtResp.GetSummary().GetOutstandingBalance())/100),
-							TotalBilled:        fmt.Sprintf("%.2f", float64(stmtResp.GetSummary().GetTotalBilled())/100),
-							TotalPaid:          fmt.Sprintf("%.2f", float64(stmtResp.GetSummary().GetTotalPaid())/100),
+							OutstandingBalance: types.MoneyCell(float64(stmtResp.GetSummary().GetOutstandingBalance()), "", true),
+							TotalBilled:        types.MoneyCell(float64(stmtResp.GetSummary().GetTotalBilled()), "", true),
+							TotalPaid:          types.MoneyCell(float64(stmtResp.GetSummary().GetTotalPaid()), "", true),
 						}
 					}
 					pageData.StatementTable = buildSupplierStatementTable(stmtResp, deps.TableLabels)
@@ -345,9 +375,11 @@ func buildPageData(supplier *supplierpb.Supplier, id, activeTab string, viewCtx 
 	hasContact := contactName != "" || contactEmail != "" || contactPhone != ""
 
 	paymentTerms := supplier.GetPaymentTerms()
-	creditLimit := ""
+	var creditLimit types.TableCell
+	hasCreditLimit := false
 	if cl := supplier.GetCreditLimit(); cl > 0 {
-		creditLimit = fmt.Sprintf("%.2f", float64(cl)/100.0)
+		creditLimit = types.MoneyCell(float64(cl), supplier.GetDefaultCurrency(), true)
+		hasCreditLimit = true
 	}
 	defaultCurrency := supplier.GetDefaultCurrency()
 	leadTimeDays := ""
@@ -356,7 +388,7 @@ func buildPageData(supplier *supplierpb.Supplier, id, activeTab string, viewCtx 
 	}
 	taxID := supplier.GetTaxId()
 	registrationNumber := supplier.GetRegistrationNumber()
-	hasFinancial := paymentTerms != "" || creditLimit != "" || defaultCurrency != "" || leadTimeDays != "" || taxID != "" || registrationNumber != ""
+	hasFinancial := paymentTerms != "" || hasCreditLimit || defaultCurrency != "" || leadTimeDays != "" || taxID != "" || registrationNumber != ""
 
 	streetAddress := supplier.GetStreetAddress()
 	city := supplier.GetCity()
@@ -451,13 +483,13 @@ func buildSupplierStatementTable(resp *suppstmtpb.SupplierStatementResponse, tab
 
 	var rows []types.TableRow
 	for _, entry := range resp.Entries {
-		billedStr := ""
+		var billedCell types.TableCell
 		if entry.Billed > 0 {
-			billedStr = fmt.Sprintf("%.2f", float64(entry.Billed)/100)
+			billedCell = types.MoneyCell(float64(entry.Billed), "", true)
 		}
-		paidStr := ""
+		var paidCell types.TableCell
 		if entry.Paid > 0 {
-			paidStr = fmt.Sprintf("%.2f", float64(entry.Paid)/100)
+			paidCell = types.MoneyCell(float64(entry.Paid), "", true)
 		}
 		entryType := entry.Type
 		if len(entryType) > 0 {
@@ -470,9 +502,9 @@ func buildSupplierStatementTable(resp *suppstmtpb.SupplierStatementResponse, tab
 				{Value: entryType},
 				{Value: entry.ReferenceNumber},
 				{Value: entry.Description},
-				{Value: billedStr},
-				{Value: paidStr},
-				{Value: fmt.Sprintf("%.2f", float64(entry.Balance)/100)},
+				billedCell,
+				paidCell,
+				types.MoneyCell(float64(entry.Balance), "", true),
 			},
 		})
 	}
@@ -484,9 +516,9 @@ func buildSupplierStatementTable(resp *suppstmtpb.SupplierStatementResponse, tab
 			Cells: []types.TableCell{
 				{}, {}, {},
 				{Value: "TOTAL"},
-				{Value: fmt.Sprintf("%.2f", float64(s.TotalBilled)/100)},
-				{Value: fmt.Sprintf("%.2f", float64(s.TotalPaid)/100)},
-				{Value: fmt.Sprintf("%.2f", float64(s.OutstandingBalance)/100)},
+				types.MoneyCell(float64(s.TotalBilled), "", true),
+				types.MoneyCell(float64(s.TotalPaid), "", true),
+				types.MoneyCell(float64(s.OutstandingBalance), "", true),
 			},
 		})
 	}

@@ -120,9 +120,13 @@ const (
 	WorkspaceSwitchURL        = "/action/admin/switch-workspace"
 
 	// Client report routes
-	ReceivablesAgingURL = "/app/clients/reports/receivables-aging"
+	ReceivablesAgingURL = "/app/reports/receivables-aging"
+
+	// Client statement export
+	ClientStatementExportURL = "/action/client/{id}/statement/export"
 
 	// Supplier routes
+	SupplierDashboardURL        = "/app/suppliers/dashboard"
 	SupplierListURL             = "/app/suppliers/list/{status}"
 	SupplierTableURL            = "/action/supplier/table/{status}"
 	SupplierAddURL              = "/action/supplier/add"
@@ -151,6 +155,16 @@ const (
 	ClientTagBulkDeleteURL    = "/action/client/tags/bulk-delete"
 	ClientTagSetStatusURL     = "/action/client/tags/set-status"
 	ClientTagBulkSetStatusURL = "/action/client/tags/bulk-set-status"
+
+	// Supplier Tag (Category) routes
+	SupplierTagListURL          = "/app/suppliers/settings/tags/list"
+	SupplierTagTableURL         = "/action/supplier/tags/table"
+	SupplierTagAddURL           = "/action/supplier/tags/add"
+	SupplierTagEditURL          = "/action/supplier/tags/edit/{id}"
+	SupplierTagDeleteURL        = "/action/supplier/tags/delete"
+	SupplierTagBulkDeleteURL    = "/action/supplier/tags/bulk-delete"
+	SupplierTagSetStatusURL     = "/action/supplier/tags/set-status"
+	SupplierTagBulkSetStatusURL = "/action/supplier/tags/bulk-set-status"
 
 	// Payment Term routes — client context (shows client + both scopes)
 	PaymentTermListURL          = "/app/clients/settings/payment-terms/list"
