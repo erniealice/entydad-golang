@@ -7,6 +7,7 @@ import (
 	"sort"
 
 	"github.com/erniealice/pyeza-golang/route"
+	pyeza "github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
 
 	locationpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/location"
@@ -20,13 +21,6 @@ type LocationAreaOption struct {
 	Name string
 }
 
-// SelectOption is the dict-compatible struct expected by the pyeza form-group select component.
-type SelectOption struct {
-	Value    string
-	Label    string
-	Selected bool
-}
-
 // FormData is the template data for the location drawer form.
 type FormData struct {
 	FormAction                string
@@ -38,7 +32,7 @@ type FormData struct {
 	Timezone                  string
 	Active                    bool
 	SelectedLocationAreaID    string
-	LocationAreaSelectOptions []SelectOption
+	LocationAreaSelectOptions []pyeza.SelectOption
 	Labels                    entydad.LocationFormLabels
 	CommonLabels              any
 }
@@ -60,13 +54,13 @@ type Deps struct {
 
 // buildAreaSelectOptions converts location area options to the select component format.
 // Options are sorted alphabetically by label.
-func buildAreaSelectOptions(areas []LocationAreaOption, selectedID string) []SelectOption {
+func buildAreaSelectOptions(areas []LocationAreaOption, selectedID string) []pyeza.SelectOption {
 	sort.Slice(areas, func(i, j int) bool {
 		return areas[i].Name < areas[j].Name
 	})
-	opts := make([]SelectOption, 0, len(areas))
+	opts := make([]pyeza.SelectOption, 0, len(areas))
 	for _, a := range areas {
-		opts = append(opts, SelectOption{
+		opts = append(opts, pyeza.SelectOption{
 			Value:    a.ID,
 			Label:    a.Name,
 			Selected: a.ID == selectedID,
@@ -76,7 +70,7 @@ func buildAreaSelectOptions(areas []LocationAreaOption, selectedID string) []Sel
 }
 
 // loadAreaOptions fetches location areas if the dep is present; returns nil on no dep or error.
-func loadAreaOptions(ctx context.Context, deps *Deps, selectedID string) []SelectOption {
+func loadAreaOptions(ctx context.Context, deps *Deps, selectedID string) []pyeza.SelectOption {
 	if deps.ListLocationAreas == nil {
 		return nil
 	}

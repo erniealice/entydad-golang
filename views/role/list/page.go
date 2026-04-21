@@ -252,7 +252,7 @@ func buildTableRows(roles []*rolepb.Role, l entydad.RoleLabels, sl entydad.Share
 			deleteAction.DisabledTooltip = sl.Errors.CannotDeleteInUse
 		} else if !perms.Can("role", "delete") {
 			deleteAction.Disabled = true
-			deleteAction.DisabledTooltip = "No permission"
+			deleteAction.DisabledTooltip = sl.Badges.NoPermission
 		}
 		actions = append(actions, deleteAction)
 

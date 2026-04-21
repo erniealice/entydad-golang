@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/erniealice/pyeza-golang/route"
+	pyeza "github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
 
 	categorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
@@ -56,13 +57,6 @@ type PaymentTermOption struct {
 	Name string
 }
 
-// SelectOption is the dict-compatible struct expected by the pyeza form-group select component.
-type SelectOption struct {
-	Value    string
-	Label    string
-	Selected bool
-}
-
 // TagOption represents a tag available for selection in the form.
 // Fields named Value/Label to match the pyeza multi-select component template.
 type TagOption struct {
@@ -96,7 +90,7 @@ type FormData struct {
 	Notes                    string
 	PaymentTerms             []*PaymentTermOption
 	SelectedPaymentTermID    string
-	PaymentTermSelectOptions []SelectOption
+	PaymentTermSelectOptions []pyeza.SelectOption
 	TagOptions               []TagOption
 	SelectedTags             []SelectedTag
 	Labels                   FormLabels
@@ -156,10 +150,10 @@ func formLabels(t func(string) string) FormLabels {
 
 // buildPaymentTermSelectOptions converts a slice of PaymentTermOption into the SelectOption
 // format expected by the pyeza form-group select component.
-func buildPaymentTermSelectOptions(terms []*PaymentTermOption, selectedID string) []SelectOption {
-	opts := make([]SelectOption, 0, len(terms))
+func buildPaymentTermSelectOptions(terms []*PaymentTermOption, selectedID string) []pyeza.SelectOption {
+	opts := make([]pyeza.SelectOption, 0, len(terms))
 	for _, t := range terms {
-		opts = append(opts, SelectOption{
+		opts = append(opts, pyeza.SelectOption{
 			Value:    t.Id,
 			Label:    t.Name,
 			Selected: t.Id == selectedID,

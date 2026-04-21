@@ -225,7 +225,7 @@ func buildTableRows(permissions []*permissionpb.Permission, status string, l ent
 		}
 		if !perms.Can("permission", "delete") {
 			deleteAction.Disabled = true
-			deleteAction.DisabledTooltip = "No permission"
+			deleteAction.DisabledTooltip = sl.Badges.NoPermission
 		}
 		actions = append(actions, deleteAction)
 

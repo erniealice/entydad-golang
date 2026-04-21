@@ -262,7 +262,7 @@ func buildTableRows(workspaces []*workspacepb.Workspace, status string, l entyda
 		}
 		if !perms.Can("workspace", "delete") {
 			deleteAction.Disabled = true
-			deleteAction.DisabledTooltip = "No permission"
+			deleteAction.DisabledTooltip = sl.Badges.NoPermission
 		}
 		actions = append(actions, deleteAction)
 

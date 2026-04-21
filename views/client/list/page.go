@@ -371,7 +371,7 @@ func buildRowActions(id, name string, active, isInUse bool, l entydad.ClientLabe
 	actions := []types.TableAction{
 		{Type: "view", Label: l.Detail.Actions.ViewClient, Action: "view", Href: route.ResolveURL(routes.DetailURL, "id", id)},
 		{Type: "edit", Label: l.Detail.Actions.EditClient, Action: "edit", URL: route.ResolveURL(routes.EditURL, "id", id), DrawerTitle: l.Detail.Actions.EditClient,
-			Disabled: !perms.Can("client", "update"), DisabledTooltip: "No permission"},
+			Disabled: !perms.Can("client", "update"), DisabledTooltip: sl.Badges.NoPermission},
 	}
 	if active {
 		actions = append(actions, types.TableAction{
