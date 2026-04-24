@@ -51,6 +51,11 @@ type FormLabels struct {
 	ScopesBoth         string
 	ScopesSupplierOnly string
 	ScopesClientOnly   string
+
+	// Field-level info text surfaced via an info button beside each label.
+	NameInfo        string
+	CodeInfo        string
+	DescriptionInfo string
 }
 
 // FormData is the template data for the payment term drawer form.
@@ -119,6 +124,9 @@ func formLabels(t func(string) string) FormLabels {
 		ScopesBoth:         t("paymentTerm.form.scopesBoth"),
 		ScopesSupplierOnly: t("paymentTerm.form.scopesSupplierOnly"),
 		ScopesClientOnly:   t("paymentTerm.form.scopesClientOnly"),
+		NameInfo:           t("paymentTerm.form.nameInfo"),
+		CodeInfo:           t("paymentTerm.form.codeInfo"),
+		DescriptionInfo:    t("paymentTerm.form.descriptionInfo"),
 	}
 }
 

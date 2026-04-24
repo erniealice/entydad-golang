@@ -3,7 +3,7 @@ Supplier drawer form -- loaded into #sheetContent via HTMX.
 Used by both Add and Edit actions.
 Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
       .StreetAddress, .City, .Province, .PostalCode, .Country,
-      .DefaultCurrency, .PaymentTerms, .SelectedPaymentTermID, .LeadTimeDays, .CreditLimit,
+      .BillingCurrency, .PaymentTerms, .SelectedPaymentTermID, .LeadTimeDays, .CreditLimit,
       .Status, .Website, .Notes, .FirstName, .LastName, .Email, .Phone,
       .Active, .ID, .FormAction, .IsEdit, .Labels, .CommonLabels
 */}}
@@ -23,6 +23,7 @@ Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
                 "Value" .CompanyName
                 "Required" true
                 "Placeholder" .Labels.CompanyNamePlaceholder
+                "Info" .Labels.CompanyNameInfo
             )}}
         </div>
 
@@ -37,6 +38,7 @@ Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
                     (dict "Value" "company" "Label" .Labels.TypeCompany "Selected" (eq .SupplierType "company"))
                     (dict "Value" "individual" "Label" .Labels.TypeIndividual "Selected" (eq .SupplierType "individual"))
                 )
+                "Info" .Labels.SupplierTypeInfo
             )}}
             {{template "form-group" (dict
                 "Type" "select"
@@ -49,6 +51,7 @@ Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
                     (dict "Value" "blocked" "Label" .Labels.StatusBlocked "Selected" (eq .Status "blocked"))
                     (dict "Value" "on_hold" "Label" .Labels.StatusOnHold "Selected" (eq .Status "on_hold"))
                 )
+                "Info" .Labels.StatusInfo
             )}}
         </div>
 
@@ -81,6 +84,7 @@ Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
                 "Label" .Labels.Email
                 "Value" .Email
                 "Placeholder" .Labels.EmailPlaceholder
+                "Info" .Labels.EmailInfo
             )}}
         </div>
 
@@ -91,6 +95,7 @@ Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
                 "Label" .Labels.Phone
                 "Value" .Phone
                 "Placeholder" .Labels.PhonePlaceholder
+                "Info" .Labels.PhoneInfo
             )}}
         </div>
 
@@ -113,16 +118,18 @@ Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
                 "Label" .Labels.CreditLimit
                 "Value" .CreditLimit
                 "Placeholder" .Labels.CreditLimitPlaceholder
+                "Info" .Labels.CreditLimitInfo
             )}}
         </div>
 
         <div class="form-row">
             {{template "form-group" (dict
                 "Type" "text"
-                "Name" "default_currency"
-                "Label" .Labels.DefaultCurrency
-                "Value" .DefaultCurrency
-                "Placeholder" .Labels.DefaultCurrencyPlaceholder
+                "Name" "billing_currency"
+                "Label" .Labels.BillingCurrency
+                "Value" .BillingCurrency
+                "Placeholder" .Labels.BillingCurrencyPlaceholder
+                "Info" .Labels.BillingCurrencyInfo
             )}}
             {{template "form-group" (dict
                 "Type" "number"
@@ -130,6 +137,7 @@ Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
                 "Label" .Labels.LeadTimeDays
                 "Value" .LeadTimeDays
                 "Placeholder" .Labels.LeadTimeDaysPlaceholder
+                "Info" .Labels.LeadTimeDaysInfo
             )}}
         </div>
 
@@ -140,6 +148,7 @@ Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
                 "Label" .Labels.TaxID
                 "Value" .TaxID
                 "Placeholder" .Labels.TaxIDPlaceholder
+                "Info" .Labels.TaxIDInfo
             )}}
             {{template "form-group" (dict
                 "Type" "text"
@@ -147,6 +156,7 @@ Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
                 "Label" .Labels.RegistrationNumber
                 "Value" .RegistrationNumber
                 "Placeholder" .Labels.RegistrationNumberPlaceholder
+                "Info" .Labels.RegistrationNumberInfo
             )}}
         </div>
 
@@ -216,6 +226,7 @@ Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
                 "Value" .Notes
                 "Placeholder" .Labels.NotesPlaceholder
                 "Rows" 3
+                "Info" .Labels.NotesInfo
             )}}
         </div>
 
@@ -241,12 +252,23 @@ Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
 
         {{/* --- Active Toggle --- */}}
         <div class="form-row single">
-            {{template "toggle" (dict
-                "Name" "active"
-                "Label" .Labels.Active
-                "Checked" .Active
-                "Value" "true"
-            )}}
+            <div class="form-group form-group-toggle">
+                <label class="form-label" for="active">
+                    {{.Labels.Active}}
+                    {{if .Labels.ActiveInfo}}
+                    <span class="form-label-info" data-popover data-popover-trigger="hover click" data-popover-position="top">
+                        <button type="button" class="popover-trigger form-label-info-btn" aria-label="More info" tabindex="0">
+                            {{template "icon-info"}}
+                        </button>
+                        <div class="popover-panel form-label-info-panel" role="tooltip">
+                            <div class="popover-arrow"></div>
+                            {{.Labels.ActiveInfo}}
+                        </div>
+                    </span>
+                    {{end}}
+                </label>
+                {{template "toggle" (dict "Name" "active" "Checked" .Active "Value" "true")}}
+            </div>
         </div>
     </div>
 

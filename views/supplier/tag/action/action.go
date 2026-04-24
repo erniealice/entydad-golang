@@ -34,6 +34,12 @@ type TagFormLabels struct {
 	Description            string
 	DescriptionPlaceholder string
 	Active                 string
+
+	// Field-level info text surfaced via an info button beside each label.
+	TagNameInfo     string
+	CodeInfo        string
+	DescriptionInfo string
+	ActiveInfo      string
 }
 
 // FormData is the template data for the tag drawer form.
@@ -58,6 +64,10 @@ func tagFormLabels(t func(string) string) TagFormLabels {
 		Description:            t("supplier.tagForm.description"),
 		DescriptionPlaceholder: t("supplier.tagForm.descriptionPlaceholder"),
 		Active:                 t("supplier.tagForm.active"),
+		TagNameInfo:            t("supplier.tagForm.tagNameInfo"),
+		CodeInfo:               t("supplier.tagForm.codeInfo"),
+		DescriptionInfo:        t("supplier.tagForm.descriptionInfo"),
+		ActiveInfo:             t("supplier.tagForm.activeInfo"),
 	}
 }
 

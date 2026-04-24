@@ -74,6 +74,10 @@ type ModuleDeps struct {
 
 	// Audit history
 	ListAuditHistory func(ctx context.Context, req *auditlog.ListAuditRequest) (*auditlog.ListAuditResponse, error)
+
+	// GetFunctionalCurrency resolves the current workspace's functional currency
+	// so new-client drawers can prefill billing_currency.
+	GetFunctionalCurrency func(ctx context.Context) string
 }
 
 // Module holds all constructed client views.
@@ -106,8 +110,9 @@ func NewModule(deps *ModuleDeps) *Module {
 		ListPaymentTerms:     deps.ListPaymentTerms,
 		ListCategories:       deps.ListCategories,
 		ListClientCategories: deps.ListClientCategories,
-		CreateClientCategory: deps.CreateClientCategory,
-		DeleteClientCategory: deps.DeleteClientCategory,
+		CreateClientCategory:  deps.CreateClientCategory,
+		DeleteClientCategory:  deps.DeleteClientCategory,
+		GetFunctionalCurrency: deps.GetFunctionalCurrency,
 	}
 	listDeps := &clientlist.ListViewDeps{
 		Routes:            deps.Routes,

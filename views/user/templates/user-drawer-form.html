@@ -35,6 +35,7 @@ Data: .FirstName, .LastName, .Email, .Mobile, .Active, .ID, .FormAction, .IsEdit
                 "Value" .Email
                 "Required" true
                 "Placeholder" .Labels.EmailPlaceholder
+                "Info" .Labels.EmailInfo
             )}}
         </div>
 
@@ -45,6 +46,7 @@ Data: .FirstName, .LastName, .Email, .Mobile, .Active, .ID, .FormAction, .IsEdit
                 "Label" .Labels.Mobile
                 "Value" .Mobile
                 "Placeholder" .Labels.MobilePlaceholder
+                "Info" .Labels.MobileInfo
             )}}
         </div>
 
@@ -71,12 +73,23 @@ Data: .FirstName, .LastName, .Email, .Mobile, .Active, .ID, .FormAction, .IsEdit
         </div>
 
         <div class="form-row single">
-            {{template "toggle" (dict
-                "Name" "active"
-                "Label" .Labels.Active
-                "Checked" .Active
-                "Value" "true"
-            )}}
+            <div class="form-group form-group-toggle">
+                <label class="form-label" for="active">
+                    {{.Labels.Active}}
+                    {{if .Labels.ActiveInfo}}
+                    <span class="form-label-info" data-popover data-popover-trigger="hover click" data-popover-position="top">
+                        <button type="button" class="popover-trigger form-label-info-btn" aria-label="More info" tabindex="0">
+                            {{template "icon-info"}}
+                        </button>
+                        <div class="popover-panel form-label-info-panel" role="tooltip">
+                            <div class="popover-arrow"></div>
+                            {{.Labels.ActiveInfo}}
+                        </div>
+                    </span>
+                    {{end}}
+                </label>
+                {{template "toggle" (dict "Name" "active" "Checked" .Active "Value" "true")}}
+            </div>
         </div>
     </div>
 

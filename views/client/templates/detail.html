@@ -17,8 +17,10 @@
         {{template "client-tab-info" .}}
         {{else if eq .ActiveTab "representative"}}
         {{template "client-tab-representative" .}}
-        {{else if eq .ActiveTab "engagements"}}
-        {{template "client-tab-engagements" .}}
+        {{else if eq .ActiveTab "subscriptions"}}
+        {{template "client-tab-subscriptions" .}}
+        {{else if eq .ActiveTab "accounting"}}
+        {{template "client-tab-accounting" .}}
         {{else if eq .ActiveTab "history"}}
         {{template "client-tab-history" .}}
         {{else if eq .ActiveTab "statement"}}
@@ -145,26 +147,36 @@
 </div>
 {{end}}
 
-{{/* Engagements Tab */}}
-{{define "client-tab-engagements"}}
+{{/* Subscriptions Tab */}}
+{{define "client-tab-subscriptions"}}
 <div class="tab-scroll tab-scroll--table">
-    {{if .EngagementsTable}}
-        {{template "table-card" .EngagementsTable}}
-    {{else}}
-        <div class="detail-tab-actions">
-            <button class="btn btn-sm btn-primary"
-                    data-testid="tab-engagements-add-btn"
-                    hx-get="{{.SubscriptionAddURL}}"
-                    hx-target="#sheetContent"
-                    hx-swap="innerHTML"
-                    onclick="lf.Sheet.open()">
-                <span class="icon icon-plus"></span> {{.Labels.Detail.Tabs.Engagements}}
-            </button>
+    {{template "table-card" .SubscriptionsTable}}
+</div>
+{{end}}
+
+{{/* Accounting Tab */}}
+{{define "client-tab-accounting"}}
+<div class="tab-scroll">
+    <h2 class="visually-hidden">{{.Labels.Detail.Tabs.Accounting}}</h2>
+    <h4 class="detail-section-title">{{.Labels.Detail.Tabs.Accounting}}</h4>
+    <div class="detail-info-grid">
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Form.BillingCurrency}}</span>
+            <span class="detail-info-value">{{if .BillingCurrency}}{{.BillingCurrency}}{{else}}&mdash;{{end}}</span>
         </div>
-        <div class="coming-soon-panel">
-            <p class="coming-soon-text">{{.Labels.Detail.EmptyEngagements}}</p>
-        </div>
-    {{end}}
+    </div>
+
+    {{/* --- Edit Button --- */}}
+    <div class="detail-tab-actions detail-tab-actions--bottom">
+        <button class="btn btn-sm btn-outline"
+                data-testid="tab-accounting-edit-btn"
+                hx-get="{{.EditURL}}?mode=accounting"
+                hx-target="#sheetContent"
+                hx-swap="innerHTML"
+                onclick="lf.Sheet.open()">
+            <span class="icon icon-edit"></span> {{.CommonLabels.Buttons.Edit}}
+        </button>
+    </div>
 </div>
 {{end}}
 

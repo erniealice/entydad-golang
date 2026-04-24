@@ -74,7 +74,7 @@ type OrderRow struct {
 	Variant   string
 }
 
-// SubscriptionRow represents a single subscription/engagement in the subscriptions tab.
+// SubscriptionRow represents a single subscription in the subscriptions tab.
 type SubscriptionRow struct {
 	ID        string
 	Name      string
@@ -117,9 +117,11 @@ type PageData struct {
 	PurchaseStats PurchaseStats
 	Orders        []OrderRow
 	HasOrders     bool
-	// Engagements tab
-	Subscriptions    []SubscriptionRow
-	EngagementsTable *types.TableConfig
+	// Subscriptions tab
+	Subscriptions      []SubscriptionRow
+	SubscriptionsTable *types.TableConfig
+	// Accounting tab
+	BillingCurrency string
 	// Statement tab
 	StatementEntries        []*clientstmtpb.StatementEntry
 	StatementSummary        *clientstmtpb.ClientStatementSummary
@@ -147,7 +149,7 @@ func NewView(deps *DetailViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		id := viewCtx.Request.PathValue("id")
 
-		activeTab := viewCtx.Request.URL.Query().Get("tab")
+		activeTab := deps.Labels.Detail.Tabs.CanonicalizeTab(viewCtx.Request.URL.Query().Get("tab"))
 		if activeTab == "" {
 			activeTab = "info"
 		}
@@ -226,7 +228,7 @@ func NewView(deps *DetailViewDeps) view.View {
 			ActiveTab:          activeTab,
 			TabItems:           tabItems,
 			EditURL:            route.ResolveURL(deps.Routes.EditURL, "id", id),
-			SubscriptionAddURL: deps.SubscriptionAddURL + "?client_id=" + id + "&client_name=" + url.QueryEscape(clientName),
+			SubscriptionAddURL: buildSubscriptionAddURL(deps.SubscriptionAddURL, id, clientName, client.GetBillingCurrency()),
 			ClientName:         clientName,
 			RepresentativeName: representativeName,
 			ClientEmail:        clientEmail,
@@ -248,14 +250,15 @@ func NewView(deps *DetailViewDeps) view.View {
 			PurchaseStats:      stats,
 			Orders:             orders,
 			HasOrders:          hasOrders,
+			BillingCurrency:    client.GetBillingCurrency(),
 		}
 
 		// Load tab-specific data for the active tab on full page load
 		switch activeTab {
-		case "engagements":
+		case "subscriptions":
 			subs := loadClientSubscriptions(ctx, deps, id)
 			pageData.Subscriptions = subs
-			pageData.EngagementsTable = buildEngagementsTable(subs, pageData.SubscriptionAddURL, id, clientName, deps)
+			pageData.SubscriptionsTable = buildSubscriptionsTable(subs, pageData.SubscriptionAddURL, id, clientName, deps)
 		case "statement":
 			if deps.GetClientStatement != nil {
 				req := &clientstmtpb.ClientStatementRequest{
@@ -316,10 +319,12 @@ func buildTabItems(id string, deps *DetailViewDeps) []pyeza.TabItem {
 	routes := deps.Routes
 	base := route.ResolveURL(routes.DetailURL, "id", id)
 	action := route.ResolveURL(routes.TabActionURL, "id", id, "tab", "")
+	subscriptionsSlug := deps.Labels.Detail.Tabs.ResolveTabSlug("subscriptions")
 	return []pyeza.TabItem{
 		{Key: "info", Label: deps.Labels.Detail.Tabs.Info, Href: base + "?tab=info", HxGet: action + "info", Icon: "icon-info"},
 		{Key: "representative", Label: deps.Labels.Detail.Tabs.Representative, Href: base + "?tab=representative", HxGet: action + "representative", Icon: "icon-user"},
-		{Key: "engagements", Label: deps.Labels.Detail.Tabs.Engagements, Href: base + "?tab=engagements", HxGet: action + "engagements", Icon: "icon-file-text"},
+		{Key: "subscriptions", Label: deps.Labels.Detail.Tabs.Subscriptions, Href: base + "?tab=" + subscriptionsSlug, HxGet: action + subscriptionsSlug, Icon: "icon-file-text"},
+		{Key: "accounting", Label: deps.Labels.Detail.Tabs.Accounting, Href: base + "?tab=accounting", HxGet: action + "accounting", Icon: "icon-credit-card"},
 		{Key: "history", Label: deps.Labels.Detail.Tabs.History, Href: base + "?tab=history", HxGet: action + "history", Icon: "icon-shopping-bag"},
 		{Key: "statement", Label: deps.Labels.Detail.Tabs.Statement, Href: base + "?tab=statement", HxGet: action + "statement", Icon: "icon-file-text"},
 		{Key: "attachments", Label: "Attachments", Href: base + "?tab=attachments", HxGet: action + "attachments", Icon: "icon-paperclip"},
@@ -331,7 +336,7 @@ func buildTabItems(id string, deps *DetailViewDeps) []pyeza.TabItem {
 func NewTabAction(deps *DetailViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		id := viewCtx.Request.PathValue("id")
-		tab := viewCtx.Request.PathValue("tab")
+		tab := deps.Labels.Detail.Tabs.CanonicalizeTab(viewCtx.Request.PathValue("tab"))
 		if tab == "" {
 			tab = "info"
 		}
@@ -386,7 +391,7 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 			ClientStatus:       clientStatus,
 			StatusVariant:      statusVariant,
 			EditURL:            route.ResolveURL(deps.Routes.EditURL, "id", id),
-			SubscriptionAddURL: deps.SubscriptionAddURL + "?client_id=" + id + "&client_name=" + url.QueryEscape(clientName),
+			SubscriptionAddURL: buildSubscriptionAddURL(deps.SubscriptionAddURL, id, clientName, client.GetBillingCurrency()),
 		}
 
 		switch tab {
@@ -405,9 +410,11 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 			pageData.HasTags = len(pageData.Tags) > 0
 		case "representative":
 			// user fields already on client via GetUser()
-		case "engagements":
+		case "accounting":
+			pageData.BillingCurrency = client.GetBillingCurrency()
+		case "subscriptions":
 			pageData.Subscriptions = loadClientSubscriptions(ctx, deps, id)
-			pageData.EngagementsTable = buildEngagementsTable(pageData.Subscriptions, pageData.SubscriptionAddURL, id, clientName, deps)
+			pageData.SubscriptionsTable = buildSubscriptionsTable(pageData.Subscriptions, pageData.SubscriptionAddURL, id, clientName, deps)
 		case "history":
 			pageData.PurchaseStats, pageData.Orders = loadPurchaseHistory(ctx, deps, id)
 			pageData.HasOrders = len(pageData.Orders) > 0
@@ -519,13 +526,20 @@ func loadClientSubscriptions(ctx context.Context, deps *DetailViewDeps, clientID
 	return rows
 }
 
-// clientDisplayName returns the client's display name.
-// buildEngagementsTable builds a TableConfig for the engagements tab.
-func buildEngagementsTable(rows []SubscriptionRow, addURL string, clientID string, clientName string, deps *DetailViewDeps) *types.TableConfig {
-	if len(rows) == 0 {
-		return nil
+// buildSubscriptionAddURL appends client_id, client_name, and (when set)
+// billing_currency so the subscription drawer can scope the plan search.
+func buildSubscriptionAddURL(base, clientID, clientName, billingCurrency string) string {
+	u := base + "?client_id=" + clientID + "&client_name=" + url.QueryEscape(clientName)
+	if billingCurrency != "" {
+		u += "&billing_currency=" + url.QueryEscape(billingCurrency)
 	}
+	return u
+}
 
+// buildSubscriptionsTable builds a TableConfig for the subscriptions tab.
+// The table is always returned (even when empty) so the primary action
+// stays visible and the table's own empty state renders.
+func buildSubscriptionsTable(rows []SubscriptionRow, addURL string, clientID string, clientName string, deps *DetailViewDeps) *types.TableConfig {
 	columns := []types.TableColumn{
 		{Key: "name", Label: "Name", Sortable: true},
 		{Key: "plan", Label: "Package", Sortable: true},
@@ -556,7 +570,7 @@ func buildEngagementsTable(rows []SubscriptionRow, addURL string, clientID strin
 			Actions: []types.TableAction{
 				{Type: "view", Label: "View", Action: "view", Href: detailURL},
 				{Type: "edit", Label: "Edit", Action: "edit", URL: editURL, DrawerTitle: r.Name},
-				{Type: "delete", Label: "Delete", Action: "delete", URL: deps.SubscriptionDeleteURL, ItemName: r.Name, ConfirmTitle: "Delete Engagement", ConfirmMessage: "Are you sure you want to delete " + r.Name + "?"},
+				{Type: "delete", Label: "Delete", Action: "delete", URL: deps.SubscriptionDeleteURL, ItemName: r.Name, ConfirmTitle: "Delete Subscription", ConfirmMessage: "Are you sure you want to delete " + r.Name + "?"},
 			},
 		})
 	}
@@ -564,7 +578,7 @@ func buildEngagementsTable(rows []SubscriptionRow, addURL string, clientID strin
 	types.ApplyColumnStyles(columns, tableRows)
 
 	tc := &types.TableConfig{
-		ID:                   "engagements-table",
+		ID:                   "subscriptions-table",
 		Columns:              columns,
 		Rows:                 tableRows,
 		Labels:               deps.TableLabels,
@@ -577,14 +591,14 @@ func buildEngagementsTable(rows []SubscriptionRow, addURL string, clientID strin
 		DefaultSortColumn:    "name",
 		DefaultSortDirection: "asc",
 		EmptyState: types.TableEmptyState{
-			Title:   "No engagements",
-			Message: "No engagements found for this client.",
+			Title:   deps.Labels.Detail.EmptySubscriptionsTitle,
+			Message: deps.Labels.Detail.EmptySubscriptions,
 		},
 	}
 
 	if addURL != "" {
 		tc.PrimaryAction = &types.PrimaryAction{
-			Label:     deps.Labels.Detail.Tabs.Engagements,
+			Label:     deps.Labels.Detail.AddSubscription,
 			ActionURL: addURL,
 			Icon:      "icon-plus",
 		}

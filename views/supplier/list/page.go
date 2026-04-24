@@ -180,7 +180,7 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 
 	l := deps.Labels
 	columns := supplierColumns(l)
-	rows := buildTableRows(resp.GetSupplierList(), status, l, deps.SharedLabels, deps.Routes, inUseIDs, supplierBalances, perms)
+	rows := buildTableRows(resp.GetSupplierList(), status, l, deps.SharedLabels, deps.CommonLabels, deps.Routes, inUseIDs, supplierBalances, perms)
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
@@ -206,6 +206,17 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 	}
 	sp.BuildDisplay()
 
+	var primaryAction *types.PrimaryAction
+	if status == "active" {
+		primaryAction = &types.PrimaryAction{
+			Label:           l.Buttons.AddNew,
+			ActionURL:       deps.Routes.AddURL,
+			Icon:            "icon-plus",
+			Disabled:        !perms.Can("supplier", "create"),
+			DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
+		}
+	}
+
 	tableConfig := &types.TableConfig{
 		ID:                   "suppliers-table",
 		RefreshURL:           refreshURL,
@@ -226,13 +237,7 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 			Title:   statusEmptyTitle(l, status),
 			Message: statusEmptyMessage(l, status),
 		},
-		PrimaryAction: &types.PrimaryAction{
-			Label:           l.Buttons.AddNew,
-			ActionURL:       deps.Routes.AddURL,
-			Icon:            "icon-plus",
-			Disabled:        !perms.Can("supplier", "create"),
-			DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
-		},
+		PrimaryAction:    primaryAction,
 		BulkActions:      &bulkCfg,
 		ServerPagination: sp,
 	}
@@ -255,7 +260,7 @@ func supplierColumns(l entydad.SupplierLabels) []types.TableColumn {
 	}
 }
 
-func buildTableRows(suppliers []*supplierpb.Supplier, status string, l entydad.SupplierLabels, sl entydad.SharedLabels, routes entydad.SupplierRoutes, inUseIDs map[string]bool, balances map[string]int64, perms *types.UserPermissions) []types.TableRow {
+func buildTableRows(suppliers []*supplierpb.Supplier, status string, l entydad.SupplierLabels, sl entydad.SharedLabels, cl pyeza.CommonLabels, routes entydad.SupplierRoutes, inUseIDs map[string]bool, balances map[string]int64, perms *types.UserPermissions) []types.TableRow {
 	rows := []types.TableRow{}
 	for _, s := range suppliers {
 		recordStatus := supplierStatus(s)
@@ -306,7 +311,7 @@ func buildTableRows(suppliers []*supplierpb.Supplier, status string, l entydad.S
 				"status":       recordStatus,
 				"deletable":    strconv.FormatBool(!isInUse),
 			},
-			Actions: buildRowActions(id, companyName, recordStatus, isInUse, l, sl, routes, perms),
+			Actions: buildRowActions(id, companyName, recordStatus, isInUse, l, sl, cl, routes, perms),
 		})
 	}
 	return rows
@@ -391,11 +396,23 @@ func statusVariant(status string) string {
 	}
 }
 
-func buildRowActions(id, companyName, status string, isInUse bool, l entydad.SupplierLabels, sl entydad.SharedLabels, routes entydad.SupplierRoutes, perms *types.UserPermissions) []types.TableAction {
+func buildRowActions(id, companyName, status string, isInUse bool, l entydad.SupplierLabels, sl entydad.SharedLabels, cl pyeza.CommonLabels, routes entydad.SupplierRoutes, perms *types.UserPermissions) []types.TableAction {
 	actions := []types.TableAction{
 		{Type: "view", Label: l.Actions.View, Action: "view", Href: route.ResolveURL(routes.DetailURL, "id", id)},
 		{Type: "edit", Label: l.Actions.Edit, Action: "edit", URL: route.ResolveURL(routes.EditURL, "id", id), DrawerTitle: l.Actions.Edit,
 			Disabled: !perms.Can("supplier", "update"), DisabledTooltip: sl.Badges.NoPermission},
+	}
+
+	if status == "active" {
+		actions = append(actions, types.TableAction{
+			Type:            "clone",
+			Label:           cl.Actions.Clone,
+			Action:          "clone",
+			URL:             route.ResolveURL(routes.EditURL, "id", id),
+			DrawerTitle:     cl.Actions.Clone,
+			Disabled:        !perms.Can("supplier", "create"),
+			DisabledTooltip: sl.Badges.NoPermission,
+		})
 	}
 
 	switch status {

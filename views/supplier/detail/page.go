@@ -79,7 +79,7 @@ type PageData struct {
 	// Financial info
 	PaymentTerms       string
 	CreditLimit        types.TableCell
-	DefaultCurrency    string
+	BillingCurrency    string
 	LeadTimeDays       string
 	TaxID              string
 	RegistrationNumber string
@@ -378,17 +378,17 @@ func buildPageData(supplier *supplierpb.Supplier, id, activeTab string, viewCtx 
 	var creditLimit types.TableCell
 	hasCreditLimit := false
 	if cl := supplier.GetCreditLimit(); cl > 0 {
-		creditLimit = types.MoneyCell(float64(cl), supplier.GetDefaultCurrency(), true)
+		creditLimit = types.MoneyCell(float64(cl), supplier.GetBillingCurrency(), true)
 		hasCreditLimit = true
 	}
-	defaultCurrency := supplier.GetDefaultCurrency()
+	billingCurrency := supplier.GetBillingCurrency()
 	leadTimeDays := ""
 	if ltd := supplier.GetLeadTimeDays(); ltd > 0 {
 		leadTimeDays = fmt.Sprintf("%d", ltd)
 	}
 	taxID := supplier.GetTaxId()
 	registrationNumber := supplier.GetRegistrationNumber()
-	hasFinancial := paymentTerms != "" || hasCreditLimit || defaultCurrency != "" || leadTimeDays != "" || taxID != "" || registrationNumber != ""
+	hasFinancial := paymentTerms != "" || hasCreditLimit || billingCurrency != "" || leadTimeDays != "" || taxID != "" || registrationNumber != ""
 
 	streetAddress := supplier.GetStreetAddress()
 	city := supplier.GetCity()
@@ -438,7 +438,7 @@ func buildPageData(supplier *supplierpb.Supplier, id, activeTab string, viewCtx 
 		ContactPhone:       contactPhone,
 		PaymentTerms:       paymentTerms,
 		CreditLimit:        creditLimit,
-		DefaultCurrency:    defaultCurrency,
+		BillingCurrency:    billingCurrency,
 		LeadTimeDays:       leadTimeDays,
 		TaxID:              taxID,
 		RegistrationNumber: registrationNumber,

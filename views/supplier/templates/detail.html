@@ -161,10 +161,10 @@
             <span class="detail-info-value">{{template "table-cell-money" .CreditLimit}}</span>
         </div>
         {{end}}
-        {{if .DefaultCurrency}}
+        {{if .BillingCurrency}}
         <div class="detail-info-item">
-            <span class="detail-info-label">{{.Labels.Form.DefaultCurrency}}</span>
-            <span class="detail-info-value">{{.DefaultCurrency}}</span>
+            <span class="detail-info-label">{{.Labels.Form.BillingCurrency}}</span>
+            <span class="detail-info-value">{{.BillingCurrency}}</span>
         </div>
         {{end}}
         {{if .LeadTimeDays}}

@@ -48,6 +48,7 @@ import (
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
 	categorypb   "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
 	paymenttermpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/payment_term"
+	workspacepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace"
 	clientstmtpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/ledger/reporting/client_statement"
 	suppstmtpb   "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/reporting/supplier_statement"
 	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
@@ -264,6 +265,23 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 			if uc.Subscription != nil && uc.Subscription.Subscription != nil {
 				clientDeps.ListSubscriptions = uc.Subscription.Subscription.ListSubscriptions.Execute
 				clientDeps.GetSubscriptionListPageData = uc.Subscription.Subscription.GetSubscriptionListPageData.Execute
+			}
+			if uc.Entity.Workspace != nil && uc.Entity.Workspace.ReadWorkspace != nil {
+				readWorkspace := uc.Entity.Workspace.ReadWorkspace.Execute
+				wsID := getDefaultWorkspaceID()
+				clientDeps.GetFunctionalCurrency = func(fctx context.Context) string {
+					resp, err := readWorkspace(fctx, &workspacepb.ReadWorkspaceRequest{
+						Data: &workspacepb.Workspace{Id: wsID},
+					})
+					if err != nil {
+						return ""
+					}
+					data := resp.GetData()
+					if len(data) == 0 {
+						return ""
+					}
+					return data[0].GetFunctionalCurrency()
+				}
 			}
 			if ledgerReportingSvc != nil {
 				clientDeps.GetClientBalances = func(fctx context.Context) (map[string]int64, error) {

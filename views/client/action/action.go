@@ -49,6 +49,19 @@ type FormLabels struct {
 	TagsPlaceholder          string
 	TagsSearchPlaceholder    string
 	TagsNoResults            string
+	Accounting                 string
+	BillingCurrency            string
+	BillingCurrencyPlaceholder string
+	BillingCurrencyInfo        string
+
+	// Field-level info text surfaced via an info button beside each label.
+	NameInfo          string
+	EmailInfo         string
+	MobileInfo        string
+	NotesInfo         string
+	PaymentTermsInfo  string
+	TagsInfo          string
+	ActiveInfo        string
 }
 
 // PaymentTermOption is a minimal struct for rendering payment term options in the form.
@@ -88,6 +101,7 @@ type FormData struct {
 	Province                 string
 	PostalCode               string
 	Notes                    string
+	BillingCurrency          string
 	PaymentTerms             []*PaymentTermOption
 	SelectedPaymentTermID    string
 	PaymentTermSelectOptions []pyeza.SelectOption
@@ -112,6 +126,10 @@ type Deps struct {
 	ListClientCategories func(ctx context.Context, req *clientcategorypb.ListClientCategoriesRequest) (*clientcategorypb.ListClientCategoriesResponse, error)
 	CreateClientCategory func(ctx context.Context, req *clientcategorypb.CreateClientCategoryRequest) (*clientcategorypb.CreateClientCategoryResponse, error)
 	DeleteClientCategory func(ctx context.Context, req *clientcategorypb.DeleteClientCategoryRequest) (*clientcategorypb.DeleteClientCategoryResponse, error)
+	// GetFunctionalCurrency resolves the current workspace's functional currency
+	// so new-client drawers can prefill billing_currency. Optional; returns
+	// empty string (or a nil func) means no prefill.
+	GetFunctionalCurrency func(ctx context.Context) string
 }
 
 func formLabels(t func(string) string) FormLabels {
@@ -145,6 +163,17 @@ func formLabels(t func(string) string) FormLabels {
 		TagsPlaceholder:          t("client.form.tagsPlaceholder"),
 		TagsSearchPlaceholder:    t("client.form.tagsSearchPlaceholder"),
 		TagsNoResults:            t("client.form.tagsNoResults"),
+		NameInfo:                   t("client.form.nameInfo"),
+		EmailInfo:                  t("client.form.emailInfo"),
+		MobileInfo:                 t("client.form.mobileInfo"),
+		NotesInfo:                  t("client.form.notesInfo"),
+		PaymentTermsInfo:           t("client.form.paymentTermsInfo"),
+		TagsInfo:                   t("client.form.tagsInfo"),
+		ActiveInfo:                 t("client.form.activeInfo"),
+		Accounting:                 t("client.form.accounting"),
+		BillingCurrency:            t("client.form.billingCurrency"),
+		BillingCurrencyPlaceholder: t("client.form.billingCurrencyPlaceholder"),
+		BillingCurrencyInfo:        t("client.form.billingCurrencyInfo"),
 	}
 }
 
@@ -325,6 +354,12 @@ func NewAddAction(deps *Deps) view.View {
 				FormAction:               deps.Routes.AddURL,
 				Active:                   true,
 				Mode:                     mode,
+				BillingCurrency: func() string {
+				if deps.GetFunctionalCurrency == nil {
+					return ""
+				}
+				return deps.GetFunctionalCurrency(ctx)
+			}(),
 				PaymentTerms:             paymentTerms,
 				PaymentTermSelectOptions: buildPaymentTermSelectOptions(paymentTerms, ""),
 				TagOptions:               tagOptions,
@@ -343,14 +378,15 @@ func NewAddAction(deps *Deps) view.View {
 
 		resp, err := deps.CreateClient(ctx, &clientpb.CreateClientRequest{
 			Data: &clientpb.Client{
-				Active:        active,
-				Name:          optionalString(r.FormValue("name")),
-				StreetAddress: optionalString(r.FormValue("street_address")),
-				City:          optionalString(r.FormValue("city")),
-				Province:      optionalString(r.FormValue("province")),
-				PostalCode:    optionalString(r.FormValue("postal_code")),
-				Notes:         optionalString(r.FormValue("notes")),
-				PaymentTermId: optionalString(r.FormValue("payment_term_id")),
+				Active:          active,
+				Name:            optionalString(r.FormValue("name")),
+				StreetAddress:   optionalString(r.FormValue("street_address")),
+				City:            optionalString(r.FormValue("city")),
+				Province:        optionalString(r.FormValue("province")),
+				PostalCode:      optionalString(r.FormValue("postal_code")),
+				Notes:           optionalString(r.FormValue("notes")),
+				BillingCurrency: optionalString(r.FormValue("billing_currency")),
+				PaymentTermId:   optionalString(r.FormValue("payment_term_id")),
 				User: &userpb.User{
 					FirstName:    r.FormValue("first_name"),
 					LastName:     r.FormValue("last_name"),
@@ -379,13 +415,24 @@ func NewAddAction(deps *Deps) view.View {
 }
 
 // NewEditAction creates the client edit action (GET = form, POST = update).
+// When the GET request includes ?clone=1, the handler returns the drawer form
+// pre-populated from the source record but wired to AddURL (so submission
+// creates a new client) with " (Copy)" appended to the name. Tag assignments
+// are loaded for UI display but — because the form POSTs to the add handler —
+// get attached to the newly created client, not the source.
 func NewEditAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
-		if !perms.Can("client", "update") {
+		id := viewCtx.Request.PathValue("id")
+		isClone := viewCtx.Request.Method == http.MethodGet && viewCtx.Request.URL.Query().Get("clone") == "1"
+
+		requiredAction := "update"
+		if isClone {
+			requiredAction = "create"
+		}
+		if !perms.Can("client", requiredAction) {
 			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
-		id := viewCtx.Request.PathValue("id")
 
 		if viewCtx.Request.Method == http.MethodGet {
 			mode := viewCtx.Request.URL.Query().Get("mode")
@@ -403,12 +450,21 @@ func NewEditAction(deps *Deps) view.View {
 			paymentTerms := loadPaymentTerms(ctx, deps)
 			selectedPaymentTermID := c.GetPaymentTermId()
 
+			name := c.GetName()
+			formAction := route.ResolveURL(deps.Routes.EditURL, "id", id) + "?mode=" + mode
+			formID := id
+			if isClone {
+				name = strings.TrimSpace(name) + viewCtx.T("actions.copySuffix")
+				formAction = deps.Routes.AddURL
+				formID = ""
+			}
+
 			return view.OK("client-drawer-form", &FormData{
-				FormAction:               route.ResolveURL(deps.Routes.EditURL, "id", id) + "?mode=" + mode,
-				IsEdit:                   true,
-				ID:                       id,
+				FormAction:               formAction,
+				IsEdit:                   !isClone,
+				ID:                       formID,
 				Mode:                     mode,
-				Name:                     c.GetName(),
+				Name:                     name,
 				FirstName:                u.GetFirstName(),
 				LastName:                 u.GetLastName(),
 				Email:                    u.GetEmailAddress(),
@@ -419,6 +475,7 @@ func NewEditAction(deps *Deps) view.View {
 				Province:                 c.GetProvince(),
 				PostalCode:               c.GetPostalCode(),
 				Notes:                    c.GetNotes(),
+				BillingCurrency:          c.GetBillingCurrency(),
 				PaymentTerms:             paymentTerms,
 				SelectedPaymentTermID:    selectedPaymentTermID,
 				PaymentTermSelectOptions: buildPaymentTermSelectOptions(paymentTerms, selectedPaymentTermID),
@@ -452,6 +509,11 @@ func NewEditAction(deps *Deps) view.View {
 			clientData.PostalCode = optionalString(r.FormValue("postal_code"))
 			clientData.Notes = optionalString(r.FormValue("notes"))
 			clientData.PaymentTermId = optionalString(r.FormValue("payment_term_id"))
+		case "accounting":
+			// Only update accounting fields. Active is always present on every
+			// mode's form so we keep it authoritative.
+			clientData.Active = active
+			clientData.BillingCurrency = optionalString(r.FormValue("billing_currency"))
 		case "representative":
 			// Only update representative (user) fields; leave company fields untouched
 			userData.FirstName = r.FormValue("first_name")
@@ -469,6 +531,7 @@ func NewEditAction(deps *Deps) view.View {
 			clientData.Province = optionalString(r.FormValue("province"))
 			clientData.PostalCode = optionalString(r.FormValue("postal_code"))
 			clientData.Notes = optionalString(r.FormValue("notes"))
+			clientData.BillingCurrency = optionalString(r.FormValue("billing_currency"))
 			clientData.PaymentTermId = optionalString(r.FormValue("payment_term_id"))
 			userData.FirstName = r.FormValue("first_name")
 			userData.LastName = r.FormValue("last_name")
@@ -486,15 +549,15 @@ func NewEditAction(deps *Deps) view.View {
 			return entydad.HTMXError(err.Error())
 		}
 
-		// Sync tags — multi-select sends comma-separated IDs in a single hidden input
-		// Skip when mode is "representative": that form doesn't render the tags field,
-		// so FormValue("tags") would be empty and wipe all existing tags.
-		if mode != "representative" {
+		// Sync tags only when the current mode renders the tags field.
+		// representative + accounting forms don't, so FormValue("tags") would
+		// be empty and wipe all existing tags.
+		if mode != "representative" && mode != "accounting" {
 			syncTags(ctx, deps, id, parseTagIDs(r.FormValue("tags")))
 		}
 
 		// If mode is set, we're in the detail page context — redirect to the correct tab
-		if mode == "info" || mode == "representative" {
+		if mode == "info" || mode == "representative" || mode == "accounting" {
 			detailURL := route.ResolveURL(deps.Routes.DetailURL, "id", id) + "?tab=" + mode
 			return view.ViewResult{
 				StatusCode: http.StatusOK,

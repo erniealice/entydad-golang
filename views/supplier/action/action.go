@@ -49,7 +49,7 @@ type FormLabels struct {
 	Province           string
 	PostalCode         string
 	Country            string
-	DefaultCurrency    string
+	BillingCurrency    string
 	PaymentTerms       string
 	LeadTimeDays       string
 	CreditLimit        string
@@ -78,7 +78,7 @@ type FormLabels struct {
 	PhonePlaceholder              string
 	PaymentTermsPlaceholder       string
 	CreditLimitPlaceholder        string
-	DefaultCurrencyPlaceholder    string
+	BillingCurrencyPlaceholder    string
 	LeadTimeDaysPlaceholder       string
 	TaxIDPlaceholder              string
 	RegistrationNumberPlaceholder string
@@ -104,6 +104,21 @@ type FormLabels struct {
 	TagsPlaceholder       string
 	TagsSearchPlaceholder string
 	TagsNoResults         string
+
+	// Field-level info text surfaced via an info button beside each label.
+	CompanyNameInfo        string
+	SupplierTypeInfo       string
+	StatusInfo             string
+	EmailInfo              string
+	PhoneInfo              string
+	PaymentTermsInfo       string
+	CreditLimitInfo        string
+	BillingCurrencyInfo    string
+	LeadTimeDaysInfo       string
+	TaxIDInfo              string
+	RegistrationNumberInfo string
+	NotesInfo              string
+	ActiveInfo             string
 }
 
 // FormData is the template data for the supplier drawer form.
@@ -120,7 +135,7 @@ type FormData struct {
 	Province              string
 	PostalCode            string
 	Country               string
-	DefaultCurrency       string
+	BillingCurrency       string
 	PaymentTerms          []*PaymentTermOption
 	SelectedPaymentTermID string
 	LeadTimeDays          string
@@ -167,7 +182,7 @@ func formLabels(t func(string) string) FormLabels {
 		Province:           t("supplier.form.province"),
 		PostalCode:         t("supplier.form.postalCode"),
 		Country:            t("supplier.form.country"),
-		DefaultCurrency:    t("supplier.form.defaultCurrency"),
+		BillingCurrency:    t("supplier.form.billingCurrency"),
 		PaymentTerms:       t("supplier.form.paymentTerms"),
 		LeadTimeDays:       t("supplier.form.leadTimeDays"),
 		CreditLimit:        t("supplier.form.creditLimit"),
@@ -196,7 +211,7 @@ func formLabels(t func(string) string) FormLabels {
 		PhonePlaceholder:              t("supplier.form.phonePlaceholder"),
 		PaymentTermsPlaceholder:       t("supplier.form.paymentTermsPlaceholder"),
 		CreditLimitPlaceholder:        t("supplier.form.creditLimitPlaceholder"),
-		DefaultCurrencyPlaceholder:    t("supplier.form.defaultCurrencyPlaceholder"),
+		BillingCurrencyPlaceholder:    t("supplier.form.billingCurrencyPlaceholder"),
 		LeadTimeDaysPlaceholder:       t("supplier.form.leadTimeDaysPlaceholder"),
 		TaxIDPlaceholder:              t("supplier.form.taxIdPlaceholder"),
 		RegistrationNumberPlaceholder: t("supplier.form.registrationNumberPlaceholder"),
@@ -222,6 +237,19 @@ func formLabels(t func(string) string) FormLabels {
 		TagsPlaceholder:       t("supplier.form.tagsPlaceholder"),
 		TagsSearchPlaceholder: t("supplier.form.tagsSearchPlaceholder"),
 		TagsNoResults:         t("supplier.form.tagsNoResults"),
+		CompanyNameInfo:        t("supplier.form.companyNameInfo"),
+		SupplierTypeInfo:       t("supplier.form.supplierTypeInfo"),
+		StatusInfo:             t("supplier.form.statusInfo"),
+		EmailInfo:              t("supplier.form.emailInfo"),
+		PhoneInfo:              t("supplier.form.phoneInfo"),
+		PaymentTermsInfo:       t("supplier.form.paymentTermsInfo"),
+		CreditLimitInfo:        t("supplier.form.creditLimitInfo"),
+		BillingCurrencyInfo:    t("supplier.form.billingCurrencyInfo"),
+		LeadTimeDaysInfo:       t("supplier.form.leadTimeDaysInfo"),
+		TaxIDInfo:              t("supplier.form.taxIdInfo"),
+		RegistrationNumberInfo: t("supplier.form.registrationNumberInfo"),
+		NotesInfo:              t("supplier.form.notesInfo"),
+		ActiveInfo:             t("supplier.form.activeInfo"),
 	}
 }
 
@@ -430,7 +458,7 @@ func NewAddAction(deps *Deps) view.View {
 				Province:           optionalString(r.FormValue("province")),
 				PostalCode:         optionalString(r.FormValue("postal_code")),
 				Country:            optionalString(r.FormValue("country")),
-				DefaultCurrency:    optionalString(r.FormValue("default_currency")),
+				BillingCurrency:    optionalString(r.FormValue("billing_currency")),
 				PaymentTermId:      optionalString(r.FormValue("payment_term_id")),
 				LeadTimeDays:       optionalInt32(r.FormValue("lead_time_days")),
 				CreditLimit:        optionalInt64Money(r.FormValue("credit_limit")),
@@ -460,13 +488,22 @@ func NewAddAction(deps *Deps) view.View {
 }
 
 // NewEditAction creates the supplier edit action (GET = form, POST = update).
+// When the GET request includes ?clone=1, the handler returns the drawer form
+// pre-populated from the source record but wired to AddURL (submission creates
+// a new supplier) with " (Copy)" appended to the company name.
 func NewEditAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
-		if !perms.Can("supplier", "update") {
+		id := viewCtx.Request.PathValue("id")
+		isClone := viewCtx.Request.Method == http.MethodGet && viewCtx.Request.URL.Query().Get("clone") == "1"
+
+		requiredAction := "update"
+		if isClone {
+			requiredAction = "create"
+		}
+		if !perms.Can("supplier", requiredAction) {
 			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
-		id := viewCtx.Request.PathValue("id")
 
 		if viewCtx.Request.Method == http.MethodGet {
 			resp, err := deps.ReadSupplier(ctx, &supplierpb.ReadSupplierRequest{
@@ -509,12 +546,21 @@ func NewEditAction(deps *Deps) view.View {
 				creditLimit = strconv.FormatFloat(float64(cl)/100.0, 'f', 2, 64)
 			}
 
+			companyName := s.GetCompanyName()
+			formAction := route.ResolveURL(deps.Routes.EditURL, "id", id)
+			formID := id
+			if isClone {
+				companyName = strings.TrimSpace(companyName) + viewCtx.T("actions.copySuffix")
+				formAction = deps.Routes.AddURL
+				formID = ""
+			}
+
 			tagOptions, selectedTags := loadTagData(ctx, deps, id)
 			return view.OK("supplier-drawer-form", &FormData{
-				FormAction:            route.ResolveURL(deps.Routes.EditURL, "id", id),
-				IsEdit:                true,
-				ID:                    id,
-				CompanyName:           s.GetCompanyName(),
+				FormAction:            formAction,
+				IsEdit:                !isClone,
+				ID:                    formID,
+				CompanyName:           companyName,
 				SupplierType:          s.GetSupplierType(),
 				TaxID:                 s.GetTaxId(),
 				RegistrationNumber:    s.GetRegistrationNumber(),
@@ -523,7 +569,7 @@ func NewEditAction(deps *Deps) view.View {
 				Province:              s.GetProvince(),
 				PostalCode:            s.GetPostalCode(),
 				Country:               s.GetCountry(),
-				DefaultCurrency:       s.GetDefaultCurrency(),
+				BillingCurrency:       s.GetBillingCurrency(),
 				PaymentTerms:          loadPaymentTerms(ctx, deps),
 				SelectedPaymentTermID: s.GetPaymentTermId(),
 				LeadTimeDays:          leadTimeDays,
@@ -564,7 +610,7 @@ func NewEditAction(deps *Deps) view.View {
 				Province:           optionalString(r.FormValue("province")),
 				PostalCode:         optionalString(r.FormValue("postal_code")),
 				Country:            optionalString(r.FormValue("country")),
-				DefaultCurrency:    optionalString(r.FormValue("default_currency")),
+				BillingCurrency:    optionalString(r.FormValue("billing_currency")),
 				PaymentTermId:      optionalString(r.FormValue("payment_term_id")),
 				LeadTimeDays:       optionalInt32(r.FormValue("lead_time_days")),
 				CreditLimit:        optionalInt64Money(r.FormValue("credit_limit")),

@@ -25,6 +25,13 @@ type FormLabels struct {
 	Description               string
 	DescriptionPlaceholder    string
 	Active                    string
+
+	// Field-level info text surfaced via an info button beside each label.
+	NameInfo           string
+	PermissionCodeInfo string
+	PermissionTypeInfo string
+	DescriptionInfo    string
+	ActiveInfo         string
 }
 
 // FormData is the template data for the permission drawer form.
@@ -63,6 +70,11 @@ func formLabels(t func(string) string) FormLabels {
 		Description:               t("form.description"),
 		DescriptionPlaceholder:    t("form.descriptionPlaceholder"),
 		Active:                    t("form.active"),
+		NameInfo:                  t("permission.form.nameInfo"),
+		PermissionCodeInfo:        t("permission.form.permissionCodeInfo"),
+		PermissionTypeInfo:        t("permission.form.permissionTypeInfo"),
+		DescriptionInfo:           t("permission.form.descriptionInfo"),
+		ActiveInfo:                t("permission.form.activeInfo"),
 	}
 }
 

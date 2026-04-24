@@ -29,6 +29,11 @@ type FormLabels struct {
 	PasswordGenerate         string
 	Active                   string
 	TogglePasswordVisibility string
+
+	// Field-level info text surfaced via an info button beside each label.
+	EmailInfo  string
+	MobileInfo string
+	ActiveInfo string
 }
 
 // FormData is the template data for the user drawer form.
@@ -73,6 +78,9 @@ func formLabels(t func(string) string) FormLabels {
 		PasswordGenerate:         t("form.passwordGenerate"),
 		Active:                   t("form.active"),
 		TogglePasswordVisibility: t("form.togglePasswordVisibility"),
+		EmailInfo:                t("user.form.emailInfo"),
+		MobileInfo:               t("user.form.mobileInfo"),
+		ActiveInfo:               t("user.form.activeInfo"),
 	}
 }
 

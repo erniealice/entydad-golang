@@ -24,6 +24,7 @@ Data: .Name, .Code, .Type, .NetDays, .DiscountDays, .DiscountPercentBps,
                 "Value" .Name
                 "Required" true
                 "Placeholder" .Labels.NamePlaceholder
+                "Info" .Labels.NameInfo
             )}}
         </div>
 
@@ -35,6 +36,7 @@ Data: .Name, .Code, .Type, .NetDays, .DiscountDays, .DiscountPercentBps,
                 "Label" .Labels.Code
                 "Value" .Code
                 "Placeholder" .Labels.CodePlaceholder
+                "Info" .Labels.CodeInfo
             )}}
         </div>
 
@@ -46,6 +48,7 @@ Data: .Name, .Code, .Type, .NetDays, .DiscountDays, .DiscountPercentBps,
                 "Label" .Labels.Description
                 "Value" .Description
                 "Placeholder" .Labels.DescriptionPlaceholder
+                "Info" .Labels.DescriptionInfo
             )}}
         </div>
 
@@ -109,20 +112,12 @@ Data: .Name, .Code, .Type, .NetDays, .DiscountDays, .DiscountPercentBps,
                 <input type="number" class="form-input" id="display_order" name="display_order" value="{{.DisplayOrder}}" min="0">
             </div>
             <div class="form-group form-group-toggle">
-                <label class="form-label">{{.Labels.IsDefault}}</label>
-                {{template "toggle" (dict
-                    "Name" "is_default"
-                    "Checked" .IsDefault
-                    "Value" "true"
-                )}}
+                <label class="form-label" for="is_default">{{.Labels.IsDefault}}</label>
+                {{template "toggle" (dict "Name" "is_default" "Checked" .IsDefault "Value" "true")}}
             </div>
             <div class="form-group form-group-toggle">
-                <label class="form-label">{{.Labels.Active}}</label>
-                {{template "toggle" (dict
-                    "Name" "active"
-                    "Checked" .Active
-                    "Value" "true"
-                )}}
+                <label class="form-label" for="active">{{.Labels.Active}}</label>
+                {{template "toggle" (dict "Name" "active" "Checked" .Active "Value" "true")}}
             </div>
         </div>
 

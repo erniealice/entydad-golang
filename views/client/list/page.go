@@ -165,7 +165,7 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 
 	l := deps.Labels
 	columns := clientColumns(l)
-	rows := buildTableRows(resp.GetClientList(), status, l, deps.SharedLabels, deps.Routes, inUseIDs, clientBalances, perms)
+	rows := buildTableRows(resp.GetClientList(), status, l, deps.SharedLabels, deps.CommonLabels, deps.Routes, inUseIDs, clientBalances, perms)
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
@@ -191,6 +191,17 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 	}
 	sp.BuildDisplay()
 
+	var primaryAction *types.PrimaryAction
+	if status == "active" {
+		primaryAction = &types.PrimaryAction{
+			Label:           l.Buttons.AddNew,
+			ActionURL:       deps.Routes.AddURL,
+			Icon:            "icon-plus",
+			Disabled:        !perms.Can("client", "create"),
+			DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
+		}
+	}
+
 	tableConfig := &types.TableConfig{
 		ID:                   "clients-table",
 		RefreshURL:           refreshURL,
@@ -211,13 +222,7 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 			Title:   statusEmptyTitle(l, status),
 			Message: statusEmptyMessage(l, status),
 		},
-		PrimaryAction: &types.PrimaryAction{
-			Label:           l.Buttons.AddNew,
-			ActionURL:       deps.Routes.AddURL,
-			Icon:            "icon-plus",
-			Disabled:        !perms.Can("client", "create"),
-			DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
-		},
+		PrimaryAction:    primaryAction,
 		BulkActions:      &bulkCfg,
 		ServerPagination: sp,
 	}
@@ -236,7 +241,7 @@ func clientColumns(l entydad.ClientLabels) []types.TableColumn {
 	}
 }
 
-func buildTableRows(clients []*clientpb.Client, status string, l entydad.ClientLabels, sl entydad.SharedLabels, routes entydad.ClientRoutes, inUseIDs map[string]bool, balances map[string]int64, perms *types.UserPermissions) []types.TableRow {
+func buildTableRows(clients []*clientpb.Client, status string, l entydad.ClientLabels, sl entydad.SharedLabels, cl pyeza.CommonLabels, routes entydad.ClientRoutes, inUseIDs map[string]bool, balances map[string]int64, perms *types.UserPermissions) []types.TableRow {
 	rows := []types.TableRow{}
 	for _, c := range clients {
 		active := c.GetActive()
@@ -298,7 +303,7 @@ func buildTableRows(clients []*clientpb.Client, status string, l entydad.ClientL
 				"status":    recordStatus,
 				"deletable": strconv.FormatBool(!isInUse),
 			},
-			Actions: buildRowActions(id, displayName, active, isInUse, l, sl, routes, perms),
+			Actions: buildRowActions(id, displayName, active, isInUse, l, sl, cl, routes, perms),
 		})
 	}
 	return rows
@@ -367,13 +372,22 @@ func statusVariant(status string) string {
 	}
 }
 
-func buildRowActions(id, name string, active, isInUse bool, l entydad.ClientLabels, sl entydad.SharedLabels, routes entydad.ClientRoutes, perms *types.UserPermissions) []types.TableAction {
+func buildRowActions(id, name string, active, isInUse bool, l entydad.ClientLabels, sl entydad.SharedLabels, cl pyeza.CommonLabels, routes entydad.ClientRoutes, perms *types.UserPermissions) []types.TableAction {
 	actions := []types.TableAction{
 		{Type: "view", Label: l.Detail.Actions.ViewClient, Action: "view", Href: route.ResolveURL(routes.DetailURL, "id", id)},
 		{Type: "edit", Label: l.Detail.Actions.EditClient, Action: "edit", URL: route.ResolveURL(routes.EditURL, "id", id), DrawerTitle: l.Detail.Actions.EditClient,
 			Disabled: !perms.Can("client", "update"), DisabledTooltip: sl.Badges.NoPermission},
 	}
 	if active {
+		actions = append(actions, types.TableAction{
+			Type:            "clone",
+			Label:           cl.Actions.Clone,
+			Action:          "clone",
+			URL:             route.ResolveURL(routes.EditURL, "id", id),
+			DrawerTitle:     cl.Actions.Clone,
+			Disabled:        !perms.Can("client", "create"),
+			DisabledTooltip: sl.Badges.NoPermission,
+		})
 		actions = append(actions, types.TableAction{
 			Type: "deactivate", Label: l.Detail.Actions.DeactivateClient, Action: "deactivate",
 			URL: routes.SetStatusURL + "?status=inactive", ItemName: name,

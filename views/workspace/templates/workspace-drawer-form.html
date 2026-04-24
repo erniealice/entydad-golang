@@ -30,21 +30,17 @@ Data: .Name, .Description, .Private, .Active, .ID, .FormAction, .IsEdit, .Common
         </div>
 
         <div class="form-row single">
-            {{template "toggle" (dict
-                "Name" "private"
-                "Label" .Labels.Private
-                "Checked" .Private
-                "Value" "true"
-            )}}
+            <div class="form-group form-group-toggle">
+                <label class="form-label" for="private">{{.Labels.Private}}</label>
+                {{template "toggle" (dict "Name" "private" "Checked" .Private "Value" "true")}}
+            </div>
         </div>
 
         <div class="form-row single">
-            {{template "toggle" (dict
-                "Name" "active"
-                "Label" .Labels.Active
-                "Checked" .Active
-                "Value" "true"
-            )}}
+            <div class="form-group form-group-toggle">
+                <label class="form-label" for="active">{{.Labels.Active}}</label>
+                {{template "toggle" (dict "Name" "active" "Checked" .Active "Value" "true")}}
+            </div>
         </div>
     </div>
 

@@ -1,6 +1,8 @@
 package entydad
 
 import (
+	"strings"
+
 	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/pyeza-golang/types"
 )
@@ -74,6 +76,10 @@ type ClientFormLabels struct {
 	TagsPlaceholder          string `json:"tagsPlaceholder"`
 	TagsSearchPlaceholder    string `json:"tagsSearchPlaceholder"`
 	TagsNoResults            string `json:"tagsNoResults"`
+	Accounting                 string `json:"accounting"`
+	BillingCurrency            string `json:"billingCurrency"`
+	BillingCurrencyPlaceholder string `json:"billingCurrencyPlaceholder"`
+	BillingCurrencyInfo        string `json:"billingCurrencyInfo"`
 }
 
 type ClientDetailLabels struct {
@@ -95,8 +101,10 @@ type ClientDetailLabels struct {
 	ColAmount            string `json:"colAmount"`
 	ColStatus            string `json:"colStatus"`
 	PurchaseHistoryEmpty string `json:"purchaseHistoryEmpty"`
-	// Engagements empty state
-	EmptyEngagements string `json:"emptyEngagements"`
+	// Subscriptions tab
+	AddSubscription         string `json:"addSubscription"`
+	EmptySubscriptionsTitle string `json:"emptySubscriptionsTitle"`
+	EmptySubscriptions      string `json:"emptySubscriptions"`
 	// Statement tab stat card labels
 	OutstandingBalance string `json:"outstandingBalance"`
 	TotalBilled        string `json:"totalBilled"`
@@ -134,11 +142,37 @@ type ClientPurchaseHistoryLabels struct {
 
 // ClientDetailTabLabels holds labels for the client detail page tabs.
 type ClientDetailTabLabels struct {
-	Info           string `json:"info"`
-	Representative string `json:"representative"`
-	Engagements    string `json:"engagements"`
-	History        string `json:"history"`
-	Statement      string `json:"statement"`
+	Info              string `json:"info"`
+	Representative    string `json:"representative"`
+	Subscriptions     string `json:"subscriptions"`
+	SubscriptionsSlug string `json:"subscriptionsSlug"`
+	Accounting        string `json:"accounting"`
+	History           string `json:"history"`
+	Statement         string `json:"statement"`
+}
+
+// ResolveTabSlug returns the URL slug for a canonical tab key. The
+// "subscriptions" tab can be re-slugged per tier (e.g. professional ships
+// "engagements"); other tabs round-trip through as-is.
+func (t ClientDetailTabLabels) ResolveTabSlug(canonical string) string {
+	if canonical == "subscriptions" {
+		if s := strings.TrimSpace(t.SubscriptionsSlug); s != "" {
+			return s
+		}
+	}
+	return canonical
+}
+
+// CanonicalizeTab maps an incoming URL tab slug back to its canonical key so
+// internal template lookups and equality checks stay tier-agnostic.
+func (t ClientDetailTabLabels) CanonicalizeTab(slug string) string {
+	if slug == "" {
+		return ""
+	}
+	if s := strings.TrimSpace(t.SubscriptionsSlug); s != "" && slug == s {
+		return "subscriptions"
+	}
+	return slug
 }
 
 type ClientDetailActionLabels struct {
@@ -329,6 +363,14 @@ type LocationFormLabels struct {
 	Area                   string `json:"area"`
 	AreaPlaceholder        string `json:"areaPlaceholder"`
 	Active                 string `json:"active"`
+
+	// Field-level info text surfaced via an info button beside each label.
+	NameInfo        string `json:"nameInfo"`
+	AddressInfo     string `json:"addressInfo"`
+	DescriptionInfo string `json:"descriptionInfo"`
+	TimezoneInfo    string `json:"timezoneInfo"`
+	AreaInfo        string `json:"areaInfo"`
+	ActiveInfo      string `json:"activeInfo"`
 }
 
 type LocationActionLabels struct {
@@ -1056,7 +1098,7 @@ type SupplierFormLabels struct {
 	Province           string `json:"province"`
 	PostalCode         string `json:"postalCode"`
 	Country            string `json:"country"`
-	DefaultCurrency    string `json:"defaultCurrency"`
+	BillingCurrency    string `json:"billingCurrency"`
 	PaymentTerms       string `json:"paymentTerms"`
 	LeadTimeDays       string `json:"leadTimeDays"`
 	CreditLimit        string `json:"creditLimit"`
@@ -1085,7 +1127,7 @@ type SupplierFormLabels struct {
 	PhonePlaceholder              string `json:"phonePlaceholder"`
 	PaymentTermsPlaceholder       string `json:"paymentTermsPlaceholder"`
 	CreditLimitPlaceholder        string `json:"creditLimitPlaceholder"`
-	DefaultCurrencyPlaceholder    string `json:"defaultCurrencyPlaceholder"`
+	BillingCurrencyPlaceholder    string `json:"billingCurrencyPlaceholder"`
 	LeadTimeDaysPlaceholder       string `json:"leadTimeDaysPlaceholder"`
 	TaxIDPlaceholder              string `json:"taxIdPlaceholder"`
 	RegistrationNumberPlaceholder string `json:"registrationNumberPlaceholder"`
@@ -1330,6 +1372,11 @@ type PaymentTermFormLabels struct {
 	ScopesBoth         string `json:"scopesBoth"`
 	ScopesSupplierOnly string `json:"scopesSupplierOnly"`
 	ScopesClientOnly   string `json:"scopesClientOnly"`
+
+	// Field-level info text for the drawer form.
+	NameInfo        string `json:"nameInfo"`
+	CodeInfo        string `json:"codeInfo"`
+	DescriptionInfo string `json:"descriptionInfo"`
 }
 
 type PaymentTermActionLabels struct {
