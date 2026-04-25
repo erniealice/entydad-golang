@@ -1,7 +1,7 @@
 {{/*
 User drawer form — loaded into #sheetContent via HTMX.
 Used by both Add and Edit actions.
-Data: .FirstName, .LastName, .Email, .Mobile, .Active, .ID, .FormAction, .IsEdit, .CommonLabels
+Data: .FirstName, .LastName, .Email, .Mobile, .Timezone, .Active, .ID, .FormAction, .IsEdit, .CommonLabels
 */}}
 {{define "user-drawer-form"}}
 <form hx-post="{{.FormAction}}" hx-swap="none" hx-on::after-request="lf.Sheet.handleResponse(event)">
@@ -47,6 +47,21 @@ Data: .FirstName, .LastName, .Email, .Mobile, .Active, .ID, .FormAction, .IsEdit
                 "Value" .Mobile
                 "Placeholder" .Labels.MobilePlaceholder
                 "Info" .Labels.MobileInfo
+            )}}
+        </div>
+
+        <div class="form-row single">
+            {{template "auto-complete" (dict
+                "ID" "timezone-search"
+                "Name" "timezone"
+                "Label" .Labels.Timezone
+                "Placeholder" .Labels.TimezonePlaceholder
+                "SearchPlaceholder" .Labels.TimezoneSearchPlaceholder
+                "SearchURL" .SearchTimezonesURL
+                "Value" .Timezone
+                "SelectedLabel" .Timezone
+                "NoResults" .Labels.TimezoneNoResults
+                "Info" .Labels.TimezoneInfo
             )}}
         </div>
 

@@ -43,7 +43,7 @@ type ModuleDeps struct {
 	ReadSupplier     func(ctx context.Context, req *supplierpb.ReadSupplierRequest) (*supplierpb.ReadSupplierResponse, error)
 	UpdateSupplier   func(ctx context.Context, req *supplierpb.UpdateSupplierRequest) (*supplierpb.UpdateSupplierResponse, error)
 	DeleteSupplier   func(ctx context.Context, req *supplierpb.DeleteSupplierRequest) (*supplierpb.DeleteSupplierResponse, error)
-	SetActive        func(ctx context.Context, id string, active bool) error
+	SetStatus        func(ctx context.Context, id string, status string) error
 	ListPaymentTerms func(ctx context.Context) ([]*PaymentTermOption, error)
 
 	// Attachment operations
@@ -98,7 +98,7 @@ func NewModule(deps *ModuleDeps) *Module {
 		ReadSupplier:           deps.ReadSupplier,
 		UpdateSupplier:         deps.UpdateSupplier,
 		DeleteSupplier:         deps.DeleteSupplier,
-		SetSupplierActive:      deps.SetActive,
+		SetSupplierStatus:      deps.SetStatus,
 		ListPaymentTerms:       deps.ListPaymentTerms,
 		ListCategories:         deps.ListCategories,
 		ListSupplierCategories: deps.ListSupplierCategories,

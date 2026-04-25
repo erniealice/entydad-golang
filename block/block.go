@@ -200,6 +200,9 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 			}
 			clientDeps := &clientmod.ModuleDeps{
 				Routes:               routes.Client,
+				// User module owns the timezone search endpoint; the client
+				// representative form reuses the same JSON handler.
+				SearchTimezonesURL:   routes.User.SearchTimezonesURL,
 				CommonLabels:         ctx.Common,
 				SharedLabels:         labels.Shared,
 				Labels:               labels.Client,
@@ -212,8 +215,15 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 				ReadClient:           uc.Entity.Client.ReadClient.Execute,
 				UpdateClient:         uc.Entity.Client.UpdateClient.Execute,
 				DeleteClient:         uc.Entity.Client.DeleteClient.Execute,
-				SetActive: func(fctx context.Context, id string, active bool) error {
-					_, err := db.Update(fctx, "client", id, map[string]any{"active": active})
+				SetStatus: func(fctx context.Context, id string, status string) error {
+					// Keep the legacy `active` boolean in sync with the lifecycle
+					// status so consumers that still filter on c.active see
+					// consistent values: only "inactive" flips active=false.
+					active := status != "inactive"
+					_, err := db.Update(fctx, "client", id, map[string]any{
+						"status": status,
+						"active": active,
+					})
 					return err
 				},
 				ListPaymentTerms: func(fctx context.Context) ([]*clientmod.PaymentTermOption, error) {
@@ -244,10 +254,11 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 					}
 					return ledgerReportingSvc.GetClientStatement(fctx, req)
 				},
-				SubscriptionAddURL:    routes.Subscription.AddURL,
-				SubscriptionDetailURL: routes.Subscription.DetailURL,
-				SubscriptionEditURL:   routes.Subscription.EditURL,
-				SubscriptionDeleteURL: routes.Subscription.DeleteURL,
+				SubscriptionAddURL:                routes.Subscription.AddURL,
+				SubscriptionDetailURL:             routes.Subscription.DetailURL,
+				SubscriptionUnderClientDetailURL:  routes.Subscription.UnderClientDetailURL,
+				SubscriptionEditURL:               routes.Subscription.EditURL,
+				SubscriptionDeleteURL:             routes.Subscription.DeleteURL,
 				UploadFile:            uploadFile,
 				ListAttachments:       listAttachments,
 				CreateAttachment:      createAttachment,
@@ -572,15 +583,15 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 				DashboardTitleLabels: labels.Dashboard,
 				TableLabels:          ctx.Table,
 				GetInUseIDs: refChecker.GetSupplierInUseIDs,
-				SetActive: func(fctx context.Context, id string, active bool) error {
-					// `active` is the soft-delete flag; status transitions (active↔blocked)
-					// must NOT flip it, otherwise deactivated suppliers look identical to
-					// deleted ones. Only DeleteSupplier should set active=false.
-					status := "blocked"
-					if active {
-						status = "active"
-					}
-					_, err := db.Update(fctx, "supplier", id, map[string]any{"active": true, "status": status})
+				SetStatus: func(fctx context.Context, id string, status string) error {
+					// `active` is the soft-delete flag; status transitions
+					// (active/blocked/on_hold) must NOT flip it, otherwise
+					// deactivated suppliers look identical to deleted ones.
+					// Only DeleteSupplier should set active=false.
+					_, err := db.Update(fctx, "supplier", id, map[string]any{
+						"active": true,
+						"status": status,
+					})
 					return err
 				},
 				ListPaymentTerms: func(fctx context.Context) ([]*suppliermod.PaymentTermOption, error) {

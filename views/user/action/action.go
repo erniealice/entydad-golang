@@ -16,38 +16,45 @@ import (
 
 // FormLabels holds i18n labels for the drawer form template.
 type FormLabels struct {
-	FirstName                string
-	FirstNamePlaceholder     string
-	LastName                 string
-	LastNamePlaceholder      string
-	Email                    string
-	EmailPlaceholder         string
-	Mobile                   string
-	MobilePlaceholder        string
-	Password                 string
-	PasswordPlaceholder      string
-	PasswordGenerate         string
-	Active                   string
-	TogglePasswordVisibility string
+	FirstName                 string
+	FirstNamePlaceholder      string
+	LastName                  string
+	LastNamePlaceholder       string
+	Email                     string
+	EmailPlaceholder          string
+	Mobile                    string
+	MobilePlaceholder         string
+	Timezone                  string
+	TimezonePlaceholder       string
+	TimezoneSearchPlaceholder string
+	TimezoneNoResults         string
+	Password                  string
+	PasswordPlaceholder       string
+	PasswordGenerate          string
+	Active                    string
+	TogglePasswordVisibility  string
 
 	// Field-level info text surfaced via an info button beside each label.
-	EmailInfo  string
-	MobileInfo string
-	ActiveInfo string
+	EmailInfo    string
+	MobileInfo   string
+	TimezoneInfo string
+	ActiveInfo   string
 }
 
 // FormData is the template data for the user drawer form.
 type FormData struct {
-	FormAction   string
-	IsEdit       bool
-	ID           string
-	FirstName    string
-	LastName     string
-	Email        string
-	Mobile       string
-	Active       bool
-	Labels       FormLabels
-	CommonLabels any
+	FormAction         string
+	IsEdit             bool
+	ID                 string
+	FirstName          string
+	LastName           string
+	Email              string
+	Mobile             string
+	Timezone           string
+	Active             bool
+	SearchTimezonesURL string
+	Labels             FormLabels
+	CommonLabels       any
 }
 
 // Deps holds dependencies for user action handlers.
@@ -65,22 +72,27 @@ type Deps struct {
 
 func formLabels(t func(string) string) FormLabels {
 	return FormLabels{
-		FirstName:                t("form.firstName"),
-		FirstNamePlaceholder:     t("form.firstNamePlaceholder"),
-		LastName:                 t("form.lastName"),
-		LastNamePlaceholder:      t("form.lastNamePlaceholder"),
-		Email:                    t("form.email"),
-		EmailPlaceholder:         t("form.emailPlaceholder"),
-		Mobile:                   t("form.mobile"),
-		MobilePlaceholder:        t("form.mobilePlaceholder"),
-		Password:                 t("form.password"),
-		PasswordPlaceholder:      t("form.passwordPlaceholder"),
-		PasswordGenerate:         t("form.passwordGenerate"),
-		Active:                   t("form.active"),
-		TogglePasswordVisibility: t("form.togglePasswordVisibility"),
-		EmailInfo:                t("user.form.emailInfo"),
-		MobileInfo:               t("user.form.mobileInfo"),
-		ActiveInfo:               t("user.form.activeInfo"),
+		FirstName:                 t("form.firstName"),
+		FirstNamePlaceholder:      t("form.firstNamePlaceholder"),
+		LastName:                  t("form.lastName"),
+		LastNamePlaceholder:       t("form.lastNamePlaceholder"),
+		Email:                     t("form.email"),
+		EmailPlaceholder:          t("form.emailPlaceholder"),
+		Mobile:                    t("form.mobile"),
+		MobilePlaceholder:         t("form.mobilePlaceholder"),
+		Timezone:                  t("form.timezone"),
+		TimezonePlaceholder:       t("form.timezonePlaceholder"),
+		TimezoneSearchPlaceholder: t("form.timezoneSearchPlaceholder"),
+		TimezoneNoResults:         t("form.timezoneNoResults"),
+		Password:                  t("form.password"),
+		PasswordPlaceholder:       t("form.passwordPlaceholder"),
+		PasswordGenerate:          t("form.passwordGenerate"),
+		Active:                    t("form.active"),
+		TogglePasswordVisibility:  t("form.togglePasswordVisibility"),
+		EmailInfo:                 t("user.form.emailInfo"),
+		MobileInfo:                t("user.form.mobileInfo"),
+		TimezoneInfo:              t("user.form.timezoneInfo"),
+		ActiveInfo:                t("user.form.activeInfo"),
 	}
 }
 
@@ -101,10 +113,11 @@ func NewAddAction(deps *Deps) view.View {
 		}
 		if viewCtx.Request.Method == http.MethodGet {
 			return view.OK("user-drawer-form", &FormData{
-				FormAction:   deps.Routes.AddURL,
-				Active:       true,
-				Labels:       formLabels(viewCtx.T),
-				CommonLabels: nil, // injected by ViewAdapter
+				FormAction:         deps.Routes.AddURL,
+				Active:             true,
+				SearchTimezonesURL: deps.Routes.SearchTimezonesURL,
+				Labels:             formLabels(viewCtx.T),
+				CommonLabels:       nil, // injected by ViewAdapter
 			})
 		}
 
@@ -133,15 +146,20 @@ func NewAddAction(deps *Deps) view.View {
 			mobile = "+639000000000"
 		}
 
+		newUser := &userpb.User{
+			FirstName:    r.FormValue("first_name"),
+			LastName:     r.FormValue("last_name"),
+			EmailAddress: r.FormValue("email_address"),
+			MobileNumber: mobile,
+			PasswordHash: pwHash,
+			Active:       active,
+		}
+		if tz := r.FormValue("timezone"); tz != "" {
+			newUser.Timezone = &tz
+		}
+
 		createResp, err := deps.CreateUser(ctx, &userpb.CreateUserRequest{
-			Data: &userpb.User{
-				FirstName:    r.FormValue("first_name"),
-				LastName:     r.FormValue("last_name"),
-				EmailAddress: r.FormValue("email_address"),
-				MobileNumber: mobile,
-				PasswordHash: pwHash,
-				Active:       active,
-			},
+			Data: newUser,
 		})
 		if err != nil {
 			log.Printf("Failed to create user: %v", err)
@@ -193,16 +211,18 @@ func NewEditAction(deps *Deps) view.View {
 			u := resp.GetData()[0]
 
 			return view.OK("user-drawer-form", &FormData{
-				FormAction:   route.ResolveURL(deps.Routes.EditURL, "id", id),
-				IsEdit:       true,
-				ID:           id,
-				FirstName:    u.GetFirstName(),
-				LastName:     u.GetLastName(),
-				Email:        u.GetEmailAddress(),
-				Mobile:       u.GetMobileNumber(),
-				Active:       u.GetActive(),
-				Labels:       formLabels(viewCtx.T),
-				CommonLabels: nil, // injected by ViewAdapter
+				FormAction:         route.ResolveURL(deps.Routes.EditURL, "id", id),
+				IsEdit:             true,
+				ID:                 id,
+				FirstName:          u.GetFirstName(),
+				LastName:           u.GetLastName(),
+				Email:              u.GetEmailAddress(),
+				Mobile:             u.GetMobileNumber(),
+				Timezone:           u.GetTimezone(),
+				Active:             u.GetActive(),
+				SearchTimezonesURL: deps.Routes.SearchTimezonesURL,
+				Labels:             formLabels(viewCtx.T),
+				CommonLabels:       nil, // injected by ViewAdapter
 			})
 		}
 
@@ -221,6 +241,9 @@ func NewEditAction(deps *Deps) view.View {
 			EmailAddress: r.FormValue("email_address"),
 			MobileNumber: r.FormValue("mobile_number"),
 			Active:       active,
+		}
+		if tz := r.FormValue("timezone"); tz != "" {
+			userData.Timezone = &tz
 		}
 
 		// Only update password if a new one was provided

@@ -27,10 +27,14 @@ type ClientPageLabels struct {
 	Heading         string `json:"heading"`
 	HeadingActive   string `json:"headingActive"`
 	HeadingProspect string `json:"headingProspect"`
+	HeadingOnHold   string `json:"headingOnHold"`
+	HeadingBlocked  string `json:"headingBlocked"`
 	HeadingInactive string `json:"headingInactive"`
 	Caption         string `json:"caption"`
 	CaptionActive   string `json:"captionActive"`
 	CaptionProspect string `json:"captionProspect"`
+	CaptionOnHold   string `json:"captionOnHold"`
+	CaptionBlocked  string `json:"captionBlocked"`
 	CaptionInactive string `json:"captionInactive"`
 }
 
@@ -41,6 +45,7 @@ type ClientButtonLabels struct {
 type ClientColumnLabels struct {
 	ClientName     string `json:"clientName"`
 	Representative string `json:"representative"`
+	Status         string `json:"status"`
 	Category       string `json:"category"`
 	PaymentTerm    string `json:"paymentTerm"`
 	DateCreated    string `json:"dateCreated"`
@@ -51,6 +56,10 @@ type ClientEmptyLabels struct {
 	ActiveMessage   string `json:"activeMessage"`
 	ProspectTitle   string `json:"prospectTitle"`
 	ProspectMessage string `json:"prospectMessage"`
+	OnHoldTitle     string `json:"onHoldTitle"`
+	OnHoldMessage   string `json:"onHoldMessage"`
+	BlockedTitle    string `json:"blockedTitle"`
+	BlockedMessage  string `json:"blockedMessage"`
 	InactiveTitle   string `json:"inactiveTitle"`
 	InactiveMessage string `json:"inactiveMessage"`
 }
@@ -181,10 +190,17 @@ type ClientDetailActionLabels struct {
 	DeleteClient     string `json:"deleteClient"`
 	DeactivateClient string `json:"deactivateClient"`
 	ActivateClient   string `json:"activateClient"`
+	BlockClient      string `json:"blockClient"`
+	HoldClient       string `json:"holdClient"`
+	SetProspect      string `json:"setProspect"`
 }
 
 type ClientBulkActionLabels struct {
 	SetAsInactive string `json:"setAsInactive"`
+	SetAsActive   string `json:"setAsActive"`
+	SetAsBlocked  string `json:"setAsBlocked"`
+	SetAsOnHold   string `json:"setAsOnHold"`
+	SetAsProspect string `json:"setAsProspect"`
 }
 
 // ---------------------------------------------------------------------------
@@ -232,7 +248,10 @@ type UserEmptyLabels struct {
 }
 
 type UserFormLabels struct {
-	Mobile string `json:"mobile"`
+	Mobile              string `json:"mobile"`
+	Timezone            string `json:"timezone"`
+	TimezonePlaceholder string `json:"timezonePlaceholder"`
+	TimezoneInfo        string `json:"timezoneInfo"`
 }
 
 type UserActionLabels struct {
@@ -1423,11 +1442,15 @@ type SharedConfirmLabels struct {
 	Deactivate     string `json:"deactivate"`
 	Delete         string `json:"delete"`
 	Block          string `json:"block"`
+	Hold           string `json:"hold"`
+	Prospect       string `json:"prospect"`
 	Remove         string `json:"remove"`
 	BulkActivate   string `json:"bulkActivate"`
 	BulkDeactivate string `json:"bulkDeactivate"`
 	BulkDelete     string `json:"bulkDelete"`
 	BulkBlock      string `json:"bulkBlock"`
+	BulkHold       string `json:"bulkHold"`
+	BulkProspect   string `json:"bulkProspect"`
 }
 
 // SharedBadgeLabels holds translatable badge values.

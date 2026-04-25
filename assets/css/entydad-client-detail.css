@@ -33,17 +33,6 @@
     color: var(--text-secondary);
 }
 
-.detail-tab-actions {
-    display: flex;
-    gap: var(--spacing-sm);
-}
-
-.detail-tab-actions--bottom {
-    margin-top: var(--spacing-2xl);
-    padding-top: var(--spacing-lg);
-    border-top: var(--border-width) solid var(--border);
-}
-
 /* --- Statement tab summary bar --- */
 .statement-summary-row {
     display: flex;

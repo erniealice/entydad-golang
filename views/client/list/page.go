@@ -81,10 +81,15 @@ func NewView(deps *ListViewDeps) view.View {
 			Table:           tableConfig,
 		}
 
-		// KB help content
+		// KB help content — status-specific slug with generic fallback.
 		if viewCtx.Translations != nil {
 			if provider, ok := viewCtx.Translations.(*lynguaV1.TranslationProvider); ok {
-				if kb, _ := provider.LoadKBIfExists(viewCtx.Lang, viewCtx.BusinessType, "client"); kb != nil {
+				slug := "clients-list-" + status
+				kb, _ := provider.LoadKBIfExists(viewCtx.Lang, viewCtx.BusinessType, slug)
+				if kb == nil {
+					kb, _ = provider.LoadKBIfExists(viewCtx.Lang, viewCtx.BusinessType, "clients-list")
+				}
+				if kb != nil {
 					pageData.HasHelp = true
 					pageData.HelpContent = kb.Body
 				}
@@ -125,15 +130,20 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 
 	listParams := espynahttp.ToListParams(p, clientSearchFields)
 
-	// Inject status filter for server-side pagination
-	activeValue := status != "inactive"
+	// Inject status filter for server-side pagination. Client lifecycle now
+	// has 5 states (prospect/active/on_hold/blocked/inactive). The legacy
+	// `active` boolean is kept in sync by SetStatus closure but `status` is
+	// the source of truth for filter equality.
 	if listParams.Filters == nil {
 		listParams.Filters = &commonpb.FilterRequest{}
 	}
 	listParams.Filters.Filters = append(listParams.Filters.Filters, &commonpb.TypedFilter{
-		Field: "c.active",
-		FilterType: &commonpb.TypedFilter_BooleanFilter{
-			BooleanFilter: &commonpb.BooleanFilter{Value: activeValue},
+		Field: "c.status",
+		FilterType: &commonpb.TypedFilter_StringFilter{
+			StringFilter: &commonpb.StringFilter{
+				Value:    status,
+				Operator: commonpb.StringOperator_STRING_EQUALS,
+			},
 		},
 	})
 
@@ -232,6 +242,8 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 }
 
 func clientColumns(l entydad.ClientLabels) []types.TableColumn {
+	// Status column omitted on purpose — the list page is already scoped
+	// by /list/{status}, so a per-row badge would be redundant.
 	return []types.TableColumn{
 		{Key: "name", Label: l.Columns.ClientName, Sortable: true, Filterable: true, FilterType: types.FilterTypeString},
 		{Key: "representative", Label: l.Columns.Representative, Sortable: true, Filterable: true, FilterType: types.FilterTypeString},
@@ -241,14 +253,15 @@ func clientColumns(l entydad.ClientLabels) []types.TableColumn {
 	}
 }
 
-func buildTableRows(clients []*clientpb.Client, status string, l entydad.ClientLabels, sl entydad.SharedLabels, cl pyeza.CommonLabels, routes entydad.ClientRoutes, inUseIDs map[string]bool, balances map[string]int64, perms *types.UserPermissions) []types.TableRow {
+// buildTableRows builds row data for a status-filtered list. listStatus is
+// the lifecycle filter the page is currently rendering (e.g. "blocked"); row
+// actions key off that, not the proto field, so transitions stay correct even
+// when individual rows have stale/unmigrated status values. The badge cell
+// still reflects each row's own recordStatus.
+func buildTableRows(clients []*clientpb.Client, listStatus string, l entydad.ClientLabels, sl entydad.SharedLabels, cl pyeza.CommonLabels, routes entydad.ClientRoutes, inUseIDs map[string]bool, balances map[string]int64, perms *types.UserPermissions) []types.TableRow {
 	rows := []types.TableRow{}
 	for _, c := range clients {
-		active := c.GetActive()
-		recordStatus := "active"
-		if !active {
-			recordStatus = "inactive"
-		}
+		recordStatus := clientStatus(c)
 
 		id := c.GetId()
 		u := c.GetUser()
@@ -303,10 +316,23 @@ func buildTableRows(clients []*clientpb.Client, status string, l entydad.ClientL
 				"status":    recordStatus,
 				"deletable": strconv.FormatBool(!isInUse),
 			},
-			Actions: buildRowActions(id, displayName, active, isInUse, l, sl, cl, routes, perms),
+			Actions: buildRowActions(id, displayName, listStatus, isInUse, l, sl, cl, routes, perms),
 		})
 	}
 	return rows
+}
+
+// clientStatus returns the effective lifecycle status for a client. Falls back
+// to the legacy `active` boolean when the proto status field is unset (for
+// rows created before the status column existed and not yet backfilled).
+func clientStatus(c *clientpb.Client) string {
+	if st := c.GetStatus(); st != "" {
+		return st
+	}
+	if c.GetActive() {
+		return "active"
+	}
+	return "inactive"
 }
 
 func statusPageTitle(l entydad.ClientLabels, status string) string {
@@ -315,6 +341,10 @@ func statusPageTitle(l entydad.ClientLabels, status string) string {
 		return l.Page.HeadingActive
 	case "prospect":
 		return l.Page.HeadingProspect
+	case "on_hold":
+		return l.Page.HeadingOnHold
+	case "blocked":
+		return l.Page.HeadingBlocked
 	case "inactive":
 		return l.Page.HeadingInactive
 	default:
@@ -328,6 +358,10 @@ func statusPageCaption(l entydad.ClientLabels, status string) string {
 		return l.Page.CaptionActive
 	case "prospect":
 		return l.Page.CaptionProspect
+	case "on_hold":
+		return l.Page.CaptionOnHold
+	case "blocked":
+		return l.Page.CaptionBlocked
 	case "inactive":
 		return l.Page.CaptionInactive
 	default:
@@ -341,6 +375,10 @@ func statusEmptyTitle(l entydad.ClientLabels, status string) string {
 		return l.Empty.ActiveTitle
 	case "prospect":
 		return l.Empty.ProspectTitle
+	case "on_hold":
+		return l.Empty.OnHoldTitle
+	case "blocked":
+		return l.Empty.BlockedTitle
 	case "inactive":
 		return l.Empty.InactiveTitle
 	default:
@@ -354,6 +392,10 @@ func statusEmptyMessage(l entydad.ClientLabels, status string) string {
 		return l.Empty.ActiveMessage
 	case "prospect":
 		return l.Empty.ProspectMessage
+	case "on_hold":
+		return l.Empty.OnHoldMessage
+	case "blocked":
+		return l.Empty.BlockedMessage
 	case "inactive":
 		return l.Empty.InactiveMessage
 	default:
@@ -365,20 +407,87 @@ func statusVariant(status string) string {
 	switch status {
 	case "active":
 		return "success"
-	case "inactive":
+	case "prospect":
+		return "info"
+	case "on_hold":
 		return "warning"
+	case "blocked":
+		return "danger"
+	case "inactive":
+		return "default"
 	default:
 		return "default"
 	}
 }
 
-func buildRowActions(id, name string, active, isInUse bool, l entydad.ClientLabels, sl entydad.SharedLabels, cl pyeza.CommonLabels, routes entydad.ClientRoutes, perms *types.UserPermissions) []types.TableAction {
+// statusLabel resolves the user-facing badge text for a client lifecycle
+// status through the centralized pyeza.StatusLabels (CommonLabels.Status).
+func statusLabel(cl pyeza.CommonLabels, status string) string {
+	switch status {
+	case "active":
+		return cl.Status.Active
+	case "prospect":
+		return cl.Status.Prospect
+	case "on_hold":
+		return cl.Status.OnHold
+	case "blocked":
+		return cl.Status.Blocked
+	case "inactive":
+		return cl.Status.Inactive
+	default:
+		return status
+	}
+}
+
+// statusTransition describes a possible move to a target lifecycle status.
+// Order in clientStatusTransitions controls the order in which actions appear
+// in row + bulk menus.
+type statusTransition struct {
+	target  string // proto status value: prospect/active/on_hold/blocked/inactive
+	iconKey string // table.html action Type (drives the icon)
+	action  string // table.html data-{action}-url switch (activate or deactivate)
+	variant string // bulk action variant (primary/warning/danger/default)
+}
+
+// clientStatusTransitions enumerates the canonical transition order. Row
+// actions filter out the source status, so a row in the "active" filter shows
+// transitions to the other 4 states.
+var clientStatusTransitions = []statusTransition{
+	{target: "active", iconKey: "activate", action: "activate", variant: "primary"},
+	{target: "prospect", iconKey: "prospect", action: "deactivate", variant: "info"},
+	{target: "on_hold", iconKey: "hold", action: "deactivate", variant: "warning"},
+	{target: "blocked", iconKey: "block", action: "deactivate", variant: "danger"},
+	{target: "inactive", iconKey: "deactivate", action: "deactivate", variant: "default"},
+}
+
+// transitionLabels returns (rowLabel, bulkLabel, confirmRow, confirmBulk) for
+// a given target status, sourced from typed labels so every string is
+// translatable.
+func transitionLabels(target string, l entydad.ClientLabels, sl entydad.SharedLabels) (string, string, string, string) {
+	switch target {
+	case "active":
+		return l.Detail.Actions.ActivateClient, l.BulkActions.SetAsActive, sl.Confirm.Activate, sl.Confirm.BulkActivate
+	case "prospect":
+		return l.Detail.Actions.SetProspect, l.BulkActions.SetAsProspect, sl.Confirm.Prospect, sl.Confirm.BulkProspect
+	case "on_hold":
+		return l.Detail.Actions.HoldClient, l.BulkActions.SetAsOnHold, sl.Confirm.Hold, sl.Confirm.BulkHold
+	case "blocked":
+		return l.Detail.Actions.BlockClient, l.BulkActions.SetAsBlocked, sl.Confirm.Block, sl.Confirm.BulkBlock
+	case "inactive":
+		return l.Detail.Actions.DeactivateClient, l.BulkActions.SetAsInactive, sl.Confirm.Deactivate, sl.Confirm.BulkDeactivate
+	}
+	return "", "", "", ""
+}
+
+func buildRowActions(id, name, status string, isInUse bool, l entydad.ClientLabels, sl entydad.SharedLabels, cl pyeza.CommonLabels, routes entydad.ClientRoutes, perms *types.UserPermissions) []types.TableAction {
 	actions := []types.TableAction{
 		{Type: "view", Label: l.Detail.Actions.ViewClient, Action: "view", Href: route.ResolveURL(routes.DetailURL, "id", id)},
 		{Type: "edit", Label: l.Detail.Actions.EditClient, Action: "edit", URL: route.ResolveURL(routes.EditURL, "id", id), DrawerTitle: l.Detail.Actions.EditClient,
 			Disabled: !perms.Can("client", "update"), DisabledTooltip: sl.Badges.NoPermission},
 	}
-	if active {
+
+	// Clone is only meaningful for healthy (active) clients.
+	if status == "active" {
 		actions = append(actions, types.TableAction{
 			Type:            "clone",
 			Label:           cl.Actions.Clone,
@@ -388,22 +497,28 @@ func buildRowActions(id, name string, active, isInUse bool, l entydad.ClientLabe
 			Disabled:        !perms.Can("client", "create"),
 			DisabledTooltip: sl.Badges.NoPermission,
 		})
+	}
+
+	canUpdate := perms.Can("client", "update")
+	tooltip := sl.Badges.NoPermission
+
+	// Cross-status transitions: every status filter exposes moves to all 4
+	// other lifecycle states, so users can always reach any status from any
+	// list without round-tripping through detail.
+	for _, tr := range clientStatusTransitions {
+		if tr.target == status {
+			continue
+		}
+		rowLabel, _, confirmRow, _ := transitionLabels(tr.target, l, sl)
 		actions = append(actions, types.TableAction{
-			Type: "deactivate", Label: l.Detail.Actions.DeactivateClient, Action: "deactivate",
-			URL: routes.SetStatusURL + "?status=inactive", ItemName: name,
-			ConfirmTitle:   l.Detail.Actions.DeactivateClient,
-			ConfirmMessage: fmt.Sprintf(sl.Confirm.Deactivate, name),
-			Disabled:       !perms.Can("client", "update"), DisabledTooltip: sl.Badges.NoPermission,
-		})
-	} else {
-		actions = append(actions, types.TableAction{
-			Type: "activate", Label: l.Detail.Actions.ActivateClient, Action: "activate",
-			URL: routes.SetStatusURL + "?status=active", ItemName: name,
-			ConfirmTitle:   l.Detail.Actions.ActivateClient,
-			ConfirmMessage: fmt.Sprintf(sl.Confirm.Activate, name),
-			Disabled:       !perms.Can("client", "update"), DisabledTooltip: sl.Badges.NoPermission,
+			Type: tr.iconKey, Label: rowLabel, Action: tr.action,
+			URL: routes.SetStatusURL + "?status=" + tr.target, ItemName: name,
+			ConfirmTitle:   rowLabel,
+			ConfirmMessage: fmt.Sprintf(confirmRow, name),
+			Disabled:       !canUpdate, DisabledTooltip: tooltip,
 		})
 	}
+
 	deleteAction := types.TableAction{
 		Type:     "delete",
 		Label:    l.Detail.Actions.DeleteClient,
@@ -422,31 +537,42 @@ func buildRowActions(id, name string, active, isInUse bool, l entydad.ClientLabe
 	return actions
 }
 
+// bulkActionIcon maps a transition iconKey to the bulk-action icon name.
+// Bulk action icons live outside table.html (no shared mapping), so each
+// status keeps an explicit icon-* string.
+func bulkActionIcon(iconKey string) string {
+	switch iconKey {
+	case "activate":
+		return "icon-user-check"
+	case "prospect":
+		return "icon-user-plus"
+	case "hold":
+		return "icon-pause-circle"
+	case "block":
+		return "icon-x-circle"
+	case "deactivate":
+		return "icon-user-minus"
+	}
+	return "icon-edit"
+}
+
 func buildBulkActions(l entydad.ClientLabels, sl entydad.SharedLabels, cl pyeza.CommonLabels, status string, routes entydad.ClientRoutes) []types.BulkAction {
 	actions := []types.BulkAction{}
 
-	switch status {
-	case "active":
+	for _, tr := range clientStatusTransitions {
+		if tr.target == status {
+			continue
+		}
+		_, bulkLabel, _, confirmBulk := transitionLabels(tr.target, l, sl)
 		actions = append(actions, types.BulkAction{
-			Key:             "deactivate",
-			Label:           l.BulkActions.SetAsInactive,
-			Icon:            "icon-user-minus",
-			Variant:         "warning",
+			Key:             tr.target,
+			Label:           bulkLabel,
+			Icon:            bulkActionIcon(tr.iconKey),
+			Variant:         tr.variant,
 			Endpoint:        routes.BulkSetStatusURL,
-			ConfirmTitle:    l.BulkActions.SetAsInactive,
-			ConfirmMessage:  sl.Confirm.BulkDeactivate,
-			ExtraParamsJSON: `{"target_status":"inactive"}`,
-		})
-	case "inactive":
-		actions = append(actions, types.BulkAction{
-			Key:             "activate",
-			Label:           cl.Bulk.Activate,
-			Icon:            "icon-user-check",
-			Variant:         "primary",
-			Endpoint:        routes.BulkSetStatusURL,
-			ConfirmTitle:    cl.Bulk.Activate,
-			ConfirmMessage:  sl.Confirm.BulkActivate,
-			ExtraParamsJSON: `{"target_status":"active"}`,
+			ConfirmTitle:    bulkLabel,
+			ConfirmMessage:  confirmBulk,
+			ExtraParamsJSON: `{"target_status":"` + tr.target + `"}`,
 		})
 	}
 

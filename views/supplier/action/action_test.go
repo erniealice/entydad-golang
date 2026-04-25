@@ -17,7 +17,7 @@ import (
 
 type supplierStatusCall struct {
 	id     string
-	active bool
+	status string
 }
 
 func TestNewSetStatusAction_TableDriven(t *testing.T) {
@@ -55,33 +55,33 @@ func TestNewSetStatusAction_TableDriven(t *testing.T) {
 			wantErrHeader: "invalid status",
 		},
 		{
-			name:        "active maps to true",
+			name:        "active persists active status",
 			perms:       []string{"supplier:update"},
 			req:         httptest.NewRequest(http.MethodPost, "/action/suppliers/status?id=sup-1&status=active", nil),
 			wantStatus:  http.StatusOK,
 			wantTrigger: `{"formSuccess":true,"refreshTable":"suppliers-table"}`,
 			wantStatusCalls: []supplierStatusCall{
-				{id: "sup-1", active: true},
+				{id: "sup-1", status: "active"},
 			},
 		},
 		{
-			name:        "blocked maps to false",
+			name:        "blocked persists blocked status",
 			perms:       []string{"supplier:update"},
 			req:         httptest.NewRequest(http.MethodPost, "/action/suppliers/status?id=sup-2&status=blocked", nil),
 			wantStatus:  http.StatusOK,
 			wantTrigger: `{"formSuccess":true,"refreshTable":"suppliers-table"}`,
 			wantStatusCalls: []supplierStatusCall{
-				{id: "sup-2", active: false},
+				{id: "sup-2", status: "blocked"},
 			},
 		},
 		{
-			name:        "on_hold maps to false",
+			name:        "on_hold persists on_hold status",
 			perms:       []string{"supplier:update"},
 			req:         httptest.NewRequest(http.MethodPost, "/action/suppliers/status?id=sup-3&status=on_hold", nil),
 			wantStatus:  http.StatusOK,
 			wantTrigger: `{"formSuccess":true,"refreshTable":"suppliers-table"}`,
 			wantStatusCalls: []supplierStatusCall{
-				{id: "sup-3", active: false},
+				{id: "sup-3", status: "on_hold"},
 			},
 		},
 		{
@@ -91,7 +91,7 @@ func TestNewSetStatusAction_TableDriven(t *testing.T) {
 			wantStatus:  http.StatusOK,
 			wantTrigger: `{"formSuccess":true,"refreshTable":"suppliers-table"}`,
 			wantStatusCalls: []supplierStatusCall{
-				{id: "sup-4", active: true},
+				{id: "sup-4", status: "active"},
 			},
 		},
 		{
@@ -102,7 +102,7 @@ func TestNewSetStatusAction_TableDriven(t *testing.T) {
 			wantStatus:    http.StatusUnprocessableEntity,
 			wantErrHeader: "set active failed",
 			wantStatusCalls: []supplierStatusCall{
-				{id: "sup-5", active: true},
+				{id: "sup-5", status: "active"},
 			},
 		},
 		{
@@ -123,8 +123,8 @@ func TestNewSetStatusAction_TableDriven(t *testing.T) {
 			var gotCalls []supplierStatusCall
 			deps := &Deps{}
 			if tt.name != "nil dependency still succeeds after validation" {
-				deps.SetSupplierActive = func(_ context.Context, id string, active bool) error {
-					gotCalls = append(gotCalls, supplierStatusCall{id: id, active: active})
+				deps.SetSupplierStatus = func(_ context.Context, id string, status string) error {
+					gotCalls = append(gotCalls, supplierStatusCall{id: id, status: status})
 					return tt.setErr
 				}
 			}
@@ -144,7 +144,7 @@ func TestNewSetStatusAction_TableDriven(t *testing.T) {
 				t.Fatalf("HX-Trigger = %q, want %q", got, tt.wantTrigger)
 			}
 			if !reflect.DeepEqual(gotCalls, tt.wantStatusCalls) {
-				t.Fatalf("SetSupplierActive calls = %#v, want %#v", gotCalls, tt.wantStatusCalls)
+				t.Fatalf("SetSupplierStatus calls = %#v, want %#v", gotCalls, tt.wantStatusCalls)
 			}
 		})
 	}
@@ -186,36 +186,36 @@ func TestNewBulkSetStatusAction_TableDriven(t *testing.T) {
 			wantErrHeader: "invalid target status",
 		},
 		{
-			name:        "active maps all ids to true",
+			name:        "active persists active for all ids",
 			perms:       []string{"supplier:update"},
 			req:         newMultipartRequest(http.MethodPost, "/action/suppliers/bulk-status", map[string][]string{"id": {"sup-1", "sup-2"}, "target_status": {"active"}}),
 			wantStatus:  http.StatusOK,
 			wantTrigger: `{"formSuccess":true,"refreshTable":"suppliers-table"}`,
 			wantStatusCalls: []supplierStatusCall{
-				{id: "sup-1", active: true},
-				{id: "sup-2", active: true},
+				{id: "sup-1", status: "active"},
+				{id: "sup-2", status: "active"},
 			},
 		},
 		{
-			name:        "blocked maps all ids to false",
+			name:        "blocked persists blocked for all ids",
 			perms:       []string{"supplier:update"},
 			req:         newMultipartRequest(http.MethodPost, "/action/suppliers/bulk-status", map[string][]string{"id": {"sup-3", "sup-4"}, "target_status": {"blocked"}}),
 			wantStatus:  http.StatusOK,
 			wantTrigger: `{"formSuccess":true,"refreshTable":"suppliers-table"}`,
 			wantStatusCalls: []supplierStatusCall{
-				{id: "sup-3", active: false},
-				{id: "sup-4", active: false},
+				{id: "sup-3", status: "blocked"},
+				{id: "sup-4", status: "blocked"},
 			},
 		},
 		{
-			name:        "on_hold maps all ids to false",
+			name:        "on_hold persists on_hold for all ids",
 			perms:       []string{"supplier:update"},
 			req:         newMultipartRequest(http.MethodPost, "/action/suppliers/bulk-status", map[string][]string{"id": {"sup-5", "sup-6"}, "target_status": {"on_hold"}}),
 			wantStatus:  http.StatusOK,
 			wantTrigger: `{"formSuccess":true,"refreshTable":"suppliers-table"}`,
 			wantStatusCalls: []supplierStatusCall{
-				{id: "sup-5", active: false},
-				{id: "sup-6", active: false},
+				{id: "sup-5", status: "on_hold"},
+				{id: "sup-6", status: "on_hold"},
 			},
 		},
 		{
@@ -226,8 +226,8 @@ func TestNewBulkSetStatusAction_TableDriven(t *testing.T) {
 			wantStatus:  http.StatusOK,
 			wantTrigger: `{"formSuccess":true,"refreshTable":"suppliers-table"}`,
 			wantStatusCalls: []supplierStatusCall{
-				{id: "sup-7", active: true},
-				{id: "sup-8", active: true},
+				{id: "sup-7", status: "active"},
+				{id: "sup-8", status: "active"},
 			},
 		},
 		{
@@ -249,8 +249,8 @@ func TestNewBulkSetStatusAction_TableDriven(t *testing.T) {
 			var gotCalls []supplierStatusCall
 			deps := &Deps{}
 			if !tt.useNilDep {
-				deps.SetSupplierActive = func(_ context.Context, id string, active bool) error {
-					gotCalls = append(gotCalls, supplierStatusCall{id: id, active: active})
+				deps.SetSupplierStatus = func(_ context.Context, id string, status string) error {
+					gotCalls = append(gotCalls, supplierStatusCall{id: id, status: status})
 					if tt.setErrByID != nil {
 						if err, ok := tt.setErrByID[id]; ok {
 							return err
@@ -275,7 +275,7 @@ func TestNewBulkSetStatusAction_TableDriven(t *testing.T) {
 				t.Fatalf("HX-Trigger = %q, want %q", got, tt.wantTrigger)
 			}
 			if !reflect.DeepEqual(gotCalls, tt.wantStatusCalls) {
-				t.Fatalf("SetSupplierActive calls = %#v, want %#v", gotCalls, tt.wantStatusCalls)
+				t.Fatalf("SetSupplierStatus calls = %#v, want %#v", gotCalls, tt.wantStatusCalls)
 			}
 		})
 	}

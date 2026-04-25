@@ -111,6 +111,21 @@ Data: .FirstName, .LastName, .Email, .Mobile, .Active, .ID, .FormAction, .IsEdit
                 "Info" .Labels.MobileInfo
             )}}
         </div>
+
+        <div class="form-row single">
+            {{template "auto-complete" (dict
+                "ID" "rep-timezone-search"
+                "Name" "timezone"
+                "Label" .Labels.Timezone
+                "Placeholder" .Labels.TimezonePlaceholder
+                "SearchPlaceholder" .Labels.TimezoneSearchPlaceholder
+                "SearchURL" .SearchTimezonesURL
+                "Value" .Timezone
+                "SelectedLabel" .Timezone
+                "NoResults" .Labels.TimezoneNoResults
+                "Info" .Labels.TimezoneInfo
+            )}}
+        </div>
         {{end}}
 
         {{if or (eq .Mode "") (eq .Mode "info")}}

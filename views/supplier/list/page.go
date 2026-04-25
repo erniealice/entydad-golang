@@ -79,10 +79,15 @@ func NewView(deps *ListViewDeps) view.View {
 			Table:           tableConfig,
 		}
 
-		// KB help content
+		// KB help content — status-specific slug with generic fallback.
 		if viewCtx.Translations != nil {
 			if provider, ok := viewCtx.Translations.(*lynguaV1.TranslationProvider); ok {
-				if kb, _ := provider.LoadKBIfExists(viewCtx.Lang, viewCtx.BusinessType, "client"); kb != nil {
+				slug := "suppliers-list-" + status
+				kb, _ := provider.LoadKBIfExists(viewCtx.Lang, viewCtx.BusinessType, slug)
+				if kb == nil {
+					kb, _ = provider.LoadKBIfExists(viewCtx.Lang, viewCtx.BusinessType, "suppliers-list")
+				}
+				if kb != nil {
 					pageData.HasHelp = true
 					pageData.HelpContent = kb.Body
 				}
@@ -299,7 +304,7 @@ func buildTableRows(suppliers []*supplierpb.Supplier, status string, l entydad.S
 				{Type: "text", Value: companyName},
 				{Type: "text", Value: supplierType},
 				{Type: "text", Value: internalID},
-				{Type: "badge", Value: recordStatus, Variant: statusVariant(recordStatus)},
+				{Type: "badge", Value: statusLabel(cl, recordStatus), Variant: statusVariant(recordStatus)},
 				categoryCell,
 				{Type: "text", Value: paymentTerms},
 				{Type: "text", Value: contactName},
@@ -311,7 +316,10 @@ func buildTableRows(suppliers []*supplierpb.Supplier, status string, l entydad.S
 				"status":       recordStatus,
 				"deletable":    strconv.FormatBool(!isInUse),
 			},
-			Actions: buildRowActions(id, companyName, recordStatus, isInUse, l, sl, cl, routes, perms),
+			// Row actions key off the page's list filter (not per-row
+			// recordStatus) so transitions stay correct even when rows have
+			// stale/unmigrated status values.
+			Actions: buildRowActions(id, companyName, status, isInUse, l, sl, cl, routes, perms),
 		})
 	}
 	return rows
@@ -396,6 +404,60 @@ func statusVariant(status string) string {
 	}
 }
 
+func statusLabel(cl pyeza.CommonLabels, status string) string {
+	switch status {
+	case "active":
+		return cl.Status.Active
+	case "inactive":
+		return cl.Status.Inactive
+	case "blocked":
+		return cl.Status.Blocked
+	case "on_hold":
+		return cl.Status.OnHold
+	default:
+		return status
+	}
+}
+
+// supplierStatusTransition describes a possible move to a target supplier
+// lifecycle status (active/blocked/on_hold).
+type supplierStatusTransition struct {
+	target  string
+	iconKey string
+	action  string
+	variant string
+}
+
+var supplierStatusTransitions = []supplierStatusTransition{
+	{target: "active", iconKey: "activate", action: "activate", variant: "primary"},
+	{target: "on_hold", iconKey: "hold", action: "deactivate", variant: "warning"},
+	{target: "blocked", iconKey: "block", action: "deactivate", variant: "danger"},
+}
+
+func supplierTransitionLabels(target string, l entydad.SupplierLabels, sl entydad.SharedLabels) (string, string, string) {
+	switch target {
+	case "active":
+		return l.Actions.Activate, sl.Confirm.Activate, sl.Confirm.BulkActivate
+	case "on_hold":
+		return l.Actions.SetOnHold, sl.Confirm.Hold, sl.Confirm.BulkHold
+	case "blocked":
+		return l.Actions.Block, sl.Confirm.Block, sl.Confirm.BulkBlock
+	}
+	return "", "", ""
+}
+
+func supplierBulkActionIcon(iconKey string) string {
+	switch iconKey {
+	case "activate":
+		return "icon-check-circle"
+	case "hold":
+		return "icon-pause-circle"
+	case "block":
+		return "icon-x-circle"
+	}
+	return "icon-edit"
+}
+
 func buildRowActions(id, companyName, status string, isInUse bool, l entydad.SupplierLabels, sl entydad.SharedLabels, cl pyeza.CommonLabels, routes entydad.SupplierRoutes, perms *types.UserPermissions) []types.TableAction {
 	actions := []types.TableAction{
 		{Type: "view", Label: l.Actions.View, Action: "view", Href: route.ResolveURL(routes.DetailURL, "id", id)},
@@ -415,30 +477,22 @@ func buildRowActions(id, companyName, status string, isInUse bool, l entydad.Sup
 		})
 	}
 
-	switch status {
-	case "active":
+	canUpdate := perms.Can("supplier", "update")
+	tooltip := sl.Badges.NoPermission
+
+	// Cross-status transitions: every status filter exposes moves to all
+	// other supplier lifecycle states (active/on_hold/blocked).
+	for _, tr := range supplierStatusTransitions {
+		if tr.target == status {
+			continue
+		}
+		rowLabel, confirmRow, _ := supplierTransitionLabels(tr.target, l, sl)
 		actions = append(actions, types.TableAction{
-			Type: "deactivate", Label: l.Actions.Block, Action: "deactivate",
-			URL: routes.SetStatusURL + "?status=blocked", ItemName: companyName,
-			ConfirmTitle:   l.Actions.Block,
-			ConfirmMessage: fmt.Sprintf(sl.Confirm.Block, companyName),
-			Disabled:       !perms.Can("supplier", "update"), DisabledTooltip: sl.Badges.NoPermission,
-		})
-	case "blocked":
-		actions = append(actions, types.TableAction{
-			Type: "activate", Label: l.Actions.Activate, Action: "activate",
-			URL: routes.SetStatusURL + "?status=active", ItemName: companyName,
-			ConfirmTitle:   l.Actions.Activate,
-			ConfirmMessage: fmt.Sprintf(sl.Confirm.Activate, companyName),
-			Disabled:       !perms.Can("supplier", "update"), DisabledTooltip: sl.Badges.NoPermission,
-		})
-	case "on_hold":
-		actions = append(actions, types.TableAction{
-			Type: "activate", Label: l.Actions.Activate, Action: "activate",
-			URL: routes.SetStatusURL + "?status=active", ItemName: companyName,
-			ConfirmTitle:   l.Actions.Activate,
-			ConfirmMessage: fmt.Sprintf(sl.Confirm.Activate, companyName),
-			Disabled:       !perms.Can("supplier", "update"), DisabledTooltip: sl.Badges.NoPermission,
+			Type: tr.iconKey, Label: rowLabel, Action: tr.action,
+			URL: routes.SetStatusURL + "?status=" + tr.target, ItemName: companyName,
+			ConfirmTitle:   rowLabel,
+			ConfirmMessage: fmt.Sprintf(confirmRow, companyName),
+			Disabled:       !canUpdate, DisabledTooltip: tooltip,
 		})
 	}
 
@@ -463,28 +517,20 @@ func buildRowActions(id, companyName, status string, isInUse bool, l entydad.Sup
 func buildBulkActions(l entydad.SupplierLabels, sl entydad.SharedLabels, cl pyeza.CommonLabels, status string, routes entydad.SupplierRoutes) []types.BulkAction {
 	actions := []types.BulkAction{}
 
-	switch status {
-	case "active":
+	for _, tr := range supplierStatusTransitions {
+		if tr.target == status {
+			continue
+		}
+		bulkLabel, _, confirmBulk := supplierTransitionLabels(tr.target, l, sl)
 		actions = append(actions, types.BulkAction{
-			Key:             "block",
-			Label:           l.Actions.Block,
-			Icon:            "icon-slash",
-			Variant:         "warning",
+			Key:             tr.target,
+			Label:           bulkLabel,
+			Icon:            supplierBulkActionIcon(tr.iconKey),
+			Variant:         tr.variant,
 			Endpoint:        routes.BulkSetStatusURL,
-			ConfirmTitle:    l.Actions.Block,
-			ConfirmMessage:  sl.Confirm.BulkBlock,
-			ExtraParamsJSON: `{"target_status":"blocked"}`,
-		})
-	case "blocked", "on_hold":
-		actions = append(actions, types.BulkAction{
-			Key:             "activate",
-			Label:           cl.Bulk.Activate,
-			Icon:            "icon-check-circle",
-			Variant:         "primary",
-			Endpoint:        routes.BulkSetStatusURL,
-			ConfirmTitle:    cl.Bulk.Activate,
-			ConfirmMessage:  sl.Confirm.BulkActivate,
-			ExtraParamsJSON: `{"target_status":"active"}`,
+			ConfirmTitle:    bulkLabel,
+			ConfirmMessage:  confirmBulk,
+			ExtraParamsJSON: `{"target_status":"` + tr.target + `"}`,
 		})
 	}
 

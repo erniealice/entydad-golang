@@ -25,7 +25,7 @@ type deleteCall struct {
 
 type statusCall struct {
 	id     string
-	active bool
+	status string
 }
 
 type createClientCall struct {
@@ -82,8 +82,8 @@ func (r *clientActionRecorder) deleteClient(_ context.Context, req *clientpb.Del
 	return &clientpb.DeleteClientResponse{}, nil
 }
 
-func (r *clientActionRecorder) setClientActive(_ context.Context, id string, active bool) error {
-	r.statusCalls = append(r.statusCalls, statusCall{id: id, active: active})
+func (r *clientActionRecorder) setClientStatus(_ context.Context, id string, status string) error {
+	r.statusCalls = append(r.statusCalls, statusCall{id: id, status: status})
 	return r.statusErrByID[id]
 }
 
@@ -422,14 +422,35 @@ func TestNewSetStatusAction_TableDriven(t *testing.T) {
 			perms:      []string{"client:update"},
 			req:        makePostRequest("/action/clients/set-status?id=cl-1&status=active", nil),
 			wantStatus: http.StatusOK,
-			wantCalls:  []statusCall{{id: "cl-1", active: true}},
+			wantCalls:  []statusCall{{id: "cl-1", status: "active"}},
 		},
 		{
 			name:       "form fallback inactive success",
 			perms:      []string{"client:update"},
 			req:        makePostRequest("/action/clients/set-status", url.Values{"id": {"cl-2"}, "status": {"inactive"}}),
 			wantStatus: http.StatusOK,
-			wantCalls:  []statusCall{{id: "cl-2", active: false}},
+			wantCalls:  []statusCall{{id: "cl-2", status: "inactive"}},
+		},
+		{
+			name:       "block lifecycle success",
+			perms:      []string{"client:update"},
+			req:        makePostRequest("/action/clients/set-status?id=cl-4&status=blocked", nil),
+			wantStatus: http.StatusOK,
+			wantCalls:  []statusCall{{id: "cl-4", status: "blocked"}},
+		},
+		{
+			name:       "on_hold lifecycle success",
+			perms:      []string{"client:update"},
+			req:        makePostRequest("/action/clients/set-status?id=cl-5&status=on_hold", nil),
+			wantStatus: http.StatusOK,
+			wantCalls:  []statusCall{{id: "cl-5", status: "on_hold"}},
+		},
+		{
+			name:       "prospect lifecycle success",
+			perms:      []string{"client:update"},
+			req:        makePostRequest("/action/clients/set-status?id=cl-6&status=prospect", nil),
+			wantStatus: http.StatusOK,
+			wantCalls:  []statusCall{{id: "cl-6", status: "prospect"}},
 		},
 		{
 			name:            "dependency error",
@@ -438,7 +459,7 @@ func TestNewSetStatusAction_TableDriven(t *testing.T) {
 			statusErrByID:   map[string]error{"cl-3": errors.New("set status failed")},
 			wantStatus:      http.StatusUnprocessableEntity,
 			wantErrorHeader: "set status failed",
-			wantCalls:       []statusCall{{id: "cl-3", active: false}},
+			wantCalls:       []statusCall{{id: "cl-3", status: "inactive"}},
 		},
 	}
 
@@ -448,7 +469,7 @@ func TestNewSetStatusAction_TableDriven(t *testing.T) {
 			t.Parallel()
 
 			rec := &clientActionRecorder{statusErrByID: tt.statusErrByID}
-			deps := &Deps{SetClientActive: rec.setClientActive}
+			deps := &Deps{SetClientStatus: rec.setClientStatus}
 			res := runHandler(t, NewSetStatusAction(deps), withPerms(tt.perms...), tt.req)
 
 			if res.StatusCode != tt.wantStatus {
@@ -462,11 +483,11 @@ func TestNewSetStatusAction_TableDriven(t *testing.T) {
 			}
 
 			if len(rec.statusCalls) != len(tt.wantCalls) {
-				t.Fatalf("SetClientActive call count = %d, want %d", len(rec.statusCalls), len(tt.wantCalls))
+				t.Fatalf("SetClientStatus call count = %d, want %d", len(rec.statusCalls), len(tt.wantCalls))
 			}
 			for i := range tt.wantCalls {
 				if rec.statusCalls[i] != tt.wantCalls[i] {
-					t.Fatalf("SetClientActive call[%d] = %+v, want %+v", i, rec.statusCalls[i], tt.wantCalls[i])
+					t.Fatalf("SetClientStatus call[%d] = %+v, want %+v", i, rec.statusCalls[i], tt.wantCalls[i])
 				}
 			}
 		})
@@ -512,8 +533,8 @@ func TestNewBulkSetStatusAction_TableDriven(t *testing.T) {
 			form:       url.Values{"id": {"cl-1", "cl-2"}, "target_status": {"active"}},
 			wantStatus: http.StatusOK,
 			wantCalls: []statusCall{
-				{id: "cl-1", active: true},
-				{id: "cl-2", active: true},
+				{id: "cl-1", status: "active"},
+				{id: "cl-2", status: "active"},
 			},
 		},
 		{
@@ -522,8 +543,18 @@ func TestNewBulkSetStatusAction_TableDriven(t *testing.T) {
 			form:       url.Values{"id": {"cl-1", "cl-2"}, "target_status": {"inactive"}},
 			wantStatus: http.StatusOK,
 			wantCalls: []statusCall{
-				{id: "cl-1", active: false},
-				{id: "cl-2", active: false},
+				{id: "cl-1", status: "inactive"},
+				{id: "cl-2", status: "inactive"},
+			},
+		},
+		{
+			name:       "blocked success",
+			perms:      []string{"client:update"},
+			form:       url.Values{"id": {"cl-1", "cl-2"}, "target_status": {"blocked"}},
+			wantStatus: http.StatusOK,
+			wantCalls: []statusCall{
+				{id: "cl-1", status: "blocked"},
+				{id: "cl-2", status: "blocked"},
 			},
 		},
 		{
@@ -533,9 +564,9 @@ func TestNewBulkSetStatusAction_TableDriven(t *testing.T) {
 			statusErrByID: map[string]error{"cl-2": errors.New("boom")},
 			wantStatus:    http.StatusOK,
 			wantCalls: []statusCall{
-				{id: "cl-1", active: false},
-				{id: "cl-2", active: false},
-				{id: "cl-3", active: false},
+				{id: "cl-1", status: "inactive"},
+				{id: "cl-2", status: "inactive"},
+				{id: "cl-3", status: "inactive"},
 			},
 		},
 	}
@@ -546,7 +577,7 @@ func TestNewBulkSetStatusAction_TableDriven(t *testing.T) {
 			t.Parallel()
 
 			rec := &clientActionRecorder{statusErrByID: tt.statusErrByID}
-			deps := &Deps{SetClientActive: rec.setClientActive}
+			deps := &Deps{SetClientStatus: rec.setClientStatus}
 			req := makePostRequest("/action/clients/bulk-set-status", tt.form)
 			res := runHandler(t, NewBulkSetStatusAction(deps), withPerms(tt.perms...), req)
 
@@ -561,11 +592,11 @@ func TestNewBulkSetStatusAction_TableDriven(t *testing.T) {
 			}
 
 			if len(rec.statusCalls) != len(tt.wantCalls) {
-				t.Fatalf("SetClientActive call count = %d, want %d", len(rec.statusCalls), len(tt.wantCalls))
+				t.Fatalf("SetClientStatus call count = %d, want %d", len(rec.statusCalls), len(tt.wantCalls))
 			}
 			for i := range tt.wantCalls {
 				if rec.statusCalls[i] != tt.wantCalls[i] {
-					t.Fatalf("SetClientActive call[%d] = %+v, want %+v", i, rec.statusCalls[i], tt.wantCalls[i])
+					t.Fatalf("SetClientStatus call[%d] = %+v, want %+v", i, rec.statusCalls[i], tt.wantCalls[i])
 				}
 			}
 		})

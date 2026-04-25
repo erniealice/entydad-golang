@@ -2,6 +2,8 @@ package user
 
 import (
 	"context"
+	"log"
+	"net/http"
 
 	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/pyeza-golang/types"
@@ -87,6 +89,8 @@ type Module struct {
 	RoleRemove       view.View
 	AttachmentUpload view.View
 	AttachmentDelete view.View
+	// SearchTimezones is a JSON endpoint backing the timezone autocomplete in the user drawer form.
+	SearchTimezones http.HandlerFunc
 }
 
 func NewModule(deps *ModuleDeps) *Module {
@@ -178,7 +182,28 @@ func NewModule(deps *ModuleDeps) *Module {
 		RoleRemove:       userroles.NewRemoveAction(roleActionDeps),
 		AttachmentUpload: userdetail.NewAttachmentUploadAction(detailDeps),
 		AttachmentDelete: userdetail.NewAttachmentDeleteAction(detailDeps),
+		SearchTimezones:  useraction.NewSearchTimezonesAction(),
 	}
+}
+
+// routeRegistrarFull extends view.RouteRegistrar with HandleFunc support
+// for raw http.HandlerFunc routes (e.g., JSON search endpoints).
+type routeRegistrarFull interface {
+	view.RouteRegistrar
+	HandleFunc(method, path string, handler http.HandlerFunc, middlewares ...string)
+}
+
+// handleFunc is a nil-safe helper that registers an http.HandlerFunc route if
+// the RouteRegistrar supports it, otherwise logs a warning and skips.
+func handleFunc(r view.RouteRegistrar, method, path string, handler http.HandlerFunc) {
+	if handler == nil {
+		return
+	}
+	if full, ok := r.(routeRegistrarFull); ok {
+		full.HandleFunc(method, path, handler)
+		return
+	}
+	log.Printf("user: RouteRegistrar does not support HandleFunc — skipping %s %s", method, path)
 }
 
 func (m *Module) RegisterRoutes(r view.RouteRegistrar) {
@@ -214,4 +239,6 @@ func (m *Module) RegisterRoutes(r view.RouteRegistrar) {
 		r.POST(m.routes.AttachmentUploadURL, m.AttachmentUpload)
 		r.POST(m.routes.AttachmentDeleteURL, m.AttachmentDelete)
 	}
+	// Timezone autocomplete JSON endpoint
+	handleFunc(r, "GET", m.routes.SearchTimezonesURL, m.SearchTimezones)
 }

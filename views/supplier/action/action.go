@@ -161,7 +161,7 @@ type Deps struct {
 	ReadSupplier      func(ctx context.Context, req *supplierpb.ReadSupplierRequest) (*supplierpb.ReadSupplierResponse, error)
 	UpdateSupplier    func(ctx context.Context, req *supplierpb.UpdateSupplierRequest) (*supplierpb.UpdateSupplierResponse, error)
 	DeleteSupplier    func(ctx context.Context, req *supplierpb.DeleteSupplierRequest) (*supplierpb.DeleteSupplierResponse, error)
-	SetSupplierActive func(ctx context.Context, id string, active bool) error
+	SetSupplierStatus func(ctx context.Context, id string, status string) error
 	ListPaymentTerms  func(ctx context.Context) ([]*PaymentTermOption, error)
 
 	// Tag-related deps for multi-select tags on the supplier form
@@ -715,8 +715,8 @@ func NewSetStatusAction(deps *Deps) view.View {
 			return entydad.HTMXError(viewCtx.T("shared.errors.invalidStatus"))
 		}
 
-		if deps.SetSupplierActive != nil {
-			if err := deps.SetSupplierActive(ctx, id, targetStatus == "active"); err != nil {
+		if deps.SetSupplierStatus != nil {
+			if err := deps.SetSupplierStatus(ctx, id, targetStatus); err != nil {
 				log.Printf("Failed to update supplier status %s: %v", id, err)
 				return entydad.HTMXError(err.Error())
 			}
@@ -745,11 +745,9 @@ func NewBulkSetStatusAction(deps *Deps) view.View {
 			return entydad.HTMXError(viewCtx.T("shared.errors.invalidTargetStatus"))
 		}
 
-		active := targetStatus == "active"
-
-		if deps.SetSupplierActive != nil {
+		if deps.SetSupplierStatus != nil {
 			for _, id := range ids {
-				if err := deps.SetSupplierActive(ctx, id, active); err != nil {
+				if err := deps.SetSupplierStatus(ctx, id, targetStatus); err != nil {
 					log.Printf("Failed to update supplier status %s: %v", id, err)
 				}
 			}

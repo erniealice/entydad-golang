@@ -30,6 +30,10 @@ type PaymentTermOption = clientaction.PaymentTermOption
 // ModuleDeps holds all dependencies for the client module.
 type ModuleDeps struct {
 	Routes               entydad.ClientRoutes
+	// SearchTimezonesURL points to the timezone autocomplete JSON endpoint
+	// (provided by the user module). The client representative section reuses
+	// the same handler for its timezone picker.
+	SearchTimezonesURL string
 	CommonLabels         pyeza.CommonLabels
 	SharedLabels         entydad.SharedLabels
 	Labels               entydad.ClientLabels
@@ -44,7 +48,7 @@ type ModuleDeps struct {
 	ReadClient   func(ctx context.Context, req *clientpb.ReadClientRequest) (*clientpb.ReadClientResponse, error)
 	UpdateClient func(ctx context.Context, req *clientpb.UpdateClientRequest) (*clientpb.UpdateClientResponse, error)
 	DeleteClient func(ctx context.Context, req *clientpb.DeleteClientRequest) (*clientpb.DeleteClientResponse, error)
-	SetActive    func(ctx context.Context, id string, active bool) error
+	SetStatus    func(ctx context.Context, id string, status string) error
 	// Payment terms dropdown
 	ListPaymentTerms func(ctx context.Context) ([]*clientaction.PaymentTermOption, error)
 	// Categories (client tags)
@@ -62,8 +66,12 @@ type ModuleDeps struct {
 	// Subscription URLs (cross-module, from centymo).
 	SubscriptionAddURL    string
 	SubscriptionDetailURL string
-	SubscriptionEditURL   string
-	SubscriptionDeleteURL string
+	// SubscriptionUnderClientDetailURL is the nested-route template; when set,
+	// the engagements row link uses it so the subscription detail renders
+	// with a "client → subscription" breadcrumb.
+	SubscriptionUnderClientDetailURL string
+	SubscriptionEditURL              string
+	SubscriptionDeleteURL            string
 
 	// Attachment operations
 	UploadFile       func(ctx context.Context, bucket, key string, content []byte, contentType string) error
@@ -102,11 +110,12 @@ type Module struct {
 func NewModule(deps *ModuleDeps) *Module {
 	actionDeps := &clientaction.Deps{
 		Routes:               deps.Routes,
+		SearchTimezonesURL:   deps.SearchTimezonesURL,
 		CreateClient:         deps.CreateClient,
 		ReadClient:           deps.ReadClient,
 		UpdateClient:         deps.UpdateClient,
 		DeleteClient:         deps.DeleteClient,
-		SetClientActive:      deps.SetActive,
+		SetClientStatus:      deps.SetStatus,
 		ListPaymentTerms:     deps.ListPaymentTerms,
 		ListCategories:       deps.ListCategories,
 		ListClientCategories: deps.ListClientCategories,
@@ -133,10 +142,11 @@ func NewModule(deps *ModuleDeps) *Module {
 		GetClientStatement:          deps.GetClientStatement,
 		ListSubscriptions:           deps.ListSubscriptions,
 		GetSubscriptionListPageData: deps.GetSubscriptionListPageData,
-		SubscriptionAddURL:          deps.SubscriptionAddURL,
-		SubscriptionDetailURL: deps.SubscriptionDetailURL,
-		SubscriptionEditURL:   deps.SubscriptionEditURL,
-		SubscriptionDeleteURL: deps.SubscriptionDeleteURL,
+		SubscriptionAddURL:                deps.SubscriptionAddURL,
+		SubscriptionDetailURL:             deps.SubscriptionDetailURL,
+		SubscriptionUnderClientDetailURL:  deps.SubscriptionUnderClientDetailURL,
+		SubscriptionEditURL:               deps.SubscriptionEditURL,
+		SubscriptionDeleteURL:             deps.SubscriptionDeleteURL,
 		Labels:                deps.Labels,
 		CommonLabels:          deps.CommonLabels,
 		TableLabels:           deps.TableLabels,

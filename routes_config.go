@@ -130,6 +130,9 @@ type UserRoutes struct {
 	TabActionURL     string `json:"tab_action_url"`
 	ResetPasswordURL string `json:"reset_password_url"`
 
+	// Timezone autocomplete search endpoint (returns JSON [{value,label}, ...])
+	SearchTimezonesURL string `json:"search_timezones_url"`
+
 	// Attachment routes
 	AttachmentUploadURL string `json:"attachment_upload_url"`
 	AttachmentDeleteURL string `json:"attachment_delete_url"`
@@ -164,6 +167,8 @@ func DefaultUserRoutes() UserRoutes {
 		TabActionURL:     UserTabActionURL,
 		ResetPasswordURL: UserResetPasswordURL,
 
+		SearchTimezonesURL: UserSearchTimezonesURL,
+
 		AttachmentUploadURL: UserAttachmentUploadURL,
 		AttachmentDeleteURL: UserAttachmentDeleteURL,
 
@@ -195,6 +200,8 @@ func (r UserRoutes) RouteMap() map[string]string {
 		"user.bulk_set_status": r.BulkSetStatusURL,
 		"user.detail":          r.DetailURL,
 		"user.tab_action":      r.TabActionURL,
+
+		"user.search_timezones": r.SearchTimezonesURL,
 
 		"user.attachment.upload": r.AttachmentUploadURL,
 		"user.attachment.delete": r.AttachmentDeleteURL,

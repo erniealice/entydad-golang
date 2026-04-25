@@ -38,6 +38,12 @@ type DetailViewDeps struct {
 	GetSubscriptionListPageData func(ctx context.Context, req *subscriptionpb.GetSubscriptionListPageDataRequest) (*subscriptionpb.GetSubscriptionListPageDataResponse, error)
 	SubscriptionAddURL    string
 	SubscriptionDetailURL string
+	// SubscriptionUnderClientDetailURL is the nested-route template (e.g.
+	// "/app/clients/detail/{client_id}/subscriptions/{id}"). When set, the
+	// engagements row link uses this so the subscription detail page renders
+	// with a "client → subscription" breadcrumb. Falls back to the flat
+	// SubscriptionDetailURL when empty.
+	SubscriptionUnderClientDetailURL string
 	SubscriptionEditURL   string
 	SubscriptionDeleteURL string
 	Labels                entydad.ClientLabels
@@ -188,7 +194,7 @@ func NewView(deps *DetailViewDeps) view.View {
 			statusVariant = "warning"
 		}
 
-		tabItems := buildTabItems(id, deps)
+		tabItems := buildTabItems(id, deps, countClientSubscriptions(ctx, deps, id))
 
 		// CRM fields
 		name := client.GetName()
@@ -315,7 +321,7 @@ func NewView(deps *DetailViewDeps) view.View {
 	})
 }
 
-func buildTabItems(id string, deps *DetailViewDeps) []pyeza.TabItem {
+func buildTabItems(id string, deps *DetailViewDeps, subscriptionCount int) []pyeza.TabItem {
 	routes := deps.Routes
 	base := route.ResolveURL(routes.DetailURL, "id", id)
 	action := route.ResolveURL(routes.TabActionURL, "id", id, "tab", "")
@@ -323,7 +329,7 @@ func buildTabItems(id string, deps *DetailViewDeps) []pyeza.TabItem {
 	return []pyeza.TabItem{
 		{Key: "info", Label: deps.Labels.Detail.Tabs.Info, Href: base + "?tab=info", HxGet: action + "info", Icon: "icon-info"},
 		{Key: "representative", Label: deps.Labels.Detail.Tabs.Representative, Href: base + "?tab=representative", HxGet: action + "representative", Icon: "icon-user"},
-		{Key: "subscriptions", Label: deps.Labels.Detail.Tabs.Subscriptions, Href: base + "?tab=" + subscriptionsSlug, HxGet: action + subscriptionsSlug, Icon: "icon-file-text"},
+		{Key: "subscriptions", Label: deps.Labels.Detail.Tabs.Subscriptions, Href: base + "?tab=" + subscriptionsSlug, HxGet: action + subscriptionsSlug, Icon: "icon-file-text", Count: subscriptionCount},
 		{Key: "accounting", Label: deps.Labels.Detail.Tabs.Accounting, Href: base + "?tab=accounting", HxGet: action + "accounting", Icon: "icon-credit-card"},
 		{Key: "history", Label: deps.Labels.Detail.Tabs.History, Href: base + "?tab=history", HxGet: action + "history", Icon: "icon-shopping-bag"},
 		{Key: "statement", Label: deps.Labels.Detail.Tabs.Statement, Href: base + "?tab=statement", HxGet: action + "statement", Icon: "icon-file-text"},
@@ -383,7 +389,7 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 			Client:             client,
 			Labels:             deps.Labels,
 			ActiveTab:          tab,
-			TabItems:           buildTabItems(id, deps),
+			TabItems:           buildTabItems(id, deps, countClientSubscriptions(ctx, deps, id)),
 			ClientName:         clientName,
 			RepresentativeName: representativeName,
 			ClientEmail:        clientEmail,
@@ -471,6 +477,39 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 	})
 }
 
+// countClientSubscriptions returns the active-subscription count for a client.
+// Uses GetSubscriptionListPageData with a single-row pagination so the response
+// payload stays small; the count is taken from pagination.TotalItems. Returns 0
+// on any error.
+func countClientSubscriptions(ctx context.Context, deps *DetailViewDeps, clientID string) int {
+	if deps.GetSubscriptionListPageData == nil {
+		return 0
+	}
+	limit := int32(1)
+	resp, err := deps.GetSubscriptionListPageData(ctx, &subscriptionpb.GetSubscriptionListPageDataRequest{
+		Pagination: &categorypb.PaginationRequest{Limit: limit},
+		Filters: &categorypb.FilterRequest{
+			Filters: []*categorypb.TypedFilter{
+				{
+					Field: "client_id",
+					FilterType: &categorypb.TypedFilter_StringFilter{
+						StringFilter: &categorypb.StringFilter{
+							Value:         clientID,
+							Operator:      categorypb.StringOperator_STRING_EQUALS,
+							CaseSensitive: true,
+						},
+					},
+				},
+			},
+		},
+	})
+	if err != nil {
+		log.Printf("Failed to count subscriptions for client %s: %v", clientID, err)
+		return 0
+	}
+	return int(resp.GetPagination().GetTotalItems())
+}
+
 // loadClientSubscriptions fetches active subscriptions for a client
 // using GetSubscriptionListPageData with a client_id filter so that
 // PricePlan (and its embedded Plan) are populated via JOIN, enabling
@@ -499,6 +538,7 @@ func loadClientSubscriptions(ctx context.Context, deps *DetailViewDeps, clientID
 		log.Printf("Failed to load subscriptions for client %s: %v", clientID, err)
 		return nil
 	}
+	tz := types.LocationFromContext(ctx)
 	var rows []SubscriptionRow
 	for _, s := range resp.GetSubscriptionList() {
 		if !s.GetActive() {
@@ -513,8 +553,8 @@ func loadClientSubscriptions(ctx context.Context, deps *DetailViewDeps, clientID
 				planName = pp.GetName()
 			}
 		}
-		dateStart := s.GetDateStart()
-		dateEnd := s.GetDateEnd()
+		dateStart := types.FormatTimestampInTZ(s.GetDateTimeStart(), tz, types.DateTimeReadable)
+		dateEnd := types.FormatTimestampInTZ(s.GetDateTimeEnd(), tz, types.DateTimeReadable)
 		rows = append(rows, SubscriptionRow{
 			ID:        s.GetId(),
 			Name:      s.GetName(),
@@ -554,6 +594,9 @@ func buildSubscriptionsTable(rows []SubscriptionRow, addURL string, clientID str
 	for _, r := range rows {
 		editURL := route.ResolveURL(deps.SubscriptionEditURL, "id", r.ID) + clientParams
 		detailURL := route.ResolveURL(deps.SubscriptionDetailURL, "id", r.ID)
+		if deps.SubscriptionUnderClientDetailURL != "" {
+			detailURL = route.ResolveURL(deps.SubscriptionUnderClientDetailURL, "client_id", clientID, "id", r.ID)
+		}
 
 		tableRows = append(tableRows, types.TableRow{
 			ID: r.ID,

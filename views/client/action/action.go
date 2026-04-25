@@ -53,6 +53,11 @@ type FormLabels struct {
 	BillingCurrency            string
 	BillingCurrencyPlaceholder string
 	BillingCurrencyInfo        string
+	Timezone                  string
+	TimezonePlaceholder       string
+	TimezoneSearchPlaceholder string
+	TimezoneNoResults         string
+	TimezoneInfo              string
 
 	// Field-level info text surfaced via an info button beside each label.
 	NameInfo          string
@@ -95,6 +100,7 @@ type FormData struct {
 	LastName                 string
 	Email                    string
 	Mobile                   string
+	Timezone                 string
 	Active                   bool
 	StreetAddress            string
 	City                     string
@@ -102,6 +108,7 @@ type FormData struct {
 	PostalCode               string
 	Notes                    string
 	BillingCurrency          string
+	SearchTimezonesURL       string
 	PaymentTerms             []*PaymentTermOption
 	SelectedPaymentTermID    string
 	PaymentTermSelectOptions []pyeza.SelectOption
@@ -114,11 +121,15 @@ type FormData struct {
 // Deps holds dependencies for client action handlers.
 type Deps struct {
 	Routes          entydad.ClientRoutes
+	// SearchTimezonesURL is the URL of the timezone autocomplete JSON endpoint
+	// (owned by the user module; passed through so the client representative
+	// section can wire its own auto-complete to the same handler).
+	SearchTimezonesURL string
 	CreateClient    func(ctx context.Context, req *clientpb.CreateClientRequest) (*clientpb.CreateClientResponse, error)
 	ReadClient      func(ctx context.Context, req *clientpb.ReadClientRequest) (*clientpb.ReadClientResponse, error)
 	UpdateClient    func(ctx context.Context, req *clientpb.UpdateClientRequest) (*clientpb.UpdateClientResponse, error)
 	DeleteClient    func(ctx context.Context, req *clientpb.DeleteClientRequest) (*clientpb.DeleteClientResponse, error)
-	SetClientActive func(ctx context.Context, id string, active bool) error
+	SetClientStatus func(ctx context.Context, id string, status string) error
 	// Payment terms dropdown
 	ListPaymentTerms func(ctx context.Context) ([]*PaymentTermOption, error)
 	// Tag-related deps for multi-select tags on the client form
@@ -174,6 +185,11 @@ func formLabels(t func(string) string) FormLabels {
 		BillingCurrency:            t("client.form.billingCurrency"),
 		BillingCurrencyPlaceholder: t("client.form.billingCurrencyPlaceholder"),
 		BillingCurrencyInfo:        t("client.form.billingCurrencyInfo"),
+		Timezone:                  t("client.form.timezone"),
+		TimezonePlaceholder:       t("client.form.timezonePlaceholder"),
+		TimezoneSearchPlaceholder: t("client.form.timezoneSearchPlaceholder"),
+		TimezoneNoResults:         t("client.form.timezoneNoResults"),
+		TimezoneInfo:              t("client.form.timezoneInfo"),
 	}
 }
 
@@ -360,6 +376,7 @@ func NewAddAction(deps *Deps) view.View {
 				}
 				return deps.GetFunctionalCurrency(ctx)
 			}(),
+				SearchTimezonesURL:       deps.SearchTimezonesURL,
 				PaymentTerms:             paymentTerms,
 				PaymentTermSelectOptions: buildPaymentTermSelectOptions(paymentTerms, ""),
 				TagOptions:               tagOptions,
@@ -376,6 +393,17 @@ func NewAddAction(deps *Deps) view.View {
 		r := viewCtx.Request
 		active := r.FormValue("active") == "true"
 
+		repUser := &userpb.User{
+			FirstName:    r.FormValue("first_name"),
+			LastName:     r.FormValue("last_name"),
+			EmailAddress: r.FormValue("email_address"),
+			MobileNumber: r.FormValue("mobile_number"),
+			Active:       active,
+		}
+		if tz := r.FormValue("timezone"); tz != "" {
+			repUser.Timezone = &tz
+		}
+
 		resp, err := deps.CreateClient(ctx, &clientpb.CreateClientRequest{
 			Data: &clientpb.Client{
 				Active:          active,
@@ -387,13 +415,7 @@ func NewAddAction(deps *Deps) view.View {
 				Notes:           optionalString(r.FormValue("notes")),
 				BillingCurrency: optionalString(r.FormValue("billing_currency")),
 				PaymentTermId:   optionalString(r.FormValue("payment_term_id")),
-				User: &userpb.User{
-					FirstName:    r.FormValue("first_name"),
-					LastName:     r.FormValue("last_name"),
-					EmailAddress: r.FormValue("email_address"),
-					MobileNumber: r.FormValue("mobile_number"),
-					Active:       active,
-				},
+				User:            repUser,
 			},
 		})
 		if err != nil {
@@ -469,6 +491,7 @@ func NewEditAction(deps *Deps) view.View {
 				LastName:                 u.GetLastName(),
 				Email:                    u.GetEmailAddress(),
 				Mobile:                   u.GetMobileNumber(),
+				Timezone:                 u.GetTimezone(),
 				Active:                   c.GetActive(),
 				StreetAddress:            c.GetStreetAddress(),
 				City:                     c.GetCity(),
@@ -476,6 +499,7 @@ func NewEditAction(deps *Deps) view.View {
 				PostalCode:               c.GetPostalCode(),
 				Notes:                    c.GetNotes(),
 				BillingCurrency:          c.GetBillingCurrency(),
+				SearchTimezonesURL:       deps.SearchTimezonesURL,
 				PaymentTerms:             paymentTerms,
 				SelectedPaymentTermID:    selectedPaymentTermID,
 				PaymentTermSelectOptions: buildPaymentTermSelectOptions(paymentTerms, selectedPaymentTermID),
@@ -521,6 +545,9 @@ func NewEditAction(deps *Deps) view.View {
 			userData.EmailAddress = r.FormValue("email_address")
 			userData.MobileNumber = r.FormValue("mobile_number")
 			userData.Active = active
+			if tz := r.FormValue("timezone"); tz != "" {
+				userData.Timezone = &tz
+			}
 			clientData.User = userData
 		default:
 			// List page edit — update all fields
@@ -538,6 +565,9 @@ func NewEditAction(deps *Deps) view.View {
 			userData.EmailAddress = r.FormValue("email_address")
 			userData.MobileNumber = r.FormValue("mobile_number")
 			userData.Active = active
+			if tz := r.FormValue("timezone"); tz != "" {
+				userData.Timezone = &tz
+			}
 			clientData.User = userData
 		}
 
@@ -629,12 +659,23 @@ func NewBulkDeleteAction(deps *Deps) view.View {
 	})
 }
 
-// NewSetStatusAction creates the client activate/deactivate action (POST only).
-// Expects query params: ?id={clientId}&status={active|inactive}
+// validClientStatus returns true for the five canonical client lifecycle states.
+func validClientStatus(s string) bool {
+	switch s {
+	case "prospect", "active", "on_hold", "blocked", "inactive":
+		return true
+	}
+	return false
+}
+
+// NewSetStatusAction creates the client set-status action (POST only).
+// Expects query params: ?id={clientId}&status={prospect|active|on_hold|blocked|inactive}
 //
-// Uses SetClientActive (raw map update) instead of UpdateClient (protobuf) because
-// proto3's protojson omits bool fields with value false, which means
-// deactivation (active=false) would silently be skipped.
+// Uses SetClientStatus (raw map update) instead of UpdateClient (protobuf) because
+// proto3's protojson omits bool fields with value false, which means deactivation
+// (active=false) would silently be skipped. The closure also keeps the active
+// boolean in sync with the status string (active for prospect/active/on_hold/blocked,
+// inactive for "inactive") so legacy consumers reading c.active still see consistent values.
 func NewSetStatusAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
@@ -652,11 +693,11 @@ func NewSetStatusAction(deps *Deps) view.View {
 		if id == "" {
 			return entydad.HTMXError(viewCtx.T("shared.errors.idRequired"))
 		}
-		if targetStatus != "active" && targetStatus != "inactive" {
+		if !validClientStatus(targetStatus) {
 			return entydad.HTMXError(viewCtx.T("shared.errors.invalidStatus"))
 		}
 
-		if err := deps.SetClientActive(ctx, id, targetStatus == "active"); err != nil {
+		if err := deps.SetClientStatus(ctx, id, targetStatus); err != nil {
 			log.Printf("Failed to update client status %s: %v", id, err)
 			return entydad.HTMXError(err.Error())
 		}
@@ -665,7 +706,7 @@ func NewSetStatusAction(deps *Deps) view.View {
 	})
 }
 
-// NewBulkSetStatusAction creates the client bulk activate/deactivate action (POST only).
+// NewBulkSetStatusAction creates the client bulk set-status action (POST only).
 // Selected IDs come as multiple "id" form fields; target status from "target_status" field.
 func NewBulkSetStatusAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
@@ -681,14 +722,12 @@ func NewBulkSetStatusAction(deps *Deps) view.View {
 		if len(ids) == 0 {
 			return entydad.HTMXError(viewCtx.T("shared.errors.noIdsProvided"))
 		}
-		if targetStatus != "active" && targetStatus != "inactive" {
+		if !validClientStatus(targetStatus) {
 			return entydad.HTMXError(viewCtx.T("shared.errors.invalidTargetStatus"))
 		}
 
-		active := targetStatus == "active"
-
 		for _, id := range ids {
-			if err := deps.SetClientActive(ctx, id, active); err != nil {
+			if err := deps.SetClientStatus(ctx, id, targetStatus); err != nil {
 				log.Printf("Failed to update client status %s: %v", id, err)
 			}
 		}
