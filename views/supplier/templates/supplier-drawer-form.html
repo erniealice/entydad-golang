@@ -1,10 +1,11 @@
 {{/*
 Supplier drawer form -- loaded into #sheetContent via HTMX.
 Used by both Add and Edit actions.
-Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
+Data: .Name, .SupplierType, .TaxID, .RegistrationNumber,
       .StreetAddress, .City, .Province, .PostalCode, .Country,
       .BillingCurrency, .PaymentTerms, .SelectedPaymentTermID, .LeadTimeDays, .CreditLimit,
       .Status, .Website, .Notes, .FirstName, .LastName, .Email, .Phone,
+      .Timezone, .SearchTimezonesURL,
       .Active, .ID, .FormAction, .IsEdit, .Labels, .CommonLabels
 */}}
 {{define "supplier-drawer-form"}}
@@ -12,22 +13,22 @@ Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
     {{if .ID}}<input type="hidden" name="id" value="{{.ID}}">{{end}}
 
     <div class="sheet-body">
-        {{/* --- Company Section --- */}}
+        {{/* --- Company Details Section --- */}}
         {{template "form-section" (dict "Title" .Labels.SectionCompany)}}
 
         <div class="form-row single">
             {{template "form-group" (dict
                 "Type" "text"
-                "Name" "company_name"
-                "Label" .Labels.CompanyName
-                "Value" .CompanyName
+                "Name" "name"
+                "Label" .Labels.Name
+                "Value" .Name
                 "Required" true
-                "Placeholder" .Labels.CompanyNamePlaceholder
-                "Info" .Labels.CompanyNameInfo
+                "Placeholder" .Labels.NamePlaceholder
+                "Info" .Labels.NameInfo
             )}}
         </div>
 
-        <div class="form-row">
+        <div class="form-row single">
             {{template "form-group" (dict
                 "Type" "select"
                 "Name" "supplier_type"
@@ -40,123 +41,15 @@ Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
                 )
                 "Info" .Labels.SupplierTypeInfo
             )}}
-            {{template "form-group" (dict
-                "Type" "select"
-                "Name" "status"
-                "Label" .Labels.Status
-                "Value" .Status
-                "Placeholder" .Labels.StatusPlaceholder
-                "Options" (list
-                    (dict "Value" "active" "Label" .Labels.StatusActive "Selected" (eq .Status "active"))
-                    (dict "Value" "blocked" "Label" .Labels.StatusBlocked "Selected" (eq .Status "blocked"))
-                    (dict "Value" "on_hold" "Label" .Labels.StatusOnHold "Selected" (eq .Status "on_hold"))
-                )
-                "Info" .Labels.StatusInfo
-            )}}
-        </div>
-
-        {{/* --- Contact Section --- */}}
-        {{template "form-section" (dict "Title" .Labels.SectionContact)}}
-
-        <div class="form-row">
-            {{template "form-group" (dict
-                "Type" "text"
-                "Name" "first_name"
-                "Label" .Labels.FirstName
-                "Value" .FirstName
-                "Required" true
-                "Placeholder" .Labels.FirstNamePlaceholder
-            )}}
-            {{template "form-group" (dict
-                "Type" "text"
-                "Name" "last_name"
-                "Label" .Labels.LastName
-                "Value" .LastName
-                "Required" true
-                "Placeholder" .Labels.LastNamePlaceholder
-            )}}
         </div>
 
         <div class="form-row single">
             {{template "form-group" (dict
-                "Type" "email"
-                "Name" "email_address"
-                "Label" .Labels.Email
-                "Value" .Email
-                "Placeholder" .Labels.EmailPlaceholder
-                "Info" .Labels.EmailInfo
-            )}}
-        </div>
-
-        <div class="form-row single">
-            {{template "form-group" (dict
-                "Type" "tel"
-                "Name" "mobile_number"
-                "Label" .Labels.Phone
-                "Value" .Phone
-                "Placeholder" .Labels.PhonePlaceholder
-                "Info" .Labels.PhoneInfo
-            )}}
-        </div>
-
-        {{/* --- Financial Section --- */}}
-        {{template "form-section" (dict "Title" .Labels.SectionFinancial)}}
-
-        <div class="form-row">
-            <div class="form-group">
-                <label for="payment_term_id" class="form-label">{{.Labels.PaymentTerms}}</label>
-                <select name="payment_term_id" id="payment_term_id" class="form-control">
-                    <option value="">{{.Labels.SelectPaymentTerm}}</option>
-                    {{range .PaymentTerms}}
-                    <option value="{{.Id}}" {{if eq .Id $.SelectedPaymentTermID}}selected{{end}}>{{.Name}}</option>
-                    {{end}}
-                </select>
-            </div>
-            {{template "form-group" (dict
-                "Type" "number"
-                "Name" "credit_limit"
-                "Label" .Labels.CreditLimit
-                "Value" .CreditLimit
-                "Placeholder" .Labels.CreditLimitPlaceholder
-                "Info" .Labels.CreditLimitInfo
-            )}}
-        </div>
-
-        <div class="form-row">
-            {{template "form-group" (dict
-                "Type" "text"
-                "Name" "billing_currency"
-                "Label" .Labels.BillingCurrency
-                "Value" .BillingCurrency
-                "Placeholder" .Labels.BillingCurrencyPlaceholder
-                "Info" .Labels.BillingCurrencyInfo
-            )}}
-            {{template "form-group" (dict
-                "Type" "number"
-                "Name" "lead_time_days"
-                "Label" .Labels.LeadTimeDays
-                "Value" .LeadTimeDays
-                "Placeholder" .Labels.LeadTimeDaysPlaceholder
-                "Info" .Labels.LeadTimeDaysInfo
-            )}}
-        </div>
-
-        <div class="form-row">
-            {{template "form-group" (dict
-                "Type" "text"
-                "Name" "tax_id"
-                "Label" .Labels.TaxID
-                "Value" .TaxID
-                "Placeholder" .Labels.TaxIDPlaceholder
-                "Info" .Labels.TaxIDInfo
-            )}}
-            {{template "form-group" (dict
-                "Type" "text"
-                "Name" "registration_number"
-                "Label" .Labels.RegistrationNumber
-                "Value" .RegistrationNumber
-                "Placeholder" .Labels.RegistrationNumberPlaceholder
-                "Info" .Labels.RegistrationNumberInfo
+                "Type" "url"
+                "Name" "website"
+                "Label" .Labels.Website
+                "Value" .Website
+                "Placeholder" .Labels.WebsitePlaceholder
             )}}
         </div>
 
@@ -207,16 +100,144 @@ Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
             )}}
         </div>
 
-        {{/* --- Other Section --- */}}
-        <div class="form-row single">
+        {{/* --- Representative Section --- */}}
+        {{template "form-section" (dict "Title" .Labels.SectionRepresentative)}}
+
+        <div class="form-row">
             {{template "form-group" (dict
-                "Type" "url"
-                "Name" "website"
-                "Label" .Labels.Website
-                "Value" .Website
-                "Placeholder" .Labels.WebsitePlaceholder
+                "Type" "text"
+                "Name" "first_name"
+                "Label" .Labels.FirstName
+                "Value" .FirstName
+                "Required" true
+                "Placeholder" .Labels.FirstNamePlaceholder
+            )}}
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "last_name"
+                "Label" .Labels.LastName
+                "Value" .LastName
+                "Required" true
+                "Placeholder" .Labels.LastNamePlaceholder
             )}}
         </div>
+
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "email"
+                "Name" "email_address"
+                "Label" .Labels.Email
+                "Value" .Email
+                "Placeholder" .Labels.EmailPlaceholder
+                "Info" .Labels.EmailInfo
+            )}}
+        </div>
+
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "tel"
+                "Name" "mobile_number"
+                "Label" .Labels.Phone
+                "Value" .Phone
+                "Placeholder" .Labels.PhonePlaceholder
+                "Info" .Labels.PhoneInfo
+            )}}
+        </div>
+
+        <div class="form-row single">
+            {{template "auto-complete" (dict
+                "ID" "sup-timezone-search"
+                "Name" "timezone"
+                "Label" .Labels.Timezone
+                "Placeholder" .Labels.TimezonePlaceholder
+                "SearchPlaceholder" .Labels.TimezoneSearchPlaceholder
+                "SearchURL" .SearchTimezonesURL
+                "Value" .Timezone
+                "SelectedLabel" .Timezone
+                "NoResults" .Labels.TimezoneNoResults
+                "Info" .Labels.TimezoneInfo
+            )}}
+        </div>
+
+        {{/* --- Accounting Section --- */}}
+        {{template "form-section" (dict "Title" .Labels.SectionAccounting)}}
+
+        <div class="form-row">
+            {{template "form-group" (dict
+                "Type" "select"
+                "Name" "status"
+                "Label" .Labels.Status
+                "Value" .Status
+                "Placeholder" .Labels.StatusPlaceholder
+                "Options" (list
+                    (dict "Value" "active" "Label" .Labels.StatusActive "Selected" (eq .Status "active"))
+                    (dict "Value" "blocked" "Label" .Labels.StatusBlocked "Selected" (eq .Status "blocked"))
+                    (dict "Value" "on_hold" "Label" .Labels.StatusOnHold "Selected" (eq .Status "on_hold"))
+                )
+                "Info" .Labels.StatusInfo
+            )}}
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "billing_currency"
+                "Label" .Labels.BillingCurrency
+                "Value" .BillingCurrency
+                "Placeholder" .Labels.BillingCurrencyPlaceholder
+                "Info" .Labels.BillingCurrencyInfo
+            )}}
+        </div>
+
+        <div class="form-row single">
+            <div class="form-group">
+                <label for="payment_term_id" class="form-label">{{.Labels.PaymentTerms}}</label>
+                <select name="payment_term_id" id="payment_term_id" class="form-control">
+                    <option value="">{{.Labels.SelectPaymentTerm}}</option>
+                    {{range .PaymentTerms}}
+                    <option value="{{.Id}}" {{if eq .Id $.SelectedPaymentTermID}}selected{{end}}>{{.Name}}</option>
+                    {{end}}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            {{template "form-group" (dict
+                "Type" "number"
+                "Name" "credit_limit"
+                "Label" .Labels.CreditLimit
+                "Value" .CreditLimit
+                "Placeholder" .Labels.CreditLimitPlaceholder
+                "Info" .Labels.CreditLimitInfo
+            )}}
+            {{template "form-group" (dict
+                "Type" "number"
+                "Name" "lead_time_days"
+                "Label" .Labels.LeadTimeDays
+                "Value" .LeadTimeDays
+                "Placeholder" .Labels.LeadTimeDaysPlaceholder
+                "Info" .Labels.LeadTimeDaysInfo
+            )}}
+        </div>
+
+        <div class="form-row">
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "tax_id"
+                "Label" .Labels.TaxID
+                "Value" .TaxID
+                "Placeholder" .Labels.TaxIDPlaceholder
+                "Info" .Labels.TaxIDInfo
+            )}}
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "registration_number"
+                "Label" .Labels.RegistrationNumber
+                "Value" .RegistrationNumber
+                "Placeholder" .Labels.RegistrationNumberPlaceholder
+                "Info" .Labels.RegistrationNumberInfo
+            )}}
+        </div>
+
+        {{/* --- Others Section --- */}}
+        {{template "form-section" (dict "Title" .Labels.SectionOthers)}}
 
         <div class="form-row single">
             {{template "form-group" (dict
@@ -230,7 +251,6 @@ Data: .CompanyName, .SupplierType, .TaxID, .RegistrationNumber,
             )}}
         </div>
 
-        {{/* --- Tags Section --- */}}
         {{if .TagOptions}}
         <div class="form-row single">
             <div class="form-group">

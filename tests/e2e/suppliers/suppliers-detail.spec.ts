@@ -91,7 +91,7 @@ test.describe('ENT-SUP-LIFECYCLE: Supplier Full Lifecycle', () => {
     await expect(page.locator('#sheet.open .sheet-panel')).toBeVisible();
     await waitForHtmxSettle(page);
 
-    await page.locator('#company_name').fill(`E2ESupplier${ts}`);
+    await page.locator('#name').fill(`E2ESupplier${ts}`);
     await page.locator('#first_name').fill('E2ETest');
     await page.locator('#last_name').fill(`SupLC${ts}`);
     await page.locator('#mobile_number').fill(`09190000${String(ts).slice(-4)}`);
@@ -134,10 +134,10 @@ test.describe('ENT-SUP-LIFECYCLE: Supplier Full Lifecycle', () => {
     await expect(page.locator('#sheet.open .sheet-panel')).toBeVisible();
     await waitForHtmxSettle(page);
 
-    const companyValue = await page.locator('#company_name').inputValue();
-    expect(companyValue.length).toBeGreaterThan(0);
+    const nameValue = await page.locator('#name').inputValue();
+    expect(nameValue.length).toBeGreaterThan(0);
 
-    await page.locator('#company_name').fill(`E2ESupplierEdited${ts}`);
+    await page.locator('#name').fill(`E2ESupplierEdited${ts}`);
     await page.locator('#sheet .sheet-footer button[type="submit"]').click();
     await waitForHtmxSettle(page);
     await expect(page.locator('.sheet.open')).not.toBeVisible({ timeout: 15000 });

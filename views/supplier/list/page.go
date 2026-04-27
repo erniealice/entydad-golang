@@ -40,10 +40,10 @@ type PageData struct {
 }
 
 var supplierAllowedSortCols = []string{
-	"date_created", "date_modified", "company_name", "status",
+	"date_created", "date_modified", "name", "status",
 }
 
-var supplierSearchFields = []string{"company_name", "internal_id", "u.first_name", "u.last_name", "u.email_address"}
+var supplierSearchFields = []string{"name", "internal_id", "u.first_name", "u.last_name", "u.email_address"}
 
 // NewView creates the supplier list view (full page).
 func NewView(deps *ListViewDeps) view.View {
@@ -235,7 +235,7 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 		ShowExport:           true,
 		ShowDensity:          true,
 		ShowEntries:          true,
-		DefaultSortColumn:    "company_name",
+		DefaultSortColumn:    "name",
 		DefaultSortDirection: "asc",
 		Labels:               deps.TableLabels,
 		EmptyState: types.TableEmptyState{
@@ -253,7 +253,7 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 
 func supplierColumns(l entydad.SupplierLabels) []types.TableColumn {
 	return []types.TableColumn{
-		{Key: "company_name", Label: l.Columns.CompanyName, Sortable: true},
+		{Key: "name", Label: l.Columns.Name, Sortable: true},
 		{Key: "supplier_type", Label: l.Columns.SupplierType, Sortable: true, WidthClass: "col-3xl"},
 		{Key: "internal_id", Label: l.Columns.InternalID, Sortable: true, WidthClass: "col-3xl"},
 		{Key: "status", Label: l.Columns.Status, Sortable: true, WidthClass: "col-2xl"},
@@ -271,7 +271,7 @@ func buildTableRows(suppliers []*supplierpb.Supplier, status string, l entydad.S
 		recordStatus := supplierStatus(s)
 
 		id := s.GetId()
-		companyName := s.GetCompanyName()
+		name := s.GetName()
 		supplierType := s.GetSupplierType()
 		internalID := s.GetInternalId()
 		paymentTerms := s.GetPaymentTerms()
@@ -301,7 +301,7 @@ func buildTableRows(suppliers []*supplierpb.Supplier, status string, l entydad.S
 		rows = append(rows, types.TableRow{
 			ID: id,
 			Cells: []types.TableCell{
-				{Type: "text", Value: companyName},
+				{Type: "text", Value: name},
 				{Type: "text", Value: supplierType},
 				{Type: "text", Value: internalID},
 				{Type: "badge", Value: statusLabel(cl, recordStatus), Variant: statusVariant(recordStatus)},
@@ -312,14 +312,14 @@ func buildTableRows(suppliers []*supplierpb.Supplier, status string, l entydad.S
 				types.DateTimeCell(dateCreated, types.DateReadable),
 			},
 			DataAttrs: map[string]string{
-				"company_name": companyName,
+				"name": name,
 				"status":       recordStatus,
 				"deletable":    strconv.FormatBool(!isInUse),
 			},
 			// Row actions key off the page's list filter (not per-row
 			// recordStatus) so transitions stay correct even when rows have
 			// stale/unmigrated status values.
-			Actions: buildRowActions(id, companyName, status, isInUse, l, sl, cl, routes, perms),
+			Actions: buildRowActions(id, name, status, isInUse, l, sl, cl, routes, perms),
 		})
 	}
 	return rows
@@ -458,7 +458,7 @@ func supplierBulkActionIcon(iconKey string) string {
 	return "icon-edit"
 }
 
-func buildRowActions(id, companyName, status string, isInUse bool, l entydad.SupplierLabels, sl entydad.SharedLabels, cl pyeza.CommonLabels, routes entydad.SupplierRoutes, perms *types.UserPermissions) []types.TableAction {
+func buildRowActions(id, name, status string, isInUse bool, l entydad.SupplierLabels, sl entydad.SharedLabels, cl pyeza.CommonLabels, routes entydad.SupplierRoutes, perms *types.UserPermissions) []types.TableAction {
 	actions := []types.TableAction{
 		{Type: "view", Label: l.Actions.View, Action: "view", Href: route.ResolveURL(routes.DetailURL, "id", id)},
 		{Type: "edit", Label: l.Actions.Edit, Action: "edit", URL: route.ResolveURL(routes.EditURL, "id", id), DrawerTitle: l.Actions.Edit,
@@ -489,9 +489,9 @@ func buildRowActions(id, companyName, status string, isInUse bool, l entydad.Sup
 		rowLabel, confirmRow, _ := supplierTransitionLabels(tr.target, l, sl)
 		actions = append(actions, types.TableAction{
 			Type: tr.iconKey, Label: rowLabel, Action: tr.action,
-			URL: routes.SetStatusURL + "?status=" + tr.target, ItemName: companyName,
+			URL: routes.SetStatusURL + "?status=" + tr.target, ItemName: name,
 			ConfirmTitle:   rowLabel,
-			ConfirmMessage: fmt.Sprintf(confirmRow, companyName),
+			ConfirmMessage: fmt.Sprintf(confirmRow, name),
 			Disabled:       !canUpdate, DisabledTooltip: tooltip,
 		})
 	}
@@ -501,7 +501,7 @@ func buildRowActions(id, companyName, status string, isInUse bool, l entydad.Sup
 		Label:    l.Actions.Delete,
 		Action:   "delete",
 		URL:      routes.DeleteURL,
-		ItemName: companyName,
+		ItemName: name,
 	}
 	if isInUse {
 		deleteAction.Disabled = true

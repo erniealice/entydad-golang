@@ -55,6 +55,17 @@ type DetailViewDeps struct {
 
 	// Audit log operations (embedded from hybra)
 	auditlog.AuditOps
+
+	// ListClientPlans is an optional callback that fetches Plans scoped to a
+	// specific client_id. When nil the Packages tab silently renders empty state.
+	// The function returns rows with at least: PlanID, PlanName, RateCardName,
+	// and EngagementCount. It is wired from centymo's ListPlans helper filtered
+	// by client_id so entydad never imports the centymo Plan repo directly.
+	ListClientPlans func(ctx context.Context, clientID string) ([]ClientPlanRow, error)
+
+	// PlanAddURL is the centymo Plan-add drawer URL. The Packages tab appends
+	// ?context=client&client_id={cid} to pre-fill and lock the client field.
+	PlanAddURL string
 }
 
 // TagChip represents a tag displayed as a chip on the detail page.
@@ -111,6 +122,8 @@ type PageData struct {
 	City          string
 	Province      string
 	PostalCode    string
+	Country       string
+	Website       string
 	Notes         string
 	FullAddress   string
 	Tags          []TagChip
@@ -126,6 +139,8 @@ type PageData struct {
 	// Subscriptions tab
 	Subscriptions      []SubscriptionRow
 	SubscriptionsTable *types.TableConfig
+	// Packages tab
+	PackagesTable      *types.TableConfig
 	// Accounting tab
 	BillingCurrency string
 	// Statement tab
@@ -202,6 +217,8 @@ func NewView(deps *DetailViewDeps) view.View {
 		city := client.GetCity()
 		province := client.GetProvince()
 		postalCode := client.GetPostalCode()
+		country := client.GetCountry()
+		website := client.GetWebsite()
 		notes := client.GetNotes()
 		fullAddress := buildFullAddress(streetAddress, city, province, postalCode)
 
@@ -246,6 +263,8 @@ func NewView(deps *DetailViewDeps) view.View {
 			City:               city,
 			Province:           province,
 			PostalCode:         postalCode,
+			Country:            country,
+			Website:            website,
 			Notes:              notes,
 			FullAddress:        fullAddress,
 			Tags:               tags,
@@ -265,6 +284,10 @@ func NewView(deps *DetailViewDeps) view.View {
 			subs := loadClientSubscriptions(ctx, deps, id)
 			pageData.Subscriptions = subs
 			pageData.SubscriptionsTable = buildSubscriptionsTable(subs, pageData.SubscriptionAddURL, id, clientName, deps)
+		case "packages":
+			if deps.ListClientPlans != nil {
+				pageData.PackagesTable = buildPackagesTable(ctx, deps, id, clientName)
+			}
 		case "statement":
 			if deps.GetClientStatement != nil {
 				req := &clientstmtpb.ClientStatementRequest{
@@ -281,7 +304,7 @@ func NewView(deps *DetailViewDeps) view.View {
 							TotalReceived:      types.MoneyCell(float64(resp.Summary.TotalReceived), "", true),
 						}
 					}
-					pageData.StatementTable = buildStatementTable(resp, deps.TableLabels)
+					pageData.StatementTable = buildStatementTable(resp, deps)
 				}
 			}
 		case "attachments":
@@ -330,11 +353,12 @@ func buildTabItems(id string, deps *DetailViewDeps, subscriptionCount int) []pye
 		{Key: "info", Label: deps.Labels.Detail.Tabs.Info, Href: base + "?tab=info", HxGet: action + "info", Icon: "icon-info"},
 		{Key: "representative", Label: deps.Labels.Detail.Tabs.Representative, Href: base + "?tab=representative", HxGet: action + "representative", Icon: "icon-user"},
 		{Key: "subscriptions", Label: deps.Labels.Detail.Tabs.Subscriptions, Href: base + "?tab=" + subscriptionsSlug, HxGet: action + subscriptionsSlug, Icon: "icon-file-text", Count: subscriptionCount},
+		{Key: "packages", Label: deps.Labels.Detail.Tabs.Packages, Href: base + "?tab=packages", HxGet: action + "packages", Icon: "icon-package"},
 		{Key: "accounting", Label: deps.Labels.Detail.Tabs.Accounting, Href: base + "?tab=accounting", HxGet: action + "accounting", Icon: "icon-credit-card"},
 		{Key: "history", Label: deps.Labels.Detail.Tabs.History, Href: base + "?tab=history", HxGet: action + "history", Icon: "icon-shopping-bag"},
 		{Key: "statement", Label: deps.Labels.Detail.Tabs.Statement, Href: base + "?tab=statement", HxGet: action + "statement", Icon: "icon-file-text"},
-		{Key: "attachments", Label: "Attachments", Href: base + "?tab=attachments", HxGet: action + "attachments", Icon: "icon-paperclip"},
-		{Key: "audit-history", Label: "History", Href: base + "?tab=audit-history", HxGet: action + "audit-history", Icon: "icon-clock"},
+		{Key: "attachments", Label: deps.Labels.Detail.Tabs.Attachments, Href: base + "?tab=attachments", HxGet: action + "attachments", Icon: "icon-paperclip"},
+		{Key: "audit-history", Label: deps.Labels.Detail.Tabs.AuditHistory, Href: base + "?tab=audit-history", HxGet: action + "audit-history", Icon: "icon-clock"},
 	}
 }
 
@@ -407,6 +431,8 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 			pageData.City = client.GetCity()
 			pageData.Province = client.GetProvince()
 			pageData.PostalCode = client.GetPostalCode()
+			pageData.Country = client.GetCountry()
+			pageData.Website = client.GetWebsite()
 			pageData.Notes = client.GetNotes()
 			pageData.FullAddress = buildFullAddress(pageData.StreetAddress, pageData.City, pageData.Province, pageData.PostalCode)
 			pageData.HasName = pageData.Name != ""
@@ -421,6 +447,10 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 		case "subscriptions":
 			pageData.Subscriptions = loadClientSubscriptions(ctx, deps, id)
 			pageData.SubscriptionsTable = buildSubscriptionsTable(pageData.Subscriptions, pageData.SubscriptionAddURL, id, clientName, deps)
+		case "packages":
+			if deps.ListClientPlans != nil {
+				pageData.PackagesTable = buildPackagesTable(ctx, deps, id, clientName)
+			}
 		case "history":
 			pageData.PurchaseStats, pageData.Orders = loadPurchaseHistory(ctx, deps, id)
 			pageData.HasOrders = len(pageData.Orders) > 0
@@ -440,7 +470,7 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 							TotalReceived:      types.MoneyCell(float64(resp.Summary.TotalReceived), "", true),
 						}
 					}
-					pageData.StatementTable = buildStatementTable(resp, deps.TableLabels)
+					pageData.StatementTable = buildStatementTable(resp, deps)
 				}
 			}
 		case "attachments":
@@ -472,6 +502,9 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 		}
 		if tab == "audit-history" {
 			templateName = "audit-history-tab"
+		}
+		if tab == "packages" {
+			templateName = "client-tab-packages"
 		}
 		return view.OK(templateName, pageData)
 	})
@@ -581,10 +614,10 @@ func buildSubscriptionAddURL(base, clientID, clientName, billingCurrency string)
 // stays visible and the table's own empty state renders.
 func buildSubscriptionsTable(rows []SubscriptionRow, addURL string, clientID string, clientName string, deps *DetailViewDeps) *types.TableConfig {
 	columns := []types.TableColumn{
-		{Key: "name", Label: "Name", Sortable: true},
-		{Key: "plan", Label: "Package", Sortable: true},
-		{Key: "start_date", Label: "Start Date", Sortable: true, WidthClass: "col-3xl"},
-		{Key: "end_date", Label: "End Date", Sortable: true, WidthClass: "col-3xl"},
+		{Key: "name", Label: deps.Labels.Detail.Subscriptions.ColumnName, Sortable: true},
+		{Key: "plan", Label: deps.Labels.Detail.Subscriptions.ColumnPlan, Sortable: true},
+		{Key: "start_date", Label: deps.Labels.Detail.Subscriptions.ColumnStartDate, Sortable: true, WidthClass: "col-3xl"},
+		{Key: "end_date", Label: deps.Labels.Detail.Subscriptions.ColumnEndDate, Sortable: true, WidthClass: "col-3xl"},
 	}
 
 	// Build locked client query params for edit URLs
@@ -611,9 +644,9 @@ func buildSubscriptionsTable(rows []SubscriptionRow, addURL string, clientID str
 				"plan": r.Plan,
 			},
 			Actions: []types.TableAction{
-				{Type: "view", Label: "View", Action: "view", Href: detailURL},
-				{Type: "edit", Label: "Edit", Action: "edit", URL: editURL, DrawerTitle: r.Name},
-				{Type: "delete", Label: "Delete", Action: "delete", URL: deps.SubscriptionDeleteURL, ItemName: r.Name, ConfirmTitle: "Delete Subscription", ConfirmMessage: "Are you sure you want to delete " + r.Name + "?"},
+				{Type: "view", Label: deps.CommonLabels.Actions.View, Action: "view", Href: detailURL},
+				{Type: "edit", Label: deps.CommonLabels.Actions.Edit, Action: "edit", URL: editURL, DrawerTitle: r.Name},
+				{Type: "delete", Label: deps.CommonLabels.Actions.Delete, Action: "delete", URL: deps.SubscriptionDeleteURL, ItemName: r.Name, ConfirmTitle: deps.Labels.Detail.Subscriptions.ConfirmDeleteTitle, ConfirmMessage: fmt.Sprintf(deps.Labels.Detail.Subscriptions.ConfirmDeleteMessage, r.Name)},
 			},
 		})
 	}
@@ -836,15 +869,15 @@ func capitalizeType(t string) string {
 }
 
 // buildStatementTable builds a TableConfig for the statement tab.
-func buildStatementTable(resp *clientstmtpb.ClientStatementResponse, tableLabels types.TableLabels) *types.TableConfig {
+func buildStatementTable(resp *clientstmtpb.ClientStatementResponse, deps *DetailViewDeps) *types.TableConfig {
 	columns := []types.TableColumn{
-		{Key: "date", Label: "Date", Sortable: true, WidthClass: "col-2xl"},
-		{Key: "type", Label: "Type", Sortable: true, WidthClass: "col-lg"},
-		{Key: "reference", Label: "Reference", Sortable: true, WidthClass: "col-3xl"},
-		{Key: "description", Label: "Description", Sortable: true},
-		{Key: "billed", Label: "Billed", Sortable: true, WidthClass: "col-3xl", Align: "right"},
-		{Key: "received", Label: "Received", Sortable: true, WidthClass: "col-3xl", Align: "right"},
-		{Key: "balance", Label: "Balance", Sortable: true, WidthClass: "col-3xl", Align: "right"},
+		{Key: "date", Label: deps.Labels.Detail.Statement.ColumnDate, Sortable: true, WidthClass: "col-2xl"},
+		{Key: "type", Label: deps.Labels.Detail.Statement.ColumnType, Sortable: true, WidthClass: "col-lg"},
+		{Key: "reference", Label: deps.Labels.Detail.Statement.ColumnReference, Sortable: true, WidthClass: "col-3xl"},
+		{Key: "description", Label: deps.Labels.Detail.Statement.ColumnDescription, Sortable: true},
+		{Key: "billed", Label: deps.Labels.Detail.Statement.ColumnBilled, Sortable: true, WidthClass: "col-3xl", Align: "right"},
+		{Key: "received", Label: deps.Labels.Detail.Statement.ColumnReceived, Sortable: true, WidthClass: "col-3xl", Align: "right"},
+		{Key: "balance", Label: deps.Labels.Detail.Statement.ColumnBalance, Sortable: true, WidthClass: "col-3xl", Align: "right"},
 	}
 
 	var rows []types.TableRow
@@ -880,7 +913,7 @@ func buildStatementTable(resp *clientstmtpb.ClientStatementResponse, tableLabels
 				{Type: "text", Value: ""},
 				{Type: "text", Value: ""},
 				{Type: "text", Value: ""},
-				{Type: "text", Value: "TOTAL"},
+				{Type: "text", Value: strings.ToUpper(deps.Labels.Detail.Statement.TotalsRowLabel)},
 				types.MoneyCell(float64(s.TotalBilled), "", true),
 				types.MoneyCell(float64(s.TotalReceived), "", true),
 				types.MoneyCell(float64(s.OutstandingBalance), "", true),
@@ -894,7 +927,7 @@ func buildStatementTable(resp *clientstmtpb.ClientStatementResponse, tableLabels
 		ID:                   "clientStatementTable",
 		Columns:              columns,
 		Rows:                 rows,
-		Labels:               tableLabels,
+		Labels:               deps.TableLabels,
 		ShowSearch:           false,
 		ShowSort:             false,
 		ShowExport:           true,
@@ -902,8 +935,8 @@ func buildStatementTable(resp *clientstmtpb.ClientStatementResponse, tableLabels
 		DefaultSortColumn:    "date",
 		DefaultSortDirection: "asc",
 		EmptyState: types.TableEmptyState{
-			Title:   "No Statement Entries",
-			Message: "There are no transactions for this client.",
+			Title:   deps.Labels.Detail.EmptyStatementTitle,
+			Message: deps.Labels.Detail.EmptyStatementMessage,
 		},
 	}
 

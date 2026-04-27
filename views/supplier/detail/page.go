@@ -67,7 +67,7 @@ type PageData struct {
 	ActiveTab       string
 	TabItems        []pyeza.TabItem
 	// Company info
-	CompanyName   string
+	Name          string
 	SupplierType  string
 	InternalID    string
 	Status        string
@@ -344,7 +344,7 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 func buildPageData(supplier *supplierpb.Supplier, id, activeTab string, viewCtx *view.ViewContext, deps *DetailViewDeps) *PageData {
 	u := supplier.GetUser()
 
-	companyName := supplier.GetCompanyName()
+	name := supplier.GetName()
 	supplierType := supplier.GetSupplierType()
 	internalID := supplier.GetInternalId()
 
@@ -402,7 +402,7 @@ func buildPageData(supplier *supplierpb.Supplier, id, activeTab string, viewCtx 
 	notes := supplier.GetNotes()
 	hasNotes := notes != ""
 
-	displayName := companyName
+	displayName := name
 	if displayName == "" {
 		displayName = contactName
 	}
@@ -428,7 +428,7 @@ func buildPageData(supplier *supplierpb.Supplier, id, activeTab string, viewCtx 
 		Labels:             deps.Labels,
 		ActiveTab:          activeTab,
 		TabItems:           tabItems,
-		CompanyName:        companyName,
+		Name:               name,
 		SupplierType:       supplierType,
 		InternalID:         internalID,
 		Status:             status,

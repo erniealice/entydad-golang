@@ -25,6 +25,8 @@
         {{template "client-tab-history" .}}
         {{else if eq .ActiveTab "statement"}}
         {{template "client-tab-statement" .}}
+        {{else if eq .ActiveTab "packages"}}
+        {{template "client-tab-packages" .}}
         {{else if eq .ActiveTab "attachments"}}
         {{template "attachment-tab" .}}
         {{else if eq .ActiveTab "audit-history"}}
@@ -79,7 +81,21 @@
             <span class="detail-info-label">{{.Labels.Form.PostalCode}}</span>
             <span class="detail-info-value">{{if .PostalCode}}{{.PostalCode}}{{else}}&mdash;{{end}}</span>
         </div>
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Form.Country}}</span>
+            <span class="detail-info-value">{{if .Country}}{{.Country}}{{else}}&mdash;{{end}}</span>
+        </div>
     </div>
+
+    {{/* --- Company / Website --- */}}
+    {{if .Website}}
+    <div class="detail-info-grid">
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Form.Website}}</span>
+            <span class="detail-info-value"><a href="{{.Website}}" target="_blank" rel="noopener noreferrer">{{.Website}}</a></span>
+        </div>
+    </div>
+    {{end}}
 
     {{/* --- Notes Section --- */}}
     <h4 class="detail-section-title detail-section-title--spaced">{{.Labels.Detail.NotesSection.Title}}</h4>

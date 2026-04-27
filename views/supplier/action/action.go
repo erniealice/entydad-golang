@@ -40,7 +40,7 @@ type SelectedTag struct {
 
 // FormLabels holds i18n labels for the drawer form template.
 type FormLabels struct {
-	CompanyName        string
+	Name               string
 	SupplierType       string
 	TaxID              string
 	RegistrationNumber string
@@ -63,13 +63,21 @@ type FormLabels struct {
 	Active             string
 
 	// Section titles
-	SectionCompany   string
-	SectionContact   string
-	SectionFinancial string
-	SectionAddress   string
+	SectionCompany        string
+	SectionRepresentative string
+	SectionAccounting     string
+	SectionAddress        string
+	SectionOthers         string
+
+	// Timezone autocomplete
+	Timezone                  string
+	TimezonePlaceholder       string
+	TimezoneSearchPlaceholder string
+	TimezoneNoResults         string
+	TimezoneInfo              string
 
 	// Placeholders
-	CompanyNamePlaceholder        string
+	NamePlaceholder               string
 	SupplierTypePlaceholder       string
 	StatusPlaceholder             string
 	FirstNamePlaceholder          string
@@ -106,7 +114,7 @@ type FormLabels struct {
 	TagsNoResults         string
 
 	// Field-level info text surfaced via an info button beside each label.
-	CompanyNameInfo        string
+	NameInfo               string
 	SupplierTypeInfo       string
 	StatusInfo             string
 	EmailInfo              string
@@ -126,7 +134,9 @@ type FormData struct {
 	FormAction            string
 	IsEdit                bool
 	ID                    string
-	CompanyName           string
+	Name                  string
+	Timezone              string
+	SearchTimezonesURL    string
 	SupplierType          string
 	TaxID                 string
 	RegistrationNumber    string
@@ -156,7 +166,9 @@ type FormData struct {
 
 // Deps holds dependencies for supplier action handlers.
 type Deps struct {
-	Routes            entydad.SupplierRoutes
+	Routes             entydad.SupplierRoutes
+	// SearchTimezonesURL is the URL of the timezone autocomplete JSON endpoint.
+	SearchTimezonesURL string
 	CreateSupplier    func(ctx context.Context, req *supplierpb.CreateSupplierRequest) (*supplierpb.CreateSupplierResponse, error)
 	ReadSupplier      func(ctx context.Context, req *supplierpb.ReadSupplierRequest) (*supplierpb.ReadSupplierResponse, error)
 	UpdateSupplier    func(ctx context.Context, req *supplierpb.UpdateSupplierRequest) (*supplierpb.UpdateSupplierResponse, error)
@@ -173,7 +185,7 @@ type Deps struct {
 
 func formLabels(t func(string) string) FormLabels {
 	return FormLabels{
-		CompanyName:        t("supplier.form.companyName"),
+		Name:               t("supplier.form.name"),
 		SupplierType:       t("supplier.form.supplierType"),
 		TaxID:              t("supplier.form.taxId"),
 		RegistrationNumber: t("supplier.form.registrationNumber"),
@@ -196,13 +208,21 @@ func formLabels(t func(string) string) FormLabels {
 		Active:             t("supplier.form.active"),
 
 		// Section titles
-		SectionCompany:   t("supplier.form.sectionCompany"),
-		SectionContact:   t("supplier.form.sectionContact"),
-		SectionFinancial: t("supplier.form.sectionFinancial"),
-		SectionAddress:   t("supplier.form.sectionAddress"),
+		SectionCompany:        t("supplier.form.sectionCompany"),
+		SectionRepresentative: t("supplier.form.sectionRepresentative"),
+		SectionAccounting:     t("supplier.form.sectionAccounting"),
+		SectionAddress:        t("supplier.form.sectionAddress"),
+		SectionOthers:         t("supplier.form.sectionOthers"),
+
+		// Timezone autocomplete
+		Timezone:                  t("supplier.form.timezone"),
+		TimezonePlaceholder:       t("supplier.form.timezonePlaceholder"),
+		TimezoneSearchPlaceholder: t("supplier.form.timezoneSearchPlaceholder"),
+		TimezoneNoResults:         t("supplier.form.timezoneNoResults"),
+		TimezoneInfo:              t("supplier.form.timezoneInfo"),
 
 		// Placeholders
-		CompanyNamePlaceholder:        t("supplier.form.companyNamePlaceholder"),
+		NamePlaceholder:               t("supplier.form.namePlaceholder"),
 		SupplierTypePlaceholder:       t("supplier.form.supplierTypePlaceholder"),
 		StatusPlaceholder:             t("supplier.form.statusPlaceholder"),
 		FirstNamePlaceholder:          t("supplier.form.firstNamePlaceholder"),
@@ -237,7 +257,7 @@ func formLabels(t func(string) string) FormLabels {
 		TagsPlaceholder:       t("supplier.form.tagsPlaceholder"),
 		TagsSearchPlaceholder: t("supplier.form.tagsSearchPlaceholder"),
 		TagsNoResults:         t("supplier.form.tagsNoResults"),
-		CompanyNameInfo:        t("supplier.form.companyNameInfo"),
+		NameInfo:               t("supplier.form.nameInfo"),
 		SupplierTypeInfo:       t("supplier.form.supplierTypeInfo"),
 		StatusInfo:             t("supplier.form.statusInfo"),
 		EmailInfo:              t("supplier.form.emailInfo"),
@@ -428,13 +448,14 @@ func NewAddAction(deps *Deps) view.View {
 		if viewCtx.Request.Method == http.MethodGet {
 			tagOptions, _ := loadTagData(ctx, deps, "")
 			return view.OK("supplier-drawer-form", &FormData{
-				FormAction:   deps.Routes.AddURL,
-				Active:       true,
-				Status:       "active",
-				PaymentTerms: loadPaymentTerms(ctx, deps),
-				Labels:       formLabels(viewCtx.T),
-				CommonLabels: nil, // injected by ViewAdapter
-				TagOptions:   tagOptions,
+				FormAction:         deps.Routes.AddURL,
+				Active:             true,
+				Status:             "active",
+				PaymentTerms:       loadPaymentTerms(ctx, deps),
+				Labels:             formLabels(viewCtx.T),
+				CommonLabels:       nil, // injected by ViewAdapter
+				TagOptions:         tagOptions,
+				SearchTimezonesURL: deps.SearchTimezonesURL,
 			})
 		}
 
@@ -448,8 +469,8 @@ func NewAddAction(deps *Deps) view.View {
 
 		resp, err := deps.CreateSupplier(ctx, &supplierpb.CreateSupplierRequest{
 			Data: &supplierpb.Supplier{
-				Active:             active,
-				CompanyName:        r.FormValue("company_name"),
+				Active: active,
+				Name:   r.FormValue("name"),
 				SupplierType:       r.FormValue("supplier_type"),
 				TaxId:              optionalString(r.FormValue("tax_id")),
 				RegistrationNumber: optionalString(r.FormValue("registration_number")),
@@ -465,11 +486,13 @@ func NewAddAction(deps *Deps) view.View {
 				Status:             optionalString(r.FormValue("status")),
 				Website:            optionalString(r.FormValue("website")),
 				Notes:              optionalString(r.FormValue("notes")),
+				Timezone:           optionalString(r.FormValue("timezone")),
 				User: &userpb.User{
 					FirstName:    r.FormValue("first_name"),
 					LastName:     r.FormValue("last_name"),
 					EmailAddress: r.FormValue("email_address"),
 					MobileNumber: r.FormValue("mobile_number"),
+					Timezone:     optionalString(r.FormValue("timezone")),
 					Active:       active,
 				},
 			},
@@ -490,7 +513,7 @@ func NewAddAction(deps *Deps) view.View {
 // NewEditAction creates the supplier edit action (GET = form, POST = update).
 // When the GET request includes ?clone=1, the handler returns the drawer form
 // pre-populated from the source record but wired to AddURL (submission creates
-// a new supplier) with " (Copy)" appended to the company name.
+// a new supplier) with " (Copy)" appended to the name.
 func NewEditAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
@@ -546,13 +569,18 @@ func NewEditAction(deps *Deps) view.View {
 				creditLimit = strconv.FormatFloat(float64(cl)/100.0, 'f', 2, 64)
 			}
 
-			companyName := s.GetCompanyName()
+			name := s.GetName()
 			formAction := route.ResolveURL(deps.Routes.EditURL, "id", id)
 			formID := id
 			if isClone {
-				companyName = strings.TrimSpace(companyName) + viewCtx.T("actions.copySuffix")
+				name = strings.TrimSpace(name) + viewCtx.T("actions.copySuffix")
 				formAction = deps.Routes.AddURL
 				formID = ""
+			}
+
+			timezone := ""
+			if u != nil {
+				timezone = u.GetTimezone()
 			}
 
 			tagOptions, selectedTags := loadTagData(ctx, deps, id)
@@ -560,7 +588,9 @@ func NewEditAction(deps *Deps) view.View {
 				FormAction:            formAction,
 				IsEdit:                !isClone,
 				ID:                    formID,
-				CompanyName:           companyName,
+				Name:                  name,
+				Timezone:              timezone,
+				SearchTimezonesURL:    deps.SearchTimezonesURL,
 				SupplierType:          s.GetSupplierType(),
 				TaxID:                 s.GetTaxId(),
 				RegistrationNumber:    s.GetRegistrationNumber(),
@@ -599,9 +629,9 @@ func NewEditAction(deps *Deps) view.View {
 
 		_, err := deps.UpdateSupplier(ctx, &supplierpb.UpdateSupplierRequest{
 			Data: &supplierpb.Supplier{
-				Id:                 id,
-				Active:             active,
-				CompanyName:        r.FormValue("company_name"),
+				Id:     id,
+				Active: active,
+				Name:   r.FormValue("name"),
 				SupplierType:       r.FormValue("supplier_type"),
 				TaxId:              optionalString(r.FormValue("tax_id")),
 				RegistrationNumber: optionalString(r.FormValue("registration_number")),
@@ -617,11 +647,13 @@ func NewEditAction(deps *Deps) view.View {
 				Status:             optionalString(r.FormValue("status")),
 				Website:            optionalString(r.FormValue("website")),
 				Notes:              optionalString(r.FormValue("notes")),
+				Timezone:           optionalString(r.FormValue("timezone")),
 				User: &userpb.User{
 					FirstName:    r.FormValue("first_name"),
 					LastName:     r.FormValue("last_name"),
 					EmailAddress: r.FormValue("email_address"),
 					MobileNumber: r.FormValue("mobile_number"),
+					Timezone:     optionalString(r.FormValue("timezone")),
 					Active:       active,
 				},
 			},

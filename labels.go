@@ -89,6 +89,23 @@ type ClientFormLabels struct {
 	BillingCurrency            string `json:"billingCurrency"`
 	BillingCurrencyPlaceholder string `json:"billingCurrencyPlaceholder"`
 	BillingCurrencyInfo        string `json:"billingCurrencyInfo"`
+	// New fields
+	Status                string `json:"status"`
+	StatusPlaceholder     string `json:"statusPlaceholder"`
+	StatusActive          string `json:"statusActive"`
+	StatusBlocked         string `json:"statusBlocked"`
+	StatusOnHold          string `json:"statusOnHold"`
+	StatusInactive        string `json:"statusInactive"`
+	StatusProspect        string `json:"statusProspect"`
+	Country               string `json:"country"`
+	CountryPlaceholder    string `json:"countryPlaceholder"`
+	Website               string `json:"website"`
+	WebsitePlaceholder    string `json:"websitePlaceholder"`
+	SectionCompany        string `json:"sectionCompany"`
+	SectionAddress        string `json:"sectionAddress"`
+	SectionRepresentative string `json:"sectionRepresentative"`
+	SectionAccounting     string `json:"sectionAccounting"`
+	SectionOthers         string `json:"sectionOthers"`
 }
 
 type ClientDetailLabels struct {
@@ -122,6 +139,12 @@ type ClientDetailLabels struct {
 	// Statement empty state
 	EmptyStatementTitle   string `json:"emptyStatementTitle"`
 	EmptyStatementMessage string `json:"emptyStatementMessage"`
+	// Packages tab
+	Packages ClientPackagesLabels `json:"packages"`
+	// Subscriptions tab column headers + confirm dialogs
+	Subscriptions ClientSubscriptionLabels `json:"subscriptions"`
+	// Statement tab column headers + totals row
+	Statement ClientStatementLabels `json:"statement"`
 }
 
 type ClientCompanyDetailLabels struct {
@@ -158,6 +181,42 @@ type ClientDetailTabLabels struct {
 	Accounting        string `json:"accounting"`
 	History           string `json:"history"`
 	Statement         string `json:"statement"`
+	Packages          string `json:"packages"`
+	Attachments       string `json:"attachments"`
+	AuditHistory      string `json:"auditHistory"`
+}
+
+// ClientPackagesLabels holds labels for the Packages tab on the client detail page.
+type ClientPackagesLabels struct {
+	Empty             string `json:"empty"`
+	AddAction         string `json:"addAction"`
+	ColumnName        string `json:"columnName"`
+	ColumnRateCard    string `json:"columnRateCard"`
+	ColumnEngagements string `json:"columnEngagements"`
+}
+
+// ClientSubscriptionLabels holds column headers, actions, and confirm-dialog labels
+// for the Subscriptions tab table on the client detail page.
+type ClientSubscriptionLabels struct {
+	ColumnName           string `json:"columnName"`
+	ColumnPlan           string `json:"columnPlan"`
+	ColumnStartDate      string `json:"columnStartDate"`
+	ColumnEndDate        string `json:"columnEndDate"`
+	ConfirmDeleteTitle   string `json:"confirmDeleteTitle"`
+	ConfirmDeleteMessage string `json:"confirmDeleteMessage"`
+}
+
+// ClientStatementLabels holds column headers and totals-row label for the
+// Statement tab table on the client detail page.
+type ClientStatementLabels struct {
+	ColumnDate        string `json:"columnDate"`
+	ColumnType        string `json:"columnType"`
+	ColumnReference   string `json:"columnReference"`
+	ColumnDescription string `json:"columnDescription"`
+	ColumnBilled      string `json:"columnBilled"`
+	ColumnReceived    string `json:"columnReceived"`
+	ColumnBalance     string `json:"columnBalance"`
+	TotalsRowLabel    string `json:"totalsRowLabel"`
 }
 
 // ResolveTabSlug returns the URL slug for a canonical tab key. The
@@ -1088,7 +1147,7 @@ type SupplierButtonLabels struct {
 }
 
 type SupplierColumnLabels struct {
-	CompanyName  string `json:"companyName"`
+	Name         string `json:"name"`
 	SupplierType string `json:"supplierType"`
 	InternalID   string `json:"internalId"`
 	Status       string `json:"status"`
@@ -1108,7 +1167,7 @@ type SupplierEmptyLabels struct {
 }
 
 type SupplierFormLabels struct {
-	CompanyName        string `json:"companyName"`
+	Name               string `json:"name"`
 	SupplierType       string `json:"supplierType"`
 	TaxID              string `json:"taxId"`
 	RegistrationNumber string `json:"registrationNumber"`
@@ -1131,13 +1190,21 @@ type SupplierFormLabels struct {
 	Active             string `json:"active"`
 
 	// Section titles
-	SectionCompany   string `json:"sectionCompany"`
-	SectionContact   string `json:"sectionContact"`
-	SectionFinancial string `json:"sectionFinancial"`
-	SectionAddress   string `json:"sectionAddress"`
+	SectionCompany        string `json:"sectionCompany"`
+	SectionRepresentative string `json:"sectionRepresentative"`
+	SectionAccounting     string `json:"sectionAccounting"`
+	SectionAddress        string `json:"sectionAddress"`
+	SectionOthers         string `json:"sectionOthers"`
+
+	// Timezone autocomplete
+	Timezone                  string `json:"timezone"`
+	TimezonePlaceholder       string `json:"timezonePlaceholder"`
+	TimezoneSearchPlaceholder string `json:"timezoneSearchPlaceholder"`
+	TimezoneNoResults         string `json:"timezoneNoResults"`
+	TimezoneInfo              string `json:"timezoneInfo"`
 
 	// Placeholders
-	CompanyNamePlaceholder        string `json:"companyNamePlaceholder"`
+	NamePlaceholder               string `json:"namePlaceholder"`
 	SupplierTypePlaceholder       string `json:"supplierTypePlaceholder"`
 	StatusPlaceholder             string `json:"statusPlaceholder"`
 	FirstNamePlaceholder          string `json:"firstNamePlaceholder"`

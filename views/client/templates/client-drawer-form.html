@@ -3,16 +3,16 @@ Client drawer form — loaded into #sheetContent via HTMX.
 Used by both Add and Edit actions.
 Data: .FirstName, .LastName, .Email, .Mobile, .Active, .ID, .FormAction, .IsEdit,
       .Name, .StreetAddress, .City, .Province,
-      .PostalCode, .Notes, .BillingCurrency, .TagOptions, .SelectedTags, .Labels, .CommonLabels
+      .PostalCode, .Country, .Website, .Status,
+      .Notes, .BillingCurrency, .TagOptions, .SelectedTags, .Labels, .CommonLabels
 */}}
 {{define "client-drawer-form"}}
 <form hx-post="{{.FormAction}}" hx-swap="none" hx-on::after-request="lf.Sheet.handleResponse(event)">
     {{if .ID}}<input type="hidden" name="id" value="{{.ID}}">{{end}}
 
     <div class="sheet-body">
-        {{if or (eq .Mode "") (eq .Mode "info")}}
-        {{/* --- Company Section --- */}}
-        {{template "form-section" (dict "Title" .Labels.CompanyDetails)}}
+        {{/* --- Company Details Section --- */}}
+        {{template "form-section" (dict "Title" .Labels.SectionCompany)}}
 
         <div class="form-row single">
             {{template "form-group" (dict
@@ -20,13 +20,24 @@ Data: .FirstName, .LastName, .Email, .Mobile, .Active, .ID, .FormAction, .IsEdit
                 "Name" "name"
                 "Label" .Labels.Name
                 "Value" .Name
+                "Required" true
                 "Placeholder" .Labels.NamePlaceholder
                 "Info" .Labels.NameInfo
             )}}
         </div>
 
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "url"
+                "Name" "website"
+                "Label" .Labels.Website
+                "Value" .Website
+                "Placeholder" .Labels.WebsitePlaceholder
+            )}}
+        </div>
+
         {{/* --- Address Section --- */}}
-        {{template "form-section" (dict "Title" .Labels.StreetAddress)}}
+        {{template "form-section" (dict "Title" .Labels.SectionAddress)}}
 
         <div class="form-row single">
             {{template "form-group" (dict
@@ -55,7 +66,7 @@ Data: .FirstName, .LastName, .Email, .Mobile, .Active, .ID, .FormAction, .IsEdit
             )}}
         </div>
 
-        <div class="form-row single">
+        <div class="form-row">
             {{template "form-group" (dict
                 "Type" "text"
                 "Name" "postal_code"
@@ -63,12 +74,17 @@ Data: .FirstName, .LastName, .Email, .Mobile, .Active, .ID, .FormAction, .IsEdit
                 "Value" .PostalCode
                 "Placeholder" .Labels.PostalCodePlaceholder
             )}}
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "country"
+                "Label" .Labels.Country
+                "Value" .Country
+                "Placeholder" .Labels.CountryPlaceholder
+            )}}
         </div>
-        {{end}}
 
-        {{if or (eq .Mode "") (eq .Mode "representative")}}
         {{/* --- Representative Section --- */}}
-        {{template "form-section" (dict "Title" .Labels.Representative)}}
+        {{template "form-section" (dict "Title" .Labels.SectionRepresentative)}}
 
         <div class="form-row">
             {{template "form-group" (dict
@@ -126,23 +142,34 @@ Data: .FirstName, .LastName, .Email, .Mobile, .Active, .ID, .FormAction, .IsEdit
                 "Info" .Labels.TimezoneInfo
             )}}
         </div>
-        {{end}}
 
-        {{if or (eq .Mode "") (eq .Mode "info")}}
-        {{/* --- Notes Section --- */}}
-        <div class="form-row single">
+        {{/* --- Accounting Section --- */}}
+        {{template "form-section" (dict "Title" .Labels.SectionAccounting)}}
+
+        <div class="form-row">
             {{template "form-group" (dict
-                "Type" "textarea"
-                "Name" "notes"
-                "Label" .Labels.Notes
-                "Value" .Notes
-                "Placeholder" .Labels.NotesPlaceholder
-                "Rows" 3
-                "Info" .Labels.NotesInfo
+                "Type" "select"
+                "Name" "status"
+                "Label" .Labels.Status
+                "Placeholder" .Labels.StatusPlaceholder
+                "Options" (list
+                    (dict "Value" "prospect" "Label" .Labels.StatusProspect "Selected" (eq .Status "prospect"))
+                    (dict "Value" "active"   "Label" .Labels.StatusActive   "Selected" (eq .Status "active"))
+                    (dict "Value" "on_hold"  "Label" .Labels.StatusOnHold   "Selected" (eq .Status "on_hold"))
+                    (dict "Value" "blocked"  "Label" .Labels.StatusBlocked  "Selected" (eq .Status "blocked"))
+                    (dict "Value" "inactive" "Label" .Labels.StatusInactive "Selected" (eq .Status "inactive"))
+                )
+            )}}
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "billing_currency"
+                "Label" .Labels.BillingCurrency
+                "Value" .BillingCurrency
+                "Placeholder" .Labels.BillingCurrencyPlaceholder
+                "Info" .Labels.BillingCurrencyInfo
             )}}
         </div>
 
-        {{/* --- Payment Terms --- */}}
         {{if .PaymentTermSelectOptions}}
         <div class="form-row single">
             {{template "form-group" (dict
@@ -156,7 +183,21 @@ Data: .FirstName, .LastName, .Email, .Mobile, .Active, .ID, .FormAction, .IsEdit
         </div>
         {{end}}
 
-        {{/* --- Tags Section --- */}}
+        {{/* --- Others Section --- */}}
+        {{template "form-section" (dict "Title" .Labels.SectionOthers)}}
+
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "textarea"
+                "Name" "notes"
+                "Label" .Labels.Notes
+                "Value" .Notes
+                "Placeholder" .Labels.NotesPlaceholder
+                "Rows" 3
+                "Info" .Labels.NotesInfo
+            )}}
+        </div>
+
         {{if .TagOptions}}
         <div class="form-row single">
             <div class="form-group">
@@ -173,23 +214,6 @@ Data: .FirstName, .LastName, .Email, .Mobile, .Active, .ID, .FormAction, .IsEdit
                     "MaxVisibleChips" 3
                 )}}
             </div>
-        </div>
-        {{end}}
-        {{end}}
-
-        {{if or (eq .Mode "") (eq .Mode "accounting")}}
-        {{/* --- Accounting Section --- */}}
-        {{template "form-section" (dict "Title" .Labels.Accounting)}}
-
-        <div class="form-row single">
-            {{template "form-group" (dict
-                "Type" "text"
-                "Name" "billing_currency"
-                "Label" .Labels.BillingCurrency
-                "Value" .BillingCurrency
-                "Placeholder" .Labels.BillingCurrencyPlaceholder
-                "Info" .Labels.BillingCurrencyInfo
-            )}}
         </div>
         {{end}}
 

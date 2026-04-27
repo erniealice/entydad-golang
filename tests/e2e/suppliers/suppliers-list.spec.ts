@@ -82,7 +82,7 @@ test.describe('ENT-SUP-002: Supplier Add via Drawer', () => {
     await expect(page.locator('#sheet.open .sheet-panel')).toBeVisible();
 
     // Verify form fields exist by ID
-    await expect(page.locator('#company_name')).toBeVisible();
+    await expect(page.locator('#name')).toBeVisible();
     await expect(page.locator('#supplier_type')).toBeVisible();
     await expect(page.locator('#status')).toBeVisible();
   });
@@ -92,7 +92,7 @@ test.describe('ENT-SUP-002: Supplier Add via Drawer', () => {
     await expect(page.locator('#sheet.open .sheet-panel')).toBeVisible();
 
     // Company info
-    await expect(page.locator('#company_name')).toBeVisible();
+    await expect(page.locator('#name')).toBeVisible();
 
     // Contact person
     await expect(page.locator('#first_name')).toBeVisible();
@@ -118,7 +118,7 @@ test.describe('ENT-SUP-002: Supplier Add via Drawer', () => {
     await expect(page.locator('#sheet.open .sheet-panel')).toBeVisible();
 
     // Fill required fields
-    await page.locator('#company_name').fill(`TestSupplier${ts}`);
+    await page.locator('#name').fill(`TestSupplier${ts}`);
     await page.locator('#first_name').fill('E2E');
     await page.locator('#last_name').fill(`Test${ts}`);
 
@@ -138,7 +138,7 @@ test.describe('ENT-SUP-002: Supplier Add via Drawer', () => {
     await expect(page.locator('#sheet.open .sheet-panel')).toBeVisible();
 
     // Fill something
-    await page.locator('#company_name').fill('ShouldNotSave');
+    await page.locator('#name').fill('ShouldNotSave');
 
     // Cancel — use the secondary button in sheet footer
     await page.locator('#sheet .sheet-footer .btn-secondary').click();
@@ -160,8 +160,8 @@ test.describe('ENT-SUP-003: Supplier Edit via Drawer', () => {
     await expect(page.locator('#sheet.open .sheet-panel')).toBeVisible();
 
     // Company name should be pre-filled
-    const companyName = await page.locator('#company_name').inputValue();
-    expect(companyName.length).toBeGreaterThan(0);
+    const name = await page.locator('#name').inputValue();
+    expect(name.length).toBeGreaterThan(0);
   });
 
   test('saves edit and closes drawer', async ({ page }) => {
@@ -171,7 +171,7 @@ test.describe('ENT-SUP-003: Supplier Edit via Drawer', () => {
 
     // Modify a field
     const ts = Date.now();
-    await page.locator('#company_name').fill(`Updated${ts}`);
+    await page.locator('#name').fill(`Updated${ts}`);
 
     // Submit
     await page.locator('#sheet button[type="submit"]').click();

@@ -86,6 +86,14 @@ type ModuleDeps struct {
 	// GetFunctionalCurrency resolves the current workspace's functional currency
 	// so new-client drawers can prefill billing_currency.
 	GetFunctionalCurrency func(ctx context.Context) string
+
+	// ListClientPlans fetches Plans scoped to a client_id for the Packages tab.
+	// Wired from centymo via the centymo block; nil-safe (tab renders empty state).
+	ListClientPlans func(ctx context.Context, clientID string) ([]clientdetail.ClientPlanRow, error)
+
+	// PlanAddURL is the centymo Plan-add drawer URL; the Packages tab appends
+	// ?context=client&client_id={cid} to pre-fill the client field.
+	PlanAddURL string
 }
 
 // Module holds all constructed client views.
@@ -160,6 +168,8 @@ func NewModule(deps *ModuleDeps) *Module {
 		AuditOps: auditlog.AuditOps{
 			ListAuditHistory: deps.ListAuditHistory,
 		},
+		ListClientPlans: deps.ListClientPlans,
+		PlanAddURL:      deps.PlanAddURL,
 	}
 
 	return &Module{

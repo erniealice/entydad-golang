@@ -67,6 +67,24 @@ type FormLabels struct {
 	PaymentTermsInfo  string
 	TagsInfo          string
 	ActiveInfo        string
+
+	// New section + field labels
+	Status                string
+	StatusPlaceholder     string
+	StatusActive          string
+	StatusBlocked         string
+	StatusOnHold          string
+	StatusInactive        string
+	StatusProspect        string
+	Country               string
+	CountryPlaceholder    string
+	Website               string
+	WebsitePlaceholder    string
+	SectionCompany        string
+	SectionAddress        string
+	SectionRepresentative string
+	SectionAccounting     string
+	SectionOthers         string
 }
 
 // PaymentTermOption is a minimal struct for rendering payment term options in the form.
@@ -102,6 +120,9 @@ type FormData struct {
 	Mobile                   string
 	Timezone                 string
 	Active                   bool
+	Status                   string
+	Country                  string
+	Website                  string
 	StreetAddress            string
 	City                     string
 	Province                 string
@@ -190,6 +211,22 @@ func formLabels(t func(string) string) FormLabels {
 		TimezoneSearchPlaceholder: t("client.form.timezoneSearchPlaceholder"),
 		TimezoneNoResults:         t("client.form.timezoneNoResults"),
 		TimezoneInfo:              t("client.form.timezoneInfo"),
+		Status:                t("client.form.status"),
+		StatusPlaceholder:     t("client.form.statusPlaceholder"),
+		StatusActive:          t("client.form.statusActive"),
+		StatusBlocked:         t("client.form.statusBlocked"),
+		StatusOnHold:          t("client.form.statusOnHold"),
+		StatusInactive:        t("client.form.statusInactive"),
+		StatusProspect:        t("client.form.statusProspect"),
+		Country:               t("client.form.country"),
+		CountryPlaceholder:    t("client.form.countryPlaceholder"),
+		Website:               t("client.form.website"),
+		WebsitePlaceholder:    t("client.form.websitePlaceholder"),
+		SectionCompany:        t("client.form.sectionCompany"),
+		SectionAddress:        t("client.form.sectionAddress"),
+		SectionRepresentative: t("client.form.sectionRepresentative"),
+		SectionAccounting:     t("client.form.sectionAccounting"),
+		SectionOthers:         t("client.form.sectionOthers"),
 	}
 }
 
@@ -369,6 +406,7 @@ func NewAddAction(deps *Deps) view.View {
 			return view.OK("client-drawer-form", &FormData{
 				FormAction:               deps.Routes.AddURL,
 				Active:                   true,
+				Status:                   "active",
 				Mode:                     mode,
 				BillingCurrency: func() string {
 				if deps.GetFunctionalCurrency == nil {
@@ -408,6 +446,9 @@ func NewAddAction(deps *Deps) view.View {
 			Data: &clientpb.Client{
 				Active:          active,
 				Name:            optionalString(r.FormValue("name")),
+				Status:          optionalString(r.FormValue("status")),
+				Country:         optionalString(r.FormValue("country")),
+				Website:         optionalString(r.FormValue("website")),
 				StreetAddress:   optionalString(r.FormValue("street_address")),
 				City:            optionalString(r.FormValue("city")),
 				Province:        optionalString(r.FormValue("province")),
@@ -493,6 +534,9 @@ func NewEditAction(deps *Deps) view.View {
 				Mobile:                   u.GetMobileNumber(),
 				Timezone:                 u.GetTimezone(),
 				Active:                   c.GetActive(),
+				Status:                   c.GetStatus(),
+				Country:                  c.GetCountry(),
+				Website:                  c.GetWebsite(),
 				StreetAddress:            c.GetStreetAddress(),
 				City:                     c.GetCity(),
 				Province:                 c.GetProvince(),
@@ -527,16 +571,19 @@ func NewEditAction(deps *Deps) view.View {
 			// Only update company-related fields; leave representative fields untouched
 			clientData.Active = active
 			clientData.Name = optionalString(r.FormValue("name"))
+			clientData.Website = optionalString(r.FormValue("website"))
 			clientData.StreetAddress = optionalString(r.FormValue("street_address"))
 			clientData.City = optionalString(r.FormValue("city"))
 			clientData.Province = optionalString(r.FormValue("province"))
 			clientData.PostalCode = optionalString(r.FormValue("postal_code"))
+			clientData.Country = optionalString(r.FormValue("country"))
 			clientData.Notes = optionalString(r.FormValue("notes"))
 			clientData.PaymentTermId = optionalString(r.FormValue("payment_term_id"))
 		case "accounting":
 			// Only update accounting fields. Active is always present on every
 			// mode's form so we keep it authoritative.
 			clientData.Active = active
+			clientData.Status = optionalString(r.FormValue("status"))
 			clientData.BillingCurrency = optionalString(r.FormValue("billing_currency"))
 		case "representative":
 			// Only update representative (user) fields; leave company fields untouched
@@ -553,6 +600,9 @@ func NewEditAction(deps *Deps) view.View {
 			// List page edit — update all fields
 			clientData.Active = active
 			clientData.Name = optionalString(r.FormValue("name"))
+			clientData.Status = optionalString(r.FormValue("status"))
+			clientData.Country = optionalString(r.FormValue("country"))
+			clientData.Website = optionalString(r.FormValue("website"))
 			clientData.StreetAddress = optionalString(r.FormValue("street_address"))
 			clientData.City = optionalString(r.FormValue("city"))
 			clientData.Province = optionalString(r.FormValue("province"))
