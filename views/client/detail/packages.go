@@ -37,11 +37,14 @@ func buildPackagesTable(ctx context.Context, deps *DetailViewDeps, clientID, cli
 
 	var rows []types.TableRow
 
-	planRows, err := deps.ListClientPlans(ctx, clientID)
-	if err != nil {
-		log.Printf("Failed to load client plans for client %s: %v", clientID, err)
-		// Render an empty table rather than a hard error — the tab should still load.
-		planRows = nil
+	var planRows []ClientPlanRow
+	if deps.ListClientPlans != nil {
+		loaded, err := deps.ListClientPlans(ctx, clientID)
+		if err != nil {
+			log.Printf("Failed to load client plans for client %s: %v", clientID, err)
+		} else {
+			planRows = loaded
+		}
 	}
 
 	for _, p := range planRows {

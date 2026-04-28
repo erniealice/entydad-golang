@@ -285,9 +285,7 @@ func NewView(deps *DetailViewDeps) view.View {
 			pageData.Subscriptions = subs
 			pageData.SubscriptionsTable = buildSubscriptionsTable(subs, pageData.SubscriptionAddURL, id, clientName, deps)
 		case "packages":
-			if deps.ListClientPlans != nil {
-				pageData.PackagesTable = buildPackagesTable(ctx, deps, id, clientName)
-			}
+			pageData.PackagesTable = buildPackagesTable(ctx, deps, id, clientName)
 		case "statement":
 			if deps.GetClientStatement != nil {
 				req := &clientstmtpb.ClientStatementRequest{
@@ -448,9 +446,7 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 			pageData.Subscriptions = loadClientSubscriptions(ctx, deps, id)
 			pageData.SubscriptionsTable = buildSubscriptionsTable(pageData.Subscriptions, pageData.SubscriptionAddURL, id, clientName, deps)
 		case "packages":
-			if deps.ListClientPlans != nil {
-				pageData.PackagesTable = buildPackagesTable(ctx, deps, id, clientName)
-			}
+			pageData.PackagesTable = buildPackagesTable(ctx, deps, id, clientName)
 		case "history":
 			pageData.PurchaseStats, pageData.Orders = loadPurchaseHistory(ctx, deps, id)
 			pageData.HasOrders = len(pageData.Orders) > 0
