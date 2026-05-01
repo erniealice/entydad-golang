@@ -65,11 +65,20 @@ func NewView(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		step := "request"
 		token := ""
+		errorMsg := ""
+		success := false
 
 		if viewCtx.Request != nil {
-			token = viewCtx.Request.URL.Query().Get("token")
+			q := viewCtx.Request.URL.Query()
+			token = q.Get("token")
 			if token != "" {
 				step = "confirm"
+			}
+			if q.Get("sent") == "true" {
+				success = true
+			}
+			if e := q.Get("error"); e != "" {
+				errorMsg = e
 			}
 		}
 
@@ -90,6 +99,8 @@ func NewView(deps *Deps) view.View {
 			Slides:          deps.Slides,
 			Step:            step,
 			Token:           token,
+			Success:         success,
+			Error:           errorMsg,
 		}
 
 		return view.OK("reset-password02", pageData)

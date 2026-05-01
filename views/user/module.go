@@ -34,8 +34,8 @@ type ModuleDeps struct {
 	UserRoleLabels  entydad.UserRoleLabels
 	TableLabels     types.TableLabels
 	// User list page data
-	GetListPageData func(ctx context.Context, req *userpb.GetUserListPageDataRequest) (*userpb.GetUserListPageDataResponse, error)
-	GetUserRolesMap func(ctx context.Context) (map[string][]entydad.RoleBadge, error)
+	GetListPageData      func(ctx context.Context, req *userpb.GetUserListPageDataRequest) (*userpb.GetUserListPageDataResponse, error)
+	GetUserWorkspacesMap func(ctx context.Context) (map[string][]types.ChipData, error)
 	// User CRUD
 	CreateUser func(ctx context.Context, req *userpb.CreateUserRequest) (*userpb.CreateUserResponse, error)
 	ReadUser   func(ctx context.Context, req *userpb.ReadUserRequest) (*userpb.ReadUserResponse, error)
@@ -106,14 +106,14 @@ func NewModule(deps *ModuleDeps) *Module {
 		HashPassword:        deps.HashPassword,
 	}
 	listDeps := &userlist.ListViewDeps{
-		Routes:          deps.Routes,
-		GetListPageData: deps.GetListPageData,
-		GetUserRolesMap: deps.GetUserRolesMap,
-		RefreshURL:      deps.Routes.TableURL,
-		Labels:          deps.Labels,
-		SharedLabels:    deps.SharedLabels,
-		CommonLabels:    deps.CommonLabels,
-		TableLabels:     deps.TableLabels,
+		Routes:               deps.Routes,
+		GetListPageData:      deps.GetListPageData,
+		GetUserWorkspacesMap: deps.GetUserWorkspacesMap,
+		RefreshURL:           deps.Routes.TableURL,
+		Labels:               deps.Labels,
+		SharedLabels:         deps.SharedLabels,
+		CommonLabels:         deps.CommonLabels,
+		TableLabels:          deps.TableLabels,
 	}
 	detailDeps := &userdetail.DetailViewDeps{
 		Routes:                       deps.Routes,

@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	espynahttp "github.com/erniealice/espyna-golang/contrib/http"
+	"github.com/erniealice/espyna-golang/tableparams"
 	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/types"
@@ -50,10 +51,6 @@ type PageData struct {
 	Table           *types.TableConfig
 }
 
-var locationAreaAllowedSortCols = []string{
-	"date_created", "name",
-}
-
 var locationAreaSearchFields = []string{"name", "description"}
 
 // NewView creates the location area list view (full page).
@@ -64,12 +61,13 @@ func NewView(deps *ListViewDeps) view.View {
 			status = "active"
 		}
 
-		p, err := espynahttp.ParseTableParams(viewCtx.Request, locationAreaAllowedSortCols)
+		columns := locationAreaColumns(deps.Labels)
+		p, err := espynahttp.ParseTableParams(viewCtx.Request, types.SortableKeys(columns), "date_created", "desc")
 		if err != nil {
 			return view.Error(err)
 		}
 
-		tableConfig, err := buildTableConfig(ctx, deps, status, p)
+		tableConfig, err := buildTableConfig(ctx, deps, columns, status, p)
 		if err != nil {
 			return view.Error(err)
 		}
@@ -102,12 +100,13 @@ func NewTableView(deps *ListViewDeps) view.View {
 			status = "active"
 		}
 
-		p, err := espynahttp.ParseTableParams(viewCtx.Request, locationAreaAllowedSortCols)
+		columns := locationAreaColumns(deps.Labels)
+		p, err := espynahttp.ParseTableParams(viewCtx.Request, types.SortableKeys(columns), "date_created", "desc")
 		if err != nil {
 			return view.Error(err)
 		}
 
-		tableConfig, err := buildTableConfig(ctx, deps, status, p)
+		tableConfig, err := buildTableConfig(ctx, deps, columns, status, p)
 		if err != nil {
 			return view.Error(err)
 		}
@@ -117,7 +116,7 @@ func NewTableView(deps *ListViewDeps) view.View {
 }
 
 // buildTableConfig fetches location area data and builds the table configuration.
-func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p espynahttp.TableQueryParams) (*types.TableConfig, error) {
+func buildTableConfig(ctx context.Context, deps *ListViewDeps, columns []types.TableColumn, status string, p tableparams.TableQueryParams) (*types.TableConfig, error) {
 	perms := view.GetUserPermissions(ctx)
 
 	resp, err := deps.GetListPageData(ctx, status, p.Search, p.Page, p.PageSize)
@@ -137,7 +136,6 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 	}
 
 	l := deps.Labels
-	columns := locationAreaColumns(l)
 	rows := buildTableRows(resp.Items, status, l, deps.SharedLabels, deps.Routes, inUseIDs, perms)
 	types.ApplyColumnStyles(columns, rows)
 
@@ -200,9 +198,9 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 
 func locationAreaColumns(l entydad.LocationAreaLabels) []types.TableColumn {
 	return []types.TableColumn{
-		{Key: "name", Label: l.Columns.Name, Sortable: true, Filterable: true, FilterType: types.FilterTypeString},
-		{Key: "description", Label: l.Columns.Description, Sortable: false},
-		{Key: "date_created", Label: l.Columns.DateCreated, Sortable: true, Filterable: true, FilterType: types.FilterTypeDate},
+		{Key: "name", Label: l.Columns.Name, Filterable: true, FilterType: types.FilterTypeString},
+		{Key: "description", Label: l.Columns.Description, NoSort: true},
+		{Key: "date_created", Label: l.Columns.DateCreated, Filterable: true, FilterType: types.FilterTypeDate},
 	}
 }
 

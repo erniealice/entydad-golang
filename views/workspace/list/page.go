@@ -7,6 +7,7 @@ import (
 	"math"
 
 	espynahttp "github.com/erniealice/espyna-golang/contrib/http"
+	"github.com/erniealice/espyna-golang/tableparams"
 	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/types"
@@ -35,10 +36,11 @@ type PageData struct {
 	types.PageData
 	ContentTemplate string
 	Table           *types.TableConfig
-}
-
-var workspaceAllowedSortCols = []string{
-	"date_created", "date_modified", "name",
+	Routes          entydad.WorkspaceRoutes
+	Labels          entydad.WorkspaceLabels
+	Permissions     struct {
+		HasWorkspaceCreate bool
+	}
 }
 
 var workspaceSearchFields = []string{"name", "description"}
@@ -51,12 +53,13 @@ func NewView(deps *ListViewDeps) view.View {
 			status = "active"
 		}
 
-		p, err := espynahttp.ParseTableParams(viewCtx.Request, workspaceAllowedSortCols)
+		columns := workspaceColumns(deps.Labels)
+		p, err := espynahttp.ParseTableParams(viewCtx.Request, types.SortableKeys(columns), "name", "asc")
 		if err != nil {
 			return view.Error(err)
 		}
 
-		tableConfig, err := buildTableConfig(ctx, deps, status, p)
+		tableConfig, err := buildTableConfig(ctx, deps, columns, status, p)
 		if err != nil {
 			return view.Error(err)
 		}
@@ -75,7 +78,12 @@ func NewView(deps *ListViewDeps) view.View {
 			},
 			ContentTemplate: "workspace-list-content",
 			Table:           tableConfig,
+			Routes:          deps.Routes,
+			Labels:          deps.Labels,
 		}
+
+		// Populate permissions for the disabled-CTA pattern
+		pageData.Permissions.HasWorkspaceCreate = view.GetUserPermissions(ctx).Can("workspace", "create")
 
 		// KB help content
 		if viewCtx.Translations != nil {
@@ -99,12 +107,13 @@ func NewTableView(deps *ListViewDeps) view.View {
 			status = "active"
 		}
 
-		p, err := espynahttp.ParseTableParams(viewCtx.Request, workspaceAllowedSortCols)
+		columns := workspaceColumns(deps.Labels)
+		p, err := espynahttp.ParseTableParams(viewCtx.Request, types.SortableKeys(columns), "name", "asc")
 		if err != nil {
 			return view.Error(err)
 		}
 
-		tableConfig, err := buildTableConfig(ctx, deps, status, p)
+		tableConfig, err := buildTableConfig(ctx, deps, columns, status, p)
 		if err != nil {
 			return view.Error(err)
 		}
@@ -114,7 +123,7 @@ func NewTableView(deps *ListViewDeps) view.View {
 }
 
 // buildTableConfig fetches workspace data and builds the table configuration.
-func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p espynahttp.TableQueryParams) (*types.TableConfig, error) {
+func buildTableConfig(ctx context.Context, deps *ListViewDeps, columns []types.TableColumn, status string, p tableparams.TableQueryParams) (*types.TableConfig, error) {
 	perms := view.GetUserPermissions(ctx)
 
 	listParams := espynahttp.ToListParams(p, workspaceSearchFields)
@@ -125,7 +134,7 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 		listParams.Filters = &commonpb.FilterRequest{}
 	}
 	listParams.Filters.Filters = append(listParams.Filters.Filters, &commonpb.TypedFilter{
-		Field: "w.active",
+		Field: "active",
 		FilterType: &commonpb.TypedFilter_BooleanFilter{
 			BooleanFilter: &commonpb.BooleanFilter{Value: activeValue},
 		},
@@ -143,7 +152,6 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 	}
 
 	l := deps.Labels
-	columns := workspaceColumns(l)
 	rows := buildTableRows(resp.GetWorkspaceList(), status, l, deps.SharedLabels, deps.Routes, perms)
 	types.ApplyColumnStyles(columns, rows)
 
@@ -190,13 +198,9 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 			Title:   statusEmptyTitle(l, status),
 			Message: statusEmptyMessage(l, status),
 		},
-		PrimaryAction: &types.PrimaryAction{
-			Label:           l.Buttons.AddWorkspace,
-			ActionURL:       deps.Routes.AddURL,
-			Icon:            "icon-plus",
-			Disabled:        !perms.Can("workspace", "create"),
-			DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
-		},
+		// PrimaryAction is handled directly in workspace-list-content template
+		// via the disabled-CTA pattern with conditional if/else rendering
+		PrimaryAction: nil,
 		BulkActions:      &bulkCfg,
 		ServerPagination: sp,
 	}
@@ -207,10 +211,10 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 
 func workspaceColumns(l entydad.WorkspaceLabels) []types.TableColumn {
 	return []types.TableColumn{
-		{Key: "name", Label: l.Columns.Name, Sortable: true},
-		{Key: "description", Label: l.Columns.Description, Sortable: true},
-		{Key: "private", Label: l.Columns.Private, Sortable: true, WidthClass: "col-2xl"},
-		{Key: "status", Label: l.Columns.Status, Sortable: true, WidthClass: "col-2xl"},
+		{Key: "name", Label: l.Columns.Name},
+		{Key: "description", Label: l.Columns.Description},
+		{Key: "private", Label: l.Columns.Private, WidthClass: "col-2xl"},
+		{Key: "status", Label: l.Columns.Status, WidthClass: "col-2xl"},
 	}
 }
 
@@ -235,10 +239,17 @@ func buildTableRows(workspaces []*workspacepb.Workspace, status string, l entyda
 			privateVariant = "info"
 		}
 
-		actions := []types.TableAction{
-			{Type: "edit", Label: l.Actions.Edit, Action: "edit", URL: route.ResolveURL(routes.EditURL, "id", id), DrawerTitle: l.Actions.Edit,
-				Disabled: !perms.Can("workspace", "update"), DisabledTooltip: sl.Badges.NoPermission},
+		actions := []types.TableAction{}
+		if routes.DetailURL != "" {
+			actions = append(actions, types.TableAction{
+				Type: "view", Label: l.Actions.View, Action: "view",
+				Href: route.ResolveURL(routes.DetailURL, "id", id),
+			})
 		}
+		actions = append(actions, types.TableAction{
+			Type: "edit", Label: l.Actions.Edit, Action: "edit", URL: route.ResolveURL(routes.EditURL, "id", id), DrawerTitle: l.Actions.Edit,
+			Disabled: !perms.Can("workspace", "update"), DisabledTooltip: sl.Badges.NoPermission,
+		})
 		if active {
 			actions = append(actions, types.TableAction{
 				Type: "deactivate", Label: l.Actions.Deactivate, Action: "deactivate",

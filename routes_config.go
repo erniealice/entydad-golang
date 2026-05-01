@@ -514,6 +514,8 @@ type WorkspaceRoutes struct {
 	SetStatusURL     string `json:"set_status_url"`
 	BulkSetStatusURL string `json:"bulk_set_status_url"`
 	SwitchURL        string `json:"switch_url"`
+	DetailURL        string `json:"detail_url"`
+	TabActionURL     string `json:"tab_action_url"`
 }
 
 // DefaultWorkspaceRoutes returns a WorkspaceRoutes populated from the
@@ -529,6 +531,8 @@ func DefaultWorkspaceRoutes() WorkspaceRoutes {
 		SetStatusURL:     WorkspaceSetStatusURL,
 		BulkSetStatusURL: WorkspaceBulkSetStatusURL,
 		SwitchURL:        WorkspaceSwitchURL,
+		DetailURL:        WorkspaceDetailURL,
+		TabActionURL:     WorkspaceTabActionURL,
 	}
 }
 
@@ -544,6 +548,84 @@ func (r WorkspaceRoutes) RouteMap() map[string]string {
 		"workspace.set_status":      r.SetStatusURL,
 		"workspace.bulk_set_status": r.BulkSetStatusURL,
 		"workspace.switch_url":      r.SwitchURL,
+		"workspace.detail":          r.DetailURL,
+		"workspace.tab_action":      r.TabActionURL,
+	}
+}
+
+// ---------------------------------------------------------------------------
+// WorkspaceUserRoutes
+// ---------------------------------------------------------------------------
+
+// WorkspaceUserRoutes holds all route paths for workspace-user nested detail management.
+type WorkspaceUserRoutes struct {
+	ListURL      string `json:"list_url"`
+	DetailURL    string `json:"detail_url"`
+	TabActionURL string `json:"tab_action_url"`
+	AddURL       string `json:"add_url"`
+	DeleteURL    string `json:"delete_url"`
+	SetStatusURL string `json:"set_status_url"`
+	SearchURL    string `json:"search_url"`
+}
+
+// DefaultWorkspaceUserRoutes returns a WorkspaceUserRoutes populated from the
+// package-level route constants.
+func DefaultWorkspaceUserRoutes() WorkspaceUserRoutes {
+	return WorkspaceUserRoutes{
+		ListURL:      WorkspaceUserListURL,
+		DetailURL:    WorkspaceUserDetailURL,
+		TabActionURL: WorkspaceUserTabActionURL,
+		AddURL:       WorkspaceUserAddURL,
+		DeleteURL:    WorkspaceUserDeleteURL,
+		SetStatusURL: WorkspaceUserSetStatusURL,
+		SearchURL:    WorkspaceUserSearchURL,
+	}
+}
+
+// RouteMap returns a map of dot-notation keys to route path values.
+func (r WorkspaceUserRoutes) RouteMap() map[string]string {
+	return map[string]string{
+		"workspace_user.list":       r.ListURL,
+		"workspace_user.detail":     r.DetailURL,
+		"workspace_user.tab_action": r.TabActionURL,
+		"workspace_user.add":        r.AddURL,
+		"workspace_user.delete":     r.DeleteURL,
+		"workspace_user.set_status": r.SetStatusURL,
+		"workspace_user.search":     r.SearchURL,
+	}
+}
+
+// ---------------------------------------------------------------------------
+// WorkspaceUserRoleRoutes
+// ---------------------------------------------------------------------------
+
+// WorkspaceUserRoleRoutes holds all route paths for the workspace_user_role
+// assignment drawer (Phase 3).
+type WorkspaceUserRoleRoutes struct {
+	AddURL          string `json:"add_url"`
+	DeleteURL       string `json:"delete_url"`
+	PermissionsURL  string `json:"permissions_url"`
+	SearchRolesURL  string `json:"search_roles_url"`
+}
+
+// DefaultWorkspaceUserRoleRoutes returns a WorkspaceUserRoleRoutes populated from
+// the package-level route constants.
+func DefaultWorkspaceUserRoleRoutes() WorkspaceUserRoleRoutes {
+	return WorkspaceUserRoleRoutes{
+		AddURL:         WorkspaceUserRoleAddURL,
+		DeleteURL:      WorkspaceUserRoleDeleteURL,
+		PermissionsURL: WorkspaceUserRolePermissionsURL,
+		SearchRolesURL: WorkspaceUserRoleSearchRolesURL,
+	}
+}
+
+// RouteMap returns a map of dot-notation keys to route path values.
+func (r WorkspaceUserRoleRoutes) RouteMap() map[string]string {
+	return map[string]string{
+		"workspace_user_role.add":          r.AddURL,
+		"workspace_user_role.delete":       r.DeleteURL,
+		"workspace_user_role.permissions":  r.PermissionsURL,
+		"workspace_user_role.search_roles": r.SearchRolesURL,
 	}
 }
 

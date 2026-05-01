@@ -48,6 +48,7 @@ type PageData struct {
 	ForgotURL       string
 	Slides          []CarouselSlide
 	SocialProviders []SocialProvider
+	Error           string // non-empty when login failed (e.g. ?error=invalid)
 }
 
 // NewView creates the login02 page view (GET /login).
@@ -70,6 +71,13 @@ func NewView(deps *Deps) view.View {
 	}
 
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		errorMsg := ""
+		if viewCtx.Request != nil {
+			if viewCtx.Request.URL.Query().Get("error") != "" {
+				errorMsg = deps.Labels.Error
+			}
+		}
+
 		pageData := &PageData{
 			PageData: types.PageData{
 				CacheVersion: viewCtx.CacheVersion,
@@ -87,6 +95,7 @@ func NewView(deps *Deps) view.View {
 			ForgotURL:       forgotURL,
 			Slides:          deps.Slides,
 			SocialProviders: deps.SocialProviders,
+			Error:           errorMsg,
 		}
 
 		return view.OK("login02", pageData)

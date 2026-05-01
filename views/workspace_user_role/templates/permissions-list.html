@@ -1,0 +1,11 @@
+{{/*
+Permissions partial — returned by GET /action/workspace_user_role/permissions?role_id={id}.
+Renders a read-only list of permission codes for the selected role.
+No <input>, no <button> — display only.
+Data: PermissionsData (defined in action/action.go)
+*/}}
+{{define "wur-permissions-list"}}
+<ul data-testid="wur-permissions-list">
+    {{range .Permissions}}<li>{{.Code}}</li>{{end}}
+</ul>
+{{end}}

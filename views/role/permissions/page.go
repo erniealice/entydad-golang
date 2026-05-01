@@ -141,10 +141,10 @@ func buildTableConfig(ctx context.Context, deps *Deps, roleID string) (*types.Ta
 
 func permissionColumns(l entydad.RolePermissionLabels) []types.TableColumn {
 	return []types.TableColumn{
-		{Key: "permissionName", Label: l.Columns.PermissionName, Sortable: true},
-		{Key: "code", Label: l.Columns.Code, Sortable: true},
-		{Key: "type", Label: l.Columns.Type, Sortable: true, WidthClass: "col-2xl"},
-		{Key: "dateAssigned", Label: l.Columns.DateAssigned, Sortable: true, WidthClass: "col-6xl"},
+		{Key: "permissionName", Label: l.Columns.PermissionName},
+		{Key: "code", Label: l.Columns.Code},
+		{Key: "type", Label: l.Columns.Type, WidthClass: "col-2xl"},
+		{Key: "dateAssigned", Label: l.Columns.DateAssigned, WidthClass: "col-6xl"},
 	}
 }
 

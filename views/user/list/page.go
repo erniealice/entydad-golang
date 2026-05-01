@@ -7,6 +7,7 @@ import (
 	"math"
 
 	espynahttp "github.com/erniealice/espyna-golang/contrib/http"
+	"github.com/erniealice/espyna-golang/tableparams"
 	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/types"
@@ -19,22 +20,18 @@ import (
 	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
 )
 
-var userAllowedSortCols = []string{
-	"date_created", "first_name", "last_name", "email_address", "status",
-}
-
 var userSearchFields = []string{"first_name", "last_name", "email_address"}
 
 // ListViewDeps holds view dependencies.
 type ListViewDeps struct {
-	Routes          entydad.UserRoutes
-	GetListPageData func(ctx context.Context, req *userpb.GetUserListPageDataRequest) (*userpb.GetUserListPageDataResponse, error)
-	GetUserRolesMap func(ctx context.Context) (map[string][]entydad.RoleBadge, error)
-	RefreshURL      string
-	Labels          entydad.UserLabels
-	SharedLabels    entydad.SharedLabels
-	CommonLabels    pyeza.CommonLabels
-	TableLabels     types.TableLabels
+	Routes               entydad.UserRoutes
+	GetListPageData      func(ctx context.Context, req *userpb.GetUserListPageDataRequest) (*userpb.GetUserListPageDataResponse, error)
+	GetUserWorkspacesMap func(ctx context.Context) (map[string][]types.ChipData, error)
+	RefreshURL           string
+	Labels               entydad.UserLabels
+	SharedLabels         entydad.SharedLabels
+	CommonLabels         pyeza.CommonLabels
+	TableLabels          types.TableLabels
 }
 
 // PageData holds the data for the user list page.
@@ -52,12 +49,13 @@ func NewView(deps *ListViewDeps) view.View {
 			status = "active"
 		}
 
-		p, err := espynahttp.ParseTableParams(viewCtx.Request, userAllowedSortCols)
+		columns := userColumns(deps.Labels)
+		p, err := espynahttp.ParseTableParams(viewCtx.Request, types.SortableKeys(columns), "date_created", "desc")
 		if err != nil {
 			return view.Error(err)
 		}
 
-		tableConfig, err := buildTableConfig(ctx, deps, status, p)
+		tableConfig, err := buildTableConfig(ctx, deps, columns, status, p)
 		if err != nil {
 			return view.Error(err)
 		}
@@ -102,12 +100,13 @@ func NewTableView(deps *ListViewDeps) view.View {
 			status = "active"
 		}
 
-		p, err := espynahttp.ParseTableParams(viewCtx.Request, userAllowedSortCols)
+		columns := userColumns(deps.Labels)
+		p, err := espynahttp.ParseTableParams(viewCtx.Request, types.SortableKeys(columns), "date_created", "desc")
 		if err != nil {
 			return view.Error(err)
 		}
 
-		tableConfig, err := buildTableConfig(ctx, deps, status, p)
+		tableConfig, err := buildTableConfig(ctx, deps, columns, status, p)
 		if err != nil {
 			return view.Error(err)
 		}
@@ -117,7 +116,7 @@ func NewTableView(deps *ListViewDeps) view.View {
 }
 
 // buildTableConfig fetches user data and builds the table configuration.
-func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p espynahttp.TableQueryParams) (*types.TableConfig, error) {
+func buildTableConfig(ctx context.Context, deps *ListViewDeps, columns []types.TableColumn, status string, p tableparams.TableQueryParams) (*types.TableConfig, error) {
 	perms := view.GetUserPermissions(ctx)
 
 	listParams := espynahttp.ToListParams(p, userSearchFields)
@@ -145,18 +144,17 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 		return nil, fmt.Errorf("failed to load users: %w", err)
 	}
 
-	// Fetch user-role mappings (best-effort; nil map means no role data)
-	var userRolesMap map[string][]entydad.RoleBadge
-	if deps.GetUserRolesMap != nil {
-		userRolesMap, err = deps.GetUserRolesMap(ctx)
+	// Fetch user-workspace mappings (best-effort; nil map means no workspace data)
+	var userWorkspacesMap map[string][]types.ChipData
+	if deps.GetUserWorkspacesMap != nil {
+		userWorkspacesMap, err = deps.GetUserWorkspacesMap(ctx)
 		if err != nil {
-			log.Printf("Warning: Failed to load user roles map: %v", err)
+			log.Printf("Warning: Failed to load user workspaces map: %v", err)
 		}
 	}
 
 	l := deps.Labels
-	columns := userColumns(l)
-	rows := buildTableRows(resp.GetUserList(), status, l, deps.SharedLabels, userRolesMap, deps.Routes, perms)
+	rows := buildTableRows(resp.GetUserList(), status, l, deps.SharedLabels, userWorkspacesMap, deps.Routes, perms)
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
@@ -219,15 +217,15 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 
 func userColumns(l entydad.UserLabels) []types.TableColumn {
 	return []types.TableColumn{
-		{Key: "first_name", Label: l.Columns.Name, Sortable: true, Filterable: true, FilterType: types.FilterTypeString, MinWidth: "9.375rem"},
-		{Key: "email_address", Label: l.Columns.Email, Sortable: true, Filterable: true, FilterType: types.FilterTypeString, MinWidth: "11.25rem"},
-		{Key: "role", Label: l.Columns.Roles, Sortable: false, MinWidth: "7.5rem"},
-		{Key: "date_created", Label: l.Columns.DateCreated, Sortable: true, Filterable: true, FilterType: types.FilterTypeDate, WidthClass: "col-6xl"},
-		{Key: "status", Label: l.Columns.Status, Sortable: true, Filterable: false, WidthClass: "col-2xl"},
+		{Key: "first_name", Label: l.Columns.Name, Filterable: true, FilterType: types.FilterTypeString, MinWidth: "9.375rem"},
+		{Key: "email_address", Label: l.Columns.Email, Filterable: true, FilterType: types.FilterTypeString, MinWidth: "11.25rem"},
+		{Key: "workspaces", Label: l.Columns.Workspaces, NoSort: true, MinWidth: "7.5rem"},
+		{Key: "date_created", Label: l.Columns.DateCreated, Filterable: true, FilterType: types.FilterTypeDate, WidthClass: "col-6xl"},
+		{Key: "status", Label: l.Columns.Status, Filterable: false, WidthClass: "col-2xl"},
 	}
 }
 
-func buildTableRows(users []*userpb.User, status string, l entydad.UserLabels, sl entydad.SharedLabels, userRolesMap map[string][]entydad.RoleBadge, routes entydad.UserRoutes, perms *types.UserPermissions) []types.TableRow {
+func buildTableRows(users []*userpb.User, status string, l entydad.UserLabels, sl entydad.SharedLabels, userWorkspacesMap map[string][]types.ChipData, routes entydad.UserRoutes, perms *types.UserPermissions) []types.TableRow {
 	rows := []types.TableRow{}
 	for _, u := range users {
 		active := u.GetActive()
@@ -240,14 +238,10 @@ func buildTableRows(users []*userpb.User, status string, l entydad.UserLabels, s
 		name := u.GetFirstName() + " " + u.GetLastName()
 		email := u.GetEmailAddress()
 
-		// Build role chips for this user
-		var roleChips []types.ChipData
-		if userRolesMap != nil {
-			for _, rb := range userRolesMap[id] {
-				roleChips = append(roleChips, types.ChipData{Label: rb.Name, Color: rb.Color})
-			}
-		}
-		rolesCell := types.BuildChipCellFromChips(roleChips, 2)
+		// Build workspace chips for this user
+		workspaceChips := userWorkspacesMap[id] // nil-safe: returns nil slice for missing key
+		workspacesCell := types.BuildChipCellFromChips(workspaceChips, 3)
+		workspacesCell.TestID = "workspaces-chips"
 
 		actions := []types.TableAction{
 			{Type: "view", Label: l.Actions.View, Action: "view", Href: route.ResolveURL(routes.DetailURL, "id", id)},
@@ -276,11 +270,12 @@ func buildTableRows(users []*userpb.User, status string, l entydad.UserLabels, s
 			Cells: []types.TableCell{
 				{Type: "text", Value: name},
 				{Type: "text", Value: email},
-				rolesCell,
+				workspacesCell,
 				types.DateTimeCell(u.GetDateCreatedString(), types.DateReadable),
 				{Type: "badge", Value: recordStatus, Variant: statusVariant(recordStatus)},
 			},
 			DataAttrs: map[string]string{
+				"testid": "user-row-" + id,
 				"name":   name,
 				"email":  email,
 				"status": recordStatus,

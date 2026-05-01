@@ -610,10 +610,10 @@ func buildSubscriptionAddURL(base, clientID, clientName, billingCurrency string)
 // stays visible and the table's own empty state renders.
 func buildSubscriptionsTable(rows []SubscriptionRow, addURL string, clientID string, clientName string, deps *DetailViewDeps) *types.TableConfig {
 	columns := []types.TableColumn{
-		{Key: "name", Label: deps.Labels.Detail.Subscriptions.ColumnName, Sortable: true},
-		{Key: "plan", Label: deps.Labels.Detail.Subscriptions.ColumnPlan, Sortable: true},
-		{Key: "start_date", Label: deps.Labels.Detail.Subscriptions.ColumnStartDate, Sortable: true, WidthClass: "col-3xl"},
-		{Key: "end_date", Label: deps.Labels.Detail.Subscriptions.ColumnEndDate, Sortable: true, WidthClass: "col-3xl"},
+		{Key: "name", Label: deps.Labels.Detail.Subscriptions.ColumnName},
+		{Key: "plan", Label: deps.Labels.Detail.Subscriptions.ColumnPlan},
+		{Key: "start_date", Label: deps.Labels.Detail.Subscriptions.ColumnStartDate, WidthClass: "col-3xl"},
+		{Key: "end_date", Label: deps.Labels.Detail.Subscriptions.ColumnEndDate, WidthClass: "col-3xl"},
 	}
 
 	// Build locked client query params for edit URLs
@@ -867,13 +867,13 @@ func capitalizeType(t string) string {
 // buildStatementTable builds a TableConfig for the statement tab.
 func buildStatementTable(resp *clientstmtpb.ClientStatementResponse, deps *DetailViewDeps) *types.TableConfig {
 	columns := []types.TableColumn{
-		{Key: "date", Label: deps.Labels.Detail.Statement.ColumnDate, Sortable: true, WidthClass: "col-2xl"},
-		{Key: "type", Label: deps.Labels.Detail.Statement.ColumnType, Sortable: true, WidthClass: "col-lg"},
-		{Key: "reference", Label: deps.Labels.Detail.Statement.ColumnReference, Sortable: true, WidthClass: "col-3xl"},
-		{Key: "description", Label: deps.Labels.Detail.Statement.ColumnDescription, Sortable: true},
-		{Key: "billed", Label: deps.Labels.Detail.Statement.ColumnBilled, Sortable: true, WidthClass: "col-3xl", Align: "right"},
-		{Key: "received", Label: deps.Labels.Detail.Statement.ColumnReceived, Sortable: true, WidthClass: "col-3xl", Align: "right"},
-		{Key: "balance", Label: deps.Labels.Detail.Statement.ColumnBalance, Sortable: true, WidthClass: "col-3xl", Align: "right"},
+		{Key: "date", Label: deps.Labels.Detail.Statement.ColumnDate, WidthClass: "col-2xl"},
+		{Key: "type", Label: deps.Labels.Detail.Statement.ColumnType, WidthClass: "col-lg"},
+		{Key: "reference", Label: deps.Labels.Detail.Statement.ColumnReference, WidthClass: "col-3xl"},
+		{Key: "description", Label: deps.Labels.Detail.Statement.ColumnDescription},
+		{Key: "billed", Label: deps.Labels.Detail.Statement.ColumnBilled, WidthClass: "col-3xl", Align: "right"},
+		{Key: "received", Label: deps.Labels.Detail.Statement.ColumnReceived, WidthClass: "col-3xl", Align: "right"},
+		{Key: "balance", Label: deps.Labels.Detail.Statement.ColumnBalance, WidthClass: "col-3xl", Align: "right"},
 	}
 
 	var rows []types.TableRow

@@ -73,10 +73,10 @@ func NewView(deps *Deps) view.View {
 
 		l := deps.Labels
 		columns := []types.TableColumn{
-			{Key: "name", Label: l.Columns.TagName, Sortable: true},
-			{Key: "customers", Label: l.Columns.Customers, Sortable: false, WidthClass: "col-2xl"},
-			{Key: "description", Label: l.Columns.Description, Sortable: true},
-			{Key: "status", Label: l.Columns.Status, Sortable: true, WidthClass: "col-2xl"},
+			{Key: "name", Label: l.Columns.TagName},
+			{Key: "customers", Label: l.Columns.Customers, NoSort: true, WidthClass: "col-2xl"},
+			{Key: "description", Label: l.Columns.Description},
+			{Key: "status", Label: l.Columns.Status, WidthClass: "col-2xl"},
 		}
 
 		rows := buildTableRows(cats, customerCounts, deps.Routes, inUseIDs, l, deps.SharedLabels)
@@ -162,10 +162,10 @@ func NewTableView(deps *Deps) view.View {
 
 		l := deps.Labels
 		columns := []types.TableColumn{
-			{Key: "name", Label: l.Columns.TagName, Sortable: true},
-			{Key: "customers", Label: l.Columns.Customers, Sortable: false, WidthClass: "col-2xl"},
-			{Key: "description", Label: l.Columns.Description, Sortable: true},
-			{Key: "status", Label: l.Columns.Status, Sortable: true, WidthClass: "col-2xl"},
+			{Key: "name", Label: l.Columns.TagName},
+			{Key: "customers", Label: l.Columns.Customers, NoSort: true, WidthClass: "col-2xl"},
+			{Key: "description", Label: l.Columns.Description},
+			{Key: "status", Label: l.Columns.Status, WidthClass: "col-2xl"},
 		}
 
 		rows := buildTableRows(cats, customerCounts, deps.Routes, inUseIDs, l, deps.SharedLabels)

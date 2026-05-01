@@ -7,6 +7,7 @@ import (
 
 	"github.com/erniealice/entydad-golang"
 	espynahttp "github.com/erniealice/espyna-golang/contrib/http"
+	"github.com/erniealice/espyna-golang/tableparams"
 	commonpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
 	userpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/user"
 	pyeza "github.com/erniealice/pyeza-golang"
@@ -76,15 +77,16 @@ func TestBuildTableConfig_UserPermissionGatesPrimaryAndRowActions(t *testing.T) 
 			t.Parallel()
 
 			var capturedReq *userpb.GetUserListPageDataRequest
-			deps := newListViewDeps(users, func(ctx context.Context) (map[string][]entydad.RoleBadge, error) {
-				return map[string][]entydad.RoleBadge{
-					"user-active":   {{Name: "Admin", Color: "blue"}},
-					"user-inactive": {{Name: "Staff", Color: "gray"}},
+			deps := newListViewDeps(users, func(ctx context.Context) (map[string][]types.ChipData, error) {
+				return map[string][]types.ChipData{
+					"user-active":   {{Label: "Acme Corp"}},
+					"user-inactive": {{Label: "Globex"}},
 				}, nil
 			}, &capturedReq)
 
 			ctx := view.WithUserPermissions(context.Background(), types.NewUserPermissions(tc.permCodes))
-			table, err := buildTableConfig(ctx, deps, tc.status, espynahttp.TableQueryParams{
+			cols := userColumns(deps.Labels)
+			table, err := buildTableConfig(ctx, deps, cols, tc.status, tableparams.TableQueryParams{
 				Page:       2,
 				PageSize:   10,
 				Search:     "ada",
@@ -153,7 +155,8 @@ func TestBuildTableConfig_GetListPageDataError(t *testing.T) {
 		TableLabels:  types.TableLabels{},
 	}
 
-	_, err := buildTableConfig(context.Background(), deps, "active", espynahttp.TableQueryParams{
+	cols := userColumns(deps.Labels)
+	_, err := buildTableConfig(context.Background(), deps, cols, "active", tableparams.TableQueryParams{
 		Page:       1,
 		PageSize:   25,
 		SortColumn: "date_created",
@@ -167,22 +170,35 @@ func TestBuildTableConfig_GetListPageDataError(t *testing.T) {
 
 func newListViewDeps(
 	users []*userpb.User,
-	getRoles func(ctx context.Context) (map[string][]entydad.RoleBadge, error),
+	getWorkspaces func(ctx context.Context) (map[string][]types.ChipData, error),
 	capturedReq **userpb.GetUserListPageDataRequest,
 ) *ListViewDeps {
 	return &ListViewDeps{
 		Routes: entydad.DefaultUserRoutes(),
 		GetListPageData: func(ctx context.Context, req *userpb.GetUserListPageDataRequest) (*userpb.GetUserListPageDataResponse, error) {
 			*capturedReq = req
+			// Simulate server-side active filter so the test reflects real behaviour.
+			wantActive := true
+			for _, f := range req.GetFilters().GetFilters() {
+				if f.GetField() == "active" {
+					wantActive = f.GetBooleanFilter().GetValue()
+				}
+			}
+			var filtered []*userpb.User
+			for _, u := range users {
+				if u.GetActive() == wantActive {
+					filtered = append(filtered, u)
+				}
+			}
 			return &userpb.GetUserListPageDataResponse{
-				UserList: users,
+				UserList: filtered,
 				Pagination: &commonpb.PaginationResponse{
-					TotalItems: int32(len(users)),
+					TotalItems: int32(len(filtered)),
 				},
 				Success: true,
 			}, nil
 		},
-		GetUserRolesMap: getRoles,
+		GetUserWorkspacesMap: getWorkspaces,
 		Labels:          entydad.UserLabels{},
 		SharedLabels: entydad.SharedLabels{
 			Confirm: entydad.SharedConfirmLabels{

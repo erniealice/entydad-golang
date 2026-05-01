@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	espynahttp "github.com/erniealice/espyna-golang/contrib/http"
+	"github.com/erniealice/espyna-golang/tableparams"
 	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/types"
@@ -40,11 +41,6 @@ type PageData struct {
 	Table           *types.TableConfig
 }
 
-var clientAllowedSortCols = []string{
-	"date_created", "date_modified", "name",
-	"u.first_name", "u.last_name", "u.email_address",
-}
-
 var clientSearchFields = []string{"name", "u.first_name", "u.last_name", "u.email_address"}
 
 // NewView creates the client list view (full page).
@@ -55,12 +51,13 @@ func NewView(deps *ListViewDeps) view.View {
 			status = "active"
 		}
 
-		p, err := espynahttp.ParseTableParams(viewCtx.Request, clientAllowedSortCols)
+		columns := clientColumns(deps.Labels)
+		p, err := espynahttp.ParseTableParams(viewCtx.Request, types.SortableKeys(columns), "name", "asc")
 		if err != nil {
 			return view.Error(err)
 		}
 
-		tableConfig, err := buildTableConfig(ctx, deps, status, p)
+		tableConfig, err := buildTableConfig(ctx, deps, columns, status, p)
 		if err != nil {
 			return view.Error(err)
 		}
@@ -110,12 +107,13 @@ func NewTableView(deps *ListViewDeps) view.View {
 			status = "active"
 		}
 
-		p, err := espynahttp.ParseTableParams(viewCtx.Request, clientAllowedSortCols)
+		columns := clientColumns(deps.Labels)
+		p, err := espynahttp.ParseTableParams(viewCtx.Request, types.SortableKeys(columns), "name", "asc")
 		if err != nil {
 			return view.Error(err)
 		}
 
-		tableConfig, err := buildTableConfig(ctx, deps, status, p)
+		tableConfig, err := buildTableConfig(ctx, deps, columns, status, p)
 		if err != nil {
 			return view.Error(err)
 		}
@@ -125,7 +123,7 @@ func NewTableView(deps *ListViewDeps) view.View {
 }
 
 // buildTableConfig fetches client data and builds the table configuration.
-func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p espynahttp.TableQueryParams) (*types.TableConfig, error) {
+func buildTableConfig(ctx context.Context, deps *ListViewDeps, columns []types.TableColumn, status string, p tableparams.TableQueryParams) (*types.TableConfig, error) {
 	perms := view.GetUserPermissions(ctx)
 
 	listParams := espynahttp.ToListParams(p, clientSearchFields)
@@ -138,7 +136,7 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 		listParams.Filters = &commonpb.FilterRequest{}
 	}
 	listParams.Filters.Filters = append(listParams.Filters.Filters, &commonpb.TypedFilter{
-		Field: "c.status",
+		Field: "status",
 		FilterType: &commonpb.TypedFilter_StringFilter{
 			StringFilter: &commonpb.StringFilter{
 				Value:    status,
@@ -174,7 +172,6 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 	}
 
 	l := deps.Labels
-	columns := clientColumns(l)
 	rows := buildTableRows(resp.GetClientList(), status, l, deps.SharedLabels, deps.CommonLabels, deps.Routes, inUseIDs, clientBalances, perms)
 	types.ApplyColumnStyles(columns, rows)
 
@@ -225,8 +222,8 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 		ShowExport:           true,
 		ShowDensity:          true,
 		ShowEntries:          true,
-		DefaultSortColumn:    "date_created",
-		DefaultSortDirection: "desc",
+		DefaultSortColumn:    "name",
+		DefaultSortDirection: "asc",
 		Labels:               deps.TableLabels,
 		EmptyState: types.TableEmptyState{
 			Title:   statusEmptyTitle(l, status),
@@ -245,11 +242,11 @@ func clientColumns(l entydad.ClientLabels) []types.TableColumn {
 	// Status column omitted on purpose — the list page is already scoped
 	// by /list/{status}, so a per-row badge would be redundant.
 	return []types.TableColumn{
-		{Key: "name", Label: l.Columns.ClientName, Sortable: true, Filterable: true, FilterType: types.FilterTypeString},
-		{Key: "representative", Label: l.Columns.Representative, Sortable: true, Filterable: true, FilterType: types.FilterTypeString},
+		{Key: "name", Label: l.Columns.ClientName, Filterable: true, FilterType: types.FilterTypeString},
+		{Key: "representative", Label: l.Columns.Representative, Filterable: true, FilterType: types.FilterTypeString},
 		{Key: "category", Label: l.Columns.Category, WidthClass: "col-7xl"},
 		{Key: "payment_term", Label: l.Columns.PaymentTerm, WidthClass: "col-3xl"},
-		{Key: "outstanding_balance", Label: "Outstanding", Sortable: false, Align: "right", WidthClass: "col-4xl"},
+		{Key: "outstanding_balance", Label: "Outstanding", NoSort: true, Align: "right", WidthClass: "col-4xl"},
 	}
 }
 

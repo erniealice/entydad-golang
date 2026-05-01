@@ -9,8 +9,10 @@ import (
 
 	"github.com/erniealice/entydad-golang"
 	workspaceaction "github.com/erniealice/entydad-golang/views/workspace/action"
+	workspacedetail "github.com/erniealice/entydad-golang/views/workspace/detail"
 	workspacelist "github.com/erniealice/entydad-golang/views/workspace/list"
 	workspacepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace"
+	workspaceuserpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace_user"
 )
 
 // ModuleDeps holds all dependencies for the workspace module.
@@ -26,6 +28,16 @@ type ModuleDeps struct {
 	UpdateWorkspace func(ctx context.Context, req *workspacepb.UpdateWorkspaceRequest) (*workspacepb.UpdateWorkspaceResponse, error)
 	DeleteWorkspace func(ctx context.Context, req *workspacepb.DeleteWorkspaceRequest) (*workspacepb.DeleteWorkspaceResponse, error)
 	SetActive       func(ctx context.Context, id string, active bool) error
+
+	// Detail page dependencies (Phase 1 additions).
+	// Optional: when nil the detail page degrades gracefully (empty Users tab).
+	GetWorkspaceUserListPageData func(ctx context.Context, req *workspaceuserpb.GetWorkspaceUserListPageDataRequest) (*workspaceuserpb.GetWorkspaceUserListPageDataResponse, error)
+	// WorkspaceUserDetailURL is the target for the "View" row action on each workspace_user row.
+	// Phase 2 will register this route; Phase 1 just emits the URL in the table.
+	WorkspaceUserDetailURL string
+	// WorkspaceUserAddURL is the drawer action for "Add user to workspace".
+	// Phase 2 will register this route; Phase 1 just emits the URL in the button.
+	WorkspaceUserAddURL string
 }
 
 // Module holds all constructed workspace views.
@@ -39,6 +51,8 @@ type Module struct {
 	BulkDelete    view.View
 	SetStatus     view.View
 	BulkSetStatus view.View
+	Detail        view.View
+	TabAction     view.View
 }
 
 func NewModule(deps *ModuleDeps) *Module {
@@ -59,6 +73,16 @@ func NewModule(deps *ModuleDeps) *Module {
 		CommonLabels:    deps.CommonLabels,
 		TableLabels:     deps.TableLabels,
 	}
+	detailDeps := &workspacedetail.DetailViewDeps{
+		Routes:                       deps.Routes,
+		ReadWorkspace:                deps.ReadWorkspace,
+		GetWorkspaceUserListPageData: deps.GetWorkspaceUserListPageData,
+		Labels:                       deps.Labels,
+		CommonLabels:                 deps.CommonLabels,
+		TableLabels:                  deps.TableLabels,
+		WorkspaceUserDetailURL:       deps.WorkspaceUserDetailURL,
+		WorkspaceUserAddURL:          deps.WorkspaceUserAddURL,
+	}
 
 	return &Module{
 		routes:        deps.Routes,
@@ -70,6 +94,8 @@ func NewModule(deps *ModuleDeps) *Module {
 		BulkDelete:    workspaceaction.NewBulkDeleteAction(actionDeps),
 		SetStatus:     workspaceaction.NewSetStatusAction(actionDeps),
 		BulkSetStatus: workspaceaction.NewBulkSetStatusAction(actionDeps),
+		Detail:        workspacedetail.NewView(detailDeps),
+		TabAction:     workspacedetail.NewTabAction(detailDeps),
 	}
 }
 
@@ -84,4 +110,10 @@ func (m *Module) RegisterRoutes(r view.RouteRegistrar) {
 	r.POST(m.routes.BulkDeleteURL, m.BulkDelete)
 	r.POST(m.routes.SetStatusURL, m.SetStatus)
 	r.POST(m.routes.BulkSetStatusURL, m.BulkSetStatus)
+	if m.routes.DetailURL != "" {
+		r.GET(m.routes.DetailURL, m.Detail)
+	}
+	if m.routes.TabActionURL != "" {
+		r.GET(m.routes.TabActionURL, m.TabAction)
+	}
 }

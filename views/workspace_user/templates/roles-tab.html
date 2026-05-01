@@ -1,0 +1,27 @@
+{{/* Roles Tab — workspace_user_role rows for a workspace_user */}}
+{{define "workspace-user-tab-roles"}}
+<div class="tab-scroll tab-scroll--table" data-testid="workspace-user-tab-roles">
+    <div class="tab-actions-row">
+        {{/* "Assign role" button — Phase 3 owns the add handler; this URL is pre-wired. */}}
+        {{if .WorkspaceUserRoleAddURL}}
+        <button class="btn btn-sm btn-primary"
+                data-testid="workspace-user-role-add-btn"
+                hx-get="{{.WorkspaceUserRoleAddURL}}"
+                hx-target="#sheetContent"
+                hx-swap="innerHTML"
+                onclick="lf.Sheet.open()">
+            <span class="icon icon-plus"></span>
+            {{if .Labels.Detail.Roles.AssignButton}}{{.Labels.Detail.Roles.AssignButton}}{{else}}Assign role{{end}}
+        </button>
+        {{end}}
+    </div>
+    {{if .RolesTable}}
+    {{template "table-card" .RolesTable}}
+    {{else}}
+    <div class="coming-soon-panel">
+        <div class="coming-soon-title">No roles assigned</div>
+        <p class="coming-soon-text">No roles have been assigned to this workspace user yet.</p>
+    </div>
+    {{end}}
+</div>
+{{end}}

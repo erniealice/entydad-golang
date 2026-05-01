@@ -1,0 +1,26 @@
+{{/* Users Tab — workspace_user table for a given workspace */}}
+{{define "workspace-tab-users"}}
+<div class="tab-scroll tab-scroll--table" data-testid="workspace-tab-users">
+    <div class="tab-actions-row">
+        {{if .WorkspaceUserAddURL}}
+        <button class="btn btn-sm btn-primary"
+                data-testid="workspace-user-add-btn"
+                hx-get="{{.WorkspaceUserAddURL}}"
+                hx-target="#sheetContent"
+                hx-swap="innerHTML"
+                onclick="lf.Sheet.open()">
+            <span class="icon icon-plus"></span>
+            {{if .Labels.Detail.Users.AddButton}}{{.Labels.Detail.Users.AddButton}}{{else}}Add user to workspace{{end}}
+        </button>
+        {{end}}
+    </div>
+    {{if .UsersTable}}
+    {{template "table-card" .UsersTable}}
+    {{else}}
+    <div class="coming-soon-panel">
+        <div class="coming-soon-title">No users</div>
+        <p class="coming-soon-text">No users have been added to this workspace yet.</p>
+    </div>
+    {{end}}
+</div>
+{{end}}

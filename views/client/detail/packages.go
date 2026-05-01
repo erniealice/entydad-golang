@@ -27,9 +27,9 @@ type ClientPlanRow struct {
 // On error or empty result the table's own empty-state copy is rendered.
 func buildPackagesTable(ctx context.Context, deps *DetailViewDeps, clientID, clientName string) *types.TableConfig {
 	columns := []types.TableColumn{
-		{Key: "name", Label: deps.Labels.Detail.Packages.ColumnName, Sortable: true},
-		{Key: "rate_card", Label: deps.Labels.Detail.Packages.ColumnRateCard, Sortable: true},
-		{Key: "engagements", Label: deps.Labels.Detail.Packages.ColumnEngagements, Sortable: true, WidthClass: "col-2xl"},
+		{Key: "name", Label: deps.Labels.Detail.Packages.ColumnName},
+		{Key: "rate_card", Label: deps.Labels.Detail.Packages.ColumnRateCard},
+		{Key: "engagements", Label: deps.Labels.Detail.Packages.ColumnEngagements, WidthClass: "col-2xl"},
 	}
 
 	emptyLabel := deps.Labels.Detail.Packages.Empty

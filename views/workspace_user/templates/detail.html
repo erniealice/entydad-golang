@@ -1,0 +1,52 @@
+{{/* Full page — for direct access / non-HTMX */}}
+{{define "workspace-user-detail"}}
+{{template "app-shell" .}}
+{{end}}
+
+{{/* Content-only partial — for HTMX navigation */}}
+{{define "workspace-user-detail-content"}}
+<div class="page-content detail-layout" data-page-title="{{.Title}}">
+    {{/* --- "Back to workspace" breadcrumb --- */}}
+    {{if .BackToWorkspaceURL}}
+    <div class="detail-breadcrumb">
+        <a href="{{.BackToWorkspaceURL}}"
+           class="breadcrumb-link"
+           data-testid="workspace-user-back-link">
+            <span class="icon icon-chevron-left"></span>
+            {{if .Labels.Detail.BackToWorkspace}}{{.Labels.Detail.BackToWorkspace}}{{else}}Back to workspace{{end}}{{if .BackToWorkspaceName}}: {{.BackToWorkspaceName}}{{end}}
+        </a>
+    </div>
+    {{end}}
+
+    {{/* --- Tabs --- */}}
+    <div class="tabs" data-testid="workspace-user-tabs" id="workspace-user-detail-tabs" role="tablist" aria-label="Workspace user tabs">
+        {{range .TabItems}}
+        <button type="button"
+                class="tab{{if eq .Key $.ActiveTab}} active{{end}}"
+                role="tab"
+                id="tab-{{.Key}}"
+                data-testid="workspace-user-tab-{{.Key}}"
+                aria-selected="{{if eq .Key $.ActiveTab}}true{{else}}false{{end}}"
+                aria-controls="tabContent"
+                tabindex="{{if eq .Key $.ActiveTab}}0{{else}}-1{{end}}"
+                data-tab="{{.Key}}"
+                hx-get="{{.HxGet}}"
+                hx-target="#tabContent"
+                hx-swap="innerHTML"
+                hx-trigger="click"
+                {{if .Href}}hx-push-url="{{.Href}}"{{end}}>
+            {{.Label}}
+        </button>
+        {{end}}
+    </div>
+
+    {{/* --- Tab Body --- */}}
+    <div id="tabContent" class="detail-body" role="tabpanel" aria-labelledby="tab-{{.ActiveTab}}">
+        {{if eq .ActiveTab "info"}}
+        {{template "workspace-user-tab-info" .}}
+        {{else if eq .ActiveTab "roles"}}
+        {{template "workspace-user-tab-roles" .}}
+        {{end}}
+    </div>
+</div>
+{{end}}

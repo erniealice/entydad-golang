@@ -1,0 +1,42 @@
+{{/* Add-form — drawer for assigning a user to a workspace */}}
+{{define "workspace-user-add-form"}}
+<div class="sheet-header">
+    <h3 class="sheet-title">Add user to workspace</h3>
+</div>
+<form method="POST"
+      action="{{.FormAction}}"
+      hx-post="{{.FormAction}}"
+      hx-target="#sheetContent"
+      hx-swap="innerHTML">
+
+    <input type="hidden" name="workspace_id" value="{{.WorkspaceID}}">
+
+    <div class="form-body">
+        {{/* User autocomplete — mirrors the supplier timezone autocomplete pattern */}}
+        <div class="form-group">
+            <label class="form-label" for="user-search">User</label>
+            {{template "auto-complete" (dict
+                "Name"          "user_id"
+                "InputID"       "user-search"
+                "SearchURL"     .UserSearchURL
+                "Placeholder"   "Search users..."
+                "Mode"          "action-search"
+                "DataTestid"    "workspace-user-search"
+            )}}
+        </div>
+    </div>
+
+    <div class="sheet-footer">
+        <button type="button"
+                class="btn btn-outline"
+                onclick="lf.Sheet.close()">
+            Cancel
+        </button>
+        <button type="submit"
+                class="btn btn-primary"
+                data-testid="workspace-user-form-submit">
+            Add user
+        </button>
+    </div>
+</form>
+{{end}}

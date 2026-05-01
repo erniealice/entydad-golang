@@ -1,0 +1,93 @@
+{{/*
+Assign-Role drawer form — workspace_user_role Phase 3.
+Loaded into #sheetContent via HTMX from the Roles tab "Assign role" button.
+Data: AssignFormData (defined in action/action.go)
+*/}}
+{{define "wur-assign-form"}}
+<form hx-post="{{.FormAction}}"
+      hx-swap="none"
+      hx-on::after-request="lf.Sheet.handleResponse(event)"
+      data-testid="wur-drawer">
+
+    {{/* Hidden field — workspace_user_id is contextual; not editable. */}}
+    <input type="hidden" name="workspace_user_id" value="{{.WorkspaceUserID}}">
+
+    <div class="sheet-body">
+
+        {{/* Read-only workspace user label — NOT an input. */}}
+        <div class="form-group">
+            <label class="form-label">
+                {{if .Labels.Form.WorkspaceUser}}{{.Labels.Form.WorkspaceUser}}{{else}}Workspace User{{end}}
+            </label>
+            <div class="form-readonly-value"
+                 data-testid="wur-user-readonly">{{.WorkspaceUserName}} ({{.WorkspaceUserEmail}})</div>
+        </div>
+
+        {{/* Role autocomplete — server-side search. */}}
+        <div class="form-row single" data-testid="wur-role-autocomplete">
+            {{template "auto-complete" (dict
+                "ID"                "role-search"
+                "Name"              "role_id"
+                "Label"             (or .Labels.Form.Role "Role")
+                "Placeholder"       (or .Labels.Form.RolePlaceholder "Select role...")
+                "SearchPlaceholder" (or .Labels.Form.RoleSearchPlaceholder "Search roles...")
+                "SearchURL"         .SearchRolesURL
+                "Required"          true
+                "NoResults"         (or .Labels.Form.RoleNoResults "No roles found")
+            )}}
+        </div>
+
+        {{/* Reactive permissions container — populated via HTMX when role is picked. */}}
+        <div class="form-group">
+            <label class="form-label">
+                {{if .Labels.Form.Permissions}}{{.Labels.Form.Permissions}}{{else}}Permissions{{end}}
+            </label>
+            <div id="permissions-list"
+                 data-testid="wur-permissions-list"
+                 hx-get="{{.PermissionsURL}}"
+                 hx-trigger="auto-complete-change from:[name='role_id']"
+                 hx-include="[name='role_id']"
+                 hx-target="this"
+                 hx-swap="innerHTML">
+                {{template "wur-permissions-empty" .}}
+            </div>
+        </div>
+
+    </div>
+
+    <div class="sheet-footer">
+        <button type="button"
+                class="btn btn-outline"
+                onclick="lf.Sheet.close()">
+            {{if .CommonLabels}}{{with index (printf "%v" .CommonLabels) "Actions"}}{{end}}{{end}}Cancel
+        </button>
+        <button type="submit"
+                class="btn btn-primary"
+                data-testid="wur-form-submit">
+            {{if .Labels.Buttons.Submit}}{{.Labels.Buttons.Submit}}{{else}}Assign{{end}}
+        </button>
+    </div>
+
+</form>
+{{end}}
+
+{{/* wur-permissions-empty — shown before any role is selected. */}}
+{{define "wur-permissions-empty"}}
+<p class="form-hint">
+    {{if .Labels}}{{if .Labels.Form.PermissionsHint}}{{.Labels.Form.PermissionsHint}}{{else}}Select a role to see its permissions.{{end}}{{else}}Select a role to see its permissions.{{end}}
+</p>
+{{end}}
+
+{{/* wur-delete-confirm — minimal confirmation view for the delete action. */}}
+{{define "wur-delete-confirm"}}
+<div class="sheet-body">
+    <p>Are you sure you want to remove this role assignment?</p>
+</div>
+<div class="sheet-footer">
+    <button type="button" class="btn btn-outline" onclick="lf.Sheet.close()">Cancel</button>
+    <form hx-post="{{.DeleteURL}}" hx-swap="none" hx-on::after-request="lf.Sheet.handleResponse(event)" style="display:inline">
+        <input type="hidden" name="id" value="{{.ID}}">
+        <button type="submit" class="btn btn-danger">Remove</button>
+    </form>
+</div>
+{{end}}

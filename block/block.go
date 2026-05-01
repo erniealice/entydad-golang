@@ -39,8 +39,10 @@ import (
 	suppliermod "github.com/erniealice/entydad-golang/views/supplier"
 	usermod "github.com/erniealice/entydad-golang/views/user"
 	userdashboard "github.com/erniealice/entydad-golang/views/user/dashboard"
-	workspacemod    "github.com/erniealice/entydad-golang/views/workspace"
-	workspaceaction "github.com/erniealice/entydad-golang/views/workspace/action"
+	workspacemod         "github.com/erniealice/entydad-golang/views/workspace"
+	workspaceaction      "github.com/erniealice/entydad-golang/views/workspace/action"
+	workspaceusermod     "github.com/erniealice/entydad-golang/views/workspace_user"
+	workspaceuserrolemod "github.com/erniealice/entydad-golang/views/workspace_user_role"
 	"github.com/erniealice/espyna-golang/consumer"
 	"github.com/erniealice/espyna-golang/contrib/postgres/reference"
 	"github.com/erniealice/espyna-golang/registry"
@@ -48,11 +50,13 @@ import (
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
 	categorypb   "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
 	paymenttermpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/payment_term"
+	userpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/user"
 	workspacepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace"
 	clientstmtpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/ledger/reporting/client_statement"
 	suppstmtpb   "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/reporting/supplier_statement"
 	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
 	pyeza "github.com/erniealice/pyeza-golang"
+	"github.com/erniealice/pyeza-golang/types"
 )
 
 // routeRegistrarFull — optional extension for raw http.HandlerFunc routes.
@@ -77,18 +81,20 @@ func handleFunc(r pyeza.RouteRegistrar, method, path string, handler http.Handle
 type BlockOption func(*blockConfig)
 
 type blockConfig struct {
-	enableAll    bool
-	client       bool
-	clientTag    bool
-	supplierTag  bool
-	paymentTerm  bool
-	user         bool
-	role         bool
-	location     bool
-	locationArea bool
-	permission   bool
-	workspace    bool
-	supplier     bool
+	enableAll          bool
+	client             bool
+	clientTag          bool
+	supplierTag        bool
+	paymentTerm        bool
+	user               bool
+	role               bool
+	location           bool
+	locationArea       bool
+	permission         bool
+	workspace          bool
+	workspaceUser      bool
+	workspaceUserRole  bool
+	supplier           bool
 }
 
 // WithClient enables the Client module in Block().
@@ -121,6 +127,16 @@ func WithPermission() BlockOption { return func(c *blockConfig) { c.permission =
 // WithWorkspace enables the Workspace module in Block().
 func WithWorkspace() BlockOption { return func(c *blockConfig) { c.workspace = true } }
 
+// WithWorkspaceUser enables the WorkspaceUser nested-detail module in Block().
+// Phase 2: registers detail page, tab-action, add/delete/set-status, and user-search routes.
+func WithWorkspaceUser() BlockOption { return func(c *blockConfig) { c.workspaceUser = true } }
+
+// WithWorkspaceUserRole enables the WorkspaceUserRole assignment drawer module in Block().
+// Phase 3: registers add, delete, permissions, and search-roles routes.
+func WithWorkspaceUserRole() BlockOption {
+	return func(c *blockConfig) { c.workspaceUserRole = true }
+}
+
 // WithSupplier enables the Supplier module in Block().
 func WithSupplier() BlockOption { return func(c *blockConfig) { c.supplier = true } }
 
@@ -136,7 +152,7 @@ func WithSupplier() BlockOption { return func(c *blockConfig) { c.supplier = tru
 //   - ctx.UploadFile, ctx.ListAttachments, ctx.CreateAttachment,
 //     ctx.DeleteAttachment, ctx.NewAttachmentID — attachment funcs
 //   - ctx.GetUsersByRoleID, ctx.GetDashboardData, ctx.HashPassword,
-//     ctx.GetUserRolesMap — user/role helpers
+//     ctx.GetUserWorkspacesMap — user/workspace helpers
 //   - ctx.Routes, ctx.Common, ctx.Table, ctx.BusinessType — from pyeza.AppContext
 func Block(opts ...BlockOption) pyeza.AppOption {
 	cfg := &blockConfig{enableAll: len(opts) == 0}
@@ -181,7 +197,7 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 		getUsersByRoleID, _ := ctx.GetUsersByRoleID.(func(ctx context.Context, roleID string) ([]roleusers.UserByRole, error))
 		getDashboardData, _ := ctx.GetDashboardData.(func(ctx context.Context) (*userdashboard.DashboardData, error))
 		hashPassword, _ := ctx.HashPassword.(func(password string) (string, error))
-		getUserRolesMap, _ := ctx.GetUserRolesMap.(func(ctx context.Context) (map[string][]entydad.RoleBadge, error))
+		getUserWorkspacesMap, _ := ctx.GetUserWorkspacesMap.(func(ctx context.Context) (map[string][]types.ChipData, error))
 
 		// type-assert ledger reporting service (nil-safe)
 		ledgerReportingSvc, _ := ctx.LedgerReportingSvc.(consumer.LedgerReportingService)
@@ -314,8 +330,8 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 				DashboardLabels: labels.UserDashboard,
 				UserRoleLabels:  labels.UserRole,
 				TableLabels:     ctx.Table,
-				GetListPageData: uc.Entity.User.GetUserListPageData.Execute,
-				GetUserRolesMap: getUserRolesMap,
+				GetListPageData:      uc.Entity.User.GetUserListPageData.Execute,
+				GetUserWorkspacesMap: getUserWorkspacesMap,
 				CreateUser:      uc.Entity.User.CreateUser.Execute,
 				ReadUser:        uc.Entity.User.ReadUser.Execute,
 				UpdateUser:      uc.Entity.User.UpdateUser.Execute,
@@ -548,7 +564,7 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 			if uc.Entity.Workspace == nil {
 				return fmt.Errorf("entydad.Block: workspace use cases not initialized")
 			}
-			workspacemod.NewModule(&workspacemod.ModuleDeps{
+			wsMod := &workspacemod.ModuleDeps{
 				Routes:          routes.Workspace,
 				CommonLabels:    ctx.Common,
 				SharedLabels:    labels.Shared,
@@ -563,13 +579,82 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 					_, err := db.Update(fctx, "workspace", id, map[string]any{"active": active})
 					return err
 				},
-			}).RegisterRoutes(ctx.Routes)
+				// Phase 2 TODO closeout: wire the workspace_user detail + add URLs
+				// now that Phase 2 has registered those route constants.
+				WorkspaceUserDetailURL: entydad.WorkspaceUserDetailURL,
+				WorkspaceUserAddURL:    entydad.WorkspaceUserAddURL,
+			}
+			if uc.Entity.WorkspaceUser != nil && uc.Entity.WorkspaceUser.GetWorkspaceUserListPageData != nil {
+				wsMod.GetWorkspaceUserListPageData = uc.Entity.WorkspaceUser.GetWorkspaceUserListPageData.Execute
+			}
+			workspacemod.NewModule(wsMod).RegisterRoutes(ctx.Routes)
 
 			// Switch workspace (raw POST — uses session cookie, issues HX-Redirect)
 			if uc.Entity.Workspace.SwitchWorkspace != nil {
 				handleFunc(ctx.Routes, "POST", routes.Workspace.SwitchURL, workspaceaction.NewSwitchWorkspaceHandler(&workspaceaction.SwitchWorkspaceDeps{
 					SwitchWorkspace: uc.Entity.Workspace.SwitchWorkspace.Execute,
 				}))
+			}
+		}
+
+		if cfg.enableAll || cfg.workspaceUser {
+			if uc.Entity.WorkspaceUser == nil {
+				log.Println("entydad.Block: warning: workspace_user use cases not initialized — workspace_user detail routes will be unavailable")
+			} else {
+				wuRoutes := routes.WorkspaceUser
+				wuMod := &workspaceusermod.ModuleDeps{
+					Routes:             wuRoutes,
+					WorkspaceDetailURL: entydad.WorkspaceDetailURL,
+					CommonLabels:       ctx.Common,
+					Labels:             labels.WorkspaceUser,
+					TableLabels:        ctx.Table,
+					GetListPageData:    uc.Entity.WorkspaceUser.GetWorkspaceUserListPageData.Execute,
+					GetWorkspaceUserItemPageData: uc.Entity.WorkspaceUser.GetWorkspaceUserItemPageData.Execute,
+					CreateWorkspaceUser: uc.Entity.WorkspaceUser.CreateWorkspaceUser.Execute,
+					DeleteWorkspaceUser: uc.Entity.WorkspaceUser.DeleteWorkspaceUser.Execute,
+					SetWorkspaceUserActive: func(fctx context.Context, id string, active bool) error {
+						_, err := db.Update(fctx, "workspace_user", id, map[string]any{"active": active})
+						return err
+					},
+					// Phase 3 closeout: wire WorkspaceUserRole routes now that Phase 3 has registered them.
+					WorkspaceUserRoleAddURL:    entydad.WorkspaceUserRoleAddURL,
+					WorkspaceUserRoleDeleteURL: entydad.WorkspaceUserRoleDeleteURL,
+				}
+				// ListUsers — needed for the user-search autocomplete on the add form.
+				if uc.Entity.User != nil && uc.Entity.User.ListUsers != nil {
+					wuMod.ListUsers = func(fctx context.Context, req *userpb.ListUsersRequest) (*userpb.ListUsersResponse, error) {
+						return uc.Entity.User.ListUsers.Execute(fctx, req)
+					}
+				}
+				// Phase 3 closeout: wire workspace_user_role list page data.
+				if uc.Entity.WorkspaceUserRole != nil && uc.Entity.WorkspaceUserRole.GetWorkspaceUserRoleListPageData != nil {
+					wuMod.GetWorkspaceUserRoleListPageData = uc.Entity.WorkspaceUserRole.GetWorkspaceUserRoleListPageData.Execute
+				}
+				workspaceusermod.NewModule(wuMod).RegisterRoutes(ctx.Routes)
+				log.Println("  ✓ WorkspaceUser module initialized (entydad.Block)")
+			}
+		}
+
+		if cfg.enableAll || cfg.workspaceUserRole {
+			if uc.Entity.WorkspaceUserRole == nil {
+				log.Println("entydad.Block: warning: workspace_user_role use cases not initialized — workspace_user_role drawer routes will be unavailable")
+			} else {
+				wurRoutes := routes.WorkspaceUserRole
+				wurMod := &workspaceuserrolemod.ModuleDeps{
+					Routes:                      wurRoutes,
+					Labels:                      labels.WorkspaceUserRole,
+					CommonLabels:                ctx.Common,
+					CreateWorkspaceUserRole:     uc.Entity.WorkspaceUserRole.CreateWorkspaceUserRole.Execute,
+					DeleteWorkspaceUserRole:     uc.Entity.WorkspaceUserRole.DeleteWorkspaceUserRole.Execute,
+				}
+				if uc.Entity.WorkspaceUser != nil && uc.Entity.WorkspaceUser.GetWorkspaceUserItemPageData != nil {
+					wurMod.GetWorkspaceUserItemPageData = uc.Entity.WorkspaceUser.GetWorkspaceUserItemPageData.Execute
+				}
+				if uc.Entity.Role != nil && uc.Entity.Role.ListRoles != nil {
+					wurMod.ListRoles = uc.Entity.Role.ListRoles.Execute
+				}
+				workspaceuserrolemod.NewModule(wurMod).RegisterRoutes(ctx.Routes)
+				log.Println("  ✓ WorkspaceUserRole module initialized (entydad.Block)")
 			}
 		}
 
@@ -830,7 +915,9 @@ type blockLabels struct {
 	Location        entydad.LocationLabels
 	LocationArea    entydad.LocationAreaLabels
 	Permission      entydad.PermissionLabels
-	Workspace       entydad.WorkspaceLabels
+	Workspace         entydad.WorkspaceLabels
+	WorkspaceUser     entydad.WorkspaceUserLabels
+	WorkspaceUserRole entydad.WorkspaceUserRoleLabels
 	Supplier          entydad.SupplierLabels
 	SupplierDashboard entydad.SupplierDashboardLabels
 }
@@ -849,6 +936,8 @@ type blockRoutes struct {
 	LocationArea        entydad.LocationAreaRoutes
 	Permission          entydad.PermissionRoutes
 	Workspace           entydad.WorkspaceRoutes
+	WorkspaceUser       entydad.WorkspaceUserRoutes
+	WorkspaceUserRole   entydad.WorkspaceUserRoleRoutes
 	Supplier            entydad.SupplierRoutes
 }
 
@@ -895,6 +984,8 @@ func loadBlockLabels(t *lynguaV1.TranslationProvider, businessType string) block
 	if err := t.LoadPath("en", businessType, "workspace.json", "", &l.Workspace); err != nil {
 		log.Printf("entydad.Block: warning: failed to load workspace labels: %v", err)
 	}
+	_ = t.LoadPathIfExists("en", businessType, "workspace_user.json", "", &l.WorkspaceUser)
+	_ = t.LoadPathIfExists("en", businessType, "workspace_user_role.json", "workspace_user_role", &l.WorkspaceUserRole)
 	if err := t.LoadPath("en", businessType, "supplier.json", "supplier", &l.Supplier); err != nil {
 		log.Printf("entydad.Block: warning: failed to load supplier labels: %v", err)
 	}
@@ -946,6 +1037,12 @@ func loadBlockRoutes(t *lynguaV1.TranslationProvider, businessType string) block
 
 	r.Workspace = entydad.DefaultWorkspaceRoutes()
 	_ = t.LoadPathIfExists("en", businessType, "route.json", "workspace", &r.Workspace)
+
+	r.WorkspaceUser = entydad.DefaultWorkspaceUserRoutes()
+	_ = t.LoadPathIfExists("en", businessType, "route.json", "workspace_user", &r.WorkspaceUser)
+
+	r.WorkspaceUserRole = entydad.DefaultWorkspaceUserRoleRoutes()
+	_ = t.LoadPathIfExists("en", businessType, "route.json", "workspace_user_role", &r.WorkspaceUserRole)
 
 	r.Supplier = entydad.DefaultSupplierRoutes()
 	_ = t.LoadPathIfExists("en", businessType, "route.json", "supplier", &r.Supplier)

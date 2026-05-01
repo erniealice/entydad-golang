@@ -1,0 +1,35 @@
+{{/* Info Tab — read-only user/workspace fields for a workspace_user */}}
+{{define "workspace-user-tab-info"}}
+<div class="tab-scroll" data-testid="workspace-user-tab-info">
+    <h2 class="visually-hidden">Info</h2>
+    <h4 class="detail-section-title">User Details</h4>
+    <div class="detail-info-grid">
+        <div class="detail-info-item">
+            <span class="detail-info-label">Name</span>
+            <span class="detail-info-value">{{if .UserName}}{{.UserName}}{{else}}&mdash;{{end}}</span>
+        </div>
+        <div class="detail-info-item">
+            <span class="detail-info-label">Email</span>
+            <span class="detail-info-value">{{if .Email}}{{.Email}}{{else}}&mdash;{{end}}</span>
+        </div>
+        <div class="detail-info-item">
+            <span class="detail-info-label">Workspace</span>
+            <span class="detail-info-value">{{if .WorkspaceName}}{{.WorkspaceName}}{{else}}&mdash;{{end}}</span>
+        </div>
+        {{if .DateJoined}}
+        <div class="detail-info-item">
+            <span class="detail-info-label">Date Joined</span>
+            <span class="detail-info-value">{{.DateJoined}}</span>
+        </div>
+        {{end}}
+        <div class="detail-info-item">
+            <span class="detail-info-label">Status</span>
+            <span>
+                <span class="badge badge--{{.StatusVariant}}">
+                    {{if .Active}}active{{else}}inactive{{end}}
+                </span>
+            </span>
+        </div>
+    </div>
+</div>
+{{end}}

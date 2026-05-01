@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	espynahttp "github.com/erniealice/espyna-golang/contrib/http"
+	"github.com/erniealice/espyna-golang/tableparams"
 	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/types"
@@ -39,10 +40,6 @@ type PageData struct {
 	Table           *types.TableConfig
 }
 
-var supplierAllowedSortCols = []string{
-	"date_created", "date_modified", "name", "status",
-}
-
 var supplierSearchFields = []string{"name", "internal_id", "u.first_name", "u.last_name", "u.email_address"}
 
 // NewView creates the supplier list view (full page).
@@ -53,12 +50,13 @@ func NewView(deps *ListViewDeps) view.View {
 			status = "active"
 		}
 
-		p, err := espynahttp.ParseTableParams(viewCtx.Request, supplierAllowedSortCols)
+		columns := supplierColumns(deps.Labels)
+		p, err := espynahttp.ParseTableParams(viewCtx.Request, types.SortableKeys(columns), "name", "asc")
 		if err != nil {
 			return view.Error(err)
 		}
 
-		tableConfig, err := buildTableConfig(ctx, deps, status, p)
+		tableConfig, err := buildTableConfig(ctx, deps, columns, status, p)
 		if err != nil {
 			return view.Error(err)
 		}
@@ -108,12 +106,13 @@ func NewTableView(deps *ListViewDeps) view.View {
 			status = "active"
 		}
 
-		p, err := espynahttp.ParseTableParams(viewCtx.Request, supplierAllowedSortCols)
+		columns := supplierColumns(deps.Labels)
+		p, err := espynahttp.ParseTableParams(viewCtx.Request, types.SortableKeys(columns), "name", "asc")
 		if err != nil {
 			return view.Error(err)
 		}
 
-		tableConfig, err := buildTableConfig(ctx, deps, status, p)
+		tableConfig, err := buildTableConfig(ctx, deps, columns, status, p)
 		if err != nil {
 			return view.Error(err)
 		}
@@ -123,7 +122,7 @@ func NewTableView(deps *ListViewDeps) view.View {
 }
 
 // buildTableConfig fetches supplier data and builds the table configuration.
-func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p espynahttp.TableQueryParams) (*types.TableConfig, error) {
+func buildTableConfig(ctx context.Context, deps *ListViewDeps, columns []types.TableColumn, status string, p tableparams.TableQueryParams) (*types.TableConfig, error) {
 	perms := view.GetUserPermissions(ctx)
 
 	listParams := espynahttp.ToListParams(p, supplierSearchFields)
@@ -184,7 +183,6 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 	}
 
 	l := deps.Labels
-	columns := supplierColumns(l)
 	rows := buildTableRows(resp.GetSupplierList(), status, l, deps.SharedLabels, deps.CommonLabels, deps.Routes, inUseIDs, supplierBalances, perms)
 	types.ApplyColumnStyles(columns, rows)
 
@@ -253,15 +251,15 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string, p 
 
 func supplierColumns(l entydad.SupplierLabels) []types.TableColumn {
 	return []types.TableColumn{
-		{Key: "name", Label: l.Columns.Name, Sortable: true},
-		{Key: "supplier_type", Label: l.Columns.SupplierType, Sortable: true, WidthClass: "col-3xl"},
-		{Key: "internal_id", Label: l.Columns.InternalID, Sortable: true, WidthClass: "col-3xl"},
-		{Key: "status", Label: l.Columns.Status, Sortable: true, WidthClass: "col-2xl"},
+		{Key: "name", Label: l.Columns.Name},
+		{Key: "supplier_type", Label: l.Columns.SupplierType, WidthClass: "col-3xl"},
+		{Key: "internal_id", Label: l.Columns.InternalID, WidthClass: "col-3xl"},
+		{Key: "status", Label: l.Columns.Status, WidthClass: "col-2xl"},
 		{Key: "category", Label: l.Columns.Category, WidthClass: "col-7xl"},
-		{Key: "payment_terms", Label: l.Columns.PaymentTerms, Sortable: true, WidthClass: "col-3xl"},
-		{Key: "contact_name", Label: l.Columns.ContactName, Sortable: true},
-		{Key: "outstanding_balance", Label: "Outstanding", Sortable: true, Align: "right", WidthClass: "col-4xl"},
-		{Key: "date_created", Label: l.Columns.DateCreated, Sortable: true, WidthClass: "col-3xl"},
+		{Key: "payment_terms", Label: l.Columns.PaymentTerms, WidthClass: "col-3xl"},
+		{Key: "contact_name", Label: l.Columns.ContactName},
+		{Key: "outstanding_balance", Label: "Outstanding", Align: "right", WidthClass: "col-4xl"},
+		{Key: "date_created", Label: l.Columns.DateCreated, WidthClass: "col-3xl"},
 	}
 }
 

@@ -295,6 +295,7 @@ type UserColumnLabels struct {
 	Name        string `json:"name"`
 	Email       string `json:"email"`
 	Roles       string `json:"roles"`
+	Workspaces  string `json:"workspaces"`
 	DateCreated string `json:"dateCreated"`
 	Status      string `json:"status"`
 }
@@ -905,6 +906,24 @@ type WorkspaceLabels struct {
 	Empty   WorkspaceEmptyLabels  `json:"empty"`
 	Form    WorkspaceFormLabels   `json:"form"`
 	Actions WorkspaceActionLabels `json:"actions"`
+	Detail  WorkspaceDetailLabels `json:"detail"`
+}
+
+// WorkspaceDetailLabels holds i18n strings for the workspace detail page (Phase 1).
+type WorkspaceDetailLabels struct {
+	Tabs  WorkspaceDetailTabLabels  `json:"tabs"`
+	Users WorkspaceDetailUserLabels `json:"users"`
+}
+
+// WorkspaceDetailTabLabels holds the tab display names for the workspace detail page.
+type WorkspaceDetailTabLabels struct {
+	Info  string `json:"info"`
+	Users string `json:"users"`
+}
+
+// WorkspaceDetailUserLabels holds i18n strings for the Users tab on the workspace detail page.
+type WorkspaceDetailUserLabels struct {
+	AddButton string `json:"addButton"`
 }
 
 type WorkspacePageLabels struct {
@@ -949,6 +968,93 @@ type WorkspaceActionLabels struct {
 	Delete     string `json:"delete"`
 	Activate   string `json:"activate"`
 	Deactivate string `json:"deactivate"`
+}
+
+// ---------------------------------------------------------------------------
+// WorkspaceUser labels
+// ---------------------------------------------------------------------------
+
+// WorkspaceUserLabels holds all translatable strings for the workspace_user module.
+type WorkspaceUserLabels struct {
+	Page    WorkspaceUserPageLabels   `json:"page"`
+	Columns WorkspaceUserColumnLabels `json:"columns"`
+	Detail  WorkspaceUserDetailLabels `json:"detail"`
+	Form    WorkspaceUserFormLabels   `json:"form"`
+	Actions WorkspaceUserActionLabels `json:"actions"`
+}
+
+type WorkspaceUserPageLabels struct {
+	Heading string `json:"heading"`
+	Caption string `json:"caption"`
+}
+
+type WorkspaceUserColumnLabels struct {
+	UserName  string `json:"userName"`
+	Email     string `json:"email"`
+	Roles     string `json:"roles"`
+	Status    string `json:"status"`
+	RoleName  string `json:"roleName"`
+	PermCount string `json:"permCount"`
+	DateJoined string `json:"dateJoined"`
+}
+
+// WorkspaceUserDetailLabels holds i18n strings for the workspace_user detail page (Phase 2).
+type WorkspaceUserDetailLabels struct {
+	BackToWorkspace string                          `json:"backToWorkspace"`
+	Tabs            WorkspaceUserDetailTabLabels    `json:"tabs"`
+	Roles           WorkspaceUserDetailRolesLabels  `json:"roles"`
+}
+
+type WorkspaceUserDetailTabLabels struct {
+	Info  string `json:"info"`
+	Roles string `json:"roles"`
+}
+
+type WorkspaceUserDetailRolesLabels struct {
+	AssignButton string `json:"assignButton"`
+}
+
+type WorkspaceUserFormLabels struct {
+	User            string `json:"user"`
+	UserPlaceholder string `json:"userPlaceholder"`
+	UserSearchPlaceholder string `json:"userSearchPlaceholder"`
+	WorkspaceID     string `json:"workspaceId"`
+	Active          string `json:"active"`
+}
+
+type WorkspaceUserActionLabels struct {
+	View       string `json:"view"`
+	Delete     string `json:"delete"`
+	Activate   string `json:"activate"`
+	Deactivate string `json:"deactivate"`
+}
+
+// ---------------------------------------------------------------------------
+// WorkspaceUserRoleLabels
+// ---------------------------------------------------------------------------
+
+// WorkspaceUserRoleLabels holds all translatable strings for the
+// workspace_user_role assignment drawer (Phase 3).
+type WorkspaceUserRoleLabels struct {
+	Form    WorkspaceUserRoleFormLabels    `json:"form"`
+	Buttons WorkspaceUserRoleButtonLabels  `json:"buttons"`
+}
+
+// WorkspaceUserRoleFormLabels holds field labels for the assign-form drawer.
+type WorkspaceUserRoleFormLabels struct {
+	WorkspaceUser         string `json:"workspaceUser"`
+	Role                  string `json:"role"`
+	RolePlaceholder       string `json:"rolePlaceholder"`
+	RoleSearchPlaceholder string `json:"roleSearchPlaceholder"`
+	RoleNoResults         string `json:"roleNoResults"`
+	Permissions           string `json:"permissions"`
+	PermissionsHint       string `json:"permissionsHint"`
+}
+
+// WorkspaceUserRoleButtonLabels holds button text for the assign-form drawer.
+type WorkspaceUserRoleButtonLabels struct {
+	Submit string `json:"submit"`
+	Cancel string `json:"cancel"`
 }
 
 // ---------------------------------------------------------------------------
@@ -1093,6 +1199,24 @@ type ResetPassword02Labels struct {
 	// Carousel navigation
 	PreviousSlide string `json:"previousSlide"`
 	NextSlide     string `json:"nextSlide"`
+}
+
+// ChangePasswordLabels holds i18n strings for the change-password page.
+type ChangePasswordLabels struct {
+	Title                      string `json:"title"`
+	Heading                    string `json:"heading"`
+	Subheading                 string `json:"subheading"`
+	OldPasswordLabel           string `json:"oldPasswordLabel"`
+	OldPasswordPlaceholder     string `json:"oldPasswordPlaceholder"`
+	NewPasswordLabel           string `json:"newPasswordLabel"`
+	NewPasswordPlaceholder     string `json:"newPasswordPlaceholder"`
+	ConfirmPasswordLabel       string `json:"confirmPasswordLabel"`
+	ConfirmPasswordPlaceholder string `json:"confirmPasswordPlaceholder"`
+	SubmitButton               string `json:"submitButton"`
+	SuccessMessage             string `json:"successMessage"`
+	ErrorCurrentIncorrect      string `json:"errorCurrentIncorrect"`
+	ErrorTooShort              string `json:"errorTooShort"`
+	BackToApp                  string `json:"backToApp"`
 }
 
 // ---------------------------------------------------------------------------
@@ -1620,10 +1744,22 @@ func MapTableLabels(common pyeza.CommonLabels) types.TableLabels {
 		To:                 common.Table.To,
 		Of:                 common.Table.Of,
 		EntriesLabel:       common.Table.EntriesLabel,
-		SelectAll:          common.Table.SelectAll,
-		Actions:            common.Table.Actions,
-		Prev:               common.Pagination.Prev,
-		Next:               common.Pagination.Next,
+		SelectAll:                common.Table.SelectAll,
+		BulkSelectAllPage:        common.Table.BulkSelectAllPage,
+		BulkSelectAllAcrossPages: common.Table.BulkSelectAllAcrossPages,
+		BulkClearSelection:       common.Table.BulkClearSelection,
+		ColumnSortLockedHint:     common.Table.ColumnSortLockedHint,
+		SortAscText:              common.Table.SortAscText,
+		SortDescText:             common.Table.SortDescText,
+		SortAscNumber:            common.Table.SortAscNumber,
+		SortDescNumber:           common.Table.SortDescNumber,
+		SortAscDate:              common.Table.SortAscDate,
+		SortDescDate:             common.Table.SortDescDate,
+		SortAscEnum:              common.Table.SortAscEnum,
+		SortDescEnum:             common.Table.SortDescEnum,
+		Actions:                  common.Table.Actions,
+		Prev:                     common.Pagination.Prev,
+		Next:                     common.Pagination.Next,
 	}
 }
 

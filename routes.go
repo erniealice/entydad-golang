@@ -119,6 +119,22 @@ const (
 	WorkspaceSetStatusURL     = "/action/workspace/set-status"
 	WorkspaceBulkSetStatusURL = "/action/workspace/bulk-set-status"
 	WorkspaceSwitchURL        = "/action/admin/switch-workspace"
+	WorkspaceDetailURL        = "/app/workspaces/detail/{id}"
+	WorkspaceTabActionURL     = "/action/workspace/{id}/tab/{tab}"
+
+	WorkspaceUserListURL      = "/app/workspace-users/list/{status}"
+	WorkspaceUserDetailURL    = "/app/workspace-users/detail/{id}"
+	WorkspaceUserTabActionURL = "/action/workspace_user/{id}/tab/{tab}"
+	WorkspaceUserAddURL       = "/action/workspace_user/add"
+	WorkspaceUserDeleteURL    = "/action/workspace_user/delete/{id}"
+	WorkspaceUserSetStatusURL = "/action/workspace_user/set-status/{id}"
+	WorkspaceUserSearchURL    = "/action/workspace_user/search"
+
+	// WorkspaceUserRole — Phase 3 assignment drawer routes.
+	WorkspaceUserRoleAddURL         = "/action/workspace_user_role/add"
+	WorkspaceUserRoleDeleteURL      = "/action/workspace_user_role/delete/{id}"
+	WorkspaceUserRolePermissionsURL = "/action/workspace_user_role/permissions"
+	WorkspaceUserRoleSearchRolesURL = "/action/workspace_user_role/search-roles"
 
 	// Client report routes
 	ReceivablesAgingURL = "/app/reports/receivables-aging"
@@ -196,6 +212,7 @@ const (
 	AuthResetPasswordPostURL = "/auth/reset-password"
 	AuthResetConfirmURL      = "/auth/reset-password/confirm"
 	AuthResetConfirmPostURL  = "/auth/reset-password/confirm"
+	AuthChangePasswordURL    = "/auth/change-password"
 	AuthLogoutURL            = "/auth/logout"
 
 	// Legacy login routes (redirect to /auth/login)

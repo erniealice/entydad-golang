@@ -6,6 +6,43 @@
 {{/* Content-only partial -- for HTMX navigation */}}
 {{define "workspace-list-content"}}
 <div class="page-content page-content--table">
-    {{template "table-card" .Table}}
+    <div class="table-card" id="{{.Table.ID}}-card" {{if .Table.RefreshURL}}data-refresh-url="{{.Table.RefreshURL}}"{{end}}>
+        {{/* Custom toolbar with disabled-CTA pattern */}}
+        <div class="table-toolbar" data-table="{{.Table.ID}}">
+            <div class="toolbar-search-spacer"></div>
+            <button type="button" class="toolbar-mobile-toggle" onclick="this.closest('.table-toolbar').classList.toggle('actions-open')" aria-label="More options" data-testid="{{.Table.ID}}-toolbar-toggle">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+            </button>
+            <div class="toolbar-mobile-backdrop" role="button" tabindex="0" aria-label="Close menu" data-testid="{{.Table.ID}}-toolbar-backdrop" onclick="this.closest('.table-toolbar').classList.remove('actions-open')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.closest('.table-toolbar').classList.remove('actions-open')}"></div>
+            <div class="toolbar-actions">
+                {{/* Disabled-CTA pattern: workspace:create permission gate */}}
+                {{if .Permissions.HasWorkspaceCreate}}
+                <button type="button"
+                        class="btn-primary toolbar-primary-action"
+                        data-testid="workspace-add-btn"
+                        aria-haspopup="dialog"
+                        hx-get="{{.Routes.AddURL}}"
+                        hx-target="#sheetContent"
+                        hx-swap="innerHTML"
+                        hx-push-url="false"
+                        onclick="lf.Sheet.open('{{.Labels.Buttons.AddWorkspace}}')">
+                    {{template "icon-plus" .}}
+                    {{.Labels.Buttons.AddWorkspace}}
+                </button>
+                {{else}}
+                <button type="button"
+                        class="btn-primary toolbar-primary-action disabled"
+                        data-testid="workspace-add-btn"
+                        disabled
+                        title="{{.T "permissions.missingWorkspaceCreate"}}">
+                    {{template "icon-plus" .}}
+                    {{.Labels.Buttons.AddWorkspace}}
+                </button>
+                {{end}}
+            </div>
+        </div>
+        {{/* Table content */}}
+        {{template "table-content" .Table}}
+    </div>
 </div>
 {{end}}

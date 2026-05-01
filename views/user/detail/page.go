@@ -329,10 +329,10 @@ func buildRolesTable(ctx context.Context, deps *DetailViewDeps, userID string, p
 	l := deps.UserRoleLabels
 
 	columns := []types.TableColumn{
-		{Key: "roleName", Label: l.Columns.RoleName, Sortable: true},
-		{Key: "description", Label: l.Columns.Description, Sortable: true},
-		{Key: "color", Label: l.Columns.Color, Sortable: true, WidthClass: "col-2xl"},
-		{Key: "dateAssigned", Label: l.Columns.DateAssigned, Sortable: true, WidthClass: "col-6xl"},
+		{Key: "roleName", Label: l.Columns.RoleName},
+		{Key: "description", Label: l.Columns.Description},
+		{Key: "color", Label: l.Columns.Color, WidthClass: "col-2xl"},
+		{Key: "dateAssigned", Label: l.Columns.DateAssigned, WidthClass: "col-6xl"},
 	}
 
 	rows := []types.TableRow{}
@@ -419,10 +419,10 @@ func buildRolesTable(ctx context.Context, deps *DetailViewDeps, userID string, p
 func buildEmptyRolesTable(deps *DetailViewDeps, userID string) *types.TableConfig {
 	l := deps.UserRoleLabels
 	columns := []types.TableColumn{
-		{Key: "roleName", Label: l.Columns.RoleName, Sortable: true},
-		{Key: "description", Label: l.Columns.Description, Sortable: true},
-		{Key: "color", Label: l.Columns.Color, Sortable: true, WidthClass: "col-2xl"},
-		{Key: "dateAssigned", Label: l.Columns.DateAssigned, Sortable: true, WidthClass: "col-6xl"},
+		{Key: "roleName", Label: l.Columns.RoleName},
+		{Key: "description", Label: l.Columns.Description},
+		{Key: "color", Label: l.Columns.Color, WidthClass: "col-2xl"},
+		{Key: "dateAssigned", Label: l.Columns.DateAssigned, WidthClass: "col-6xl"},
 	}
 
 	tableConfig := &types.TableConfig{

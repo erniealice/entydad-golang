@@ -1,0 +1,88 @@
+{{/* Full page — for direct access / non-HTMX */}}
+{{define "workspace-detail"}}
+{{template "app-shell" .}}
+{{end}}
+
+{{/* Content-only partial — for HTMX navigation */}}
+{{define "workspace-detail-content"}}
+<div class="page-content detail-layout" data-page-title="{{.Title}}">
+    {{/* --- Tabs --- */}}
+    <div class="tabs" data-testid="workspace-tabs" id="workspace-detail-tabs" role="tablist" aria-label="Workspace tabs">
+        {{range .TabItems}}
+        <button type="button"
+                class="tab{{if eq .Key $.ActiveTab}} active{{end}}"
+                role="tab"
+                id="tab-{{.Key}}"
+                data-testid="workspace-tab-{{.Key}}"
+                aria-selected="{{if eq .Key $.ActiveTab}}true{{else}}false{{end}}"
+                aria-controls="tabContent"
+                tabindex="{{if eq .Key $.ActiveTab}}0{{else}}-1{{end}}"
+                data-tab="{{.Key}}"
+                hx-get="{{.HxGet}}"
+                hx-target="#tabContent"
+                hx-swap="innerHTML"
+                hx-trigger="click"
+                {{if .Href}}hx-push-url="{{.Href}}"{{end}}>
+            {{.Label}}
+        </button>
+        {{end}}
+    </div>
+
+    {{/* --- Tab Body --- */}}
+    <div id="tabContent" class="detail-body" role="tabpanel" aria-labelledby="tab-{{.ActiveTab}}">
+        {{if eq .ActiveTab "info"}}
+        {{template "workspace-tab-info" .}}
+        {{else if eq .ActiveTab "users"}}
+        {{template "workspace-tab-users" .}}
+        {{end}}
+    </div>
+</div>
+{{end}}
+
+{{/* Info Tab */}}
+{{define "workspace-tab-info"}}
+<div class="tab-scroll">
+    <h2 class="visually-hidden">Info</h2>
+    <h4 class="detail-section-title">Details</h4>
+    <div class="detail-info-grid">
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Form.Name}}</span>
+            <span class="detail-info-value">{{if .WorkspaceName}}{{.WorkspaceName}}{{else}}&mdash;{{end}}</span>
+        </div>
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Form.Description}}</span>
+            <span class="detail-info-value">{{if .Description}}{{.Description}}{{else}}&mdash;{{end}}</span>
+        </div>
+        {{if .Currency}}
+        <div class="detail-info-item">
+            <span class="detail-info-label">Currency</span>
+            <span class="detail-info-value">{{.Currency}}</span>
+        </div>
+        {{end}}
+        {{if .Region}}
+        <div class="detail-info-item">
+            <span class="detail-info-label">Region</span>
+            <span class="detail-info-value">{{.Region}}</span>
+        </div>
+        {{end}}
+        <div class="detail-info-item">
+            <span class="detail-info-label">{{.Labels.Columns.Status}}</span>
+            <span>
+                <span class="badge badge--{{.StatusVariant}}">
+                    {{if .Active}}active{{else}}inactive{{end}}
+                </span>
+            </span>
+        </div>
+    </div>
+</div>
+<div class="detail-tab-actions detail-tab-actions--bottom">
+    <button class="btn btn-sm btn-outline"
+            data-testid="tab-info-edit-btn"
+            hx-get="{{.EditURL}}"
+            hx-target="#sheetContent"
+            hx-swap="innerHTML"
+            onclick="lf.Sheet.open()">
+        <span class="icon icon-edit"></span> {{.CommonLabels.Buttons.Edit}}
+    </button>
+</div>
+{{end}}

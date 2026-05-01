@@ -214,10 +214,10 @@ func buildEmptyTableConfig(deps *Deps, userID string) *types.TableConfig {
 
 func roleColumns(l entydad.UserRoleLabels) []types.TableColumn {
 	return []types.TableColumn{
-		{Key: "roleName", Label: l.Columns.RoleName, Sortable: true},
-		{Key: "description", Label: l.Columns.Description, Sortable: true},
-		{Key: "color", Label: l.Columns.Color, Sortable: true, WidthClass: "col-2xl"},
-		{Key: "dateAssigned", Label: l.Columns.DateAssigned, Sortable: true, WidthClass: "col-6xl"},
+		{Key: "roleName", Label: l.Columns.RoleName},
+		{Key: "description", Label: l.Columns.Description},
+		{Key: "color", Label: l.Columns.Color, WidthClass: "col-2xl"},
+		{Key: "dateAssigned", Label: l.Columns.DateAssigned, WidthClass: "col-6xl"},
 	}
 }
 

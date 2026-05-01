@@ -163,9 +163,9 @@ func buildTableConfig(ctx context.Context, deps *Deps, roleID string) (*types.Ta
 
 func userColumns(l entydad.RoleUserLabels) []types.TableColumn {
 	return []types.TableColumn{
-		{Key: "userName", Label: l.Columns.UserName, Sortable: true},
-		{Key: "email", Label: l.Columns.Email, Sortable: true},
-		{Key: "dateAssigned", Label: l.Columns.DateAssigned, Sortable: true, WidthClass: "col-6xl"},
+		{Key: "userName", Label: l.Columns.UserName},
+		{Key: "email", Label: l.Columns.Email},
+		{Key: "dateAssigned", Label: l.Columns.DateAssigned, WidthClass: "col-6xl"},
 	}
 }
 

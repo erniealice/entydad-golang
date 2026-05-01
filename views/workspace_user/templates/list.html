@@ -1,0 +1,18 @@
+{{/* Full page */}}
+{{define "workspace-user-list"}}
+{{template "app-shell" .}}
+{{end}}
+
+{{/* Content-only partial */}}
+{{define "workspace-user-list-content"}}
+<div class="page-content" data-page-title="{{.Title}}">
+    {{if .Table}}
+    {{template "table-card" .Table}}
+    {{else}}
+    <div class="coming-soon-panel">
+        <div class="coming-soon-title">No workspace users</div>
+        <p class="coming-soon-text">No workspace-user assignments exist.</p>
+    </div>
+    {{end}}
+</div>
+{{end}}

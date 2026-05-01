@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	espynahttp "github.com/erniealice/espyna-golang/contrib/http"
+	"github.com/erniealice/espyna-golang/tableparams"
 	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/types"
@@ -37,21 +38,18 @@ type PageData struct {
 	Table           *types.TableConfig
 }
 
-var roleAllowedSortCols = []string{
-	"date_created", "name",
-}
-
 var roleSearchFields = []string{"name", "description"}
 
 // NewView creates the role list view (full page).
 func NewView(deps *ListViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
-		p, err := espynahttp.ParseTableParams(viewCtx.Request, roleAllowedSortCols)
+		columns := roleColumns(deps.Labels)
+		p, err := espynahttp.ParseTableParams(viewCtx.Request, types.SortableKeys(columns), "name", "asc")
 		if err != nil {
 			return view.Error(err)
 		}
 
-		tableConfig, err := buildTableConfig(ctx, deps, p)
+		tableConfig, err := buildTableConfig(ctx, deps, columns, p)
 		if err != nil {
 			return view.Error(err)
 		}
@@ -91,12 +89,13 @@ func NewView(deps *ListViewDeps) view.View {
 // is swapped (not the entire page content).
 func NewTableView(deps *ListViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
-		p, err := espynahttp.ParseTableParams(viewCtx.Request, roleAllowedSortCols)
+		columns := roleColumns(deps.Labels)
+		p, err := espynahttp.ParseTableParams(viewCtx.Request, types.SortableKeys(columns), "name", "asc")
 		if err != nil {
 			return view.Error(err)
 		}
 
-		tableConfig, err := buildTableConfig(ctx, deps, p)
+		tableConfig, err := buildTableConfig(ctx, deps, columns, p)
 		if err != nil {
 			return view.Error(err)
 		}
@@ -106,7 +105,7 @@ func NewTableView(deps *ListViewDeps) view.View {
 }
 
 // buildTableConfig fetches role data and builds the table configuration.
-func buildTableConfig(ctx context.Context, deps *ListViewDeps, p espynahttp.TableQueryParams) (*types.TableConfig, error) {
+func buildTableConfig(ctx context.Context, deps *ListViewDeps, columns []types.TableColumn, p tableparams.TableQueryParams) (*types.TableConfig, error) {
 	perms := view.GetUserPermissions(ctx)
 
 	listParams := espynahttp.ToListParams(p, roleSearchFields)
@@ -132,7 +131,6 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, p espynahttp.Tabl
 	}
 
 	l := deps.Labels
-	columns := roleColumns(l)
 	rows := buildTableRows(resp.GetRoleList(), l, deps.SharedLabels, deps.Routes, inUseIDs, perms)
 	types.ApplyColumnStyles(columns, rows)
 
@@ -196,12 +194,12 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, p espynahttp.Tabl
 
 func roleColumns(l entydad.RoleLabels) []types.TableColumn {
 	return []types.TableColumn{
-		{Key: "name", Label: l.Columns.Name, Sortable: true, Filterable: true, FilterType: types.FilterTypeString, MinWidth: "9.375rem"},
-		{Key: "description", Label: l.Columns.Description, Sortable: false, Filterable: true, FilterType: types.FilterTypeString, MinWidth: "9.375rem"},
-		{Key: "color", Label: l.Columns.Color, Sortable: false, WidthClass: "col-2xl"},
-		{Key: "permissions", Label: l.Columns.Permissions, Sortable: false, WidthClass: "col-2xl", Align: "center"},
-		{Key: "status", Label: l.Columns.Status, Sortable: false, WidthClass: "col-2xl"},
-		{Key: "date_created", Label: l.Columns.DateCreated, Sortable: true, Filterable: true, FilterType: types.FilterTypeDate, WidthClass: "col-6xl"},
+		{Key: "name", Label: l.Columns.Name, Filterable: true, FilterType: types.FilterTypeString, MinWidth: "9.375rem"},
+		{Key: "description", Label: l.Columns.Description, NoSort: true, Filterable: true, FilterType: types.FilterTypeString, MinWidth: "9.375rem"},
+		{Key: "color", Label: l.Columns.Color, NoSort: true, WidthClass: "col-2xl"},
+		{Key: "permissions", Label: l.Columns.Permissions, NoSort: true, WidthClass: "col-2xl", Align: "center"},
+		{Key: "status", Label: l.Columns.Status, NoSort: true, WidthClass: "col-2xl"},
+		{Key: "date_created", Label: l.Columns.DateCreated, Filterable: true, FilterType: types.FilterTypeDate, WidthClass: "col-6xl"},
 	}
 }
 
