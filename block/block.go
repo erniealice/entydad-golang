@@ -44,7 +44,7 @@ import (
 	workspaceusermod     "github.com/erniealice/entydad-golang/views/workspace_user"
 	workspaceuserrolemod "github.com/erniealice/entydad-golang/views/workspace_user_role"
 	"github.com/erniealice/espyna-golang/consumer"
-	"github.com/erniealice/espyna-golang/contrib/postgres/reference"
+	"github.com/erniealice/espyna-golang/reference"
 	"github.com/erniealice/espyna-golang/registry"
 	entityid "github.com/erniealice/espyna-golang/registry/entityid"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
@@ -147,7 +147,7 @@ func WithSupplier() BlockOption { return func(c *blockConfig) { c.supplier = tru
 // Expected ctx fields (type-asserted from any):
 //   - ctx.UseCases     → *consumer.UseCases
 //   - ctx.DB           → UpdateableSource (entydad.DataSource + Update method)
-//   - ctx.RefChecker   → *reference.Checker
+//   - ctx.RefChecker   → reference.Checker
 //   - ctx.Translations → *lynguaV1.TranslationProvider
 //   - ctx.UploadFile, ctx.ListAttachments, ctx.CreateAttachment,
 //     ctx.DeleteAttachment, ctx.NewAttachmentID — attachment funcs
@@ -176,9 +176,9 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 			return fmt.Errorf("entydad.Block: DB must implement block.UpdateableSource (DataSource + Update)")
 		}
 
-		refChecker, ok := ctx.RefChecker.(*reference.Checker)
+		refChecker, ok := ctx.RefChecker.(reference.Checker)
 		if !ok {
-			return fmt.Errorf("entydad.Block: RefChecker must be *reference.Checker")
+			return fmt.Errorf("entydad.Block: RefChecker must be reference.Checker")
 		}
 
 		translations, ok := ctx.Translations.(*lynguaV1.TranslationProvider)
