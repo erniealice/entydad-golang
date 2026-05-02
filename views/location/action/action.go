@@ -13,28 +13,13 @@ import (
 	locationpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/location"
 
 	"github.com/erniealice/entydad-golang"
+	locationform "github.com/erniealice/entydad-golang/views/location/form"
 )
 
 // LocationAreaOption is a single location area available for selection.
 type LocationAreaOption struct {
 	ID   string
 	Name string
-}
-
-// FormData is the template data for the location drawer form.
-type FormData struct {
-	FormAction                string
-	IsEdit                    bool
-	ID                        string
-	Name                      string
-	Address                   string
-	Description               string
-	Timezone                  string
-	Active                    bool
-	SelectedLocationAreaID    string
-	LocationAreaSelectOptions []pyeza.SelectOption
-	Labels                    entydad.LocationFormLabels
-	CommonLabels              any
 }
 
 // Deps holds dependencies for location action handlers.
@@ -91,7 +76,7 @@ func NewAddAction(deps *Deps) view.View {
 		}
 		if viewCtx.Request.Method == http.MethodGet {
 			areaOpts := loadAreaOptions(ctx, deps, "")
-			return view.OK("location-drawer-form", &FormData{
+			return view.OK("location-drawer-form", &locationform.Data{
 				FormAction:                deps.Routes.AddURL,
 				Active:                    true,
 				Timezone:                  "Asia/Manila",
@@ -162,7 +147,7 @@ func NewEditAction(deps *Deps) view.View {
 			}
 			selectedAreaID := loc.GetLocationAreaId()
 			areaOpts := loadAreaOptions(ctx, deps, selectedAreaID)
-			return view.OK("location-drawer-form", &FormData{
+			return view.OK("location-drawer-form", &locationform.Data{
 				FormAction:                route.ResolveURL(deps.Routes.EditURL, "id", id),
 				IsEdit:                    true,
 				ID:                        id,

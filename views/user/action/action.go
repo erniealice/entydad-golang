@@ -12,50 +12,8 @@ import (
 	workspaceuserpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace_user"
 
 	"github.com/erniealice/entydad-golang"
+	userform "github.com/erniealice/entydad-golang/views/user/form"
 )
-
-// FormLabels holds i18n labels for the drawer form template.
-type FormLabels struct {
-	FirstName                 string
-	FirstNamePlaceholder      string
-	LastName                  string
-	LastNamePlaceholder       string
-	Email                     string
-	EmailPlaceholder          string
-	Mobile                    string
-	MobilePlaceholder         string
-	Timezone                  string
-	TimezonePlaceholder       string
-	TimezoneSearchPlaceholder string
-	TimezoneNoResults         string
-	Password                  string
-	PasswordPlaceholder       string
-	PasswordGenerate          string
-	Active                    string
-	TogglePasswordVisibility  string
-
-	// Field-level info text surfaced via an info button beside each label.
-	EmailInfo    string
-	MobileInfo   string
-	TimezoneInfo string
-	ActiveInfo   string
-}
-
-// FormData is the template data for the user drawer form.
-type FormData struct {
-	FormAction         string
-	IsEdit             bool
-	ID                 string
-	FirstName          string
-	LastName           string
-	Email              string
-	Mobile             string
-	Timezone           string
-	Active             bool
-	SearchTimezonesURL string
-	Labels             FormLabels
-	CommonLabels       any
-}
 
 // Deps holds dependencies for user action handlers.
 type Deps struct {
@@ -68,32 +26,6 @@ type Deps struct {
 	CreateWorkspaceUser func(ctx context.Context, req *workspaceuserpb.CreateWorkspaceUserRequest) (*workspaceuserpb.CreateWorkspaceUserResponse, error)
 	DefaultWorkspaceID  string
 	HashPassword        func(password string) (string, error) // optional; if nil, password stored as-is
-}
-
-func formLabels(t func(string) string) FormLabels {
-	return FormLabels{
-		FirstName:                 t("form.firstName"),
-		FirstNamePlaceholder:      t("form.firstNamePlaceholder"),
-		LastName:                  t("form.lastName"),
-		LastNamePlaceholder:       t("form.lastNamePlaceholder"),
-		Email:                     t("form.email"),
-		EmailPlaceholder:          t("form.emailPlaceholder"),
-		Mobile:                    t("form.mobile"),
-		MobilePlaceholder:         t("form.mobilePlaceholder"),
-		Timezone:                  t("form.timezone"),
-		TimezonePlaceholder:       t("form.timezonePlaceholder"),
-		TimezoneSearchPlaceholder: t("form.timezoneSearchPlaceholder"),
-		TimezoneNoResults:         t("form.timezoneNoResults"),
-		Password:                  t("form.password"),
-		PasswordPlaceholder:       t("form.passwordPlaceholder"),
-		PasswordGenerate:          t("form.passwordGenerate"),
-		Active:                    t("form.active"),
-		TogglePasswordVisibility:  t("form.togglePasswordVisibility"),
-		EmailInfo:                 t("user.form.emailInfo"),
-		MobileInfo:                t("user.form.mobileInfo"),
-		TimezoneInfo:              t("user.form.timezoneInfo"),
-		ActiveInfo:                t("user.form.activeInfo"),
-	}
 }
 
 // hashPassword hashes the password using the deps.HashPassword func, or returns it as-is.
@@ -112,11 +44,11 @@ func NewAddAction(deps *Deps) view.View {
 			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		if viewCtx.Request.Method == http.MethodGet {
-			return view.OK("user-drawer-form", &FormData{
+			return view.OK("user-drawer-form", &userform.Data{
 				FormAction:         deps.Routes.AddURL,
 				Active:             true,
 				SearchTimezonesURL: deps.Routes.SearchTimezonesURL,
-				Labels:             formLabels(viewCtx.T),
+				Labels:             userform.BuildLabels(viewCtx.T),
 				CommonLabels:       nil, // injected by ViewAdapter
 			})
 		}
@@ -210,7 +142,7 @@ func NewEditAction(deps *Deps) view.View {
 
 			u := resp.GetData()[0]
 
-			return view.OK("user-drawer-form", &FormData{
+			return view.OK("user-drawer-form", &userform.Data{
 				FormAction:         route.ResolveURL(deps.Routes.EditURL, "id", id),
 				IsEdit:             true,
 				ID:                 id,
@@ -221,7 +153,7 @@ func NewEditAction(deps *Deps) view.View {
 				Timezone:           u.GetTimezone(),
 				Active:             u.GetActive(),
 				SearchTimezonesURL: deps.Routes.SearchTimezonesURL,
-				Labels:             formLabels(viewCtx.T),
+				Labels:             userform.BuildLabels(viewCtx.T),
 				CommonLabels:       nil, // injected by ViewAdapter
 			})
 		}

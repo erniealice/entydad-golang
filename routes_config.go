@@ -345,6 +345,7 @@ func (r RoleRoutes) RouteMap() map[string]string {
 
 // LocationRoutes holds all route paths for location management.
 type LocationRoutes struct {
+	DashboardURL     string `json:"dashboard_url"`
 	ListURL          string `json:"list_url"`
 	DetailURL        string `json:"detail_url"`
 	TableURL         string `json:"table_url"`
@@ -366,6 +367,7 @@ type LocationRoutes struct {
 // package-level route constants.
 func DefaultLocationRoutes() LocationRoutes {
 	return LocationRoutes{
+		DashboardURL:     LocationDashboardURL,
 		ListURL:          LocationListURL,
 		DetailURL:        LocationDetailURL,
 		TableURL:         LocationTableURL,
@@ -386,6 +388,7 @@ func DefaultLocationRoutes() LocationRoutes {
 // RouteMap returns a map of dot-notation keys to route path values.
 func (r LocationRoutes) RouteMap() map[string]string {
 	return map[string]string{
+		"location.dashboard":       r.DashboardURL,
 		"location.list":            r.ListURL,
 		"location.detail":          r.DetailURL,
 		"location.table":           r.TableURL,
@@ -626,6 +629,36 @@ func (r WorkspaceUserRoleRoutes) RouteMap() map[string]string {
 		"workspace_user_role.delete":       r.DeleteURL,
 		"workspace_user_role.permissions":  r.PermissionsURL,
 		"workspace_user_role.search_roles": r.SearchRolesURL,
+	}
+}
+
+// ---------------------------------------------------------------------------
+// AdminDashboardRoutes
+// ---------------------------------------------------------------------------
+
+// AdminDashboardRoutes holds the route path for the admin app dashboard.
+//
+// Admin is a *composite* app: its sidebar block spans permission, role,
+// workspace, workspace_user, and workspace_user_role entities. The dashboard
+// sits at the app level (not the entity level), so it gets its own thin
+// route struct rather than being attached to PermissionRoutes / RoleRoutes /
+// WorkspaceRoutes — none of which would be the obvious owner.
+type AdminDashboardRoutes struct {
+	DashboardURL string `json:"dashboard_url"`
+}
+
+// DefaultAdminDashboardRoutes returns an AdminDashboardRoutes populated from
+// the package-level route constants.
+func DefaultAdminDashboardRoutes() AdminDashboardRoutes {
+	return AdminDashboardRoutes{
+		DashboardURL: AdminDashboardURL,
+	}
+}
+
+// RouteMap returns a map of dot-notation keys to route path values.
+func (r AdminDashboardRoutes) RouteMap() map[string]string {
+	return map[string]string{
+		"admin.dashboard": r.DashboardURL,
 	}
 }
 

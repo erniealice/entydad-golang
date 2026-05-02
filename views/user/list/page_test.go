@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/erniealice/entydad-golang"
-	espynahttp "github.com/erniealice/espyna-golang/contrib/http"
 	"github.com/erniealice/espyna-golang/tableparams"
 	commonpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
 	userpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/user"

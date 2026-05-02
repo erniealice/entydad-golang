@@ -26,12 +26,13 @@ import (
 
 // ModuleDeps holds all dependencies for the user module.
 type ModuleDeps struct {
-	Routes          entydad.UserRoutes
-	CommonLabels    pyeza.CommonLabels
-	SharedLabels    entydad.SharedLabels
-	Labels          entydad.UserLabels
-	DashboardLabels entydad.UserDashboardLabels
-	UserRoleLabels  entydad.UserRoleLabels
+	Routes               entydad.UserRoutes
+	CommonLabels         pyeza.CommonLabels
+	SharedLabels         entydad.SharedLabels
+	Labels               entydad.UserLabels
+	DashboardLabels      entydad.UserDashboardLabels
+	DashboardTitleLabels entydad.DashboardLabels
+	UserRoleLabels       entydad.UserRoleLabels
 	TableLabels     types.TableLabels
 	// User list page data
 	GetListPageData      func(ctx context.Context, req *userpb.GetUserListPageDataRequest) (*userpb.GetUserListPageDataResponse, error)
@@ -161,8 +162,10 @@ func NewModule(deps *ModuleDeps) *Module {
 	return &Module{
 		routes: deps.Routes,
 		Dashboard: userdashboard.NewView(&userdashboard.Deps{
-			CommonLabels:     deps.CommonLabels,
+			DashboardLabels:  deps.DashboardTitleLabels,
 			Dashboard:        deps.DashboardLabels,
+			Routes:           deps.Routes,
+			CommonLabels:     deps.CommonLabels,
 			GetDashboardData: deps.GetDashboardData,
 		}),
 		List:             userlist.NewView(listDeps),

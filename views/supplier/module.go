@@ -142,6 +142,7 @@ func NewModule(deps *ModuleDeps) *Module {
 		Dashboard: supplierdashboard.NewView(&supplierdashboard.Deps{
 			DashboardLabels: deps.DashboardTitleLabels,
 			Dashboard:       deps.DashboardLabels,
+			Routes:          deps.Routes,
 			CommonLabels:    deps.CommonLabels,
 		}),
 		List:             supplierlist.NewView(listDeps),

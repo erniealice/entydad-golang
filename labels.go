@@ -392,13 +392,14 @@ type UserDetailTabLabels struct {
 // LocationLabels holds all translatable strings for the location module.
 // JSON tags match the "location" wrapper key in retail/location.json.
 type LocationLabels struct {
-	Page    LocationPageLabels   `json:"page"`
-	Buttons LocationButtonLabels `json:"buttons"`
-	Columns LocationColumnLabels `json:"columns"`
-	Empty   LocationEmptyLabels  `json:"empty"`
-	Form    LocationFormLabels   `json:"form"`
-	Actions LocationActionLabels `json:"actions"`
-	Detail  LocationDetailLabels `json:"detail"`
+	Page      LocationPageLabels      `json:"page"`
+	Buttons   LocationButtonLabels    `json:"buttons"`
+	Columns   LocationColumnLabels    `json:"columns"`
+	Empty     LocationEmptyLabels     `json:"empty"`
+	Form      LocationFormLabels      `json:"form"`
+	Actions   LocationActionLabels    `json:"actions"`
+	Detail    LocationDetailLabels    `json:"detail"`
+	Dashboard LocationDashboardLabels `json:"dashboard"`
 }
 
 type LocationPageLabels struct {
@@ -1658,6 +1659,8 @@ type DashboardLabels struct {
 	ClientTitle   string `json:"clientTitle"`
 	UserTitle     string `json:"userTitle"`
 	SupplierTitle string `json:"supplierTitle"`
+	LocationTitle string `json:"locationTitle"`
+	AdminTitle    string `json:"adminTitle"`
 }
 
 // ClientDashboardLabels holds translatable strings for the client dashboard.
@@ -1672,6 +1675,18 @@ type ClientDashboardLabels struct {
 	FilterYear     string `json:"filterYear"`
 	RecentActivity string `json:"recentActivity"`
 	ViewAll        string `json:"viewAll"`
+
+	// Quick action labels (Phase 1b — pyeza dashboard block refactor)
+	QuickNew          string `json:"quickNew"`
+	QuickViewAll      string `json:"quickViewAll"`
+	QuickTags         string `json:"quickTags"`
+	QuickPaymentTerms string `json:"quickPaymentTerms"`
+
+	// Activity feed titles
+	ClientAdded     string `json:"clientAdded"`
+	ClientActivated string `json:"clientActivated"`
+	ProfileUpdated  string `json:"profileUpdated"`
+	TagAssigned     string `json:"tagAssigned"`
 }
 
 // SupplierDashboardLabels holds translatable strings for the supplier dashboard.
@@ -1687,6 +1702,83 @@ type SupplierDashboardLabels struct {
 	FilterYear       string `json:"filterYear"`
 	RecentActivity   string `json:"recentActivity"`
 	ViewAll          string `json:"viewAll"`
+
+	// Quick action labels (Phase 1b — pyeza dashboard block refactor)
+	QuickNew        string `json:"quickNew"`
+	QuickViewAll    string `json:"quickViewAll"`
+	QuickTags       string `json:"quickTags"`
+	QuickCategories string `json:"quickCategories"`
+
+	// Activity feed titles
+	SupplierAdded     string `json:"supplierAdded"`
+	SupplierActivated string `json:"supplierActivated"`
+	DetailsUpdated    string `json:"detailsUpdated"`
+	TagAssigned       string `json:"tagAssigned"`
+}
+
+// LocationDashboardLabels holds translatable strings for the location dashboard.
+type LocationDashboardLabels struct {
+	// Stats (4): Total / Active / Regions / Areas Count
+	TotalLocations string `json:"totalLocations"`
+	Active         string `json:"active"`
+	Regions        string `json:"regions"`
+	AreasCount     string `json:"areasCount"`
+
+	// Widget titles
+	LocationsByRegion string `json:"locationsByRegion"`
+	TopLocationsByArea string `json:"topLocationsByArea"`
+	RecentAdditions   string `json:"recentAdditions"`
+	ViewAll           string `json:"viewAll"`
+
+	// Chart filter labels
+	FilterWeek  string `json:"filterWeek"`
+	FilterMonth string `json:"filterMonth"`
+	FilterYear  string `json:"filterYear"`
+
+	// Quick action labels
+	QuickNewLocation string `json:"quickNewLocation"`
+	QuickNewArea     string `json:"quickNewArea"`
+	QuickMoveStock   string `json:"quickMoveStock"`
+	QuickLocationMap string `json:"quickLocationMap"`
+
+	// Activity / table column labels
+	ColumnLocation string `json:"columnLocation"`
+	ColumnAreas    string `json:"columnAreas"`
+	LocationAdded  string `json:"locationAdded"`
+}
+
+// AdminDashboardLabels holds translatable strings for the admin app dashboard.
+//
+// The admin app is composite: its dashboard surfaces aggregates across the
+// permission, role, workspace, workspace_user, and workspace_user_role
+// entities — see plan.md § Phase 4b.
+type AdminDashboardLabels struct {
+	// Page header / subtitle
+	Title    string `json:"title"`
+	Subtitle string `json:"subtitle"`
+
+	// Stats (4): Workspace Users / Roles / Permissions / Recent Role Changes (7d)
+	WorkspaceUsers    string `json:"workspaceUsers"`
+	Roles             string `json:"roles"`
+	Permissions       string `json:"permissions"`
+	RecentRoleChanges string `json:"recentRoleChanges"`
+
+	// Widget titles
+	UsersPerRole         string `json:"usersPerRole"`
+	RolesByPermissionCount string `json:"rolesByPermissionCount"`
+	RecentRoleChangesList string `json:"recentRoleChangesList"`
+	ViewAll              string `json:"viewAll"`
+
+	// Quick action labels
+	QuickNewUser      string `json:"quickNewUser"`
+	QuickNewWorkspace string `json:"quickNewWorkspace"`
+	QuickAssignRole   string `json:"quickAssignRole"`
+	QuickAuditLog     string `json:"quickAuditLog"`
+
+	// Activity / table column labels
+	ColumnRole            string `json:"columnRole"`
+	ColumnPermissionCount string `json:"columnPermissionCount"`
+	RoleAssigned          string `json:"roleAssigned"`
 }
 
 // UserDashboardLabels holds translatable strings for the user dashboard.
@@ -1702,6 +1794,18 @@ type UserDashboardLabels struct {
 	RecentActivity   string `json:"recentActivity"`
 	ViewAll          string `json:"viewAll"`
 	NoRecentActivity string `json:"noRecentActivity"`
+
+	// Quick action labels (Phase 1b — pyeza dashboard block refactor)
+	QuickNew         string `json:"quickNew"`
+	QuickViewAll     string `json:"quickViewAll"`
+	QuickRoles       string `json:"quickRoles"`
+	QuickPermissions string `json:"quickPermissions"`
+
+	// Activity feed titles
+	UserAdded      string `json:"userAdded"`
+	UserActivated  string `json:"userActivated"`
+	RoleAssigned   string `json:"roleAssigned"`
+	ProfileUpdated string `json:"profileUpdated"`
 }
 
 // ---------------------------------------------------------------------------

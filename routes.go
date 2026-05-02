@@ -29,6 +29,7 @@ const (
 	UserBulkSetStatusURL    = "/action/user/bulk-set-status"
 	UserSearchTimezonesURL  = "/action/user/search-timezones"
 
+	LocationDashboardURL        = "/app/locations/dashboard"
 	LocationDetailURL           = "/app/locations/detail/{id}"
 	LocationListURL             = "/app/locations/list/{status}"
 	LocationTableURL            = "/action/location/table/{status}"
@@ -135,6 +136,10 @@ const (
 	WorkspaceUserRoleDeleteURL      = "/action/workspace_user_role/delete/{id}"
 	WorkspaceUserRolePermissionsURL = "/action/workspace_user_role/permissions"
 	WorkspaceUserRoleSearchRolesURL = "/action/workspace_user_role/search-roles"
+
+	// Admin app dashboard — composite app spanning permission/role/workspace/
+	// workspace_user/workspace_user_role. Lives under entydad/views/admin/dashboard.
+	AdminDashboardURL = "/app/admin/dashboard"
 
 	// Client report routes
 	ReceivablesAgingURL = "/app/reports/receivables-aging"

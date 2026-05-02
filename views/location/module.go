@@ -9,6 +9,7 @@ import (
 
 	"github.com/erniealice/entydad-golang"
 	locationaction "github.com/erniealice/entydad-golang/views/location/action"
+	locationdashboard "github.com/erniealice/entydad-golang/views/location/dashboard"
 	locationdetail "github.com/erniealice/entydad-golang/views/location/detail"
 	locationlist "github.com/erniealice/entydad-golang/views/location/list"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
@@ -19,20 +20,27 @@ import (
 
 // ModuleDeps holds all dependencies for the location module.
 type ModuleDeps struct {
-	Routes          entydad.LocationRoutes
-	CommonLabels    pyeza.CommonLabels
-	SharedLabels    entydad.SharedLabels
-	Labels          entydad.LocationLabels
-	TableLabels     types.TableLabels
-	GetListPageData func(ctx context.Context, req *locationpb.GetLocationListPageDataRequest) (*locationpb.GetLocationListPageDataResponse, error)
-	GetInUseIDs     func(ctx context.Context, ids []string) (map[string]bool, error)
-	CreateLocation  func(ctx context.Context, req *locationpb.CreateLocationRequest) (*locationpb.CreateLocationResponse, error)
-	ReadLocation    func(ctx context.Context, req *locationpb.ReadLocationRequest) (*locationpb.ReadLocationResponse, error)
-	UpdateLocation  func(ctx context.Context, req *locationpb.UpdateLocationRequest) (*locationpb.UpdateLocationResponse, error)
-	DeleteLocation  func(ctx context.Context, req *locationpb.DeleteLocationRequest) (*locationpb.DeleteLocationResponse, error)
-	SetActive       func(ctx context.Context, id string, active bool) error
+	Routes               entydad.LocationRoutes
+	CommonLabels         pyeza.CommonLabels
+	SharedLabels         entydad.SharedLabels
+	Labels               entydad.LocationLabels
+	DashboardTitleLabels entydad.DashboardLabels
+	TableLabels          types.TableLabels
+	GetListPageData      func(ctx context.Context, req *locationpb.GetLocationListPageDataRequest) (*locationpb.GetLocationListPageDataResponse, error)
+	GetInUseIDs          func(ctx context.Context, ids []string) (map[string]bool, error)
+	CreateLocation       func(ctx context.Context, req *locationpb.CreateLocationRequest) (*locationpb.CreateLocationResponse, error)
+	ReadLocation         func(ctx context.Context, req *locationpb.ReadLocationRequest) (*locationpb.ReadLocationResponse, error)
+	UpdateLocation       func(ctx context.Context, req *locationpb.UpdateLocationRequest) (*locationpb.UpdateLocationResponse, error)
+	DeleteLocation       func(ctx context.Context, req *locationpb.DeleteLocationRequest) (*locationpb.DeleteLocationResponse, error)
+	SetActive            func(ctx context.Context, id string, active bool) error
 	// ListLocationAreas is optional — if provided, the area dropdown appears in the form.
 	ListLocationAreas func(ctx context.Context) ([]locationaction.LocationAreaOption, error)
+
+	// GetLocationDashboardPageData is the workspace-scoped page-data fetch
+	// for the dashboard view. The container builds this by calling the
+	// GetLocationDashboardPageDataUseCase. nil-safe: when missing, the
+	// view renders empty-state widgets.
+	GetLocationDashboardPageData func(ctx context.Context) (*locationdashboard.LocationDashboardData, error)
 
 	// Attachment operations
 	UploadFile       func(ctx context.Context, bucket, key string, content []byte, contentType string) error
@@ -48,6 +56,7 @@ type ModuleDeps struct {
 // Module holds all constructed location views.
 type Module struct {
 	routes           entydad.LocationRoutes
+	Dashboard        view.View
 	List             view.View
 	Table            view.View
 	Detail           view.View
@@ -103,7 +112,14 @@ func NewModule(deps *ModuleDeps) *Module {
 	}
 
 	return &Module{
-		routes:           deps.Routes,
+		routes: deps.Routes,
+		Dashboard: locationdashboard.NewView(&locationdashboard.Deps{
+			DashboardLabels:  deps.DashboardTitleLabels,
+			Dashboard:        deps.Labels.Dashboard,
+			Routes:           deps.Routes,
+			CommonLabels:     deps.CommonLabels,
+			GetDashboardData: deps.GetLocationDashboardPageData,
+		}),
 		List:             locationlist.NewView(listDeps),
 		Table:            locationlist.NewTableView(listDeps),
 		Detail:           locationdetail.NewView(detailDeps),
@@ -120,6 +136,7 @@ func NewModule(deps *ModuleDeps) *Module {
 }
 
 func (m *Module) RegisterRoutes(r view.RouteRegistrar) {
+	r.GET(m.routes.DashboardURL, m.Dashboard)
 	r.GET(m.routes.ListURL, m.List)
 	r.GET(m.routes.TableURL, m.Table)
 	r.GET(m.routes.DetailURL, m.Detail)

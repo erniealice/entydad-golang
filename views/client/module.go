@@ -175,7 +175,7 @@ func NewModule(deps *ModuleDeps) *Module {
 
 	return &Module{
 		routes:           deps.Routes,
-		Dashboard:        clientdashboard.NewView(&clientdashboard.Deps{DashboardLabels: deps.DashboardTitleLabels, CommonLabels: deps.CommonLabels, Dashboard: deps.DashboardLabels}),
+		Dashboard:        clientdashboard.NewView(&clientdashboard.Deps{DashboardLabels: deps.DashboardTitleLabels, CommonLabels: deps.CommonLabels, Dashboard: deps.DashboardLabels, Routes: deps.Routes}),
 		List:             clientlist.NewView(listDeps),
 		Table:            clientlist.NewTableView(listDeps),
 		Detail:           clientdetail.NewView(detailDeps),

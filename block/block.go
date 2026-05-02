@@ -323,13 +323,14 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 				return fmt.Errorf("entydad.Block: user use cases not initialized")
 			}
 			usermod.NewModule(&usermod.ModuleDeps{
-				Routes:          routes.User,
-				CommonLabels:    ctx.Common,
-				SharedLabels:    labels.Shared,
-				Labels:          labels.User,
-				DashboardLabels: labels.UserDashboard,
-				UserRoleLabels:  labels.UserRole,
-				TableLabels:     ctx.Table,
+				Routes:               routes.User,
+				CommonLabels:         ctx.Common,
+				SharedLabels:         labels.Shared,
+				Labels:               labels.User,
+				DashboardLabels:      labels.UserDashboard,
+				DashboardTitleLabels: labels.Dashboard,
+				UserRoleLabels:       labels.UserRole,
+				TableLabels:          ctx.Table,
 				GetListPageData:      uc.Entity.User.GetUserListPageData.Execute,
 				GetUserWorkspacesMap: getUserWorkspacesMap,
 				CreateUser:      uc.Entity.User.CreateUser.Execute,

@@ -1,13 +1,13 @@
 {{/* Full page — for direct access / non-HTMX */}}
-{{define "user-dashboard"}}
+{{define "admin-dashboard"}}
 {{template "app-shell" .}}
 {{end}}
 
 {{/* Content-only partial — for HTMX navigation */}}
-{{define "user-dashboard-content"}}
+{{define "admin-dashboard-content"}}
 <div class="page-content"
-     data-page-css="/assets/css/entydad/entydad-user-dashboard.css?v={{.CacheVersion}}"
-     data-testid="dashboard-user">
+     data-page-css="/assets/css/entydad/entydad-admin-dashboard.css?v={{.CacheVersion}}"
+     data-testid="dashboard-admin">
     {{template "dashboard" .Dashboard}}
 </div>
 {{end}}
