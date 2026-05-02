@@ -15,16 +15,9 @@ import (
 	"github.com/erniealice/entydad-golang"
 	userpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/user"
 	workspaceuserpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace_user"
-)
 
-// AddFormData is the template data for the "Add user to workspace" drawer form.
-type AddFormData struct {
-	FormAction  string
-	WorkspaceID string
-	Labels      entydad.WorkspaceUserLabels
-	UserSearchURL string
-	CommonLabels  any
-}
+	"github.com/erniealice/entydad-golang/views/workspace_user/form"
+)
 
 // Deps holds dependencies for workspace_user action handlers.
 type Deps struct {
@@ -54,7 +47,7 @@ func NewAddAction(deps *Deps) view.View {
 
 		if viewCtx.Request.Method == http.MethodGet {
 			workspaceID := viewCtx.Request.URL.Query().Get("workspace_id")
-			return view.OK("workspace-user-add-form", &AddFormData{
+			return view.OK("workspace-user-add-form", &form.Data{
 				FormAction:    deps.Routes.AddURL,
 				WorkspaceID:   workspaceID,
 				Labels:        entydad.WorkspaceUserLabels{},

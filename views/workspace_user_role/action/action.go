@@ -23,6 +23,8 @@ import (
 	rolepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/role"
 	workspaceuserpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace_user"
 	workspaceuserrolepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace_user_role"
+
+	"github.com/erniealice/entydad-golang/views/workspace_user_role/form"
 )
 
 // Deps holds dependencies for workspace_user_role action handlers.
@@ -40,28 +42,6 @@ type Deps struct {
 	Labels entydad.WorkspaceUserRoleLabels
 	// CommonLabels provides shared labels (for sheet footer).
 	CommonLabels any
-}
-
-// AssignFormData is the template data for the "Assign role" drawer form.
-type AssignFormData struct {
-	FormAction          string
-	WorkspaceUserID     string
-	WorkspaceUserName   string
-	WorkspaceUserEmail  string
-	SearchRolesURL      string
-	PermissionsURL      string
-	Labels              entydad.WorkspaceUserRoleLabels
-	CommonLabels        any
-}
-
-// PermissionsData is the template data for the reactive permissions partial.
-type PermissionsData struct {
-	Permissions []PermissionItem
-}
-
-// PermissionItem holds a single permission code for display.
-type PermissionItem struct {
-	Code string
 }
 
 // searchOption is the JSON shape returned by the search-roles handler.
@@ -100,7 +80,7 @@ func NewAddAction(deps *Deps) view.View {
 				}
 			}
 
-			return view.OK("wur-assign-form", &AssignFormData{
+			return view.OK("wur-assign-form", &form.Data{
 				FormAction:         deps.Routes.AddURL,
 				WorkspaceUserID:    workspaceUserID,
 				WorkspaceUserName:  userName,
@@ -196,8 +176,8 @@ func NewPermissionsAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		roleID := viewCtx.Request.URL.Query().Get("role_id")
 
-		data := &PermissionsData{
-			Permissions: []PermissionItem{},
+		data := &form.PermissionsData{
+			Permissions: []form.PermissionItem{},
 		}
 
 		if roleID == "" || deps.ListRoles == nil {
@@ -222,7 +202,7 @@ func NewPermissionsAction(deps *Deps) view.View {
 				if code == "" {
 					continue
 				}
-				data.Permissions = append(data.Permissions, PermissionItem{Code: code})
+				data.Permissions = append(data.Permissions, form.PermissionItem{Code: code})
 			}
 			break
 		}

@@ -6,48 +6,13 @@ import (
 	"net/http"
 
 	"github.com/erniealice/pyeza-golang/route"
-	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
 
 	permissionpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/permission"
 
 	"github.com/erniealice/entydad-golang"
+	"github.com/erniealice/entydad-golang/views/permission/form"
 )
-
-// FormLabels holds i18n labels for the drawer form template.
-type FormLabels struct {
-	Name                      string
-	NamePlaceholder           string
-	PermissionCode            string
-	PermissionCodePlaceholder string
-	PermissionCodeHint        string
-	PermissionType            string
-	Description               string
-	DescriptionPlaceholder    string
-	Active                    string
-
-	// Field-level info text surfaced via an info button beside each label.
-	NameInfo           string
-	PermissionCodeInfo string
-	PermissionTypeInfo string
-	DescriptionInfo    string
-	ActiveInfo         string
-}
-
-// FormData is the template data for the permission drawer form.
-type FormData struct {
-	FormAction            string
-	IsEdit                bool
-	ID                    string
-	Name                  string
-	PermissionCode        string
-	PermissionType        string
-	Description           string
-	Active                bool
-	Labels                FormLabels
-	PermissionTypeOptions []types.SelectOption
-	CommonLabels          any
-}
 
 // Deps holds dependencies for permission action handlers.
 type Deps struct {
@@ -59,50 +24,6 @@ type Deps struct {
 	Routes              entydad.PermissionRoutes
 }
 
-func formLabels(t func(string) string) FormLabels {
-	return FormLabels{
-		Name:                      t("form.name"),
-		NamePlaceholder:           t("form.namePlaceholder"),
-		PermissionCode:            t("form.permissionCode"),
-		PermissionCodePlaceholder: t("form.permissionCodePlaceholder"),
-		PermissionCodeHint:        t("form.permissionCodeHint"),
-		PermissionType:            t("form.permissionType"),
-		Description:               t("form.description"),
-		DescriptionPlaceholder:    t("form.descriptionPlaceholder"),
-		Active:                    t("form.active"),
-		NameInfo:                  t("permission.form.nameInfo"),
-		PermissionCodeInfo:        t("permission.form.permissionCodeInfo"),
-		PermissionTypeInfo:        t("permission.form.permissionTypeInfo"),
-		DescriptionInfo:           t("permission.form.descriptionInfo"),
-		ActiveInfo:                t("permission.form.activeInfo"),
-	}
-}
-
-func permissionTypeOptions(current string, t func(string) string) []types.SelectOption {
-	return []types.SelectOption{
-		{Value: "PERMISSION_TYPE_ALLOW", Label: t("shared.badges.allow"), Selected: current == "PERMISSION_TYPE_ALLOW"},
-		{Value: "PERMISSION_TYPE_DENY", Label: t("shared.badges.deny"), Selected: current == "PERMISSION_TYPE_DENY"},
-	}
-}
-
-func parsePermissionType(s string) permissionpb.PermissionType {
-	switch s {
-	case "PERMISSION_TYPE_DENY":
-		return permissionpb.PermissionType_PERMISSION_TYPE_DENY
-	default:
-		return permissionpb.PermissionType_PERMISSION_TYPE_ALLOW
-	}
-}
-
-func formatPermissionType(pt permissionpb.PermissionType) string {
-	switch pt {
-	case permissionpb.PermissionType_PERMISSION_TYPE_DENY:
-		return "PERMISSION_TYPE_DENY"
-	default:
-		return "PERMISSION_TYPE_ALLOW"
-	}
-}
-
 // NewAddAction creates the permission add action (GET = form, POST = create).
 func NewAddAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
@@ -111,12 +32,12 @@ func NewAddAction(deps *Deps) view.View {
 			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		if viewCtx.Request.Method == http.MethodGet {
-			return view.OK("permission-drawer-form", &FormData{
+			return view.OK("permission-drawer-form", &form.Data{
 				FormAction:            deps.Routes.AddURL,
 				Active:                true,
 				PermissionType:        "PERMISSION_TYPE_ALLOW",
-				Labels:                formLabels(viewCtx.T),
-				PermissionTypeOptions: permissionTypeOptions("PERMISSION_TYPE_ALLOW", viewCtx.T),
+				Labels:                form.BuildLabels(viewCtx.T),
+				PermissionTypeOptions: form.BuildPermissionTypeOptions("PERMISSION_TYPE_ALLOW", viewCtx.T),
 				CommonLabels:          nil,
 			})
 		}
@@ -133,7 +54,7 @@ func NewAddAction(deps *Deps) view.View {
 			Data: &permissionpb.Permission{
 				Name:           r.FormValue("name"),
 				PermissionCode: r.FormValue("permission_code"),
-				PermissionType: parsePermissionType(r.FormValue("permission_type")),
+				PermissionType: form.ParsePermissionType(r.FormValue("permission_type")),
 				Description:    r.FormValue("description"),
 				Active:         active,
 			},
@@ -167,17 +88,17 @@ func NewEditAction(deps *Deps) view.View {
 
 			perm := resp.GetData()[0]
 
-			return view.OK("permission-drawer-form", &FormData{
+			return view.OK("permission-drawer-form", &form.Data{
 				FormAction:            route.ResolveURL(deps.Routes.EditURL, "id", id),
 				IsEdit:                true,
 				ID:                    id,
 				Name:                  perm.GetName(),
 				PermissionCode:        perm.GetPermissionCode(),
-				PermissionType:        formatPermissionType(perm.GetPermissionType()),
+				PermissionType:        form.FormatPermissionType(perm.GetPermissionType()),
 				Description:           perm.GetDescription(),
 				Active:                perm.GetActive(),
-				Labels:                formLabels(viewCtx.T),
-				PermissionTypeOptions: permissionTypeOptions(formatPermissionType(perm.GetPermissionType()), viewCtx.T),
+				Labels:                form.BuildLabels(viewCtx.T),
+				PermissionTypeOptions: form.BuildPermissionTypeOptions(form.FormatPermissionType(perm.GetPermissionType()), viewCtx.T),
 				CommonLabels:          nil,
 			})
 		}
@@ -195,7 +116,7 @@ func NewEditAction(deps *Deps) view.View {
 				Id:             id,
 				Name:           r.FormValue("name"),
 				PermissionCode: r.FormValue("permission_code"),
-				PermissionType: parsePermissionType(r.FormValue("permission_type")),
+				PermissionType: form.ParsePermissionType(r.FormValue("permission_type")),
 				Description:    r.FormValue("description"),
 				Active:         active,
 			},

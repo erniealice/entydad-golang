@@ -48,7 +48,7 @@ func NewView(deps *Deps) view.View {
 			QuickActions: []types.QuickAction{
 				{Icon: "icon-user-plus", Label: l.QuickNew, Href: deps.Routes.AddURL, Variant: "primary", TestID: "client-action-new"},
 				{Icon: "icon-list", Label: l.QuickViewAll, Href: deps.Routes.ListURL, TestID: "client-action-list"},
-				{Icon: "icon-tag", Label: l.QuickTags, Href: "/app/clients/settings/tags/list", TestID: "client-action-tags"},
+				{Icon: "icon-tag", Label: l.QuickTags, Href: deps.Routes.ClientTagListURL, TestID: "client-action-tags"},
 				{Icon: "icon-clock", Label: l.QuickPaymentTerms, Href: deps.Routes.PaymentTermsURL, TestID: "client-action-payment-terms"},
 			},
 			Stats: []types.StatCardData{

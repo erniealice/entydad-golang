@@ -157,8 +157,8 @@ func NewView(deps *Deps) view.View {
 			QuickActions: []types.QuickAction{
 				{Icon: "icon-user-plus", Label: l.QuickNew, Href: deps.Routes.AddURL, Variant: "primary", TestID: "user-action-new"},
 				{Icon: "icon-list", Label: l.QuickViewAll, Href: deps.Routes.ListURL, TestID: "user-action-list"},
-				{Icon: "icon-shield", Label: l.QuickRoles, Href: "/app/roles/list", TestID: "user-action-roles"},
-				{Icon: "icon-key", Label: l.QuickPermissions, Href: "/app/permissions/list/active", TestID: "user-action-permissions"},
+				{Icon: "icon-shield", Label: l.QuickRoles, Href: deps.Routes.RoleListURL, TestID: "user-action-roles"},
+				{Icon: "icon-key", Label: l.QuickPermissions, Href: deps.Routes.PermissionListURL, TestID: "user-action-permissions"},
 			},
 			Stats: []types.StatCardData{
 				{Icon: "icon-shield", Value: statTotal, Label: l.TotalUsers, Color: "terracotta", TestID: "user-stat-total"},

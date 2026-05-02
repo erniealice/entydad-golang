@@ -24,6 +24,8 @@ import (
 
 	centymo "github.com/erniealice/centymo-golang"
 	"github.com/erniealice/entydad-golang"
+	adminmod "github.com/erniealice/entydad-golang/views/admin"
+	admindashboardroutes "github.com/erniealice/entydad-golang/views/admin/dashboard"
 	clientmod "github.com/erniealice/entydad-golang/views/client"
 	clienttagmod "github.com/erniealice/entydad-golang/views/clienttag"
 	suppliertagmod "github.com/erniealice/entydad-golang/views/suppliertag"
@@ -82,6 +84,7 @@ type BlockOption func(*blockConfig)
 
 type blockConfig struct {
 	enableAll          bool
+	admin              bool
 	client             bool
 	clientTag          bool
 	supplierTag        bool
@@ -96,6 +99,10 @@ type blockConfig struct {
 	workspaceUserRole  bool
 	supplier           bool
 }
+
+// WithAdmin enables the Admin dashboard module in Block().
+// The admin module registers the /app/admin/dashboard route.
+func WithAdmin() BlockOption { return func(c *blockConfig) { c.admin = true } }
 
 // WithClient enables the Client module in Block().
 func WithClient() BlockOption { return func(c *blockConfig) { c.client = true } }
@@ -449,6 +456,7 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 					return opts, nil
 				}
 			}
+			wireLocationDashboard(locationDeps, uc)
 			locationmod.NewModule(locationDeps).RegisterRoutes(ctx.Routes)
 		}
 
@@ -856,6 +864,28 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 			}
 		}
 
+		if cfg.enableAll || cfg.admin {
+			adminDeps := &adminmod.ModuleDeps{
+				Routes:               routes.Admin,
+				CommonLabels:         ctx.Common,
+				DashboardLabels:      labels.Admin,
+				DashboardTitleLabels: labels.Dashboard,
+				// Cross-entity URLs for quick actions and "view all" links.
+				DashboardRoutes: admindashboardroutes.Routes{
+					DashboardURL:         routes.Admin.DashboardURL,
+					NewUserURL:           routes.WorkspaceUser.AddURL,
+					NewWorkspaceURL:      routes.Workspace.AddURL,
+					AssignRoleURL:        routes.WorkspaceUserRole.AddURL,
+					PermissionListURL:    routes.Permission.ListURL,
+					RoleListURL:          routes.Role.ListURL,
+					WorkspaceListURL:     routes.Workspace.ListURL,
+					WorkspaceUserListURL: routes.WorkspaceUser.ListURL,
+				},
+			}
+			wireAdminDashboard(adminDeps, uc)
+			adminmod.NewModule(adminDeps).RegisterRoutes(ctx.Routes)
+		}
+
 		log.Println("  ✓ Entity domain initialized (entydad.Block)")
 		return nil
 	}
@@ -902,6 +932,7 @@ func getDefaultWorkspaceID() string {
 type blockLabels struct {
 	Shared          entydad.SharedLabels
 	Dashboard       entydad.DashboardLabels
+	Admin           entydad.AdminDashboardLabels
 	Client          entydad.ClientLabels
 	ClientDashboard entydad.ClientDashboardLabels
 	ClientTag       entydad.ClientTagLabels
@@ -925,6 +956,7 @@ type blockLabels struct {
 
 // blockRoutes holds the subset of entydad route structs needed by Block().
 type blockRoutes struct {
+	Admin               entydad.AdminDashboardRoutes
 	Client              entydad.ClientRoutes
 	ClientTag           entydad.ClientTagRoutes
 	SupplierTag         entydad.SupplierTagRoutes
@@ -948,6 +980,7 @@ func loadBlockLabels(t *lynguaV1.TranslationProvider, businessType string) block
 	l := blockLabels{}
 
 	_ = t.LoadPathIfExists("en", businessType, "dashboard.json", "", &l.Dashboard)
+	_ = t.LoadPathIfExists("en", businessType, "admin.json", "admin.dashboard", &l.Admin)
 
 	if err := t.LoadPath("en", businessType, "client.json", "client", &l.Client); err != nil {
 		log.Printf("entydad.Block: warning: failed to load client labels: %v", err)
@@ -1002,6 +1035,9 @@ func loadBlockLabels(t *lynguaV1.TranslationProvider, businessType string) block
 // Mirrors the entydad section of route_config.go in service-admin/retail-admin.
 func loadBlockRoutes(t *lynguaV1.TranslationProvider, businessType string) blockRoutes {
 	r := blockRoutes{}
+
+	r.Admin = entydad.DefaultAdminDashboardRoutes()
+	_ = t.LoadPathIfExists("en", businessType, "route.json", "admin", &r.Admin)
 
 	r.Client = entydad.DefaultClientRoutes()
 	_ = t.LoadPathIfExists("en", businessType, "route.json", "client", &r.Client)

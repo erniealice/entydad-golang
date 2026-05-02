@@ -11,30 +11,8 @@ import (
 	workspacepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace"
 
 	"github.com/erniealice/entydad-golang"
+	"github.com/erniealice/entydad-golang/views/workspace/form"
 )
-
-// FormLabels holds i18n labels for the drawer form template.
-type FormLabels struct {
-	Name                   string
-	NamePlaceholder        string
-	Description            string
-	DescriptionPlaceholder string
-	Private                string
-	Active                 string
-}
-
-// FormData is the template data for the workspace drawer form.
-type FormData struct {
-	FormAction   string
-	IsEdit       bool
-	ID           string
-	Name         string
-	Description  string
-	Private      bool
-	Active       bool
-	Labels       FormLabels
-	CommonLabels any
-}
 
 // Deps holds dependencies for workspace action handlers.
 type Deps struct {
@@ -46,17 +24,6 @@ type Deps struct {
 	Routes             entydad.WorkspaceRoutes
 }
 
-func formLabels(t func(string) string) FormLabels {
-	return FormLabels{
-		Name:                   t("form.name"),
-		NamePlaceholder:        t("form.namePlaceholder"),
-		Description:            t("form.description"),
-		DescriptionPlaceholder: t("form.descriptionPlaceholder"),
-		Private:                t("form.private"),
-		Active:                 t("form.active"),
-	}
-}
-
 // NewAddAction creates the workspace add action (GET = form, POST = create).
 func NewAddAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
@@ -65,10 +32,10 @@ func NewAddAction(deps *Deps) view.View {
 			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		if viewCtx.Request.Method == http.MethodGet {
-			return view.OK("workspace-drawer-form", &FormData{
+			return view.OK("workspace-drawer-form", &form.Data{
 				FormAction:   deps.Routes.AddURL,
 				Active:       true,
-				Labels:       formLabels(viewCtx.T),
+				Labels:       form.BuildLabels(viewCtx.T),
 				CommonLabels: nil, // injected by ViewAdapter
 			})
 		}
@@ -119,7 +86,7 @@ func NewEditAction(deps *Deps) view.View {
 
 			ws := resp.GetData()[0]
 
-			return view.OK("workspace-drawer-form", &FormData{
+			return view.OK("workspace-drawer-form", &form.Data{
 				FormAction:   route.ResolveURL(deps.Routes.EditURL, "id", id),
 				IsEdit:       true,
 				ID:           id,
@@ -127,7 +94,7 @@ func NewEditAction(deps *Deps) view.View {
 				Description:  ws.GetDescription(),
 				Private:      ws.GetPrivate(),
 				Active:       ws.GetActive(),
-				Labels:       formLabels(viewCtx.T),
+				Labels:       form.BuildLabels(viewCtx.T),
 				CommonLabels: nil, // injected by ViewAdapter
 			})
 		}

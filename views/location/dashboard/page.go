@@ -140,8 +140,6 @@ func NewView(deps *Deps) view.View {
 			QuickActions: []types.QuickAction{
 				{Icon: "icon-plus", Label: l.QuickNewLocation, Href: deps.Routes.AddURL, Variant: "primary", TestID: "location-action-new"},
 				{Icon: "icon-layers", Label: l.QuickNewArea, Href: "/app/location-areas/dashboard", TestID: "location-action-new-area"},
-				{Icon: "icon-truck", Label: l.QuickMoveStock, Href: "#", TestID: "location-action-move-stock"},
-				{Icon: "icon-map", Label: l.QuickLocationMap, Href: "#", TestID: "location-action-map"},
 			},
 			Stats: stats,
 			Widgets: []types.DashboardWidget{

@@ -9,19 +9,8 @@ import (
 	"github.com/erniealice/pyeza-golang/view"
 
 	"github.com/erniealice/entydad-golang"
+	"github.com/erniealice/entydad-golang/views/location_area/form"
 )
-
-// FormData is the template data for the location area drawer form.
-type FormData struct {
-	FormAction   string
-	IsEdit       bool
-	ID           string
-	Name         string
-	Description  string
-	Active       bool
-	Labels       entydad.LocationAreaFormLabels
-	CommonLabels any
-}
 
 // LocationAreaRecord holds the data for a single location area, used by the
 // ReadLocationArea callback.
@@ -52,7 +41,7 @@ func NewAddAction(deps *Deps) view.View {
 			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		if viewCtx.Request.Method == http.MethodGet {
-			return view.OK("location-area-drawer-form", &FormData{
+			return view.OK("location-area-drawer-form", &form.Data{
 				FormAction:   deps.Routes.AddURL,
 				Active:       true,
 				Labels:       deps.Labels.Form,
@@ -96,7 +85,7 @@ func NewEditAction(deps *Deps) view.View {
 				return entydad.HTMXError(viewCtx.T("shared.errors.notFound"))
 			}
 
-			return view.OK("location-area-drawer-form", &FormData{
+			return view.OK("location-area-drawer-form", &form.Data{
 				FormAction:   route.ResolveURL(deps.Routes.EditURL, "id", id),
 				IsEdit:       true,
 				ID:           id,

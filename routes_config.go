@@ -52,7 +52,8 @@ type ClientRoutes struct {
 	ReceivablesAgingURL string `json:"receivables_aging_url"`
 
 	// Settings routes
-	PaymentTermsURL string `json:"payment_terms_url"`
+	PaymentTermsURL  string `json:"payment_terms_url"`
+	ClientTagListURL string `json:"client_tag_list_url"` // cross-app link to client-tag list (dashboard quick-action)
 }
 
 // DefaultClientRoutes returns a ClientRoutes populated from the package-level
@@ -79,7 +80,8 @@ func DefaultClientRoutes() ClientRoutes {
 
 		ReceivablesAgingURL: ReceivablesAgingURL,
 
-		PaymentTermsURL: PaymentTermListURL,
+		PaymentTermsURL:  PaymentTermListURL,
+		ClientTagListURL: ClientTagListURL,
 	}
 }
 
@@ -148,6 +150,10 @@ type UserRoutes struct {
 	DetailRolesTableURL  string `json:"detail_roles_table_url"`
 	DetailRolesAssignURL string `json:"detail_roles_assign_url"`
 	DetailRolesRemoveURL string `json:"detail_roles_remove_url"`
+
+	// Cross-app links used by the user dashboard quick-actions.
+	RoleListURL       string `json:"role_list_url"`
+	PermissionListURL string `json:"permission_list_url"`
 }
 
 // DefaultUserRoutes returns a UserRoutes populated from the package-level
@@ -183,6 +189,10 @@ func DefaultUserRoutes() UserRoutes {
 		DetailRolesTableURL:  UserDetailRolesTableURL,
 		DetailRolesAssignURL: UserDetailRolesAssignURL,
 		DetailRolesRemoveURL: UserDetailRolesRemoveURL,
+
+		// Cross-app quick-action links for the user dashboard.
+		RoleListURL:       RoleListURL,
+		PermissionListURL: "/app/permissions/list/active", // PermissionListURL with {status}=active
 	}
 }
 

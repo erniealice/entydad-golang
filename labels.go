@@ -1738,8 +1738,6 @@ type LocationDashboardLabels struct {
 	// Quick action labels
 	QuickNewLocation string `json:"quickNewLocation"`
 	QuickNewArea     string `json:"quickNewArea"`
-	QuickMoveStock   string `json:"quickMoveStock"`
-	QuickLocationMap string `json:"quickLocationMap"`
 
 	// Activity / table column labels
 	ColumnLocation string `json:"columnLocation"`
