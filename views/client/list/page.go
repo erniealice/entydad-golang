@@ -24,14 +24,14 @@ import (
 
 // ListViewDeps holds view dependencies.
 type ListViewDeps struct {
-	Routes             entydad.ClientRoutes
-	GetListPageData    func(ctx context.Context, req *clientpb.GetClientListPageDataRequest) (*clientpb.GetClientListPageDataResponse, error)
-	GetInUseIDs        func(ctx context.Context, ids []string) (map[string]bool, error)
-	GetClientBalances  func(ctx context.Context) (map[string]int64, error)
-	Labels             entydad.ClientLabels
-	SharedLabels       entydad.SharedLabels
-	CommonLabels       pyeza.CommonLabels
-	TableLabels        types.TableLabels
+	Routes            entydad.ClientRoutes
+	GetListPageData   func(ctx context.Context, req *clientpb.GetClientListPageDataRequest) (*clientpb.GetClientListPageDataResponse, error)
+	GetInUseIDs       func(ctx context.Context, ids []string) (map[string]bool, error)
+	GetClientBalances func(ctx context.Context) (map[string]int64, error)
+	Labels            entydad.ClientLabels
+	SharedLabels      entydad.SharedLabels
+	CommonLabels      pyeza.CommonLabels
+	TableLabels       types.TableLabels
 }
 
 // PageData holds the data for the client list page.
@@ -242,11 +242,11 @@ func clientColumns(l entydad.ClientLabels) []types.TableColumn {
 	// Status column omitted on purpose — the list page is already scoped
 	// by /list/{status}, so a per-row badge would be redundant.
 	return []types.TableColumn{
-		{Key: "name", Label: l.Columns.ClientName, Filterable: true, FilterType: types.FilterTypeString},
-		{Key: "representative", Label: l.Columns.Representative, Filterable: true, FilterType: types.FilterTypeString},
-		{Key: "category", Label: l.Columns.Category, WidthClass: "col-7xl"},
-		{Key: "payment_term", Label: l.Columns.PaymentTerm, WidthClass: "col-3xl"},
-		{Key: "outstanding_balance", Label: "Outstanding", NoSort: true, Align: "right", WidthClass: "col-4xl"},
+		{Key: "name", Label: l.Columns.ClientName},
+		{Key: "representative", Label: l.Columns.Representative},
+		{Key: "category", Label: l.Columns.Category, NoFilter: true, WidthClass: "col-7xl"},
+		{Key: "payment_term", Label: l.Columns.PaymentTerm, NoFilter: true, WidthClass: "col-3xl"},
+		{Key: "outstanding_balance", Label: "Outstanding", NoSort: true, NoFilter: true, Align: "right", WidthClass: "col-4xl"},
 	}
 }
 

@@ -198,9 +198,9 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, columns []types.T
 
 func locationAreaColumns(l entydad.LocationAreaLabels) []types.TableColumn {
 	return []types.TableColumn{
-		{Key: "name", Label: l.Columns.Name, Filterable: true, FilterType: types.FilterTypeString},
-		{Key: "description", Label: l.Columns.Description, NoSort: true},
-		{Key: "date_created", Label: l.Columns.DateCreated, Filterable: true, FilterType: types.FilterTypeDate},
+		{Key: "name", Label: l.Columns.Name},
+		{Key: "description", Label: l.Columns.Description, NoSort: true, NoFilter: true},
+		{Key: "date_created", Label: l.Columns.DateCreated},
 	}
 }
 

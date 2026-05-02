@@ -194,12 +194,12 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, columns []types.T
 
 func roleColumns(l entydad.RoleLabels) []types.TableColumn {
 	return []types.TableColumn{
-		{Key: "name", Label: l.Columns.Name, Filterable: true, FilterType: types.FilterTypeString, MinWidth: "9.375rem"},
-		{Key: "description", Label: l.Columns.Description, NoSort: true, Filterable: true, FilterType: types.FilterTypeString, MinWidth: "9.375rem"},
-		{Key: "color", Label: l.Columns.Color, NoSort: true, WidthClass: "col-2xl"},
-		{Key: "permissions", Label: l.Columns.Permissions, NoSort: true, WidthClass: "col-2xl", Align: "center"},
-		{Key: "status", Label: l.Columns.Status, NoSort: true, WidthClass: "col-2xl"},
-		{Key: "date_created", Label: l.Columns.DateCreated, Filterable: true, FilterType: types.FilterTypeDate, WidthClass: "col-6xl"},
+		{Key: "name", Label: l.Columns.Name, MinWidth: "9.375rem"},
+		{Key: "description", Label: l.Columns.Description, NoSort: true, MinWidth: "9.375rem"},
+		{Key: "color", Label: l.Columns.Color, NoSort: true, NoFilter: true, WidthClass: "col-2xl"},
+		{Key: "permissions", Label: l.Columns.Permissions, NoSort: true, NoFilter: true, WidthClass: "col-2xl", Align: "center"},
+		{Key: "status", Label: l.Columns.Status, NoSort: true, NoFilter: true, WidthClass: "col-2xl"},
+		{Key: "date_created", Label: l.Columns.DateCreated, WidthClass: "col-6xl"},
 	}
 }
 

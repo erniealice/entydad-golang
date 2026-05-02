@@ -217,11 +217,11 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, columns []types.T
 
 func userColumns(l entydad.UserLabels) []types.TableColumn {
 	return []types.TableColumn{
-		{Key: "first_name", Label: l.Columns.Name, Filterable: true, FilterType: types.FilterTypeString, MinWidth: "9.375rem"},
-		{Key: "email_address", Label: l.Columns.Email, Filterable: true, FilterType: types.FilterTypeString, MinWidth: "11.25rem"},
-		{Key: "workspaces", Label: l.Columns.Workspaces, NoSort: true, MinWidth: "7.5rem"},
-		{Key: "date_created", Label: l.Columns.DateCreated, Filterable: true, FilterType: types.FilterTypeDate, WidthClass: "col-6xl"},
-		{Key: "status", Label: l.Columns.Status, Filterable: false, WidthClass: "col-2xl"},
+		{Key: "first_name", Label: l.Columns.Name, MinWidth: "9.375rem"},
+		{Key: "email_address", Label: l.Columns.Email, MinWidth: "11.25rem"},
+		{Key: "workspaces", Label: l.Columns.Workspaces, NoSort: true, NoFilter: true, MinWidth: "7.5rem"},
+		{Key: "date_created", Label: l.Columns.DateCreated, WidthClass: "col-6xl"},
+		{Key: "status", Label: l.Columns.Status, NoFilter: true, WidthClass: "col-2xl"},
 	}
 }
 
