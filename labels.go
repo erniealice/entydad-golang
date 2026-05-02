@@ -65,26 +65,26 @@ type ClientEmptyLabels struct {
 }
 
 type ClientFormLabels struct {
-	Email                    string `json:"email"`
-	Phone                    string `json:"phone"`
-	Name                     string `json:"name"`
-	NamePlaceholder          string `json:"namePlaceholder"`
-	CompanyDetails           string `json:"companyDetails"`
-	Representative           string `json:"representative"`
-	StreetAddress            string `json:"streetAddress"`
-	StreetAddressPlaceholder string `json:"streetAddressPlaceholder"`
-	City                     string `json:"city"`
-	CityPlaceholder          string `json:"cityPlaceholder"`
-	Province                 string `json:"province"`
-	ProvincePlaceholder      string `json:"provincePlaceholder"`
-	PostalCode               string `json:"postalCode"`
-	PostalCodePlaceholder    string `json:"postalCodePlaceholder"`
-	Notes                    string `json:"notes"`
-	NotesPlaceholder         string `json:"notesPlaceholder"`
-	Tags                     string `json:"tags"`
-	TagsPlaceholder          string `json:"tagsPlaceholder"`
-	TagsSearchPlaceholder    string `json:"tagsSearchPlaceholder"`
-	TagsNoResults            string `json:"tagsNoResults"`
+	Email                      string `json:"email"`
+	Phone                      string `json:"phone"`
+	Name                       string `json:"name"`
+	NamePlaceholder            string `json:"namePlaceholder"`
+	CompanyDetails             string `json:"companyDetails"`
+	Representative             string `json:"representative"`
+	StreetAddress              string `json:"streetAddress"`
+	StreetAddressPlaceholder   string `json:"streetAddressPlaceholder"`
+	City                       string `json:"city"`
+	CityPlaceholder            string `json:"cityPlaceholder"`
+	Province                   string `json:"province"`
+	ProvincePlaceholder        string `json:"provincePlaceholder"`
+	PostalCode                 string `json:"postalCode"`
+	PostalCodePlaceholder      string `json:"postalCodePlaceholder"`
+	Notes                      string `json:"notes"`
+	NotesPlaceholder           string `json:"notesPlaceholder"`
+	Tags                       string `json:"tags"`
+	TagsPlaceholder            string `json:"tagsPlaceholder"`
+	TagsSearchPlaceholder      string `json:"tagsSearchPlaceholder"`
+	TagsNoResults              string `json:"tagsNoResults"`
 	Accounting                 string `json:"accounting"`
 	BillingCurrency            string `json:"billingCurrency"`
 	BillingCurrencyPlaceholder string `json:"billingCurrencyPlaceholder"`
@@ -505,13 +505,13 @@ type LocationDetailEmptyLabels struct {
 
 // LocationAreaLabels holds all translatable strings for the location area module.
 type LocationAreaLabels struct {
-	Page    LocationAreaPageLabels    `json:"page"`
-	Buttons LocationAreaButtonLabels  `json:"buttons"`
-	Columns LocationAreaColumnLabels  `json:"columns"`
-	Empty   LocationAreaEmptyLabels   `json:"empty"`
-	Form    LocationAreaFormLabels    `json:"form"`
-	Actions LocationAreaActionLabels  `json:"actions"`
-	Errors  LocationAreaErrorLabels   `json:"errors"`
+	Page    LocationAreaPageLabels   `json:"page"`
+	Buttons LocationAreaButtonLabels `json:"buttons"`
+	Columns LocationAreaColumnLabels `json:"columns"`
+	Empty   LocationAreaEmptyLabels  `json:"empty"`
+	Form    LocationAreaFormLabels   `json:"form"`
+	Actions LocationAreaActionLabels `json:"actions"`
+	Errors  LocationAreaErrorLabels  `json:"errors"`
 }
 
 type LocationAreaPageLabels struct {
@@ -989,20 +989,20 @@ type WorkspaceUserPageLabels struct {
 }
 
 type WorkspaceUserColumnLabels struct {
-	UserName  string `json:"userName"`
-	Email     string `json:"email"`
-	Roles     string `json:"roles"`
-	Status    string `json:"status"`
-	RoleName  string `json:"roleName"`
-	PermCount string `json:"permCount"`
+	UserName   string `json:"userName"`
+	Email      string `json:"email"`
+	Roles      string `json:"roles"`
+	Status     string `json:"status"`
+	RoleName   string `json:"roleName"`
+	PermCount  string `json:"permCount"`
 	DateJoined string `json:"dateJoined"`
 }
 
 // WorkspaceUserDetailLabels holds i18n strings for the workspace_user detail page (Phase 2).
 type WorkspaceUserDetailLabels struct {
-	BackToWorkspace string                          `json:"backToWorkspace"`
-	Tabs            WorkspaceUserDetailTabLabels    `json:"tabs"`
-	Roles           WorkspaceUserDetailRolesLabels  `json:"roles"`
+	BackToWorkspace string                         `json:"backToWorkspace"`
+	Tabs            WorkspaceUserDetailTabLabels   `json:"tabs"`
+	Roles           WorkspaceUserDetailRolesLabels `json:"roles"`
 }
 
 type WorkspaceUserDetailTabLabels struct {
@@ -1015,11 +1015,11 @@ type WorkspaceUserDetailRolesLabels struct {
 }
 
 type WorkspaceUserFormLabels struct {
-	User            string `json:"user"`
-	UserPlaceholder string `json:"userPlaceholder"`
+	User                  string `json:"user"`
+	UserPlaceholder       string `json:"userPlaceholder"`
 	UserSearchPlaceholder string `json:"userSearchPlaceholder"`
-	WorkspaceID     string `json:"workspaceId"`
-	Active          string `json:"active"`
+	WorkspaceID           string `json:"workspaceId"`
+	Active                string `json:"active"`
 }
 
 type WorkspaceUserActionLabels struct {
@@ -1036,8 +1036,8 @@ type WorkspaceUserActionLabels struct {
 // WorkspaceUserRoleLabels holds all translatable strings for the
 // workspace_user_role assignment drawer (Phase 3).
 type WorkspaceUserRoleLabels struct {
-	Form    WorkspaceUserRoleFormLabels    `json:"form"`
-	Buttons WorkspaceUserRoleButtonLabels  `json:"buttons"`
+	Form    WorkspaceUserRoleFormLabels   `json:"form"`
+	Buttons WorkspaceUserRoleButtonLabels `json:"buttons"`
 }
 
 // WorkspaceUserRoleFormLabels holds field labels for the assign-form drawer.
@@ -1721,29 +1721,29 @@ type RoleBadge struct {
 // MapTableLabels maps common labels into the flat types.TableLabels structure.
 func MapTableLabels(common pyeza.CommonLabels) types.TableLabels {
 	return types.TableLabels{
-		Search:             common.Table.Search,
-		SearchPlaceholder:  common.Table.SearchPlaceholder,
-		Filters:            common.Table.Filters,
-		FilterConditions:   common.Table.FilterConditions,
-		ClearAll:           common.Table.ClearAll,
-		AddCondition:       common.Table.AddCondition,
-		Clear:              common.Table.Clear,
-		ApplyFilters:       common.Table.ApplyFilters,
-		Sort:               common.Table.Sort,
-		Columns:            common.Table.Columns,
-		Export:             common.Table.Export,
-		DensityLabel:       common.Table.Density.Title,
-		DensityDense:       common.Table.Density.Dense,
-		DensityDefault:     common.Table.Density.Default,
-		DensityComfortable: common.Table.Density.Comfortable,
-		DensityCompact:     common.Table.Density.Compact,
-		EntriesPerPage:     common.Table.EntriesLabel,
-		Show:               common.Table.Show,
-		Entries:            common.Table.Entries,
-		Showing:            common.Table.Showing,
-		To:                 common.Table.To,
-		Of:                 common.Table.Of,
-		EntriesLabel:       common.Table.EntriesLabel,
+		Search:                   common.Table.Search,
+		SearchPlaceholder:        common.Table.SearchPlaceholder,
+		Filters:                  common.Table.Filters,
+		FilterConditions:         common.Table.FilterConditions,
+		ClearAll:                 common.Table.ClearAll,
+		AddCondition:             common.Table.AddCondition,
+		Clear:                    common.Table.Clear,
+		ApplyFilters:             common.Table.ApplyFilters,
+		Sort:                     common.Table.Sort,
+		Columns:                  common.Table.Columns,
+		Export:                   common.Table.Export,
+		DensityLabel:             common.Table.Density.Title,
+		DensityDense:             common.Table.Density.Dense,
+		DensityDefault:           common.Table.Density.Default,
+		DensityComfortable:       common.Table.Density.Comfortable,
+		DensityCompact:           common.Table.Density.Compact,
+		EntriesPerPage:           common.Table.EntriesLabel,
+		Show:                     common.Table.Show,
+		Entries:                  common.Table.Entries,
+		Showing:                  common.Table.Showing,
+		To:                       common.Table.To,
+		Of:                       common.Table.Of,
+		EntriesLabel:             common.Table.EntriesLabel,
 		SelectAll:                common.Table.SelectAll,
 		BulkSelectAllPage:        common.Table.BulkSelectAllPage,
 		BulkSelectAllAcrossPages: common.Table.BulkSelectAllAcrossPages,
@@ -1757,6 +1757,34 @@ func MapTableLabels(common pyeza.CommonLabels) types.TableLabels {
 		SortDescDate:             common.Table.SortDescDate,
 		SortAscEnum:              common.Table.SortAscEnum,
 		SortDescEnum:             common.Table.SortDescEnum,
+		FilterOpContains:         common.Table.FilterOpContains,
+		FilterOpEquals:           common.Table.FilterOpEquals,
+		FilterOpStartsWith:       common.Table.FilterOpStartsWith,
+		FilterOpEndsWith:         common.Table.FilterOpEndsWith,
+		FilterOpNotEquals:        common.Table.FilterOpNotEquals,
+		FilterOpBetween:          common.Table.FilterOpBetween,
+		FilterOpEq:               common.Table.FilterOpEq,
+		FilterOpNeq:              common.Table.FilterOpNeq,
+		FilterOpGt:               common.Table.FilterOpGt,
+		FilterOpGte:              common.Table.FilterOpGte,
+		FilterOpLt:               common.Table.FilterOpLt,
+		FilterOpLte:              common.Table.FilterOpLte,
+		FilterOpOn:               common.Table.FilterOpOn,
+		FilterOpBefore:           common.Table.FilterOpBefore,
+		FilterOpAfter:            common.Table.FilterOpAfter,
+		FilterOpIn:               common.Table.FilterOpIn,
+		FilterOpNotIn:            common.Table.FilterOpNotIn,
+		FilterPresetToday:        common.Table.FilterPresetToday,
+		FilterPreset7d:           common.Table.FilterPreset7d,
+		FilterPreset30d:          common.Table.FilterPreset30d,
+		FilterPresetMonth:        common.Table.FilterPresetMonth,
+		FilterPresetCustom:       common.Table.FilterPresetCustom,
+		FilterAny:                common.Table.FilterAny,
+		FilterYes:                common.Table.FilterYes,
+		FilterNo:                 common.Table.FilterNo,
+		FilterSearchPlaceholder:  common.Table.FilterSearchPlaceholder,
+		FilterMinPlaceholder:     common.Table.FilterMinPlaceholder,
+		FilterMaxPlaceholder:     common.Table.FilterMaxPlaceholder,
 		Actions:                  common.Table.Actions,
 		Prev:                     common.Pagination.Prev,
 		Next:                     common.Pagination.Next,
