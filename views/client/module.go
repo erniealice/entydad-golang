@@ -13,6 +13,7 @@ import (
 	clientaction "github.com/erniealice/entydad-golang/views/client/action"
 	clientdashboard "github.com/erniealice/entydad-golang/views/client/dashboard"
 	clientdetail "github.com/erniealice/entydad-golang/views/client/detail"
+	clientform "github.com/erniealice/entydad-golang/views/client/form"
 	clientlist "github.com/erniealice/entydad-golang/views/client/list"
 	categorypb   "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
@@ -24,8 +25,8 @@ import (
 	"github.com/erniealice/hybra-golang/views/auditlog"
 )
 
-// PaymentTermOption is re-exported from action for use by callers wiring ModuleDeps.
-type PaymentTermOption = clientaction.PaymentTermOption
+// PaymentTermOption is re-exported from form for use by callers wiring ModuleDeps.
+type PaymentTermOption = clientform.PaymentTermOption
 
 // ModuleDeps holds all dependencies for the client module.
 type ModuleDeps struct {
@@ -50,7 +51,7 @@ type ModuleDeps struct {
 	DeleteClient func(ctx context.Context, req *clientpb.DeleteClientRequest) (*clientpb.DeleteClientResponse, error)
 	SetStatus    func(ctx context.Context, id string, status string) error
 	// Payment terms dropdown
-	ListPaymentTerms func(ctx context.Context) ([]*clientaction.PaymentTermOption, error)
+	ListPaymentTerms func(ctx context.Context) ([]*clientform.PaymentTermOption, error)
 	// Categories (client tags)
 	ListCategories       func(ctx context.Context, req *categorypb.ListCategoriesRequest) (*categorypb.ListCategoriesResponse, error)
 	ListClientCategories func(ctx context.Context, req *clientcategorypb.ListClientCategoriesRequest) (*clientcategorypb.ListClientCategoriesResponse, error)

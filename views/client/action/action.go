@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/erniealice/pyeza-golang/route"
-	pyeza "github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
 
 	categorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
@@ -16,128 +15,12 @@ import (
 	userpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/user"
 
 	"github.com/erniealice/entydad-golang"
+	clientform "github.com/erniealice/entydad-golang/views/client/form"
 )
 
-// FormLabels holds i18n labels for the drawer form template.
-type FormLabels struct {
-	Name                     string
-	NamePlaceholder          string
-	CompanyDetails           string
-	Representative           string
-	FirstName                string
-	FirstNamePlaceholder     string
-	LastName                 string
-	LastNamePlaceholder      string
-	Email                    string
-	EmailPlaceholder         string
-	Mobile                   string
-	MobilePlaceholder        string
-	Active                   string
-	StreetAddress            string
-	StreetAddressPlaceholder string
-	City                     string
-	CityPlaceholder          string
-	Province                 string
-	ProvincePlaceholder      string
-	PostalCode               string
-	PostalCodePlaceholder    string
-	Notes                    string
-	NotesPlaceholder         string
-	PaymentTerms             string
-	SelectPaymentTerm        string
-	Tags                     string
-	TagsPlaceholder          string
-	TagsSearchPlaceholder    string
-	TagsNoResults            string
-	Accounting                 string
-	BillingCurrency            string
-	BillingCurrencyPlaceholder string
-	BillingCurrencyInfo        string
-	Timezone                  string
-	TimezonePlaceholder       string
-	TimezoneSearchPlaceholder string
-	TimezoneNoResults         string
-	TimezoneInfo              string
-
-	// Field-level info text surfaced via an info button beside each label.
-	NameInfo          string
-	EmailInfo         string
-	MobileInfo        string
-	NotesInfo         string
-	PaymentTermsInfo  string
-	TagsInfo          string
-	ActiveInfo        string
-
-	// New section + field labels
-	Status                string
-	StatusPlaceholder     string
-	StatusActive          string
-	StatusBlocked         string
-	StatusOnHold          string
-	StatusInactive        string
-	StatusProspect        string
-	Country               string
-	CountryPlaceholder    string
-	Website               string
-	WebsitePlaceholder    string
-	SectionCompany        string
-	SectionAddress        string
-	SectionRepresentative string
-	SectionAccounting     string
-	SectionOthers         string
-}
-
-// PaymentTermOption is a minimal struct for rendering payment term options in the form.
-type PaymentTermOption struct {
-	Id   string
-	Name string
-}
-
-// TagOption represents a tag available for selection in the form.
-// Fields named Value/Label to match the pyeza multi-select component template.
-type TagOption struct {
-	Value    string
-	Label    string
-	Selected bool
-}
-
-// SelectedTag represents a pre-selected tag for chip rendering in the multi-select.
-type SelectedTag struct {
-	Value string
-	Label string
-}
-
-// FormData is the template data for the client drawer form.
-type FormData struct {
-	FormAction               string
-	IsEdit                   bool
-	ID                       string
-	Mode                     string
-	Name                     string
-	FirstName                string
-	LastName                 string
-	Email                    string
-	Mobile                   string
-	Timezone                 string
-	Active                   bool
-	Status                   string
-	Country                  string
-	Website                  string
-	StreetAddress            string
-	City                     string
-	Province                 string
-	PostalCode               string
-	Notes                    string
-	BillingCurrency          string
-	SearchTimezonesURL       string
-	PaymentTerms             []*PaymentTermOption
-	SelectedPaymentTermID    string
-	PaymentTermSelectOptions []pyeza.SelectOption
-	TagOptions               []TagOption
-	SelectedTags             []SelectedTag
-	Labels                   FormLabels
-	CommonLabels             any
-}
+// PaymentTermOption is a type alias so callers wired through module.go
+// retain the same surface: form.PaymentTermOption is the source of truth.
+type PaymentTermOption = clientform.PaymentTermOption
 
 // Deps holds dependencies for client action handlers.
 type Deps struct {
@@ -164,88 +47,8 @@ type Deps struct {
 	GetFunctionalCurrency func(ctx context.Context) string
 }
 
-func formLabels(t func(string) string) FormLabels {
-	return FormLabels{
-		Name:                     t("client.form.name"),
-		NamePlaceholder:          t("client.form.namePlaceholder"),
-		CompanyDetails:           t("client.form.companyDetails"),
-		Representative:           t("client.form.representative"),
-		FirstName:                t("client.form.firstName"),
-		FirstNamePlaceholder:     t("client.form.firstNamePlaceholder"),
-		LastName:                 t("client.form.lastName"),
-		LastNamePlaceholder:      t("client.form.lastNamePlaceholder"),
-		Email:                    t("client.form.email"),
-		EmailPlaceholder:         t("client.form.emailPlaceholder"),
-		Mobile:                   t("client.form.phone"),
-		MobilePlaceholder:        t("client.form.phonePlaceholder"),
-		Active:                   t("client.form.active"),
-		StreetAddress:            t("client.form.streetAddress"),
-		StreetAddressPlaceholder: t("client.form.streetAddressPlaceholder"),
-		City:                     t("client.form.city"),
-		CityPlaceholder:          t("client.form.cityPlaceholder"),
-		Province:                 t("client.form.province"),
-		ProvincePlaceholder:      t("client.form.provincePlaceholder"),
-		PostalCode:               t("client.form.postalCode"),
-		PostalCodePlaceholder:    t("client.form.postalCodePlaceholder"),
-		Notes:                    t("client.form.notes"),
-		NotesPlaceholder:         t("client.form.notesPlaceholder"),
-		PaymentTerms:             t("client.form.paymentTerms"),
-		SelectPaymentTerm:        t("client.form.selectPaymentTerm"),
-		Tags:                     t("client.form.tags"),
-		TagsPlaceholder:          t("client.form.tagsPlaceholder"),
-		TagsSearchPlaceholder:    t("client.form.tagsSearchPlaceholder"),
-		TagsNoResults:            t("client.form.tagsNoResults"),
-		NameInfo:                   t("client.form.nameInfo"),
-		EmailInfo:                  t("client.form.emailInfo"),
-		MobileInfo:                 t("client.form.mobileInfo"),
-		NotesInfo:                  t("client.form.notesInfo"),
-		PaymentTermsInfo:           t("client.form.paymentTermsInfo"),
-		TagsInfo:                   t("client.form.tagsInfo"),
-		ActiveInfo:                 t("client.form.activeInfo"),
-		Accounting:                 t("client.form.accounting"),
-		BillingCurrency:            t("client.form.billingCurrency"),
-		BillingCurrencyPlaceholder: t("client.form.billingCurrencyPlaceholder"),
-		BillingCurrencyInfo:        t("client.form.billingCurrencyInfo"),
-		Timezone:                  t("client.form.timezone"),
-		TimezonePlaceholder:       t("client.form.timezonePlaceholder"),
-		TimezoneSearchPlaceholder: t("client.form.timezoneSearchPlaceholder"),
-		TimezoneNoResults:         t("client.form.timezoneNoResults"),
-		TimezoneInfo:              t("client.form.timezoneInfo"),
-		Status:                t("client.form.status"),
-		StatusPlaceholder:     t("client.form.statusPlaceholder"),
-		StatusActive:          t("client.form.statusActive"),
-		StatusBlocked:         t("client.form.statusBlocked"),
-		StatusOnHold:          t("client.form.statusOnHold"),
-		StatusInactive:        t("client.form.statusInactive"),
-		StatusProspect:        t("client.form.statusProspect"),
-		Country:               t("client.form.country"),
-		CountryPlaceholder:    t("client.form.countryPlaceholder"),
-		Website:               t("client.form.website"),
-		WebsitePlaceholder:    t("client.form.websitePlaceholder"),
-		SectionCompany:        t("client.form.sectionCompany"),
-		SectionAddress:        t("client.form.sectionAddress"),
-		SectionRepresentative: t("client.form.sectionRepresentative"),
-		SectionAccounting:     t("client.form.sectionAccounting"),
-		SectionOthers:         t("client.form.sectionOthers"),
-	}
-}
-
-// buildPaymentTermSelectOptions converts a slice of PaymentTermOption into the SelectOption
-// format expected by the pyeza form-group select component.
-func buildPaymentTermSelectOptions(terms []*PaymentTermOption, selectedID string) []pyeza.SelectOption {
-	opts := make([]pyeza.SelectOption, 0, len(terms))
-	for _, t := range terms {
-		opts = append(opts, pyeza.SelectOption{
-			Value:    t.Id,
-			Label:    t.Name,
-			Selected: t.Id == selectedID,
-		})
-	}
-	return opts
-}
-
 // loadPaymentTerms fetches the payment term options. Returns nil slice on error (graceful degradation).
-func loadPaymentTerms(ctx context.Context, deps *Deps) []*PaymentTermOption {
+func loadPaymentTerms(ctx context.Context, deps *Deps) []*clientform.PaymentTermOption {
 	if deps.ListPaymentTerms == nil {
 		return nil
 	}
@@ -259,7 +62,7 @@ func loadPaymentTerms(ctx context.Context, deps *Deps) []*PaymentTermOption {
 
 // loadTagData returns available tag options and the pre-selected tags for the form.
 // If clientID is provided, marks tags that are currently assigned and populates selected.
-func loadTagData(ctx context.Context, deps *Deps, clientID string) ([]TagOption, []SelectedTag) {
+func loadTagData(ctx context.Context, deps *Deps, clientID string) ([]clientform.TagOption, []clientform.SelectedTag) {
 	if deps.ListCategories == nil {
 		return nil, nil
 	}
@@ -285,20 +88,20 @@ func loadTagData(ctx context.Context, deps *Deps, clientID string) ([]TagOption,
 		}
 	}
 
-	var options []TagOption
-	var selected []SelectedTag
+	var options []clientform.TagOption
+	var selected []clientform.SelectedTag
 	for _, cat := range catResp.GetData() {
 		if cat.GetModule() != "client" || !cat.GetActive() {
 			continue
 		}
 		isAssigned := assigned[cat.GetId()]
-		options = append(options, TagOption{
+		options = append(options, clientform.TagOption{
 			Value:    cat.GetId(),
 			Label:    cat.GetName(),
 			Selected: isAssigned,
 		})
 		if isAssigned {
-			selected = append(selected, SelectedTag{
+			selected = append(selected, clientform.SelectedTag{
 				Value: cat.GetId(),
 				Label: cat.GetName(),
 			})
@@ -403,7 +206,7 @@ func NewAddAction(deps *Deps) view.View {
 			mode := viewCtx.Request.URL.Query().Get("mode")
 			tagOptions, _ := loadTagData(ctx, deps, "")
 			paymentTerms := loadPaymentTerms(ctx, deps)
-			return view.OK("client-drawer-form", &FormData{
+			return view.OK("client-drawer-form", &clientform.Data{
 				FormAction:               deps.Routes.AddURL,
 				Active:                   true,
 				Status:                   "active",
@@ -416,9 +219,9 @@ func NewAddAction(deps *Deps) view.View {
 			}(),
 				SearchTimezonesURL:       deps.SearchTimezonesURL,
 				PaymentTerms:             paymentTerms,
-				PaymentTermSelectOptions: buildPaymentTermSelectOptions(paymentTerms, ""),
+				PaymentTermSelectOptions: clientform.BuildPaymentTermSelectOptions(paymentTerms, ""),
 				TagOptions:               tagOptions,
-				Labels:                   formLabels(viewCtx.T),
+				Labels:                   clientform.BuildLabels(viewCtx.T),
 				CommonLabels:             nil, // injected by ViewAdapter
 			})
 		}
@@ -522,7 +325,7 @@ func NewEditAction(deps *Deps) view.View {
 				formID = ""
 			}
 
-			return view.OK("client-drawer-form", &FormData{
+			return view.OK("client-drawer-form", &clientform.Data{
 				FormAction:               formAction,
 				IsEdit:                   !isClone,
 				ID:                       formID,
@@ -546,10 +349,10 @@ func NewEditAction(deps *Deps) view.View {
 				SearchTimezonesURL:       deps.SearchTimezonesURL,
 				PaymentTerms:             paymentTerms,
 				SelectedPaymentTermID:    selectedPaymentTermID,
-				PaymentTermSelectOptions: buildPaymentTermSelectOptions(paymentTerms, selectedPaymentTermID),
+				PaymentTermSelectOptions: clientform.BuildPaymentTermSelectOptions(paymentTerms, selectedPaymentTermID),
 				TagOptions:               tagOptions,
 				SelectedTags:             selectedTags,
-				Labels:                   formLabels(viewCtx.T),
+				Labels:                   clientform.BuildLabels(viewCtx.T),
 				CommonLabels:             nil, // injected by ViewAdapter
 			})
 		}

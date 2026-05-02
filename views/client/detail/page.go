@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/url"
-	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/erniealice/hybra-golang/views/attachment"
@@ -73,24 +71,6 @@ type TagChip struct {
 	Name string
 }
 
-// PurchaseStats holds aggregated purchase statistics for a client.
-type PurchaseStats struct {
-	LifetimeSpend types.TableCell
-	TotalOrders   int
-	AvgOrderValue types.TableCell
-	LastPurchase  string
-}
-
-// OrderRow represents a single order in the purchase history table.
-type OrderRow struct {
-	ID        string
-	Reference string
-	Date      string
-	Amount    string
-	Status    string
-	Variant   string
-}
-
 // SubscriptionRow represents a single subscription in the subscriptions tab.
 type SubscriptionRow struct {
 	ID        string
@@ -132,10 +112,6 @@ type PageData struct {
 	HasAddress bool
 	HasNotes   bool
 	HasTags    bool
-	// Purchase history
-	PurchaseStats PurchaseStats
-	Orders        []OrderRow
-	HasOrders     bool
 	// Subscriptions tab
 	Subscriptions      []SubscriptionRow
 	SubscriptionsTable *types.TableConfig
@@ -230,10 +206,6 @@ func NewView(deps *DetailViewDeps) view.View {
 		tags := loadClientTags(ctx, deps, id)
 		hasTags := len(tags) > 0
 
-		// Load purchase history
-		stats, orders := loadPurchaseHistory(ctx, deps, id)
-		hasOrders := len(orders) > 0
-
 		pageData := &PageData{
 			PageData: types.PageData{
 				CacheVersion:   viewCtx.CacheVersion,
@@ -272,9 +244,6 @@ func NewView(deps *DetailViewDeps) view.View {
 			HasAddress:         hasAddress,
 			HasNotes:           hasNotes,
 			HasTags:            hasTags,
-			PurchaseStats:      stats,
-			Orders:             orders,
-			HasOrders:          hasOrders,
 			BillingCurrency:    client.GetBillingCurrency(),
 		}
 
@@ -352,8 +321,6 @@ func buildTabItems(id string, deps *DetailViewDeps, subscriptionCount int) []pye
 		{Key: "representative", Label: deps.Labels.Detail.Tabs.Representative, Href: base + "?tab=representative", HxGet: action + "representative", Icon: "icon-user"},
 		{Key: "subscriptions", Label: deps.Labels.Detail.Tabs.Subscriptions, Href: base + "?tab=" + subscriptionsSlug, HxGet: action + subscriptionsSlug, Icon: "icon-file-text", Count: subscriptionCount},
 		{Key: "packages", Label: deps.Labels.Detail.Tabs.Packages, Href: base + "?tab=packages", HxGet: action + "packages", Icon: "icon-package"},
-		{Key: "accounting", Label: deps.Labels.Detail.Tabs.Accounting, Href: base + "?tab=accounting", HxGet: action + "accounting", Icon: "icon-credit-card"},
-		{Key: "history", Label: deps.Labels.Detail.Tabs.History, Href: base + "?tab=history", HxGet: action + "history", Icon: "icon-shopping-bag"},
 		{Key: "statement", Label: deps.Labels.Detail.Tabs.Statement, Href: base + "?tab=statement", HxGet: action + "statement", Icon: "icon-file-text"},
 		{Key: "attachments", Label: deps.Labels.Detail.Tabs.Attachments, Href: base + "?tab=attachments", HxGet: action + "attachments", Icon: "icon-paperclip"},
 		{Key: "audit-history", Label: deps.Labels.Detail.Tabs.AuditHistory, Href: base + "?tab=audit-history", HxGet: action + "audit-history", Icon: "icon-clock"},
@@ -440,16 +407,11 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 			pageData.HasTags = len(pageData.Tags) > 0
 		case "representative":
 			// user fields already on client via GetUser()
-		case "accounting":
-			pageData.BillingCurrency = client.GetBillingCurrency()
 		case "subscriptions":
 			pageData.Subscriptions = loadClientSubscriptions(ctx, deps, id)
 			pageData.SubscriptionsTable = buildSubscriptionsTable(pageData.Subscriptions, pageData.SubscriptionAddURL, id, clientName, deps)
 		case "packages":
 			pageData.PackagesTable = buildPackagesTable(ctx, deps, id, clientName)
-		case "history":
-			pageData.PurchaseStats, pageData.Orders = loadPurchaseHistory(ctx, deps, id)
-			pageData.HasOrders = len(pageData.Orders) > 0
 		case "statement":
 			if deps.GetClientStatement != nil {
 				req := &clientstmtpb.ClientStatementRequest{
@@ -753,107 +715,6 @@ func loadClientTags(ctx context.Context, deps *DetailViewDeps, clientID string) 
 		}
 	}
 	return chips
-}
-
-// loadPurchaseHistory fetches revenue records for a client, calculates stats,
-// and returns sorted order rows (most recent first).
-func loadPurchaseHistory(ctx context.Context, deps *DetailViewDeps, clientID string) (PurchaseStats, []OrderRow) {
-	empty := PurchaseStats{
-		LifetimeSpend: types.MoneyCell(0, "PHP", false),
-		AvgOrderValue: types.MoneyCell(0, "PHP", false),
-		LastPurchase:  "N/A",
-	}
-
-	if deps.ListRevenues == nil {
-		return empty, nil
-	}
-
-	records, err := deps.ListRevenues(ctx, "revenue")
-	if err != nil {
-		log.Printf("Failed to load revenues for client %s: %v", clientID, err)
-		return empty, nil
-	}
-
-	// Filter revenue records for this client
-	var orders []OrderRow
-	var totalSpend float64
-	var lastPurchase string
-
-	for _, r := range records {
-		cid, _ := r["client_id"].(string)
-		if cid != clientID {
-			continue
-		}
-
-		id, _ := r["id"].(string)
-		ref, _ := r["reference_number"].(string)
-		date, _ := r["revenue_date_string"].(string)
-		status, _ := r["status"].(string)
-		currency, _ := r["currency"].(string)
-		if currency == "" {
-			currency = "PHP"
-		}
-
-		// Parse amount — can be string or float64 from DB
-		var amount float64
-		switch v := r["total_amount"].(type) {
-		case float64:
-			amount = v
-		case string:
-			amount, _ = strconv.ParseFloat(v, 64)
-		}
-
-		totalSpend += amount
-		amountStr := fmt.Sprintf("%s %.2f", currency, amount)
-
-		variant := "default"
-		switch status {
-		case "active":
-			variant = "info"
-		case "completed":
-			variant = "success"
-		case "cancelled":
-			variant = "warning"
-		}
-
-		orders = append(orders, OrderRow{
-			ID:        id,
-			Reference: ref,
-			Date:      date,
-			Amount:    amountStr,
-			Status:    status,
-			Variant:   variant,
-		})
-
-		// Track most recent purchase date
-		if date > lastPurchase {
-			lastPurchase = date
-		}
-	}
-
-	// Sort orders by date descending (most recent first)
-	sort.Slice(orders, func(i, j int) bool {
-		return orders[i].Date > orders[j].Date
-	})
-
-	totalOrders := len(orders)
-	avgOrder := 0.0
-	if totalOrders > 0 {
-		avgOrder = totalSpend / float64(totalOrders)
-	}
-
-	if lastPurchase == "" {
-		lastPurchase = "N/A"
-	}
-
-	stats := PurchaseStats{
-		LifetimeSpend: types.MoneyCell(totalSpend, "PHP", false),
-		TotalOrders:   totalOrders,
-		AvgOrderValue: types.MoneyCell(avgOrder, "PHP", false),
-		LastPurchase:  lastPurchase,
-	}
-
-	return stats, orders
 }
 
 // capitalizeType capitalizes the first letter of a type string.

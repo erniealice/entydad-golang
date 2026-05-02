@@ -13,6 +13,7 @@ import (
 	supplieraction "github.com/erniealice/entydad-golang/views/supplier/action"
 	supplierdashboard "github.com/erniealice/entydad-golang/views/supplier/dashboard"
 	supplierdetail "github.com/erniealice/entydad-golang/views/supplier/detail"
+	supplierform "github.com/erniealice/entydad-golang/views/supplier/form"
 	supplierlist "github.com/erniealice/entydad-golang/views/supplier/list"
 	categorypb      "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
 	attachmentpb    "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
@@ -24,8 +25,8 @@ import (
 	"github.com/erniealice/hybra-golang/views/auditlog"
 )
 
-// PaymentTermOption is re-exported from action for use by callers wiring ModuleDeps.
-type PaymentTermOption = supplieraction.PaymentTermOption
+// PaymentTermOption is re-exported from form for use by callers wiring ModuleDeps.
+type PaymentTermOption = supplierform.PaymentTermOption
 
 // ModuleDeps holds all dependencies for the supplier module.
 type ModuleDeps struct {

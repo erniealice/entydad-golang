@@ -19,10 +19,6 @@
         {{template "client-tab-representative" .}}
         {{else if eq .ActiveTab "subscriptions"}}
         {{template "client-tab-subscriptions" .}}
-        {{else if eq .ActiveTab "accounting"}}
-        {{template "client-tab-accounting" .}}
-        {{else if eq .ActiveTab "history"}}
-        {{template "client-tab-history" .}}
         {{else if eq .ActiveTab "statement"}}
         {{template "client-tab-statement" .}}
         {{else if eq .ActiveTab "packages"}}
@@ -170,32 +166,6 @@
 </div>
 {{end}}
 
-{{/* Accounting Tab */}}
-{{define "client-tab-accounting"}}
-<div class="tab-scroll">
-    <h2 class="visually-hidden">{{.Labels.Detail.Tabs.Accounting}}</h2>
-    <h4 class="detail-section-title">{{.Labels.Detail.Tabs.Accounting}}</h4>
-    <div class="detail-info-grid">
-        <div class="detail-info-item">
-            <span class="detail-info-label">{{.Labels.Form.BillingCurrency}}</span>
-            <span class="detail-info-value">{{if .BillingCurrency}}{{.BillingCurrency}}{{else}}&mdash;{{end}}</span>
-        </div>
-    </div>
-
-</div>
-{{/* --- Edit Button (outside .tab-scroll so it's never clipped) --- */}}
-<div class="detail-tab-actions detail-tab-actions--bottom">
-    <button class="btn btn-sm btn-outline"
-            data-testid="tab-accounting-edit-btn"
-            hx-get="{{.EditURL}}?mode=accounting"
-            hx-target="#sheetContent"
-            hx-swap="innerHTML"
-            onclick="lf.Sheet.open()">
-        <span class="icon icon-edit"></span> {{.CommonLabels.Buttons.Edit}}
-    </button>
-</div>
-{{end}}
-
 {{/* Statement Tab */}}
 {{define "client-tab-statement"}}
 <div class="tab-scroll tab-scroll--table">
@@ -231,59 +201,3 @@
 </div>
 {{end}}
 
-{{/* Purchase History Tab */}}
-{{define "client-tab-history"}}
-<div class="tab-scroll">
-    {{if .HasOrders}}
-    {{/* --- Stat Cards --- */}}
-    <div class="purchase-stats-row">
-        <div class="purchase-stat-card" data-testid="stat-lifetime-spend">
-            <span class="stat-label">{{.Labels.Detail.PurchaseHistory.LifetimeSpend}}</span>
-            <span class="stat-value">{{template "table-cell-money" .PurchaseStats.LifetimeSpend}}</span>
-        </div>
-        <div class="purchase-stat-card" data-testid="stat-total-orders">
-            <span class="stat-label">{{.Labels.Detail.PurchaseHistory.TotalOrders}}</span>
-            <span class="stat-value">{{.PurchaseStats.TotalOrders}}</span>
-        </div>
-        <div class="purchase-stat-card" data-testid="stat-avg-order">
-            <span class="stat-label">{{.Labels.Detail.PurchaseHistory.AvgOrderValue}}</span>
-            <span class="stat-value">{{template "table-cell-money" .PurchaseStats.AvgOrderValue}}</span>
-        </div>
-        <div class="purchase-stat-card" data-testid="stat-last-order">
-            <span class="stat-label">{{.Labels.Detail.PurchaseHistory.LastPurchase}}</span>
-            <span class="stat-value">{{.PurchaseStats.LastPurchase}}</span>
-        </div>
-    </div>
-
-    {{/* --- Orders Table --- */}}
-    <h4 class="detail-section-title detail-section-title--spaced">{{.Labels.Detail.RecentOrders}}</h4>
-    <div class="purchase-orders-table">
-        <table id="purchase-history-table">
-            <thead>
-                <tr>
-                    <th>{{.Labels.Detail.ColDate}}</th>
-                    <th>{{.Labels.Detail.ColReference}}</th>
-                    <th>{{.Labels.Detail.ColAmount}}</th>
-                    <th>{{.Labels.Detail.ColStatus}}</th>
-                </tr>
-            </thead>
-            <tbody>
-                {{range .Orders}}
-                <tr>
-                    <td>{{.Date}}</td>
-                    <td>{{.Reference}}</td>
-                    <td>{{.Amount}}</td>
-                    <td><span class="badge badge--{{.Variant}}">{{.Status}}</span></td>
-                </tr>
-                {{end}}
-            </tbody>
-        </table>
-    </div>
-    {{else}}
-    <div class="coming-soon-panel">
-        <div class="coming-soon-title">{{.Labels.Detail.PurchaseHistory.Empty}}</div>
-        <p class="coming-soon-text">{{.Labels.Detail.PurchaseHistoryEmpty}}</p>
-    </div>
-    {{end}}
-</div>
-{{end}}
