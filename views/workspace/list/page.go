@@ -54,7 +54,7 @@ func NewView(deps *ListViewDeps) view.View {
 		}
 
 		columns := workspaceColumns(deps.Labels)
-		p, err := espynahttp.ParseTableParams(viewCtx.Request, types.SortableKeys(columns), "name", "asc")
+		p, err := espynahttp.ParseTableParamsWithFilters(viewCtx.Request, types.SortableKeys(columns), types.FilterableKeys(columns), "name", "asc")
 		if err != nil {
 			return view.Error(err)
 		}
@@ -108,7 +108,7 @@ func NewTableView(deps *ListViewDeps) view.View {
 		}
 
 		columns := workspaceColumns(deps.Labels)
-		p, err := espynahttp.ParseTableParams(viewCtx.Request, types.SortableKeys(columns), "name", "asc")
+		p, err := espynahttp.ParseTableParamsWithFilters(viewCtx.Request, types.SortableKeys(columns), types.FilterableKeys(columns), "name", "asc")
 		if err != nil {
 			return view.Error(err)
 		}
@@ -200,7 +200,7 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, columns []types.T
 		},
 		// PrimaryAction is handled directly in workspace-list-content template
 		// via the disabled-CTA pattern with conditional if/else rendering
-		PrimaryAction: nil,
+		PrimaryAction:    nil,
 		BulkActions:      &bulkCfg,
 		ServerPagination: sp,
 	}

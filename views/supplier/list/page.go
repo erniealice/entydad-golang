@@ -51,7 +51,7 @@ func NewView(deps *ListViewDeps) view.View {
 		}
 
 		columns := supplierColumns(deps.Labels)
-		p, err := espynahttp.ParseTableParams(viewCtx.Request, types.SortableKeys(columns), "name", "asc")
+		p, err := espynahttp.ParseTableParamsWithFilters(viewCtx.Request, types.SortableKeys(columns), types.FilterableKeys(columns), "name", "asc")
 		if err != nil {
 			return view.Error(err)
 		}
@@ -107,7 +107,7 @@ func NewTableView(deps *ListViewDeps) view.View {
 		}
 
 		columns := supplierColumns(deps.Labels)
-		p, err := espynahttp.ParseTableParams(viewCtx.Request, types.SortableKeys(columns), "name", "asc")
+		p, err := espynahttp.ParseTableParamsWithFilters(viewCtx.Request, types.SortableKeys(columns), types.FilterableKeys(columns), "name", "asc")
 		if err != nil {
 			return view.Error(err)
 		}
@@ -310,9 +310,9 @@ func buildTableRows(suppliers []*supplierpb.Supplier, status string, l entydad.S
 				types.DateTimeCell(dateCreated, types.DateReadable),
 			},
 			DataAttrs: map[string]string{
-				"name": name,
-				"status":       recordStatus,
-				"deletable":    strconv.FormatBool(!isInUse),
+				"name":      name,
+				"status":    recordStatus,
+				"deletable": strconv.FormatBool(!isInUse),
 			},
 			// Row actions key off the page's list filter (not per-row
 			// recordStatus) so transitions stay correct even when rows have

@@ -52,7 +52,7 @@ func NewView(deps *ListViewDeps) view.View {
 		}
 
 		columns := clientColumns(deps.Labels)
-		p, err := espynahttp.ParseTableParams(viewCtx.Request, types.SortableKeys(columns), "name", "asc")
+		p, err := espynahttp.ParseTableParamsWithFilters(viewCtx.Request, types.SortableKeys(columns), types.FilterableKeys(columns), "name", "asc")
 		if err != nil {
 			return view.Error(err)
 		}
@@ -108,7 +108,7 @@ func NewTableView(deps *ListViewDeps) view.View {
 		}
 
 		columns := clientColumns(deps.Labels)
-		p, err := espynahttp.ParseTableParams(viewCtx.Request, types.SortableKeys(columns), "name", "asc")
+		p, err := espynahttp.ParseTableParamsWithFilters(viewCtx.Request, types.SortableKeys(columns), types.FilterableKeys(columns), "name", "asc")
 		if err != nil {
 			return view.Error(err)
 		}
