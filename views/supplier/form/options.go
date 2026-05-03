@@ -24,6 +24,7 @@ func BuildCurrencyOptions(selected string, currencyOptions []pyeza.SelectOption)
 
 // BuildPaymentTermSelectOptions converts a slice of PaymentTermOption into the
 // SelectOption format expected by the pyeza form-group select component.
+// Mirrors the client/form/options.go helper of the same name.
 // This is a pure function: no Deps, no context, no storage access.
 func BuildPaymentTermSelectOptions(terms []*PaymentTermOption, selectedID string) []pyeza.SelectOption {
 	opts := make([]pyeza.SelectOption, 0, len(terms))
@@ -37,17 +38,24 @@ func BuildPaymentTermSelectOptions(terms []*PaymentTermOption, selectedID string
 	return opts
 }
 
-// BuildStatusOptions returns the lifecycle-status options shown in the client
-// drawer form's bottom Status select. The five values mirror the client status
-// enum documented in entity-status-conventions.md (prospect, active, on_hold,
-// blocked, inactive). Tier-specific wording lives in lyngua and reaches this
+// BuildStatusOptions returns the lifecycle-status options shown in the
+// supplier drawer form's accounting Status select. Suppliers carry only
+// three values today (active / on_hold / blocked) — see entity-status-
+// conventions.md. Tier-specific wording lives in lyngua and reaches this
 // function via labels — keep the value strings proto-generic.
 func BuildStatusOptions(selected string, labels Labels) []pyeza.SelectOption {
 	return []pyeza.SelectOption{
-		{Value: "prospect", Label: labels.StatusProspect, Selected: selected == "prospect"},
 		{Value: "active", Label: labels.StatusActive, Selected: selected == "active"},
 		{Value: "on_hold", Label: labels.StatusOnHold, Selected: selected == "on_hold"},
 		{Value: "blocked", Label: labels.StatusBlocked, Selected: selected == "blocked"},
-		{Value: "inactive", Label: labels.StatusInactive, Selected: selected == "inactive"},
+	}
+}
+
+// BuildSupplierTypeOptions returns the two-value supplier_type select options
+// (company / individual). Same proto-generic value-string rule as Status.
+func BuildSupplierTypeOptions(selected string, labels Labels) []pyeza.SelectOption {
+	return []pyeza.SelectOption{
+		{Value: "company", Label: labels.TypeCompany, Selected: selected == "company"},
+		{Value: "individual", Label: labels.TypeIndividual, Selected: selected == "individual"},
 	}
 }

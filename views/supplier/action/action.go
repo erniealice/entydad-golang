@@ -10,6 +10,7 @@ import (
 
 	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/view"
+	pyezatypes "github.com/erniealice/pyeza-golang/types"
 
 	categorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
 	supplierpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/supplier"
@@ -41,6 +42,11 @@ type Deps struct {
 	ListSupplierCategories func(ctx context.Context, req *suppliercategorypb.ListSupplierCategoriesRequest) (*suppliercategorypb.ListSupplierCategoriesResponse, error)
 	CreateSupplierCategory func(ctx context.Context, req *suppliercategorypb.CreateSupplierCategoryRequest) (*suppliercategorypb.CreateSupplierCategoryResponse, error)
 	DeleteSupplierCategory func(ctx context.Context, req *suppliercategorypb.DeleteSupplierCategoryRequest) (*suppliercategorypb.DeleteSupplierCategoryResponse, error)
+	// CurrencyOptions is the pre-built list of currency select options sourced
+	// from lyngua's CommonLabels.Currency.Options. Populated by module.go from
+	// ModuleDeps.CommonLabels so the action handler can call
+	// supplierform.BuildCurrencyOptions without importing pyeza.CommonLabels.
+	CurrencyOptions []pyezatypes.SelectOption
 }
 
 // optionalString returns a pointer to the string if non-empty, nil otherwise.
@@ -217,15 +223,21 @@ func NewAddAction(deps *Deps) view.View {
 		}
 		if viewCtx.Request.Method == http.MethodGet {
 			tagOptions, _ := loadTagData(ctx, deps, "")
+			paymentTerms := loadPaymentTerms(ctx, deps)
+			labels := supplierform.BuildLabels(viewCtx.T)
 			return view.OK("supplier-drawer-form", &supplierform.Data{
-				FormAction:         deps.Routes.AddURL,
-				Active:             true,
-				Status:             "active",
-				PaymentTerms:       loadPaymentTerms(ctx, deps),
-				Labels:             supplierform.BuildLabels(viewCtx.T),
-				CommonLabels:       nil, // injected by ViewAdapter
-				TagOptions:         tagOptions,
-				SearchTimezonesURL: deps.SearchTimezonesURL,
+				FormAction:               deps.Routes.AddURL,
+				Active:                   true,
+				Status:                   "active",
+				PaymentTerms:             paymentTerms,
+				PaymentTermSelectOptions: supplierform.BuildPaymentTermSelectOptions(paymentTerms, ""),
+				StatusOptions:            supplierform.BuildStatusOptions("active", labels),
+				SupplierTypeOptions:      supplierform.BuildSupplierTypeOptions("", labels),
+				BillingCurrencyOptions:   supplierform.BuildCurrencyOptions("", deps.CurrencyOptions),
+				Labels:                   labels,
+				CommonLabels:             nil, // injected by ViewAdapter
+				TagOptions:               tagOptions,
+				SearchTimezonesURL:       deps.SearchTimezonesURL,
 			})
 		}
 
@@ -235,11 +247,12 @@ func NewAddAction(deps *Deps) view.View {
 		}
 
 		r := viewCtx.Request
-		active := r.FormValue("active") == "true"
-
+		// New suppliers default to active=true; the form no longer exposes the
+		// active flag (it's derived from status). The use case keeps active
+		// in sync with status on subsequent updates.
 		resp, err := deps.CreateSupplier(ctx, &supplierpb.CreateSupplierRequest{
 			Data: &supplierpb.Supplier{
-				Active: active,
+				Active: true,
 				Name:   r.FormValue("name"),
 				SupplierType:       r.FormValue("supplier_type"),
 				TaxId:              optionalString(r.FormValue("tax_id")),
@@ -263,7 +276,7 @@ func NewAddAction(deps *Deps) view.View {
 					EmailAddress: r.FormValue("email_address"),
 					MobileNumber: r.FormValue("mobile_number"),
 					Timezone:     optionalString(r.FormValue("timezone")),
-					Active:       active,
+					Active:       true,
 				},
 			},
 		})
@@ -354,38 +367,45 @@ func NewEditAction(deps *Deps) view.View {
 			}
 
 			tagOptions, selectedTags := loadTagData(ctx, deps, id)
+			paymentTerms := loadPaymentTerms(ctx, deps)
+			selectedPaymentTermID := s.GetPaymentTermId()
+			labels := supplierform.BuildLabels(viewCtx.T)
 			return view.OK("supplier-drawer-form", &supplierform.Data{
-				FormAction:            formAction,
-				IsEdit:                !isClone,
-				ID:                    formID,
-				Name:                  name,
-				Timezone:              timezone,
-				SearchTimezonesURL:    deps.SearchTimezonesURL,
-				SupplierType:          s.GetSupplierType(),
-				TaxID:                 s.GetTaxId(),
-				RegistrationNumber:    s.GetRegistrationNumber(),
-				StreetAddress:         s.GetStreetAddress(),
-				City:                  s.GetCity(),
-				Province:              s.GetProvince(),
-				PostalCode:            s.GetPostalCode(),
-				Country:               s.GetCountry(),
-				BillingCurrency:       s.GetBillingCurrency(),
-				PaymentTerms:          loadPaymentTerms(ctx, deps),
-				SelectedPaymentTermID: s.GetPaymentTermId(),
-				LeadTimeDays:          leadTimeDays,
-				CreditLimit:           creditLimit,
-				Status:                status,
-				Website:               s.GetWebsite(),
-				Notes:                 s.GetNotes(),
-				FirstName:             firstName,
-				LastName:              lastName,
-				Email:                 email,
-				Phone:                 phone,
-				Active:                s.GetActive(),
-				Labels:                supplierform.BuildLabels(viewCtx.T),
-				CommonLabels:          nil, // injected by ViewAdapter
-				TagOptions:            tagOptions,
-				SelectedTags:          selectedTags,
+				FormAction:               formAction,
+				IsEdit:                   !isClone,
+				ID:                       formID,
+				Name:                     name,
+				Timezone:                 timezone,
+				SearchTimezonesURL:       deps.SearchTimezonesURL,
+				SupplierType:             s.GetSupplierType(),
+				TaxID:                    s.GetTaxId(),
+				RegistrationNumber:       s.GetRegistrationNumber(),
+				StreetAddress:            s.GetStreetAddress(),
+				City:                     s.GetCity(),
+				Province:                 s.GetProvince(),
+				PostalCode:               s.GetPostalCode(),
+				Country:                  s.GetCountry(),
+				BillingCurrency:          s.GetBillingCurrency(),
+				PaymentTerms:             paymentTerms,
+				SelectedPaymentTermID:    selectedPaymentTermID,
+				PaymentTermSelectOptions: supplierform.BuildPaymentTermSelectOptions(paymentTerms, selectedPaymentTermID),
+				StatusOptions:            supplierform.BuildStatusOptions(status, labels),
+				SupplierTypeOptions:      supplierform.BuildSupplierTypeOptions(s.GetSupplierType(), labels),
+				BillingCurrencyOptions:   supplierform.BuildCurrencyOptions(s.GetBillingCurrency(), deps.CurrencyOptions),
+				LeadTimeDays:             leadTimeDays,
+				CreditLimit:              creditLimit,
+				Status:                   status,
+				Website:                  s.GetWebsite(),
+				Notes:                    s.GetNotes(),
+				FirstName:                firstName,
+				LastName:                 lastName,
+				Email:                    email,
+				Phone:                    phone,
+				Active:                   s.GetActive(),
+				Labels:                   labels,
+				CommonLabels:             nil, // injected by ViewAdapter
+				TagOptions:               tagOptions,
+				SelectedTags:             selectedTags,
 			})
 		}
 
@@ -395,13 +415,14 @@ func NewEditAction(deps *Deps) view.View {
 		}
 
 		r := viewCtx.Request
-		active := r.FormValue("active") == "true"
-
+		// The drawer form no longer exposes an "active" toggle. Active is
+		// derived from status server-side; the Update Supplier use case copies
+		// the value from the existing record so a missing field never deactivates
+		// the supplier.
 		_, err := deps.UpdateSupplier(ctx, &supplierpb.UpdateSupplierRequest{
 			Data: &supplierpb.Supplier{
-				Id:     id,
-				Active: active,
-				Name:   r.FormValue("name"),
+				Id:   id,
+				Name: r.FormValue("name"),
 				SupplierType:       r.FormValue("supplier_type"),
 				TaxId:              optionalString(r.FormValue("tax_id")),
 				RegistrationNumber: optionalString(r.FormValue("registration_number")),
@@ -424,7 +445,6 @@ func NewEditAction(deps *Deps) view.View {
 					EmailAddress: r.FormValue("email_address"),
 					MobileNumber: r.FormValue("mobile_number"),
 					Timezone:     optionalString(r.FormValue("timezone")),
-					Active:       active,
 				},
 			},
 		})

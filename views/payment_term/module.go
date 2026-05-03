@@ -55,6 +55,7 @@ func NewModule(deps *ModuleDeps) *Module {
 		UpdatePaymentTerm:    deps.UpdatePaymentTerm,
 		DeletePaymentTerm:    deps.DeletePaymentTerm,
 		SetPaymentTermActive: deps.SetPaymentTermActive,
+		Scope:                deps.Scope,
 	}
 
 	listDeps := &paymenttermlist.Deps{

@@ -71,6 +71,20 @@ type Labels struct {
 	SectionRepresentative string
 	SectionAccounting     string
 	SectionOthers         string
+
+	// Accounting fields (mirrored from supplier)
+	TaxID                      string
+	TaxIDPlaceholder           string
+	TaxIDInfo                  string
+	RegistrationNumber         string
+	RegistrationNumberPlaceholder string
+	RegistrationNumberInfo     string
+	CreditLimit                string
+	CreditLimitPlaceholder     string
+	CreditLimitInfo            string
+	LeadTimeDays               string
+	LeadTimeDaysPlaceholder    string
+	LeadTimeDaysInfo           string
 }
 
 // PaymentTermOption is a minimal struct for rendering payment term options in the form.
@@ -115,10 +129,16 @@ type Data struct {
 	PostalCode               string
 	Notes                    string
 	BillingCurrency          string
+	TaxID                    string
+	RegistrationNumber       string
+	CreditLimit              string // form-input string; converted to int64 centavos in POST
+	LeadTimeDays             string
 	SearchTimezonesURL       string
 	PaymentTerms             []*PaymentTermOption
 	SelectedPaymentTermID    string
 	PaymentTermSelectOptions []pyeza.SelectOption
+	StatusOptions            []pyeza.SelectOption
+	BillingCurrencyOptions   []pyeza.SelectOption
 	TagOptions               []TagOption
 	SelectedTags             []SelectedTag
 	Labels                   Labels
@@ -190,5 +210,17 @@ func BuildLabels(t func(string) string) Labels {
 		SectionRepresentative: t("client.form.sectionRepresentative"),
 		SectionAccounting:     t("client.form.sectionAccounting"),
 		SectionOthers:         t("client.form.sectionOthers"),
+		TaxID:                      t("client.form.taxId"),
+		TaxIDPlaceholder:           t("client.form.taxIdPlaceholder"),
+		TaxIDInfo:                  t("client.form.taxIdInfo"),
+		RegistrationNumber:         t("client.form.registrationNumber"),
+		RegistrationNumberPlaceholder: t("client.form.registrationNumberPlaceholder"),
+		RegistrationNumberInfo:     t("client.form.registrationNumberInfo"),
+		CreditLimit:                t("client.form.creditLimit"),
+		CreditLimitPlaceholder:     t("client.form.creditLimitPlaceholder"),
+		CreditLimitInfo:            t("client.form.creditLimitInfo"),
+		LeadTimeDays:               t("client.form.leadTimeDays"),
+		LeadTimeDaysPlaceholder:    t("client.form.leadTimeDaysPlaceholder"),
+		LeadTimeDaysInfo:           t("client.form.leadTimeDaysInfo"),
 	}
 }

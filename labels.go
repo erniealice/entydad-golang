@@ -43,12 +43,13 @@ type ClientButtonLabels struct {
 }
 
 type ClientColumnLabels struct {
-	ClientName     string `json:"clientName"`
-	Representative string `json:"representative"`
-	Status         string `json:"status"`
-	Category       string `json:"category"`
-	PaymentTerm    string `json:"paymentTerm"`
-	DateCreated    string `json:"dateCreated"`
+	ClientName        string `json:"clientName"`
+	Representative    string `json:"representative"`
+	Status            string `json:"status"`
+	Category          string `json:"category"`
+	ActiveEngagements string `json:"activeEngagements"`
+	PaymentTerm       string `json:"paymentTerm"`
+	DateCreated       string `json:"dateCreated"`
 }
 
 type ClientEmptyLabels struct {
@@ -145,6 +146,8 @@ type ClientDetailLabels struct {
 	Subscriptions ClientSubscriptionLabels `json:"subscriptions"`
 	// Statement tab column headers + totals row
 	Statement ClientStatementLabels `json:"statement"`
+	// OutstandingTable tab column headers + empty state
+	OutstandingTable ClientOutstandingTableLabels `json:"outstandingTable"`
 }
 
 type ClientCompanyDetailLabels struct {
@@ -222,6 +225,33 @@ type ClientStatementLabels struct {
 	ColumnReceived    string `json:"columnReceived"`
 	ColumnBalance     string `json:"columnBalance"`
 	TotalsRowLabel    string `json:"totalsRowLabel"`
+}
+
+// ClientOutstandingTableLabels holds column headers and empty-state labels for
+// the outstanding-revenue table on the Statement tab.
+type ClientOutstandingTableLabels struct {
+	Columns ClientOutstandingTableColumnLabels `json:"columns"`
+	Empty   ClientOutstandingTableEmptyLabels  `json:"empty"`
+}
+
+// ClientOutstandingTableColumnLabels holds column header labels for the
+// outstanding-revenue table.
+type ClientOutstandingTableColumnLabels struct {
+	Date        string `json:"date"`
+	Reference   string `json:"reference"`
+	Description string `json:"description"`
+	DueDate     string `json:"dueDate"`
+	Billed      string `json:"billed"`
+	Paid        string `json:"paid"`
+	Outstanding string `json:"outstanding"`
+	Status      string `json:"status"`
+}
+
+// ClientOutstandingTableEmptyLabels holds empty-state labels for the
+// outstanding-revenue table.
+type ClientOutstandingTableEmptyLabels struct {
+	Title   string `json:"title"`
+	Message string `json:"message"`
 }
 
 // ResolveTabSlug returns the URL slug for a canonical tab key. Tier-specific

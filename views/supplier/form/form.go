@@ -1,5 +1,7 @@
 package form
 
+import pyeza "github.com/erniealice/pyeza-golang/types"
+
 // Labels holds i18n labels for the supplier drawer form template.
 type Labels struct {
 	Name               string
@@ -138,11 +140,15 @@ type Data struct {
 	LastName              string
 	Email                 string
 	Phone                 string
-	Active                bool
-	Labels                Labels
-	CommonLabels          any
-	TagOptions            []TagOption
-	SelectedTags          []SelectedTag
+	Active                   bool
+	Labels                   Labels
+	CommonLabels             any
+	TagOptions               []TagOption
+	SelectedTags             []SelectedTag
+	StatusOptions            []pyeza.SelectOption
+	SupplierTypeOptions      []pyeza.SelectOption
+	PaymentTermSelectOptions []pyeza.SelectOption
+	BillingCurrencyOptions   []pyeza.SelectOption
 }
 
 // BuildLabels constructs a Labels struct from a translation function.

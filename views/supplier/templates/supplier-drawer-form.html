@@ -1,12 +1,16 @@
 {{/*
-Supplier drawer form -- loaded into #sheetContent via HTMX.
+Supplier drawer form — loaded into #sheetContent via HTMX.
 Used by both Add and Edit actions.
 Data: .Name, .SupplierType, .TaxID, .RegistrationNumber,
       .StreetAddress, .City, .Province, .PostalCode, .Country,
       .BillingCurrency, .PaymentTerms, .SelectedPaymentTermID, .LeadTimeDays, .CreditLimit,
       .Status, .Website, .Notes, .FirstName, .LastName, .Email, .Phone,
       .Timezone, .SearchTimezonesURL,
-      .Active, .ID, .FormAction, .IsEdit, .Labels, .CommonLabels
+      .ID, .FormAction, .IsEdit, .Labels, .CommonLabels
+
+Status select sits at the bottom of the form. The legacy "active" toggle
+was removed (2026-05-03) — Active is now derived from Status server-side
+and preserved by the Update Supplier use case when the request omits it.
 */}}
 {{define "supplier-drawer-form"}}
 <form hx-post="{{.FormAction}}" hx-swap="none" hx-on::after-request="lf.Sheet.handleResponse(event)">
@@ -35,10 +39,7 @@ Data: .Name, .SupplierType, .TaxID, .RegistrationNumber,
                 "Label" .Labels.SupplierType
                 "Value" .SupplierType
                 "Placeholder" .Labels.SupplierTypePlaceholder
-                "Options" (list
-                    (dict "Value" "company" "Label" .Labels.TypeCompany "Selected" (eq .SupplierType "company"))
-                    (dict "Value" "individual" "Label" .Labels.TypeIndividual "Selected" (eq .SupplierType "individual"))
-                )
+                "Options" .SupplierTypeOptions
                 "Info" .Labels.SupplierTypeInfo
             )}}
         </div>
@@ -162,40 +163,29 @@ Data: .Name, .SupplierType, .TaxID, .RegistrationNumber,
         {{/* --- Accounting Section --- */}}
         {{template "form-section" (dict "Title" .Labels.SectionAccounting)}}
 
-        <div class="form-row">
+        <div class="form-row single">
             {{template "form-group" (dict
                 "Type" "select"
-                "Name" "status"
-                "Label" .Labels.Status
-                "Value" .Status
-                "Placeholder" .Labels.StatusPlaceholder
-                "Options" (list
-                    (dict "Value" "active" "Label" .Labels.StatusActive "Selected" (eq .Status "active"))
-                    (dict "Value" "blocked" "Label" .Labels.StatusBlocked "Selected" (eq .Status "blocked"))
-                    (dict "Value" "on_hold" "Label" .Labels.StatusOnHold "Selected" (eq .Status "on_hold"))
-                )
-                "Info" .Labels.StatusInfo
-            )}}
-            {{template "form-group" (dict
-                "Type" "text"
                 "Name" "billing_currency"
                 "Label" .Labels.BillingCurrency
-                "Value" .BillingCurrency
                 "Placeholder" .Labels.BillingCurrencyPlaceholder
+                "Options" .BillingCurrencyOptions
                 "Info" .Labels.BillingCurrencyInfo
             )}}
         </div>
 
+        {{/* Payment terms — always rendered. Empty .PaymentTermSelectOptions
+             produces an empty dropdown, the honest state when no payment
+             terms with entity_scope ∈ {supplier, both} exist yet. */}}
         <div class="form-row single">
-            <div class="form-group">
-                <label for="payment_term_id" class="form-label">{{.Labels.PaymentTerms}}</label>
-                <select name="payment_term_id" id="payment_term_id" class="form-control">
-                    <option value="">{{.Labels.SelectPaymentTerm}}</option>
-                    {{range .PaymentTerms}}
-                    <option value="{{.Id}}" {{if eq .Id $.SelectedPaymentTermID}}selected{{end}}>{{.Name}}</option>
-                    {{end}}
-                </select>
-            </div>
+            {{template "form-group" (dict
+                "Type" "select"
+                "Name" "payment_term_id"
+                "Label" .Labels.PaymentTerms
+                "Placeholder" .Labels.SelectPaymentTerm
+                "Options" .PaymentTermSelectOptions
+                "Info" .Labels.PaymentTermsInfo
+            )}}
         </div>
 
         <div class="form-row">
@@ -270,25 +260,18 @@ Data: .Name, .SupplierType, .TaxID, .RegistrationNumber,
         </div>
         {{end}}
 
-        {{/* --- Active Toggle --- */}}
+        {{/* --- Status (lifecycle) — placed at the form bottom because it
+             governs the record's visibility/lifecycle, not its accounting
+             configuration. The "active" derived flag is updated server-side
+             from this status. Options are pre-built by supplierform.BuildStatusOptions. --- */}}
         <div class="form-row single">
-            <div class="form-group form-group-toggle">
-                <label class="form-label" for="active">
-                    {{.Labels.Active}}
-                    {{if .Labels.ActiveInfo}}
-                    <span class="form-label-info" data-popover data-popover-trigger="hover click" data-popover-position="top">
-                        <button type="button" class="popover-trigger form-label-info-btn" aria-label="More info" tabindex="0">
-                            {{template "icon-info"}}
-                        </button>
-                        <div class="popover-panel form-label-info-panel" role="tooltip">
-                            <div class="popover-arrow"></div>
-                            {{.Labels.ActiveInfo}}
-                        </div>
-                    </span>
-                    {{end}}
-                </label>
-                {{template "toggle" (dict "Name" "active" "Checked" .Active "Value" "true")}}
-            </div>
+            {{template "form-group" (dict
+                "Type" "select"
+                "Name" "status"
+                "Label" .Labels.Status
+                "Placeholder" .Labels.StatusPlaceholder
+                "Options" .StatusOptions
+            )}}
         </div>
     </div>
 

@@ -1,9 +1,9 @@
 {{/*
 Payment term drawer form -- loaded into #sheetContent via HTMX.
 Used by both Add and Edit actions.
-Data: .Name, .Code, .Type, .NetDays, .DiscountDays, .DiscountPercentBps,
-      .EntityScope, .IsDefault, .Description, .DisplayOrder, .Active,
-      .ID, .FormAction, .IsEdit, .Labels, .CommonLabels
+Data: .Name, .Code, .Type, .NetDays, .ProximateDay, .DiscountDays,
+      .DiscountPercentBps, .EntityScope, .IsDefault, .Description,
+      .DisplayOrder, .Active, .ID, .FormAction, .IsEdit, .Labels, .CommonLabels
 */}}
 {{define "payment-term-drawer-form"}}
 <form hx-post="{{.FormAction}}" hx-swap="none" hx-on::after-request="lf.Sheet.handleResponse(event)">
@@ -36,6 +36,7 @@ Data: .Name, .Code, .Type, .NetDays, .DiscountDays, .DiscountPercentBps,
                 "Label" .Labels.Code
                 "Value" .Code
                 "Placeholder" .Labels.CodePlaceholder
+                "Hint" .Labels.CodeHint
                 "Info" .Labels.CodeInfo
             )}}
         </div>
@@ -55,64 +56,94 @@ Data: .Name, .Code, .Type, .NetDays, .DiscountDays, .DiscountPercentBps,
         {{/* --- Terms Section --- */}}
         {{template "form-section" (dict "Title" .Labels.SectionTerms)}}
 
-        {{/* Row: Type (70%) + Net Days (30%) */}}
-        <div class="form-row form-row--70-30">
-            <div class="form-group">
-                <label for="type" class="form-label">{{.Labels.Type}} <span class="form-info-icon" title="{{.Labels.TypeHint}}">{{template "icon-info" $}}</span></label>
-                <select name="type" id="type" class="form-select">
-                    <option value="due_on_receipt" {{if eq .Type "due_on_receipt"}}selected{{end}}>{{.Labels.TypeDueOnReceipt}}</option>
-                    <option value="net" {{if eq .Type "net"}}selected{{end}}>{{.Labels.TypeNet}}</option>
-                    <option value="cod" {{if eq .Type "cod"}}selected{{end}}>{{.Labels.TypeCOD}}</option>
-                    <option value="proximate" {{if eq .Type "proximate"}}selected{{end}}>{{.Labels.TypeProximate}}</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="net_days" class="form-label">{{.Labels.NetDays}} <span class="form-info-icon" title="{{.Labels.NetDaysHint}}">{{template "icon-info" $}}</span></label>
-                <input type="number" class="form-input" id="net_days" name="net_days" value="{{.NetDays}}" min="0">
-            </div>
+        {{/* Row: Type (full-width) — always required; drives show/hide of net_days and proximate_day */}}
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "select"
+                "Name" "type"
+                "Label" .Labels.Type
+                "Value" .Type
+                "Required" true
+                "Info" .Labels.TypeInfo
+                "Options" .TypeOptions
+            )}}
         </div>
 
-        <div class="form-row single" id="proximate-day-row" {{if ne .Type "proximate"}}hidden{{end}}>
-            <div class="form-group">
-                <label for="proximate_day" class="form-label">{{.Labels.ProximateDay}}</label>
-                <input type="number" class="form-input" id="proximate_day" name="proximate_day"
-                       value="{{.ProximateDay}}" min="1" max="28"
-                       placeholder="{{.Labels.ProximateDayPlaceholder}}">
-            </div>
+        {{/* Row: Net Days — shown/required only for type=net; hidden for all other types */}}
+        <div class="form-row single" id="net-days-row">
+            {{template "form-group" (dict
+                "Type" "number"
+                "Name" "net_days"
+                "Label" .Labels.NetDays
+                "Value" .NetDays
+                "Min" "0"
+                "Hint" .Labels.NetDaysHint
+            )}}
         </div>
-        <script>
-        (function() {
-            var sel = document.querySelector('[name="type"]');
-            var row = document.getElementById('proximate-day-row');
-            if (!sel || !row) return;
-            function toggle() { row.style.display = sel.value === 'proximate' ? '' : 'none'; }
-            sel.addEventListener('change', toggle);
-        })();
-        </script>
 
-        {{/* Row: Discount Days + Discount Rate */}}
+        {{/* Row: Proximate Day — shown/required only for type=proximate; hidden for all other types.
+             Range is 1-31; the due-date calculator clamps non-existent days (e.g. 31 in February)
+             to the last day of the target month. The Info popover documents this for operators. */}}
+        <div class="form-row single" id="proximate-day-row">
+            {{template "form-group" (dict
+                "Type" "number"
+                "Name" "proximate_day"
+                "Label" .Labels.ProximateDay
+                "Value" .ProximateDay
+                "Min" "1"
+                "Max" "31"
+                "Placeholder" .Labels.ProximateDayPlaceholder
+                "Hint" .Labels.ProximateDayHint
+                "Info" .Labels.ProximateDayInfo
+            )}}
+        </div>
+
+        {{/* Row: Discount Days + Discount Rate — always optional, always visible */}}
         <div class="form-row">
-            <div class="form-group">
-                <label for="discount_days" class="form-label">{{.Labels.DiscountDays}} <span class="form-info-icon" title="{{.Labels.DiscountDaysHint}}">{{template "icon-info" $}}</span></label>
-                <input type="number" class="form-input" id="discount_days" name="discount_days" value="{{.DiscountDays}}" min="0">
-            </div>
-            <div class="form-group">
-                <label for="discount_percent_bps" class="form-label">{{.Labels.DiscountPercentBps}} <span class="form-info-icon" title="{{.Labels.DiscountPercentBpsHint}}">{{template "icon-info" $}}</span></label>
-                <input type="number" class="form-input" id="discount_percent_bps" name="discount_percent_bps" value="{{.DiscountPercentBps}}" min="0">
-            </div>
+            {{template "form-group" (dict
+                "Type" "number"
+                "Name" "discount_days"
+                "Label" .Labels.DiscountDays
+                "Value" .DiscountDays
+                "Min" "0"
+                "Hint" .Labels.DiscountDaysHint
+                "Info" .Labels.DiscountDaysInfo
+            )}}
+            {{template "form-group" (dict
+                "Type" "number"
+                "Name" "discount_percent_bps"
+                "Label" .Labels.DiscountPercentBps
+                "Value" .DiscountPercentBps
+                "Min" "0"
+                "Hint" .Labels.DiscountPercentBpsHint
+                "Info" .Labels.DiscountPercentBpsInfo
+            )}}
         </div>
 
         {{/* --- Settings Section --- */}}
         {{template "form-section" (dict "Title" .Labels.SectionSettings)}}
 
-        {{/* Settings: Priority (30%) + Default (35%) + Active (35%) */}}
-        <div class="form-row form-row-settings">
-            <div class="form-group">
-                <label for="display_order" class="form-label">{{.Labels.DisplayOrder}} <span class="form-info-icon" title="{{.Labels.PriorityHint}}">{{template "icon-info" $}}</span></label>
-                <input type="number" class="form-input" id="display_order" name="display_order" value="{{.DisplayOrder}}" min="0">
-            </div>
+        {{/* Settings: Priority */}}
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "number"
+                "Name" "display_order"
+                "Label" .Labels.DisplayOrder
+                "Value" .DisplayOrder
+                "Min" "0"
+                "Hint" .Labels.PriorityHint
+            )}}
+        </div>
+
+        {{/* Settings: Default + Active toggles */}}
+        <div class="form-row">
             <div class="form-group form-group-toggle">
-                <label class="form-label" for="is_default">{{.Labels.IsDefault}}</label>
+                <label class="form-label" for="is_default">
+                    {{.Labels.IsDefault}}
+                    {{if .Labels.IsDefaultInfo}}
+                    <span class="form-label-info" data-popover="{{.Labels.IsDefaultInfo}}" tabindex="0" role="button" aria-label="More info">{{template "icon-info" $}}</span>
+                    {{end}}
+                </label>
                 {{template "toggle" (dict "Name" "is_default" "Checked" .IsDefault "Value" "true")}}
             </div>
             <div class="form-group form-group-toggle">
@@ -125,4 +156,87 @@ Data: .Name, .Code, .Type, .NetDays, .DiscountDays, .DiscountPercentBps,
 
     {{template "sheet-form-footer" (dict "CommonLabels" .CommonLabels "ShowCancel" true "IsEdit" .IsEdit)}}
 </form>
+
+<script>
+(function() {
+    var form = document.currentScript.previousElementSibling;
+    while (form && form.tagName !== 'FORM') { form = form.previousElementSibling; }
+    if (!form) { return; }
+
+    var typeSel        = form.querySelector('select[name="type"]');
+    var netDaysRow     = form.querySelector('#net-days-row');
+    var proximateDayRow = form.querySelector('#proximate-day-row');
+
+    // Hide rows whose inputs are irrelevant for the current type; clear
+    // inputs on hide so POST sees null rather than a stale value.
+    // Mirror of the server-side nil-out switch in action/action.go.
+    function setRow(row, visible, names) {
+        if (!row) { return; }
+        row.style.display = visible ? '' : 'none';
+        if (visible) { return; }
+        names.forEach(function(n) {
+            var el = row.querySelector('[name="' + n + '"]');
+            if (!el) { return; }
+            if (el.tagName === 'SELECT') {
+                el.selectedIndex = 0;
+                el.value = '';
+            } else {
+                el.value = '';
+            }
+        });
+    }
+
+    // Requiredness + visibility matrix (mirrors action/action.go switch):
+    //   net:            net_days=A, proximate_day=N
+    //   due_on_receipt: net_days=N, proximate_day=N
+    //   cod:            net_days=N, proximate_day=N
+    //   proximate:      net_days=N, proximate_day=A
+    // A = required+visible, O = optional+visible, N = hidden+cleared
+    var rules = {
+        net:            { netDays: { show: true,  required: true  }, proximateDay: { show: false, required: false } },
+        due_on_receipt: { netDays: { show: false, required: false }, proximateDay: { show: false, required: false } },
+        cod:            { netDays: { show: false, required: false }, proximateDay: { show: false, required: false } },
+        proximate:      { netDays: { show: false, required: false }, proximateDay: { show: true,  required: true  } }
+    };
+
+    // Apply show/hide and required rules based on the current type value.
+    function applyTypeGuards() {
+        var t = typeSel ? typeSel.value : '';
+        var rule = rules[t] || rules['net'];
+
+        var netDaysInput     = netDaysRow     ? netDaysRow.querySelector('[name="net_days"]')     : null;
+        var proximateDayInput = proximateDayRow ? proximateDayRow.querySelector('[name="proximate_day"]') : null;
+
+        setRow(netDaysRow,      rule.netDays.show,     ['net_days']);
+        setRow(proximateDayRow, rule.proximateDay.show, ['proximate_day']);
+
+        if (netDaysInput) {
+            if (rule.netDays.required) {
+                netDaysInput.required = true;
+                netDaysInput.setAttribute('aria-required', 'true');
+            } else {
+                netDaysInput.required = false;
+                netDaysInput.removeAttribute('aria-required');
+            }
+        }
+        if (proximateDayInput) {
+            if (rule.proximateDay.required) {
+                proximateDayInput.required = true;
+                proximateDayInput.setAttribute('aria-required', 'true');
+            } else {
+                proximateDayInput.required = false;
+                proximateDayInput.removeAttribute('aria-required');
+            }
+        }
+    }
+
+    if (typeSel) {
+        typeSel.addEventListener('change', applyTypeGuards);
+    }
+
+    // Run immediately so the form is in the correct state on initial load
+    // before the user interacts with it.
+    applyTypeGuards();
+}());
+</script>
 {{end}}

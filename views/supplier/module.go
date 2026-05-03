@@ -31,6 +31,10 @@ type PaymentTermOption = supplierform.PaymentTermOption
 // ModuleDeps holds all dependencies for the supplier module.
 type ModuleDeps struct {
 	Routes               entydad.SupplierRoutes
+	// SearchTimezonesURL is the URL of the timezone autocomplete JSON endpoint
+	// (owned by the user module; passed through so the supplier representative
+	// section can wire its own auto-complete to the same handler).
+	SearchTimezonesURL   string
 	CommonLabels         pyeza.CommonLabels
 	SharedLabels         entydad.SharedLabels
 	Labels               entydad.SupplierLabels
@@ -95,6 +99,7 @@ type Module struct {
 func NewModule(deps *ModuleDeps) *Module {
 	actionDeps := &supplieraction.Deps{
 		Routes:                 deps.Routes,
+		SearchTimezonesURL:     deps.SearchTimezonesURL,
 		CreateSupplier:         deps.CreateSupplier,
 		ReadSupplier:           deps.ReadSupplier,
 		UpdateSupplier:         deps.UpdateSupplier,
@@ -105,6 +110,7 @@ func NewModule(deps *ModuleDeps) *Module {
 		ListSupplierCategories: deps.ListSupplierCategories,
 		CreateSupplierCategory: deps.CreateSupplierCategory,
 		DeleteSupplierCategory: deps.DeleteSupplierCategory,
+		CurrencyOptions:        deps.CommonLabels.Currency.Options,
 	}
 	listDeps := &supplierlist.ListViewDeps{
 		Routes:              deps.Routes,

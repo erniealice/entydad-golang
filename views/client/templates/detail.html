@@ -190,12 +190,12 @@
     </div>
     {{end}}
 
-    {{if .StatementTable}}
-        {{template "table-card" .StatementTable}}
+    {{if .OutstandingTable}}
+        {{template "table-card" .OutstandingTable}}
     {{else}}
         <div class="coming-soon-panel">
-            <div class="coming-soon-title">{{.Labels.Detail.EmptyStatementTitle}}</div>
-            <p class="coming-soon-text">{{.Labels.Detail.EmptyStatementMessage}}</p>
+            <div class="coming-soon-title">{{.Labels.Detail.OutstandingTable.Empty.Title}}</div>
+            <p class="coming-soon-text">{{.Labels.Detail.OutstandingTable.Empty.Message}}</p>
         </div>
     {{end}}
 </div>

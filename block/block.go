@@ -51,15 +51,18 @@ import (
 	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/espyna-golang/registry"
 	entityid "github.com/erniealice/espyna-golang/registry/entityid"
-	attachmentpb  "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
-	categorypb    "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
-	paymenttermpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/payment_term"
-	userpb        "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/user"
-	workspacepb   "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace"
-	clientstmtpb  "github.com/erniealice/esqyma/pkg/schema/v1/domain/ledger/reporting/client_statement"
+	attachmentpb    "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
+	categorypb      "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
+	paymenttermpb   "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/payment_term"
+	userpb          "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/user"
+	workspacepb     "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace"
+	clientstmtpb    "github.com/erniealice/esqyma/pkg/schema/v1/domain/ledger/reporting/client_statement"
+	revenuepb       "github.com/erniealice/esqyma/pkg/schema/v1/domain/revenue/revenue"
 	priceplanpb     "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/price_plan"
 	priceschedulepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/price_schedule"
-	suppstmtpb    "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/reporting/supplier_statement"
+	subscriptionpb  "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/subscription"
+	collectionpb    "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/collection"
+	suppstmtpb      "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/reporting/supplier_statement"
 	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
 	pyeza "github.com/erniealice/pyeza-golang"
 	pyezatypes "github.com/erniealice/pyeza-golang/types"
@@ -385,6 +388,54 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 			if ledgerReportingSvc != nil {
 				clientDeps.GetClientBalances = func(fctx context.Context) (map[string]int64, error) {
 					return ledgerReportingSvc.GetClientBalances(fctx)
+				}
+			}
+			if uc.Subscription != nil && uc.Subscription.Subscription != nil && uc.Subscription.Subscription.CountActiveByClientIds != nil {
+				countActiveUC := uc.Subscription.Subscription.CountActiveByClientIds
+				clientDeps.GetActiveEngagementCounts = func(fctx context.Context) (map[string]int32, error) {
+					resp, err := countActiveUC.Execute(fctx, &subscriptionpb.CountActiveByClientIdsRequest{})
+					if err != nil {
+						return nil, err
+					}
+					return resp.GetCounts(), nil
+				}
+			}
+			// Wire ListRevenuesByClient using the typed Revenue use case with a
+			// client_id StringFilter. The postgres adapter supports BuildFilterWhere
+			// on the revenue table which includes client_id as a filterable column.
+			if uc.Revenue != nil && uc.Revenue.Revenue != nil && uc.Revenue.Revenue.ListRevenues != nil {
+				listRevenues := uc.Revenue.Revenue.ListRevenues.Execute
+				clientDeps.ListRevenuesByClient = func(fctx context.Context, clientID string) ([]*revenuepb.Revenue, error) {
+					resp, err := listRevenues(fctx, &revenuepb.ListRevenuesRequest{
+						Filters: &categorypb.FilterRequest{
+							Filters: []*categorypb.TypedFilter{
+								{
+									Field: "client_id",
+									FilterType: &categorypb.TypedFilter_StringFilter{
+										StringFilter: &categorypb.StringFilter{
+											Value:         clientID,
+											Operator:      categorypb.StringOperator_STRING_EQUALS,
+											CaseSensitive: true,
+										},
+									},
+								},
+							},
+						},
+					})
+					if err != nil {
+						return nil, err
+					}
+					return resp.GetData(), nil
+				}
+			}
+			if uc.Treasury != nil && uc.Treasury.Collection != nil && uc.Treasury.Collection.ListByClient != nil {
+				listByClientUC := uc.Treasury.Collection.ListByClient
+				clientDeps.ListCollectionsByClient = func(fctx context.Context, clientID string) ([]*collectionpb.Collection, error) {
+					resp, err := listByClientUC.Execute(fctx, &collectionpb.ListByClientRequest{ClientId: clientID})
+					if err != nil {
+						return nil, err
+					}
+					return resp.GetData(), nil
 				}
 			}
 			clientmod.NewModule(clientDeps).RegisterRoutes(ctx.Routes)
@@ -734,7 +785,10 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 
 		if cfg.enableAll || cfg.supplier {
 			supplierDeps := &suppliermod.ModuleDeps{
-				Routes:               routes.Supplier,
+				Routes: routes.Supplier,
+				// User module owns the timezone search endpoint; the supplier
+				// representative form reuses the same JSON handler.
+				SearchTimezonesURL:   routes.User.SearchTimezonesURL,
 				CommonLabels:         ctx.Common,
 				SharedLabels:         labels.Shared,
 				Labels:               labels.Supplier,

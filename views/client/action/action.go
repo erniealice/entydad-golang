@@ -3,11 +3,14 @@ package action
 import (
 	"context"
 	"log"
+	"math"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/view"
+	pyezatypes "github.com/erniealice/pyeza-golang/types"
 
 	categorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
 	clientpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client"
@@ -45,6 +48,11 @@ type Deps struct {
 	// so new-client drawers can prefill billing_currency. Optional; returns
 	// empty string (or a nil func) means no prefill.
 	GetFunctionalCurrency func(ctx context.Context) string
+	// CurrencyOptions is the pre-built list of currency select options sourced
+	// from lyngua's CommonLabels.Currency.Options. Populated by module.go from
+	// ModuleDeps.CommonLabels so the action handler can call
+	// clientform.BuildCurrencyOptions without importing pyeza.CommonLabels.
+	CurrencyOptions []pyezatypes.SelectOption
 }
 
 // loadPaymentTerms fetches the payment term options. Returns nil slice on error (graceful degradation).
@@ -178,6 +186,41 @@ func optionalString(s string) *string {
 	return &s
 }
 
+// optionalInt32 parses a string as int32, returning nil if empty or invalid.
+func optionalInt32(s string) *int32 {
+	if s == "" {
+		return nil
+	}
+	v, err := strconv.ParseInt(s, 10, 32)
+	if err != nil {
+		return nil
+	}
+	i := int32(v)
+	return &i
+}
+
+// optionalInt64Money parses a money string (e.g. "123.45") as int64 centavos, returning nil if empty or invalid.
+func optionalInt64Money(s string) *int64 {
+	if s == "" {
+		return nil
+	}
+	v, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return nil
+	}
+	i := int64(math.Round(v * 100))
+	return &i
+}
+
+// centavosToDisplay converts int64 centavos to a display string (e.g. 12345 → "123.45").
+// Returns empty string when the value is 0 (treat as unset in form pre-fill).
+func centavosToDisplay(v int64) string {
+	if v == 0 {
+		return ""
+	}
+	return strconv.FormatFloat(float64(v)/100.0, 'f', 2, 64)
+}
+
 // parseTagIDs splits a comma-separated string of tag IDs from the multi-select
 // hidden input into a slice of individual IDs. Empty strings are filtered out.
 func parseTagIDs(csv string) []string {
@@ -206,22 +249,28 @@ func NewAddAction(deps *Deps) view.View {
 			mode := viewCtx.Request.URL.Query().Get("mode")
 			tagOptions, _ := loadTagData(ctx, deps, "")
 			paymentTerms := loadPaymentTerms(ctx, deps)
+			labels := clientform.BuildLabels(viewCtx.T)
+			functionalCurrency := ""
+			if deps.GetFunctionalCurrency != nil {
+				functionalCurrency = deps.GetFunctionalCurrency(ctx)
+			}
 			return view.OK("client-drawer-form", &clientform.Data{
 				FormAction:               deps.Routes.AddURL,
 				Active:                   true,
 				Status:                   "active",
 				Mode:                     mode,
-				BillingCurrency: func() string {
-				if deps.GetFunctionalCurrency == nil {
-					return ""
-				}
-				return deps.GetFunctionalCurrency(ctx)
-			}(),
+				BillingCurrency:          functionalCurrency,
+				TaxID:                    "",
+				RegistrationNumber:       "",
+				CreditLimit:              "",
+				LeadTimeDays:             "",
 				SearchTimezonesURL:       deps.SearchTimezonesURL,
 				PaymentTerms:             paymentTerms,
 				PaymentTermSelectOptions: clientform.BuildPaymentTermSelectOptions(paymentTerms, ""),
+				StatusOptions:            clientform.BuildStatusOptions("active", labels),
+				BillingCurrencyOptions:   clientform.BuildCurrencyOptions(functionalCurrency, deps.CurrencyOptions),
 				TagOptions:               tagOptions,
-				Labels:                   clientform.BuildLabels(viewCtx.T),
+				Labels:                   labels,
 				CommonLabels:             nil, // injected by ViewAdapter
 			})
 		}
@@ -232,14 +281,15 @@ func NewAddAction(deps *Deps) view.View {
 		}
 
 		r := viewCtx.Request
-		active := r.FormValue("active") == "true"
-
+		// New clients default to active=true; the form no longer exposes the
+		// active flag (it's derived from status). The use case keeps active
+		// in sync with status on subsequent updates.
 		repUser := &userpb.User{
 			FirstName:    r.FormValue("first_name"),
 			LastName:     r.FormValue("last_name"),
 			EmailAddress: r.FormValue("email_address"),
 			MobileNumber: r.FormValue("mobile_number"),
-			Active:       active,
+			Active:       true,
 		}
 		if tz := r.FormValue("timezone"); tz != "" {
 			repUser.Timezone = &tz
@@ -247,19 +297,23 @@ func NewAddAction(deps *Deps) view.View {
 
 		resp, err := deps.CreateClient(ctx, &clientpb.CreateClientRequest{
 			Data: &clientpb.Client{
-				Active:          active,
-				Name:            optionalString(r.FormValue("name")),
-				Status:          optionalString(r.FormValue("status")),
-				Country:         optionalString(r.FormValue("country")),
-				Website:         optionalString(r.FormValue("website")),
-				StreetAddress:   optionalString(r.FormValue("street_address")),
-				City:            optionalString(r.FormValue("city")),
-				Province:        optionalString(r.FormValue("province")),
-				PostalCode:      optionalString(r.FormValue("postal_code")),
-				Notes:           optionalString(r.FormValue("notes")),
-				BillingCurrency: optionalString(r.FormValue("billing_currency")),
-				PaymentTermId:   optionalString(r.FormValue("payment_term_id")),
-				User:            repUser,
+				Active:             true,
+				Name:               optionalString(r.FormValue("name")),
+				Status:             optionalString(r.FormValue("status")),
+				Country:            optionalString(r.FormValue("country")),
+				Website:            optionalString(r.FormValue("website")),
+				StreetAddress:      optionalString(r.FormValue("street_address")),
+				City:               optionalString(r.FormValue("city")),
+				Province:           optionalString(r.FormValue("province")),
+				PostalCode:         optionalString(r.FormValue("postal_code")),
+				Notes:              optionalString(r.FormValue("notes")),
+				BillingCurrency:    optionalString(r.FormValue("billing_currency")),
+				PaymentTermId:      optionalString(r.FormValue("payment_term_id")),
+				TaxId:              optionalString(r.FormValue("tax_id")),
+				RegistrationNumber: optionalString(r.FormValue("registration_number")),
+				CreditLimit:        optionalInt64Money(r.FormValue("credit_limit")),
+				LeadTimeDays:       optionalInt32(r.FormValue("lead_time_days")),
+				User:               repUser,
 			},
 		})
 		if err != nil {
@@ -325,6 +379,15 @@ func NewEditAction(deps *Deps) view.View {
 				formID = ""
 			}
 
+			labels := clientform.BuildLabels(viewCtx.T)
+			creditLimitDisplay := ""
+			if c.CreditLimit != nil {
+				creditLimitDisplay = centavosToDisplay(c.GetCreditLimit())
+			}
+			leadTimeDaysDisplay := ""
+			if c.LeadTimeDays != nil {
+				leadTimeDaysDisplay = strconv.Itoa(int(c.GetLeadTimeDays()))
+			}
 			return view.OK("client-drawer-form", &clientform.Data{
 				FormAction:               formAction,
 				IsEdit:                   !isClone,
@@ -346,13 +409,19 @@ func NewEditAction(deps *Deps) view.View {
 				PostalCode:               c.GetPostalCode(),
 				Notes:                    c.GetNotes(),
 				BillingCurrency:          c.GetBillingCurrency(),
+				TaxID:                    c.GetTaxId(),
+				RegistrationNumber:       c.GetRegistrationNumber(),
+				CreditLimit:              creditLimitDisplay,
+				LeadTimeDays:             leadTimeDaysDisplay,
 				SearchTimezonesURL:       deps.SearchTimezonesURL,
 				PaymentTerms:             paymentTerms,
 				SelectedPaymentTermID:    selectedPaymentTermID,
 				PaymentTermSelectOptions: clientform.BuildPaymentTermSelectOptions(paymentTerms, selectedPaymentTermID),
+				StatusOptions:            clientform.BuildStatusOptions(c.GetStatus(), labels),
+				BillingCurrencyOptions:   clientform.BuildCurrencyOptions(c.GetBillingCurrency(), deps.CurrencyOptions),
 				TagOptions:               tagOptions,
 				SelectedTags:             selectedTags,
-				Labels:                   clientform.BuildLabels(viewCtx.T),
+				Labels:                   labels,
 				CommonLabels:             nil, // injected by ViewAdapter
 			})
 		}
@@ -364,15 +433,18 @@ func NewEditAction(deps *Deps) view.View {
 
 		r := viewCtx.Request
 		mode := r.URL.Query().Get("mode")
-		active := r.FormValue("active") == "true"
 
+		// The drawer form no longer exposes an "active" toggle. Active is
+		// derived from status server-side; when the request payload omits
+		// it (the proto3 zero, which we can't distinguish from an explicit
+		// false), the Update Client use case copies the value from the
+		// existing record so a missing field never deactivates the client.
 		clientData := &clientpb.Client{Id: id}
 		userData := &userpb.User{}
 
 		switch mode {
 		case "info":
 			// Only update company-related fields; leave representative fields untouched
-			clientData.Active = active
 			clientData.Name = optionalString(r.FormValue("name"))
 			clientData.Website = optionalString(r.FormValue("website"))
 			clientData.StreetAddress = optionalString(r.FormValue("street_address"))
@@ -383,25 +455,25 @@ func NewEditAction(deps *Deps) view.View {
 			clientData.Notes = optionalString(r.FormValue("notes"))
 			clientData.PaymentTermId = optionalString(r.FormValue("payment_term_id"))
 		case "accounting":
-			// Only update accounting fields. Active is always present on every
-			// mode's form so we keep it authoritative.
-			clientData.Active = active
 			clientData.Status = optionalString(r.FormValue("status"))
 			clientData.BillingCurrency = optionalString(r.FormValue("billing_currency"))
+			clientData.PaymentTermId = optionalString(r.FormValue("payment_term_id"))
+			clientData.TaxId = optionalString(r.FormValue("tax_id"))
+			clientData.RegistrationNumber = optionalString(r.FormValue("registration_number"))
+			clientData.CreditLimit = optionalInt64Money(r.FormValue("credit_limit"))
+			clientData.LeadTimeDays = optionalInt32(r.FormValue("lead_time_days"))
 		case "representative":
 			// Only update representative (user) fields; leave company fields untouched
 			userData.FirstName = r.FormValue("first_name")
 			userData.LastName = r.FormValue("last_name")
 			userData.EmailAddress = r.FormValue("email_address")
 			userData.MobileNumber = r.FormValue("mobile_number")
-			userData.Active = active
 			if tz := r.FormValue("timezone"); tz != "" {
 				userData.Timezone = &tz
 			}
 			clientData.User = userData
 		default:
 			// List page edit — update all fields
-			clientData.Active = active
 			clientData.Name = optionalString(r.FormValue("name"))
 			clientData.Status = optionalString(r.FormValue("status"))
 			clientData.Country = optionalString(r.FormValue("country"))
@@ -413,11 +485,14 @@ func NewEditAction(deps *Deps) view.View {
 			clientData.Notes = optionalString(r.FormValue("notes"))
 			clientData.BillingCurrency = optionalString(r.FormValue("billing_currency"))
 			clientData.PaymentTermId = optionalString(r.FormValue("payment_term_id"))
+			clientData.TaxId = optionalString(r.FormValue("tax_id"))
+			clientData.RegistrationNumber = optionalString(r.FormValue("registration_number"))
+			clientData.CreditLimit = optionalInt64Money(r.FormValue("credit_limit"))
+			clientData.LeadTimeDays = optionalInt32(r.FormValue("lead_time_days"))
 			userData.FirstName = r.FormValue("first_name")
 			userData.LastName = r.FormValue("last_name")
 			userData.EmailAddress = r.FormValue("email_address")
 			userData.MobileNumber = r.FormValue("mobile_number")
-			userData.Active = active
 			if tz := r.FormValue("timezone"); tz != "" {
 				userData.Timezone = &tz
 			}

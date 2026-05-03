@@ -1,5 +1,11 @@
 package form
 
+import (
+	"sort"
+
+	pyeza "github.com/erniealice/pyeza-golang"
+)
+
 // Labels holds i18n labels for the payment term drawer form template.
 type Labels struct {
 	SectionInfo            string
@@ -39,9 +45,22 @@ type Labels struct {
 	ScopesClientOnly   string
 
 	// Field-level info text surfaced via an info button beside each label.
-	NameInfo        string
-	CodeInfo        string
-	DescriptionInfo string
+	NameInfo               string
+	CodeInfo               string
+	CodeHint               string
+	DescriptionInfo        string
+	TypeInfo               string
+	ProximateDayHint       string
+	ProximateDayInfo       string
+	DiscountDaysInfo       string
+	DiscountPercentBpsInfo string
+	IsDefaultInfo          string
+
+	// Error messages for server-side validation.
+	ErrTypeRequired        string
+	ErrTypeInvalid         string
+	ErrNetDaysRequired     string
+	ErrProximateDayRequired string
 }
 
 // Data is the template data for the payment term drawer form.
@@ -61,8 +80,36 @@ type Data struct {
 	DisplayOrder       string
 	ProximateDay       string
 	Active             bool
-	Labels             Labels
-	CommonLabels       any
+	// TypeOptions holds the type select options with the current value pre-selected.
+	TypeOptions  []pyeza.SelectOption
+	Labels       Labels
+	CommonLabels any
+}
+
+// BuildTypeOptions constructs the select options for the type field,
+// marking the currently-selected value. Labels are drawn from the form labels
+// so they flow through lyngua and are not hardcoded in the template.
+// Options are sorted alphabetically by their (tier-translated) label so the
+// dropdown order remains stable for an operator regardless of which underlying
+// proto enum value backs each row.
+func BuildTypeOptions(labels Labels, current string) []pyeza.SelectOption {
+	// Canonical type values from payment_term.proto field 9:
+	//   "net", "due_on_receipt", "cod", "proximate"
+	// Default to "net" when current is empty so the initial Add form
+	// starts with the most common type pre-selected.
+	if current == "" {
+		current = "net"
+	}
+	opts := []pyeza.SelectOption{
+		{Value: "net", Label: labels.TypeNet, Selected: current == "net"},
+		{Value: "due_on_receipt", Label: labels.TypeDueOnReceipt, Selected: current == "due_on_receipt"},
+		{Value: "cod", Label: labels.TypeCOD, Selected: current == "cod"},
+		{Value: "proximate", Label: labels.TypeProximate, Selected: current == "proximate"},
+	}
+	sort.SliceStable(opts, func(i, j int) bool {
+		return opts[i].Label < opts[j].Label
+	})
+	return opts
 }
 
 // BuildLabels constructs a Labels struct from a translation function.
@@ -102,8 +149,19 @@ func BuildLabels(t func(string) string) Labels {
 		ScopesBoth:         t("paymentTerm.form.scopesBoth"),
 		ScopesSupplierOnly: t("paymentTerm.form.scopesSupplierOnly"),
 		ScopesClientOnly:   t("paymentTerm.form.scopesClientOnly"),
-		NameInfo:           t("paymentTerm.form.nameInfo"),
-		CodeInfo:           t("paymentTerm.form.codeInfo"),
-		DescriptionInfo:    t("paymentTerm.form.descriptionInfo"),
+		NameInfo:               t("paymentTerm.form.nameInfo"),
+		CodeInfo:               t("paymentTerm.form.codeInfo"),
+		CodeHint:               t("paymentTerm.form.codeHint"),
+		DescriptionInfo:        t("paymentTerm.form.descriptionInfo"),
+		TypeInfo:               t("paymentTerm.form.typeInfo"),
+		ProximateDayHint:       t("paymentTerm.form.proximateDayHint"),
+		ProximateDayInfo:       t("paymentTerm.form.proximateDayInfo"),
+		DiscountDaysInfo:       t("paymentTerm.form.discountDaysInfo"),
+		DiscountPercentBpsInfo: t("paymentTerm.form.discountPercentBpsInfo"),
+		IsDefaultInfo:          t("paymentTerm.form.isDefaultInfo"),
+		ErrTypeRequired:        t("paymentTerm.form.errors.typeRequired"),
+		ErrTypeInvalid:         t("paymentTerm.form.errors.typeInvalid"),
+		ErrNetDaysRequired:     t("paymentTerm.form.errors.netDaysRequired"),
+		ErrProximateDayRequired: t("paymentTerm.form.errors.proximateDayRequired"),
 	}
 }

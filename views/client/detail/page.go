@@ -17,11 +17,13 @@ import (
 	"github.com/erniealice/entydad-golang"
 	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
 
-	categorypb   "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
-	clientpb     "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client"
+	categorypb       "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
+	clientpb         "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client"
 	clientcategorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client_category"
-	clientstmtpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/ledger/reporting/client_statement"
-	subscriptionpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/subscription"
+	clientstmtpb     "github.com/erniealice/esqyma/pkg/schema/v1/domain/ledger/reporting/client_statement"
+	revenuepb        "github.com/erniealice/esqyma/pkg/schema/v1/domain/revenue/revenue"
+	collectionpb     "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/collection"
+	subscriptionpb   "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/subscription"
 )
 
 // DetailViewDeps holds view dependencies.
@@ -65,6 +67,16 @@ type DetailViewDeps struct {
 	// The PriceSchedules tab appends ?context=client&client_id={cid} to
 	// pre-fill and lock the client field.
 	PriceScheduleAddURL string
+
+	// ListRevenuesByClient returns all Revenue rows for the given client_id,
+	// ordered by revenue_date desc. Used by the outstanding-revenue table on
+	// the Statement tab.
+	ListRevenuesByClient func(ctx context.Context, clientID string) ([]*revenuepb.Revenue, error)
+
+	// ListCollectionsByClient returns all Collection rows whose linked revenue
+	// has the given client_id. Used to compute paid-amount per revenue on the
+	// outstanding-revenue table.
+	ListCollectionsByClient func(ctx context.Context, clientID string) ([]*collectionpb.Collection, error)
 }
 
 // TagChip represents a tag displayed as a chip on the detail page.
@@ -125,6 +137,7 @@ type PageData struct {
 	StatementSummary        *clientstmtpb.ClientStatementSummary
 	StatementSummaryDisplay *StatementSummaryDisplay
 	StatementTable          *types.TableConfig
+	OutstandingTable        *types.TableConfig
 	// Attachments tab
 	AttachmentTable     *types.TableConfig
 	AttachmentUploadURL string
@@ -272,9 +285,9 @@ func NewView(deps *DetailViewDeps) view.View {
 							TotalReceived:      types.MoneyCell(float64(resp.Summary.TotalReceived), "", true),
 						}
 					}
-					pageData.StatementTable = buildStatementTable(resp, deps)
 				}
 			}
+			pageData.OutstandingTable = buildOutstandingRevenueTable(ctx, deps, id)
 		case "attachments":
 			loadAttachments(ctx, deps, id, pageData)
 		case "audit-history":
@@ -430,9 +443,9 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 							TotalReceived:      types.MoneyCell(float64(resp.Summary.TotalReceived), "", true),
 						}
 					}
-					pageData.StatementTable = buildStatementTable(resp, deps)
 				}
 			}
+			pageData.OutstandingTable = buildOutstandingRevenueTable(ctx, deps, id)
 		case "attachments":
 			loadAttachments(ctx, deps, id, pageData)
 		case "audit-history":
@@ -817,4 +830,121 @@ func buildStatementTable(resp *clientstmtpb.ClientStatementResponse, deps *Detai
 
 	types.ApplyTableSettings(tc)
 	return tc
+}
+
+// buildOutstandingRevenueTable builds a TableConfig showing only revenue rows
+// that are not fully paid (outstanding amount > 0) for the given client.
+// It calls ListRevenuesByClient and ListCollectionsByClient; if either dep is
+// nil it returns nil so the template falls back to its empty-state panel.
+func buildOutstandingRevenueTable(ctx context.Context, deps *DetailViewDeps, clientID string) *types.TableConfig {
+	if deps.ListRevenuesByClient == nil || deps.ListCollectionsByClient == nil {
+		return nil
+	}
+
+	revenues, err := deps.ListRevenuesByClient(ctx, clientID)
+	if err != nil {
+		log.Printf("buildOutstandingRevenueTable: failed to list revenues for client %s: %v", clientID, err)
+		return nil
+	}
+
+	collections, err := deps.ListCollectionsByClient(ctx, clientID)
+	if err != nil {
+		log.Printf("buildOutstandingRevenueTable: failed to list collections for client %s: %v", clientID, err)
+		return nil
+	}
+
+	// Aggregate paid amount by revenue_id (skip reversed/voided/inactive collections)
+	paidByRevenue := make(map[string]int64, len(collections))
+	for _, c := range collections {
+		if !c.GetActive() {
+			continue
+		}
+		s := c.GetStatus()
+		if s == "reversed" || s == "voided" {
+			continue
+		}
+		paidByRevenue[c.GetRevenueId()] += c.GetAmount()
+	}
+
+	labels := deps.Labels.Detail.OutstandingTable
+	columns := []types.TableColumn{
+		{Key: "revenue_date", Label: labels.Columns.Date, WidthClass: "col-2xl"},
+		{Key: "reference_number", Label: labels.Columns.Reference, WidthClass: "col-3xl"},
+		{Key: "name", Label: labels.Columns.Description},
+		{Key: "due_date", Label: labels.Columns.DueDate, WidthClass: "col-2xl"},
+		{Key: "billed", Label: labels.Columns.Billed, WidthClass: "col-3xl", Align: "right"},
+		{Key: "paid", Label: labels.Columns.Paid, WidthClass: "col-3xl", Align: "right"},
+		{Key: "outstanding", Label: labels.Columns.Outstanding, WidthClass: "col-3xl", Align: "right"},
+		{Key: "status", Label: labels.Columns.Status, WidthClass: "col-lg"},
+	}
+
+	var rows []types.TableRow
+	for _, r := range revenues {
+		outstanding := r.GetTotalAmount() - paidByRevenue[r.GetId()]
+		if outstanding <= 0 {
+			continue
+		}
+
+		dueDate := r.GetDueDate()
+		if dueDate == "" {
+			dueDate = "—"
+		}
+
+		currency := r.GetCurrency()
+		paid := paidByRevenue[r.GetId()]
+
+		rows = append(rows, types.TableRow{
+			ID: r.GetId(),
+			Cells: []types.TableCell{
+				{Type: "text", Value: r.GetRevenueDate()},
+				{Type: "text", Value: r.GetReferenceNumber()},
+				{Type: "text", Value: r.GetName()},
+				{Type: "text", Value: dueDate},
+				types.MoneyCell(float64(r.GetTotalAmount()), currency, true),
+				types.MoneyCell(float64(paid), currency, true),
+				types.MoneyCell(float64(outstanding), currency, true),
+				{Type: "badge", Value: r.GetStatus(), Variant: revenueStatusVariant(r.GetStatus())},
+			},
+		})
+	}
+
+	types.ApplyColumnStyles(columns, rows)
+
+	tc := &types.TableConfig{
+		ID:                   "client-statement-outstanding-table",
+		Columns:              columns,
+		Rows:                 rows,
+		Labels:               deps.TableLabels,
+		ShowSearch:           true,
+		ShowSort:             true,
+		ShowFilters:          false,
+		ShowExport:           true,
+		ShowDensity:          true,
+		ShowEntries:          true,
+		DefaultSortColumn:    "revenue_date",
+		DefaultSortDirection: "desc",
+		PrimaryAction:        nil,
+		BulkActions:          nil,
+		EmptyState: types.TableEmptyState{
+			Title:   labels.Empty.Title,
+			Message: labels.Empty.Message,
+		},
+	}
+
+	types.ApplyTableSettings(tc)
+	return tc
+}
+
+// revenueStatusVariant maps a revenue status string to a badge variant.
+func revenueStatusVariant(status string) string {
+	switch status {
+	case "complete":
+		return "success"
+	case "draft":
+		return "warning"
+	case "cancelled":
+		return "default"
+	default:
+		return "default"
+	}
 }

@@ -28,10 +28,14 @@ type ListViewDeps struct {
 	GetListPageData   func(ctx context.Context, req *clientpb.GetClientListPageDataRequest) (*clientpb.GetClientListPageDataResponse, error)
 	GetInUseIDs       func(ctx context.Context, ids []string) (map[string]bool, error)
 	GetClientBalances func(ctx context.Context) (map[string]int64, error)
-	Labels            entydad.ClientLabels
-	SharedLabels      entydad.SharedLabels
-	CommonLabels      pyeza.CommonLabels
-	TableLabels       types.TableLabels
+	// GetActiveEngagementCounts returns a map of client_id → count of active
+	// subscriptions for that client. Fetched once per page render so the per-row
+	// cell lookup is O(1). Empty map when nil — the cell falls back to "0".
+	GetActiveEngagementCounts func(ctx context.Context) (map[string]int32, error)
+	Labels                    entydad.ClientLabels
+	SharedLabels              entydad.SharedLabels
+	CommonLabels              pyeza.CommonLabels
+	TableLabels               types.TableLabels
 }
 
 // PageData holds the data for the client list page.
@@ -171,8 +175,13 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, columns []types.T
 		clientBalances, _ = deps.GetClientBalances(ctx)
 	}
 
+	var engagementCounts map[string]int32
+	if deps.GetActiveEngagementCounts != nil {
+		engagementCounts, _ = deps.GetActiveEngagementCounts(ctx)
+	}
+
 	l := deps.Labels
-	rows := buildTableRows(resp.GetClientList(), status, l, deps.SharedLabels, deps.CommonLabels, deps.Routes, inUseIDs, clientBalances, perms)
+	rows := buildTableRows(resp.GetClientList(), status, l, deps.SharedLabels, deps.CommonLabels, deps.Routes, inUseIDs, clientBalances, engagementCounts, perms)
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
@@ -243,8 +252,13 @@ func clientColumns(l entydad.ClientLabels) []types.TableColumn {
 	// by /list/{status}, so a per-row badge would be redundant.
 	return []types.TableColumn{
 		{Key: "name", Label: l.Columns.ClientName},
-		{Key: "representative", Label: l.Columns.Representative},
-		{Key: "category", Label: l.Columns.Category, NoFilter: true, WidthClass: "col-7xl"},
+		// Representative is a joined field (u.first_name + u.last_name). The
+		// postgres client adapter does not support cross-table sort yet, so
+		// clicking this header would 500. Disable sort until the adapter learns
+		// the rep_name expression — at that point set NoSort:false and
+		// SortKey:"rep_name". Tracked in docs/plan/20260503-sortkey-positive-form-and-rep-sort/.
+		{Key: "representative", Label: l.Columns.Representative, NoSort: true},
+		{Key: "active_engagements", Label: l.Columns.ActiveEngagements, NoFilter: true, NoSort: true, Align: "right", WidthClass: "col-3xl"},
 		{Key: "payment_term", Label: l.Columns.PaymentTerm, NoFilter: true, WidthClass: "col-3xl"},
 		{Key: "outstanding_balance", Label: "Outstanding", NoSort: true, NoFilter: true, Align: "right", WidthClass: "col-4xl"},
 	}
@@ -255,7 +269,7 @@ func clientColumns(l entydad.ClientLabels) []types.TableColumn {
 // actions key off that, not the proto field, so transitions stay correct even
 // when individual rows have stale/unmigrated status values. The badge cell
 // still reflects each row's own recordStatus.
-func buildTableRows(clients []*clientpb.Client, listStatus string, l entydad.ClientLabels, sl entydad.SharedLabels, cl pyeza.CommonLabels, routes entydad.ClientRoutes, inUseIDs map[string]bool, balances map[string]int64, perms *types.UserPermissions) []types.TableRow {
+func buildTableRows(clients []*clientpb.Client, listStatus string, l entydad.ClientLabels, sl entydad.SharedLabels, cl pyeza.CommonLabels, routes entydad.ClientRoutes, inUseIDs map[string]bool, balances map[string]int64, engagementCounts map[string]int32, perms *types.UserPermissions) []types.TableRow {
 	rows := []types.TableRow{}
 	for _, c := range clients {
 		recordStatus := clientStatus(c)
@@ -277,14 +291,11 @@ func buildTableRows(clients []*clientpb.Client, listStatus string, l entydad.Cli
 		}
 		isInUse := inUseIDs[id]
 
-		// Build category chip cell
-		var catLabels []string
-		for _, cc := range c.GetCategories() {
-			if n := cc.GetCategory().GetName(); n != "" {
-				catLabels = append(catLabels, n)
-			}
+		// Build active engagements count cell
+		countCell := types.TableCell{Type: "text", Value: "0"}
+		if n, ok := engagementCounts[id]; ok {
+			countCell = types.TableCell{Type: "text", Value: strconv.FormatInt(int64(n), 10)}
 		}
-		categoryCell := types.BuildChipCellFromLabels(catLabels, 3)
 
 		// Build payment term badge cell
 		ptCell := types.TableCell{Type: "text", Value: ""}
@@ -303,7 +314,7 @@ func buildTableRows(clients []*clientpb.Client, listStatus string, l entydad.Cli
 			Cells: []types.TableCell{
 				{Type: "text", Value: displayName},
 				{Type: "single-person", Person: &types.PersonData{Name: repName, Email: repEmail}},
-				categoryCell,
+				countCell,
 				ptCell,
 				balanceCell,
 			},

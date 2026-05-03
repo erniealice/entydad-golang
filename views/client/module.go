@@ -15,12 +15,14 @@ import (
 	clientdetail "github.com/erniealice/entydad-golang/views/client/detail"
 	clientform "github.com/erniealice/entydad-golang/views/client/form"
 	clientlist "github.com/erniealice/entydad-golang/views/client/list"
-	categorypb   "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
-	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
-	clientpb     "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client"
+	categorypb       "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
+	attachmentpb     "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
+	clientpb         "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client"
 	clientcategorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client_category"
-	clientstmtpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/ledger/reporting/client_statement"
-	subscriptionpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/subscription"
+	clientstmtpb     "github.com/erniealice/esqyma/pkg/schema/v1/domain/ledger/reporting/client_statement"
+	revenuepb        "github.com/erniealice/esqyma/pkg/schema/v1/domain/revenue/revenue"
+	collectionpb     "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/collection"
+	subscriptionpb   "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/subscription"
 	"github.com/erniealice/hybra-golang/views/attachment"
 	"github.com/erniealice/hybra-golang/views/auditlog"
 )
@@ -41,9 +43,10 @@ type ModuleDeps struct {
 	DashboardLabels      entydad.ClientDashboardLabels
 	DashboardTitleLabels entydad.DashboardLabels
 	TableLabels          types.TableLabels
-	GetListPageData      func(ctx context.Context, req *clientpb.GetClientListPageDataRequest) (*clientpb.GetClientListPageDataResponse, error)
-	GetInUseIDs          func(ctx context.Context, ids []string) (map[string]bool, error)
-	GetClientBalances    func(ctx context.Context) (map[string]int64, error)
+	GetListPageData           func(ctx context.Context, req *clientpb.GetClientListPageDataRequest) (*clientpb.GetClientListPageDataResponse, error)
+	GetInUseIDs               func(ctx context.Context, ids []string) (map[string]bool, error)
+	GetClientBalances         func(ctx context.Context) (map[string]int64, error)
+	GetActiveEngagementCounts func(ctx context.Context) (map[string]int32, error)
 	// Client CRUD
 	CreateClient func(ctx context.Context, req *clientpb.CreateClientRequest) (*clientpb.CreateClientResponse, error)
 	ReadClient   func(ctx context.Context, req *clientpb.ReadClientRequest) (*clientpb.ReadClientResponse, error)
@@ -97,6 +100,16 @@ type ModuleDeps struct {
 	// PriceSchedules tab appends ?context=client&client_id={cid} to pre-fill
 	// the client field.
 	PriceScheduleAddURL string
+
+	// ListRevenuesByClient returns all Revenue rows for the given client_id,
+	// ordered by revenue_date desc. Used by the outstanding-revenue table on the
+	// Statement tab. Nil-safe (tab renders empty state when not wired).
+	ListRevenuesByClient func(ctx context.Context, clientID string) ([]*revenuepb.Revenue, error)
+
+	// ListCollectionsByClient returns all Collection rows whose linked revenue
+	// has the given client_id. Used to compute paid-amount per revenue on the
+	// outstanding-revenue table. Nil-safe.
+	ListCollectionsByClient func(ctx context.Context, clientID string) ([]*collectionpb.Collection, error)
 }
 
 // Module holds all constructed client views.
@@ -133,16 +146,18 @@ func NewModule(deps *ModuleDeps) *Module {
 		CreateClientCategory:  deps.CreateClientCategory,
 		DeleteClientCategory:  deps.DeleteClientCategory,
 		GetFunctionalCurrency: deps.GetFunctionalCurrency,
+		CurrencyOptions:       deps.CommonLabels.Currency.Options,
 	}
 	listDeps := &clientlist.ListViewDeps{
-		Routes:            deps.Routes,
-		GetListPageData:   deps.GetListPageData,
-		GetInUseIDs:       deps.GetInUseIDs,
-		GetClientBalances: deps.GetClientBalances,
-		Labels:            deps.Labels,
-		SharedLabels:      deps.SharedLabels,
-		CommonLabels:      deps.CommonLabels,
-		TableLabels:       deps.TableLabels,
+		Routes:                    deps.Routes,
+		GetListPageData:           deps.GetListPageData,
+		GetInUseIDs:               deps.GetInUseIDs,
+		GetClientBalances:         deps.GetClientBalances,
+		GetActiveEngagementCounts: deps.GetActiveEngagementCounts,
+		Labels:                    deps.Labels,
+		SharedLabels:              deps.SharedLabels,
+		CommonLabels:              deps.CommonLabels,
+		TableLabels:               deps.TableLabels,
 	}
 	detailDeps := &clientdetail.DetailViewDeps{
 		Routes:                      deps.Routes,
@@ -173,6 +188,8 @@ func NewModule(deps *ModuleDeps) *Module {
 		},
 		ListClientPriceSchedules: deps.ListClientPriceSchedules,
 		PriceScheduleAddURL:      deps.PriceScheduleAddURL,
+		ListRevenuesByClient:     deps.ListRevenuesByClient,
+		ListCollectionsByClient:  deps.ListCollectionsByClient,
 	}
 
 	return &Module{

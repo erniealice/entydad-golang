@@ -23,6 +23,9 @@ type Deps struct {
 	UpdatePaymentTerm    func(ctx context.Context, req *paymenttermpb.UpdatePaymentTermRequest) (*paymenttermpb.UpdatePaymentTermResponse, error)
 	DeletePaymentTerm    func(ctx context.Context, req *paymenttermpb.DeletePaymentTermRequest) (*paymenttermpb.DeletePaymentTermResponse, error)
 	SetPaymentTermActive func(ctx context.Context, id string, active bool) error
+	// Scope is the route-derived entity scope context: "client", "supplier", or ""
+	// (empty = standalone, shows all scopes). Used to pre-fill entity_scope on Add.
+	Scope string
 }
 
 // optionalInt32 parses a string as int32, returning nil if empty or invalid.
@@ -58,6 +61,45 @@ func requiredInt32(s string) int32 {
 	return int32(v)
 }
 
+// validateAndNilOutTypeFields enforces the type-driven requiredness + nil-out matrix:
+//
+//	type            net_days   proximate_day
+//	net             A (req)    N (nil-out)
+//	due_on_receipt  N (nil-out) N (nil-out)
+//	cod             N (nil-out) N (nil-out)
+//	proximate       N (nil-out) A (req)
+//
+// A = required; N = nil-out (caller must not pass value to proto, regardless of client).
+// Returns (netDays, proximateDay, errorMsg). errorMsg is non-empty on validation failure.
+// Mirrors the JS `rules` object in the template tail script.
+func validateAndNilOutTypeFields(termType string, r *http.Request, t func(string) string) (netDays int32, proximateDay *int32, errMsg string) {
+	switch termType {
+	case "net":
+		// net_days is required for Net type.
+		rawNetDays := r.FormValue("net_days")
+		if rawNetDays == "" {
+			return 0, nil, t("paymentTerm.form.errors.netDaysRequired")
+		}
+		return requiredInt32(rawNetDays), nil, ""
+	case "due_on_receipt", "cod":
+		// Both net_days and proximate_day are N — nil-out regardless of client value.
+		return 0, nil, ""
+	case "proximate":
+		// proximate_day is required for Proximate type.
+		rawProximateDay := r.FormValue("proximate_day")
+		if rawProximateDay == "" {
+			return 0, nil, t("paymentTerm.form.errors.proximateDayRequired")
+		}
+		return 0, optionalInt32(rawProximateDay), ""
+	default:
+		// Unknown or empty type.
+		if termType == "" {
+			return 0, nil, t("paymentTerm.form.errors.typeRequired")
+		}
+		return 0, nil, t("paymentTerm.form.errors.typeInvalid")
+	}
+}
+
 // NewAddAction creates the payment term add action (GET = form, POST = create).
 func NewAddAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
@@ -67,11 +109,23 @@ func NewAddAction(deps *Deps) view.View {
 		}
 
 		if viewCtx.Request.Method == http.MethodGet {
+			// Default entity_scope from the route context so client/supplier
+			// settings pages pre-fill the right scope without operator input.
+			entityScope := deps.Scope
+			if entityScope == "" {
+				entityScope = "both"
+			}
+			labels := paymenttermform.BuildLabels(viewCtx.T)
+			// Default type to "net" for Add so the form starts in a coherent state
+			// (net_days visible+required, proximate_day hidden).
+			defaultType := "net"
 			return view.OK("payment-term-drawer-form", &paymenttermform.Data{
 				FormAction:   deps.Routes.AddURL,
 				Active:       true,
-				EntityScope:  "both",
-				Labels:       paymenttermform.BuildLabels(viewCtx.T),
+				EntityScope:  entityScope,
+				Type:         defaultType,
+				TypeOptions:  paymenttermform.BuildTypeOptions(labels, defaultType),
+				Labels:       labels,
 				CommonLabels: nil,
 			})
 		}
@@ -85,20 +139,28 @@ func NewAddAction(deps *Deps) view.View {
 		active := r.FormValue("active") == "true"
 		isDefault := r.FormValue("is_default") == "true"
 
+		// Validate and nil-out type-driven fields.
+		// This mirrors the JS rules object in the template tail script.
+		termType := r.FormValue("type")
+		netDays, proximateDay, validErr := validateAndNilOutTypeFields(termType, r, viewCtx.T)
+		if validErr != "" {
+			return entydad.HTMXError(validErr)
+		}
+
 		_, err := deps.CreatePaymentTerm(ctx, &paymenttermpb.CreatePaymentTermRequest{
 			Data: &paymenttermpb.PaymentTerm{
 				Active:             active,
 				Name:               r.FormValue("name"),
 				Code:               r.FormValue("code"),
-				Type:               r.FormValue("type"),
-				NetDays:            requiredInt32(r.FormValue("net_days")),
+				Type:               termType,
+				NetDays:            netDays,
 				DiscountDays:       optionalInt32(r.FormValue("discount_days")),
 				DiscountPercentBps: optionalInt32(r.FormValue("discount_percent_bps")),
 				EntityScope:        r.FormValue("entity_scope"),
 				IsDefault:          isDefault,
 				Description:        optionalString(r.FormValue("description")),
 				DisplayOrder:       optionalInt32(r.FormValue("display_order")),
-				ProximateDay:       optionalInt32(r.FormValue("proximate_day")),
+				ProximateDay:       proximateDay,
 			},
 		})
 		if err != nil {
@@ -156,13 +218,15 @@ func NewEditAction(deps *Deps) view.View {
 				proximateDay = strconv.FormatInt(int64(v), 10)
 			}
 
+			currentType := pt.GetType()
+			labels := paymenttermform.BuildLabels(viewCtx.T)
 			return view.OK("payment-term-drawer-form", &paymenttermform.Data{
 				FormAction:         route.ResolveURL(deps.Routes.EditURL, "id", id),
 				IsEdit:             true,
 				ID:                 id,
 				Name:               pt.GetName(),
 				Code:               pt.GetCode(),
-				Type:               pt.GetType(),
+				Type:               currentType,
 				NetDays:            netDays,
 				DiscountDays:       discountDays,
 				DiscountPercentBps: discountPercentBps,
@@ -172,7 +236,8 @@ func NewEditAction(deps *Deps) view.View {
 				DisplayOrder:       displayOrder,
 				ProximateDay:       proximateDay,
 				Active:             pt.GetActive(),
-				Labels:             paymenttermform.BuildLabels(viewCtx.T),
+				TypeOptions:        paymenttermform.BuildTypeOptions(labels, currentType),
+				Labels:             labels,
 				CommonLabels:       nil,
 			})
 		}
@@ -186,21 +251,29 @@ func NewEditAction(deps *Deps) view.View {
 		active := r.FormValue("active") == "true"
 		isDefault := r.FormValue("is_default") == "true"
 
+		// Validate and nil-out type-driven fields.
+		// This mirrors the JS rules object in the template tail script.
+		termType := r.FormValue("type")
+		netDays, proximateDay, validErr := validateAndNilOutTypeFields(termType, r, viewCtx.T)
+		if validErr != "" {
+			return entydad.HTMXError(validErr)
+		}
+
 		_, err := deps.UpdatePaymentTerm(ctx, &paymenttermpb.UpdatePaymentTermRequest{
 			Data: &paymenttermpb.PaymentTerm{
 				Id:                 id,
 				Active:             active,
 				Name:               r.FormValue("name"),
 				Code:               r.FormValue("code"),
-				Type:               r.FormValue("type"),
-				NetDays:            requiredInt32(r.FormValue("net_days")),
+				Type:               termType,
+				NetDays:            netDays,
 				DiscountDays:       optionalInt32(r.FormValue("discount_days")),
 				DiscountPercentBps: optionalInt32(r.FormValue("discount_percent_bps")),
 				EntityScope:        r.FormValue("entity_scope"),
 				IsDefault:          isDefault,
 				Description:        optionalString(r.FormValue("description")),
 				DisplayOrder:       optionalInt32(r.FormValue("display_order")),
-				ProximateDay:       optionalInt32(r.FormValue("proximate_day")),
+				ProximateDay:       proximateDay,
 			},
 		})
 		if err != nil {
