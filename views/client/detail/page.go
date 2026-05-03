@@ -54,16 +54,17 @@ type DetailViewDeps struct {
 	// Audit log operations (embedded from hybra)
 	auditlog.AuditOps
 
-	// ListClientPlans is an optional callback that fetches Plans scoped to a
-	// specific client_id. When nil the Packages tab silently renders empty state.
-	// The function returns rows with at least: PlanID, PlanName, RateCardName,
-	// and EngagementCount. It is wired from centymo's ListPlans helper filtered
-	// by client_id so entydad never imports the centymo Plan repo directly.
-	ListClientPlans func(ctx context.Context, clientID string) ([]ClientPlanRow, error)
+	// ListClientPriceSchedules is an optional callback that fetches PriceSchedules
+	// scoped to a specific client_id (price_schedule.client_id == clientID).
+	// When nil the PriceSchedules tab silently renders empty state.
+	// It is wired from centymo's ListPriceSchedules use case filtered by client_id
+	// so entydad never imports the centymo PriceSchedule repo directly.
+	ListClientPriceSchedules func(ctx context.Context, clientID string) ([]ClientPriceScheduleRow, error)
 
-	// PlanAddURL is the centymo Plan-add drawer URL. The Packages tab appends
-	// ?context=client&client_id={cid} to pre-fill and lock the client field.
-	PlanAddURL string
+	// PriceScheduleAddURL is the centymo PriceSchedule-add drawer URL.
+	// The PriceSchedules tab appends ?context=client&client_id={cid} to
+	// pre-fill and lock the client field.
+	PriceScheduleAddURL string
 }
 
 // TagChip represents a tag displayed as a chip on the detail page.
@@ -115,8 +116,8 @@ type PageData struct {
 	// Subscriptions tab
 	Subscriptions      []SubscriptionRow
 	SubscriptionsTable *types.TableConfig
-	// Packages tab
-	PackagesTable      *types.TableConfig
+	// PriceSchedules tab
+	PriceSchedulesTable *types.TableConfig
 	// Accounting tab
 	BillingCurrency string
 	// Statement tab
@@ -185,7 +186,7 @@ func NewView(deps *DetailViewDeps) view.View {
 			statusVariant = "warning"
 		}
 
-		tabItems := buildTabItems(id, deps, countClientSubscriptions(ctx, deps, id))
+		tabItems := buildTabItems(id, deps, countClientSubscriptions(ctx, deps, id), countClientPriceSchedules(ctx, deps, id))
 
 		// CRM fields
 		name := client.GetName()
@@ -253,8 +254,8 @@ func NewView(deps *DetailViewDeps) view.View {
 			subs := loadClientSubscriptions(ctx, deps, id)
 			pageData.Subscriptions = subs
 			pageData.SubscriptionsTable = buildSubscriptionsTable(subs, pageData.SubscriptionAddURL, id, clientName, deps)
-		case "packages":
-			pageData.PackagesTable = buildPackagesTable(ctx, deps, id, clientName)
+		case "priceSchedules":
+			pageData.PriceSchedulesTable = buildPriceSchedulesTable(ctx, deps, id, clientName)
 		case "statement":
 			if deps.GetClientStatement != nil {
 				req := &clientstmtpb.ClientStatementRequest{
@@ -311,16 +312,17 @@ func NewView(deps *DetailViewDeps) view.View {
 	})
 }
 
-func buildTabItems(id string, deps *DetailViewDeps, subscriptionCount int) []pyeza.TabItem {
+func buildTabItems(id string, deps *DetailViewDeps, subscriptionCount, priceScheduleCount int) []pyeza.TabItem {
 	routes := deps.Routes
 	base := route.ResolveURL(routes.DetailURL, "id", id)
 	action := route.ResolveURL(routes.TabActionURL, "id", id, "tab", "")
 	subscriptionsSlug := deps.Labels.Detail.Tabs.ResolveTabSlug("subscriptions")
+	priceSchedulesSlug := deps.Labels.Detail.Tabs.ResolveTabSlug("priceSchedules")
 	return []pyeza.TabItem{
 		{Key: "info", Label: deps.Labels.Detail.Tabs.Info, Href: base + "?tab=info", HxGet: action + "info", Icon: "icon-info"},
 		{Key: "representative", Label: deps.Labels.Detail.Tabs.Representative, Href: base + "?tab=representative", HxGet: action + "representative", Icon: "icon-user"},
+		{Key: "priceSchedules", Label: deps.Labels.Detail.Tabs.PriceSchedules, Href: base + "?tab=" + priceSchedulesSlug, HxGet: action + priceSchedulesSlug, Icon: "icon-calendar", Count: priceScheduleCount},
 		{Key: "subscriptions", Label: deps.Labels.Detail.Tabs.Subscriptions, Href: base + "?tab=" + subscriptionsSlug, HxGet: action + subscriptionsSlug, Icon: "icon-file-text", Count: subscriptionCount},
-		{Key: "packages", Label: deps.Labels.Detail.Tabs.Packages, Href: base + "?tab=packages", HxGet: action + "packages", Icon: "icon-package"},
 		{Key: "statement", Label: deps.Labels.Detail.Tabs.Statement, Href: base + "?tab=statement", HxGet: action + "statement", Icon: "icon-file-text"},
 		{Key: "attachments", Label: deps.Labels.Detail.Tabs.Attachments, Href: base + "?tab=attachments", HxGet: action + "attachments", Icon: "icon-paperclip"},
 		{Key: "audit-history", Label: deps.Labels.Detail.Tabs.AuditHistory, Href: base + "?tab=audit-history", HxGet: action + "audit-history", Icon: "icon-clock"},
@@ -378,7 +380,7 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 			Client:             client,
 			Labels:             deps.Labels,
 			ActiveTab:          tab,
-			TabItems:           buildTabItems(id, deps, countClientSubscriptions(ctx, deps, id)),
+			TabItems:           buildTabItems(id, deps, countClientSubscriptions(ctx, deps, id), countClientPriceSchedules(ctx, deps, id)),
 			ClientName:         clientName,
 			RepresentativeName: representativeName,
 			ClientEmail:        clientEmail,
@@ -410,8 +412,8 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 		case "subscriptions":
 			pageData.Subscriptions = loadClientSubscriptions(ctx, deps, id)
 			pageData.SubscriptionsTable = buildSubscriptionsTable(pageData.Subscriptions, pageData.SubscriptionAddURL, id, clientName, deps)
-		case "packages":
-			pageData.PackagesTable = buildPackagesTable(ctx, deps, id, clientName)
+		case "priceSchedules":
+			pageData.PriceSchedulesTable = buildPriceSchedulesTable(ctx, deps, id, clientName)
 		case "statement":
 			if deps.GetClientStatement != nil {
 				req := &clientstmtpb.ClientStatementRequest{
@@ -461,11 +463,27 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 		if tab == "audit-history" {
 			templateName = "audit-history-tab"
 		}
-		if tab == "packages" {
-			templateName = "client-tab-packages"
+		if tab == "priceSchedules" {
+			templateName = "client-tab-priceSchedules"
 		}
 		return view.OK(templateName, pageData)
 	})
+}
+
+// countClientPriceSchedules returns the count of price_schedules scoped to
+// this client. Reuses the same callback that powers the PriceSchedules tab —
+// returns 0 if the dep is unwired or the call errors. The count surfaces in
+// the tab header badge alongside the Subscriptions count.
+func countClientPriceSchedules(ctx context.Context, deps *DetailViewDeps, clientID string) int {
+	if deps.ListClientPriceSchedules == nil {
+		return 0
+	}
+	rows, err := deps.ListClientPriceSchedules(ctx, clientID)
+	if err != nil {
+		log.Printf("Failed to count price schedules for client %s: %v", clientID, err)
+		return 0
+	}
+	return len(rows)
 }
 
 // countClientSubscriptions returns the active-subscription count for a client.

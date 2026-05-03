@@ -139,8 +139,8 @@ type ClientDetailLabels struct {
 	// Statement empty state
 	EmptyStatementTitle   string `json:"emptyStatementTitle"`
 	EmptyStatementMessage string `json:"emptyStatementMessage"`
-	// Packages tab
-	Packages ClientPackagesLabels `json:"packages"`
+	// PriceSchedules tab
+	PriceSchedules ClientPriceSchedulesLabels `json:"priceSchedules"`
 	// Subscriptions tab column headers + confirm dialogs
 	Subscriptions ClientSubscriptionLabels `json:"subscriptions"`
 	// Statement tab column headers + totals row
@@ -180,19 +180,24 @@ type ClientDetailTabLabels struct {
 	SubscriptionsSlug string `json:"subscriptionsSlug"`
 	Accounting        string `json:"accounting"`
 	History           string `json:"history"`
-	Statement         string `json:"statement"`
-	Packages          string `json:"packages"`
-	Attachments       string `json:"attachments"`
-	AuditHistory      string `json:"auditHistory"`
+	Statement          string `json:"statement"`
+	PriceSchedules     string `json:"priceSchedules"`
+	PriceSchedulesSlug string `json:"priceSchedulesSlug"`
+	Attachments        string `json:"attachments"`
+	AuditHistory       string `json:"auditHistory"`
 }
 
-// ClientPackagesLabels holds labels for the Packages tab on the client detail page.
-type ClientPackagesLabels struct {
-	Empty             string `json:"empty"`
-	AddAction         string `json:"addAction"`
-	ColumnName        string `json:"columnName"`
-	ColumnRateCard    string `json:"columnRateCard"`
-	ColumnEngagements string `json:"columnEngagements"`
+// ClientPriceSchedulesLabels holds labels for the PriceSchedules tab on the
+// client detail page. All copy uses proto-generic vocabulary ("price schedule",
+// "plan", "client"); tier-specific words ("rate card", "package") live only in
+// lyngua JSON overrides.
+type ClientPriceSchedulesLabels struct {
+	Empty           string `json:"empty"`
+	AddAction       string `json:"addAction"`
+	ColumnName      string `json:"columnName"`
+	ColumnDateStart string `json:"columnDateStart"`
+	ColumnDateEnd   string `json:"columnDateEnd"`
+	ColumnPlanCount string `json:"columnPlanCount"`
 }
 
 // ClientSubscriptionLabels holds column headers, actions, and confirm-dialog labels
@@ -219,12 +224,18 @@ type ClientStatementLabels struct {
 	TotalsRowLabel    string `json:"totalsRowLabel"`
 }
 
-// ResolveTabSlug returns the URL slug for a canonical tab key. The
-// "subscriptions" tab can be re-slugged per tier (e.g. professional ships
-// "engagements"); other tabs round-trip through as-is.
+// ResolveTabSlug returns the URL slug for a canonical tab key. Tier-specific
+// slugs flow through here so URLs match the operator's vocabulary (e.g.
+// professional ships "engagements" + "rate-cards"). Tabs without overrides
+// round-trip through unchanged.
 func (t ClientDetailTabLabels) ResolveTabSlug(canonical string) string {
-	if canonical == "subscriptions" {
+	switch canonical {
+	case "subscriptions":
 		if s := strings.TrimSpace(t.SubscriptionsSlug); s != "" {
+			return s
+		}
+	case "priceSchedules":
+		if s := strings.TrimSpace(t.PriceSchedulesSlug); s != "" {
 			return s
 		}
 	}
@@ -239,6 +250,9 @@ func (t ClientDetailTabLabels) CanonicalizeTab(slug string) string {
 	}
 	if s := strings.TrimSpace(t.SubscriptionsSlug); s != "" && slug == s {
 		return "subscriptions"
+	}
+	if s := strings.TrimSpace(t.PriceSchedulesSlug); s != "" && slug == s {
+		return "priceSchedules"
 	}
 	return slug
 }

@@ -26,7 +26,8 @@ import (
 	"github.com/erniealice/entydad-golang"
 	adminmod "github.com/erniealice/entydad-golang/views/admin"
 	admindashboardroutes "github.com/erniealice/entydad-golang/views/admin/dashboard"
-	clientmod "github.com/erniealice/entydad-golang/views/client"
+	clientmod    "github.com/erniealice/entydad-golang/views/client"
+	clientdetail "github.com/erniealice/entydad-golang/views/client/detail"
 	clienttagmod "github.com/erniealice/entydad-golang/views/clienttag"
 	suppliertagmod "github.com/erniealice/entydad-golang/views/suppliertag"
 	locationmod "github.com/erniealice/entydad-golang/views/location"
@@ -47,18 +48,21 @@ import (
 	workspaceuserrolemod "github.com/erniealice/entydad-golang/views/workspace_user_role"
 	"github.com/erniealice/espyna-golang/consumer"
 	"github.com/erniealice/espyna-golang/reference"
+	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/espyna-golang/registry"
 	entityid "github.com/erniealice/espyna-golang/registry/entityid"
-	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
-	categorypb   "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
+	attachmentpb  "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
+	categorypb    "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
 	paymenttermpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/payment_term"
-	userpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/user"
-	workspacepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace"
-	clientstmtpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/ledger/reporting/client_statement"
-	suppstmtpb   "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/reporting/supplier_statement"
+	userpb        "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/user"
+	workspacepb   "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace"
+	clientstmtpb  "github.com/erniealice/esqyma/pkg/schema/v1/domain/ledger/reporting/client_statement"
+	priceplanpb     "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/price_plan"
+	priceschedulepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/price_schedule"
+	suppstmtpb    "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/reporting/supplier_statement"
 	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
 	pyeza "github.com/erniealice/pyeza-golang"
-	"github.com/erniealice/pyeza-golang/types"
+	pyezatypes "github.com/erniealice/pyeza-golang/types"
 )
 
 // routeRegistrarFull — optional extension for raw http.HandlerFunc routes.
@@ -204,7 +208,7 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 		getUsersByRoleID, _ := ctx.GetUsersByRoleID.(func(ctx context.Context, roleID string) ([]roleusers.UserByRole, error))
 		getDashboardData, _ := ctx.GetDashboardData.(func(ctx context.Context) (*userdashboard.DashboardData, error))
 		hashPassword, _ := ctx.HashPassword.(func(password string) (string, error))
-		getUserWorkspacesMap, _ := ctx.GetUserWorkspacesMap.(func(ctx context.Context) (map[string][]types.ChipData, error))
+		getUserWorkspacesMap, _ := ctx.GetUserWorkspacesMap.(func(ctx context.Context) (map[string][]pyezatypes.ChipData, error))
 
 		// type-assert ledger reporting service (nil-safe)
 		ledgerReportingSvc, _ := ctx.LedgerReportingSvc.(consumer.LedgerReportingService)
@@ -299,6 +303,67 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 			if uc.Subscription != nil && uc.Subscription.Subscription != nil {
 				clientDeps.ListSubscriptions = uc.Subscription.Subscription.ListSubscriptions.Execute
 				clientDeps.GetSubscriptionListPageData = uc.Subscription.Subscription.GetSubscriptionListPageData.Execute
+			}
+			// Wire the PriceSchedules tab: list all price_schedules, filter to
+			// client_id == clientID, then map each to a ClientPriceScheduleRow.
+			// PlanCount is computed from a single secondary ListPricePlans call —
+			// build a map[scheduleID]int once, then injected per row. DetailURL
+			// resolved from the active PriceSchedule route config (lyngua overrides
+			// per business type).
+			if uc.Subscription != nil && uc.Subscription.PriceSchedule != nil && uc.Subscription.PriceSchedule.ListPriceSchedules != nil {
+				listPriceSchedules := uc.Subscription.PriceSchedule.ListPriceSchedules.Execute
+				var listPricePlans func(context.Context, *priceplanpb.ListPricePlansRequest) (*priceplanpb.ListPricePlansResponse, error)
+				if uc.Subscription.PricePlan != nil && uc.Subscription.PricePlan.ListPricePlans != nil {
+					listPricePlans = uc.Subscription.PricePlan.ListPricePlans.Execute
+				}
+				psDetailURL := routes.PriceSchedule.DetailURL
+				clientDeps.ListClientPriceSchedules = func(fctx context.Context, clientID string) ([]clientdetail.ClientPriceScheduleRow, error) {
+					resp, err := listPriceSchedules(fctx, &priceschedulepb.ListPriceSchedulesRequest{})
+					if err != nil {
+						return nil, err
+					}
+					// Build plan count by schedule_id: one ListPricePlans call,
+					// tally GetPriceScheduleId() per row. Failures are non-fatal
+					// (counts default to 0).
+					planCountBySchedule := map[string]int{}
+					if listPricePlans != nil {
+						ppResp, ppErr := listPricePlans(fctx, &priceplanpb.ListPricePlansRequest{})
+						if ppErr != nil {
+							log.Printf("entydad.Block: failed to list price plans for plan-count column: %v", ppErr)
+						} else {
+							for _, pp := range ppResp.GetData() {
+								if sid := pp.GetPriceScheduleId(); sid != "" {
+									planCountBySchedule[sid]++
+								}
+							}
+						}
+					}
+					tz := pyezatypes.LocationFromContext(fctx)
+					var rows []clientdetail.ClientPriceScheduleRow
+					for _, s := range resp.GetData() {
+						if s.GetClientId() != clientID {
+							continue
+						}
+						detailURL := ""
+						if psDetailURL != "" {
+							detailURL = route.ResolveURL(psDetailURL, "id", s.GetId())
+						}
+						startDate, startTime := pyezatypes.FormatTimestampSplitInTZ(s.GetDateTimeStart(), tz)
+						endDate, endTime := pyezatypes.FormatTimestampSplitInTZ(s.GetDateTimeEnd(), tz)
+						rows = append(rows, clientdetail.ClientPriceScheduleRow{
+							ID:            s.GetId(),
+							Name:          s.GetName(),
+							DateStartDate: startDate,
+							DateStartTime: startTime,
+							DateEndDate:   endDate,
+							DateEndTime:   endTime,
+							PlanCount:     planCountBySchedule[s.GetId()],
+							DetailURL:     detailURL,
+						})
+					}
+					return rows, nil
+				}
+				clientDeps.PriceScheduleAddURL = routes.PriceSchedule.AddURL
 			}
 			if uc.Entity.Workspace != nil && uc.Entity.Workspace.ReadWorkspace != nil {
 				readWorkspace := uc.Entity.Workspace.ReadWorkspace.Execute
@@ -963,6 +1028,7 @@ type blockRoutes struct {
 	PaymentTerm         entydad.PaymentTermRoutes
 	SupplierPaymentTerm entydad.SupplierPaymentTermRoutes
 	Subscription        centymo.SubscriptionRoutes
+	PriceSchedule       centymo.PriceScheduleRoutes
 	User                entydad.UserRoutes
 	Role                entydad.RoleRoutes
 	Location            entydad.LocationRoutes
@@ -1056,6 +1122,9 @@ func loadBlockRoutes(t *lynguaV1.TranslationProvider, businessType string) block
 
 	r.Subscription = centymo.DefaultSubscriptionRoutes()
 	_ = t.LoadPathIfExists("en", businessType, "route.json", "subscription", &r.Subscription)
+
+	r.PriceSchedule = centymo.DefaultPriceScheduleRoutes()
+	_ = t.LoadPathIfExists("en", businessType, "route.json", "price_schedule", &r.PriceSchedule)
 
 	r.User = entydad.DefaultUserRoutes()
 	_ = t.LoadPathIfExists("en", businessType, "route.json", "user", &r.User)
