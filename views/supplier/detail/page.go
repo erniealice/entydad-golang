@@ -99,8 +99,7 @@ type PageData struct {
 	HasAddress   bool
 	HasNotes     bool
 	// Attachments
-	AttachmentTable     *types.TableConfig
-	AttachmentUploadURL string
+	AttachmentTable *types.TableConfig
 	// Audit history tab
 	AuditEntries    []auditlog.AuditEntryView
 	AuditHasNext    bool

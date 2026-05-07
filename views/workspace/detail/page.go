@@ -12,6 +12,7 @@ import (
 	"github.com/erniealice/pyeza-golang/view"
 
 	"github.com/erniealice/entydad-golang"
+	"github.com/erniealice/hybra-golang/views/attachment"
 	commonpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
 	workspacepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace"
 	workspaceuserpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace_user"
@@ -31,6 +32,9 @@ type DetailViewDeps struct {
 	// WorkspaceUserAddURL is the drawer action for "Add user to workspace".
 	// Phase 2 will add this handler; emit the URL so the button target is wired.
 	WorkspaceUserAddURL string
+
+	// Attachment operations (embedded from hybra)
+	attachment.AttachmentOps
 }
 
 // WorkspaceUserRow holds display data for a single workspace_user in the Users tab table.
@@ -61,16 +65,19 @@ type PageData struct {
 	// Users tab
 	UsersTable          *types.TableConfig
 	WorkspaceUserAddURL string
+	// Attachments tab
+	AttachmentTable *types.TableConfig
 }
 
 // tabLabels holds the resolved tab display strings, sourced from the lyngua
 // workspace.json keys added in Phase 1.
 type tabLabels struct {
-	Info  string
-	Users string
+	Info        string
+	Users       string
+	Attachments string
 }
 
-// resolveTabLabels returns display strings for the two tabs.
+// resolveTabLabels returns display strings for the tabs.
 // The labels are loaded from WorkspaceLabels.Detail.Tabs (added in Phase 1).
 // If the struct fields are empty (older lyngua build), fall back to English literals.
 func resolveTabLabels(l entydad.WorkspaceLabels) tabLabels {
@@ -82,7 +89,11 @@ func resolveTabLabels(l entydad.WorkspaceLabels) tabLabels {
 	if users == "" {
 		users = "Users"
 	}
-	return tabLabels{Info: info, Users: users}
+	attachments := l.Detail.Tabs.Attachments
+	if attachments == "" {
+		attachments = "Attachments"
+	}
+	return tabLabels{Info: info, Users: users, Attachments: attachments}
 }
 
 // NewView creates the workspace detail view (full page load).
@@ -108,6 +119,8 @@ func NewView(deps *DetailViewDeps) view.View {
 		switch activeTab {
 		case "users":
 			pageData.UsersTable = buildUsersTable(ctx, deps, id, tl)
+		case "attachments":
+			loadAttachments(ctx, deps, id, pageData)
 		}
 
 		return view.OK("workspace-detail", pageData)
@@ -137,6 +150,9 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 		case "users":
 			pageData.UsersTable = buildUsersTable(ctx, deps, id, tl)
 			return view.OK("workspace-tab-users", pageData)
+		case "attachments":
+			loadAttachments(ctx, deps, id, pageData)
+			return view.OK("attachment-tab", pageData)
 		default:
 			return view.OK("workspace-tab-info", pageData)
 		}
@@ -193,13 +209,14 @@ func buildPageData(viewCtx *view.ViewContext, id string, ws *workspacepb.Workspa
 	}
 }
 
-// buildTabItems constructs the two tab items (Info, Users) for the workspace detail page.
+// buildTabItems constructs the tab items for the workspace detail page.
 func buildTabItems(id string, deps *DetailViewDeps, tl tabLabels) []pyeza.TabItem {
 	base := route.ResolveURL(deps.Routes.DetailURL, "id", id)
 	action := route.ResolveURL(deps.Routes.TabActionURL, "id", id, "tab", "")
 	return []pyeza.TabItem{
 		{Key: "info", Label: tl.Info, Href: base + "?tab=info", HxGet: action + "info", Icon: "icon-info"},
 		{Key: "users", Label: tl.Users, Href: base + "?tab=users", HxGet: action + "users", Icon: "icon-users"},
+		{Key: "attachments", Label: tl.Attachments, Href: base + "?tab=attachments", HxGet: action + "attachments", Icon: "icon-paperclip"},
 	}
 }
 

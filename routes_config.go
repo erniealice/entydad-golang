@@ -54,6 +54,9 @@ type ClientRoutes struct {
 	// Settings routes
 	PaymentTermsURL  string `json:"payment_terms_url"`
 	ClientTagListURL string `json:"client_tag_list_url"` // cross-app link to client-tag list (dashboard quick-action)
+
+	// RevenueRunURL is the per-client "Run Invoices" drawer endpoint.
+	RevenueRunURL string `json:"revenue_run_url"`
 }
 
 // DefaultClientRoutes returns a ClientRoutes populated from the package-level
@@ -82,6 +85,7 @@ func DefaultClientRoutes() ClientRoutes {
 
 		PaymentTermsURL:  PaymentTermListURL,
 		ClientTagListURL: ClientTagListURL,
+		RevenueRunURL:    ClientRevenueRunURL,
 	}
 }
 
@@ -108,7 +112,8 @@ func (r ClientRoutes) RouteMap() map[string]string {
 
 		"client.receivables_aging": r.ReceivablesAgingURL,
 
-		"client.payment_terms": r.PaymentTermsURL,
+		"client.payment_terms":  r.PaymentTermsURL,
+		"client.revenue_run":    r.RevenueRunURL,
 	}
 }
 
@@ -529,6 +534,10 @@ type WorkspaceRoutes struct {
 	SwitchURL        string `json:"switch_url"`
 	DetailURL        string `json:"detail_url"`
 	TabActionURL     string `json:"tab_action_url"`
+
+	// Attachment routes
+	AttachmentUploadURL string `json:"attachment_upload_url"`
+	AttachmentDeleteURL string `json:"attachment_delete_url"`
 }
 
 // DefaultWorkspaceRoutes returns a WorkspaceRoutes populated from the
@@ -546,6 +555,9 @@ func DefaultWorkspaceRoutes() WorkspaceRoutes {
 		SwitchURL:        WorkspaceSwitchURL,
 		DetailURL:        WorkspaceDetailURL,
 		TabActionURL:     WorkspaceTabActionURL,
+
+		AttachmentUploadURL: WorkspaceAttachmentUploadURL,
+		AttachmentDeleteURL: WorkspaceAttachmentDeleteURL,
 	}
 }
 
@@ -563,6 +575,9 @@ func (r WorkspaceRoutes) RouteMap() map[string]string {
 		"workspace.switch_url":      r.SwitchURL,
 		"workspace.detail":          r.DetailURL,
 		"workspace.tab_action":      r.TabActionURL,
+
+		"workspace.attachment.upload": r.AttachmentUploadURL,
+		"workspace.attachment.delete": r.AttachmentDeleteURL,
 	}
 }
 
@@ -579,6 +594,10 @@ type WorkspaceUserRoutes struct {
 	DeleteURL    string `json:"delete_url"`
 	SetStatusURL string `json:"set_status_url"`
 	SearchURL    string `json:"search_url"`
+
+	// Attachment routes
+	AttachmentUploadURL string `json:"attachment_upload_url"`
+	AttachmentDeleteURL string `json:"attachment_delete_url"`
 }
 
 // DefaultWorkspaceUserRoutes returns a WorkspaceUserRoutes populated from the
@@ -592,6 +611,9 @@ func DefaultWorkspaceUserRoutes() WorkspaceUserRoutes {
 		DeleteURL:    WorkspaceUserDeleteURL,
 		SetStatusURL: WorkspaceUserSetStatusURL,
 		SearchURL:    WorkspaceUserSearchURL,
+
+		AttachmentUploadURL: WorkspaceUserAttachmentUploadURL,
+		AttachmentDeleteURL: WorkspaceUserAttachmentDeleteURL,
 	}
 }
 
@@ -605,6 +627,9 @@ func (r WorkspaceUserRoutes) RouteMap() map[string]string {
 		"workspace_user.delete":     r.DeleteURL,
 		"workspace_user.set_status": r.SetStatusURL,
 		"workspace_user.search":     r.SearchURL,
+
+		"workspace_user.attachment.upload": r.AttachmentUploadURL,
+		"workspace_user.attachment.delete": r.AttachmentDeleteURL,
 	}
 }
 

@@ -148,6 +148,8 @@ type ClientDetailLabels struct {
 	Statement ClientStatementLabels `json:"statement"`
 	// OutstandingTable tab column headers + empty state
 	OutstandingTable ClientOutstandingTableLabels `json:"outstandingTable"`
+	// RevenueRun drawer labels for the per-client Run Invoices flow
+	RevenueRun ClientRevenueRunLabels `json:"revenueRun"`
 }
 
 type ClientCompanyDetailLabels struct {
@@ -230,8 +232,9 @@ type ClientStatementLabels struct {
 // ClientOutstandingTableLabels holds column headers and empty-state labels for
 // the outstanding-revenue table on the Statement tab.
 type ClientOutstandingTableLabels struct {
-	Columns ClientOutstandingTableColumnLabels `json:"columns"`
-	Empty   ClientOutstandingTableEmptyLabels  `json:"empty"`
+	Columns          ClientOutstandingTableColumnLabels `json:"columns"`
+	Empty            ClientOutstandingTableEmptyLabels  `json:"empty"`
+	RunInvoicesLabel string                             `json:"runInvoicesLabel"`
 }
 
 // ClientOutstandingTableColumnLabels holds column header labels for the
@@ -252,6 +255,41 @@ type ClientOutstandingTableColumnLabels struct {
 type ClientOutstandingTableEmptyLabels struct {
 	Title   string `json:"title"`
 	Message string `json:"message"`
+}
+
+// ClientRevenueRunLabels holds labels for the per-client Run Invoices
+// drawer surfaced from the Statement-tab outstanding table.
+type ClientRevenueRunLabels struct {
+	Title                 string                     `json:"title"`
+	SubtitleTemplate      string                     `json:"subtitleTemplate"`
+	AsOfDateLabel         string                     `json:"asOfDateLabel"`
+	AsOfDateHint          string                     `json:"asOfDateHint"`
+	BillThroughTodayLabel string                     `json:"billThroughTodayLabel"`
+	ColumnEngagement      string                     `json:"columnEngagement"`
+	ColumnPeriod          string                     `json:"columnPeriod"`
+	ColumnAmount          string                     `json:"columnAmount"`
+	ColumnLines           string                     `json:"columnLines"`
+	GroupTotalLabel       string                     `json:"groupTotalLabel"`
+	GroupNoPending        string                     `json:"groupNoPending"`
+	GroupCurrencyMismatch string                     `json:"groupCurrencyMismatch"`
+	ColumnSelectAriaLabel string                     `json:"columnSelectAriaLabel"`
+	EmptyTitle            string                     `json:"emptyTitle"`
+	EmptyMessage          string                     `json:"emptyMessage"`
+	GenerateButton        string                     `json:"generateButton"`
+	GenerateButtonCount   string                     `json:"generateButtonCount"`
+	CancelButton          string                     `json:"cancelButton"`
+	ToastSuccess          string                     `json:"toastSuccess"`
+	ViewRunLink           string                     `json:"viewRunLink"`
+	Errors                ClientRevenueRunErrorLabels `json:"errors"`
+}
+
+// ClientRevenueRunErrorLabels — error copy surfaced in the drawer.
+type ClientRevenueRunErrorLabels struct {
+	PermissionDenied   string `json:"permissionDenied"`
+	IDRequired         string `json:"idRequired"`
+	InvalidFormData    string `json:"invalidFormData"`
+	UseCaseUnavailable string `json:"useCaseUnavailable"`
+	SelectOne          string `json:"selectOne"`
 }
 
 // ResolveTabSlug returns the URL slug for a canonical tab key. Tier-specific
@@ -962,8 +1000,9 @@ type WorkspaceDetailLabels struct {
 
 // WorkspaceDetailTabLabels holds the tab display names for the workspace detail page.
 type WorkspaceDetailTabLabels struct {
-	Info  string `json:"info"`
-	Users string `json:"users"`
+	Info        string `json:"info"`
+	Users       string `json:"users"`
+	Attachments string `json:"attachments"`
 }
 
 // WorkspaceDetailUserLabels holds i18n strings for the Users tab on the workspace detail page.
@@ -1051,8 +1090,9 @@ type WorkspaceUserDetailLabels struct {
 }
 
 type WorkspaceUserDetailTabLabels struct {
-	Info  string `json:"info"`
-	Roles string `json:"roles"`
+	Info        string `json:"info"`
+	Roles       string `json:"roles"`
+	Attachments string `json:"attachments"`
 }
 
 type WorkspaceUserDetailRolesLabels struct {

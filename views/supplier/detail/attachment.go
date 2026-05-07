@@ -11,7 +11,8 @@ import (
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
 )
 
-// loadAttachments populates the AttachmentTable and AttachmentUploadURL on PageData.
+// loadAttachments populates the AttachmentTable on PageData. The Upload CTA
+// is carried by AttachmentTable.PrimaryAction (set inside attachment.BuildTable).
 func loadAttachments(ctx context.Context, deps *DetailViewDeps, id string, pageData *PageData) {
 	cfg := attachmentConfig(deps, id)
 
@@ -26,8 +27,6 @@ func loadAttachments(ctx context.Context, deps *DetailViewDeps, id string, pageD
 		}
 		pageData.AttachmentTable = attachment.BuildTable(items, cfg, id)
 	}
-
-	pageData.AttachmentUploadURL = route.ResolveURL(deps.Routes.AttachmentUploadURL, "id", id)
 }
 
 // attachmentConfig builds the shared attachment.Config for the supplier entity.

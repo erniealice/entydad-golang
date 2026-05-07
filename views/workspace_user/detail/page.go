@@ -15,6 +15,7 @@ import (
 	"github.com/erniealice/pyeza-golang/view"
 
 	"github.com/erniealice/entydad-golang"
+	"github.com/erniealice/hybra-golang/views/attachment"
 	workspaceuserpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace_user"
 	workspaceuserrolepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace_user_role"
 )
@@ -31,6 +32,9 @@ type DetailViewDeps struct {
 	GetWorkspaceUserRoleListPageData func(ctx context.Context, req *workspaceuserrolepb.GetWorkspaceUserRoleListPageDataRequest) (*workspaceuserrolepb.GetWorkspaceUserRoleListPageDataResponse, error)
 	WorkspaceUserRoleAddURL    string
 	WorkspaceUserRoleDeleteURL string
+
+	// Attachment operations (embedded from hybra)
+	attachment.AttachmentOps
 }
 
 // PageData holds the data for the workspace_user detail page.
@@ -55,15 +59,18 @@ type PageData struct {
 	// Roles tab
 	RolesTable                  *types.TableConfig
 	WorkspaceUserRoleAddURL     string
+	// Attachments tab
+	AttachmentTable *types.TableConfig
 }
 
 // tabLabels holds the resolved tab display strings.
 type tabLabels struct {
-	Info  string
-	Roles string
+	Info        string
+	Roles       string
+	Attachments string
 }
 
-// resolveTabLabels returns display strings for the two tabs with English fallbacks.
+// resolveTabLabels returns display strings for the tabs with English fallbacks.
 func resolveTabLabels(l entydad.WorkspaceUserLabels) tabLabels {
 	info := l.Detail.Tabs.Info
 	if info == "" {
@@ -73,7 +80,11 @@ func resolveTabLabels(l entydad.WorkspaceUserLabels) tabLabels {
 	if roles == "" {
 		roles = "Roles"
 	}
-	return tabLabels{Info: info, Roles: roles}
+	attachments := l.Detail.Tabs.Attachments
+	if attachments == "" {
+		attachments = "Attachments"
+	}
+	return tabLabels{Info: info, Roles: roles, Attachments: attachments}
 }
 
 // NewView creates the workspace_user detail view (full page load).
@@ -98,6 +109,8 @@ func NewView(deps *DetailViewDeps) view.View {
 		switch activeTab {
 		case "roles":
 			pageData.RolesTable = buildRolesTable(ctx, deps, wu, tl)
+		case "attachments":
+			loadAttachments(ctx, deps, id, pageData)
 		}
 
 		return view.OK("workspace-user-detail", pageData)
@@ -127,6 +140,9 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 		case "roles":
 			pageData.RolesTable = buildRolesTable(ctx, deps, wu, tl)
 			return view.OK("workspace-user-tab-roles", pageData)
+		case "attachments":
+			loadAttachments(ctx, deps, id, pageData)
+			return view.OK("attachment-tab", pageData)
 		default:
 			return view.OK("workspace-user-tab-info", pageData)
 		}
@@ -224,13 +240,14 @@ func buildPageData(viewCtx *view.ViewContext, id string, wu *workspaceuserpb.Wor
 	}
 }
 
-// buildTabItems constructs the Info and Roles tab items.
+// buildTabItems constructs the tab items for the workspace_user detail page.
 func buildTabItems(id string, deps *DetailViewDeps, tl tabLabels) []pyeza.TabItem {
 	base := route.ResolveURL(deps.Routes.DetailURL, "id", id)
 	action := route.ResolveURL(deps.Routes.TabActionURL, "id", id, "tab", "")
 	return []pyeza.TabItem{
 		{Key: "info", Label: tl.Info, Href: base + "?tab=info", HxGet: action + "info", Icon: "icon-info"},
 		{Key: "roles", Label: tl.Roles, Href: base + "?tab=roles", HxGet: action + "roles", Icon: "icon-shield"},
+		{Key: "attachments", Label: tl.Attachments, Href: base + "?tab=attachments", HxGet: action + "attachments", Icon: "icon-paperclip"},
 	}
 }
 

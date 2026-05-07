@@ -15,9 +15,11 @@ import (
 	workspaceaction "github.com/erniealice/entydad-golang/views/workspace_user/action"
 	workspaceuserdetail "github.com/erniealice/entydad-golang/views/workspace_user/detail"
 	workspaceuserlist "github.com/erniealice/entydad-golang/views/workspace_user/list"
+	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
 	userpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/user"
 	workspaceuserpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace_user"
 	workspaceuserrolepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace_user_role"
+	"github.com/erniealice/hybra-golang/views/attachment"
 )
 
 // routeRegistrarFull extends view.RouteRegistrar with HandleFunc support.
@@ -48,19 +50,28 @@ type ModuleDeps struct {
 	GetWorkspaceUserRoleListPageData func(ctx context.Context, req *workspaceuserrolepb.GetWorkspaceUserRoleListPageDataRequest) (*workspaceuserrolepb.GetWorkspaceUserRoleListPageDataResponse, error)
 	WorkspaceUserRoleAddURL    string
 	WorkspaceUserRoleDeleteURL string
+
+	// Attachment operations
+	UploadFile       func(ctx context.Context, bucket, key string, content []byte, contentType string) error
+	ListAttachments  func(ctx context.Context, moduleKey, foreignKey string) (*attachmentpb.ListAttachmentsResponse, error)
+	CreateAttachment func(ctx context.Context, req *attachmentpb.CreateAttachmentRequest) (*attachmentpb.CreateAttachmentResponse, error)
+	DeleteAttachment func(ctx context.Context, req *attachmentpb.DeleteAttachmentRequest) (*attachmentpb.DeleteAttachmentResponse, error)
+	NewID            func() string
 }
 
 // Module holds all constructed workspace_user views.
 type Module struct {
-	routes    entydad.WorkspaceUserRoutes
-	List      view.View
-	Detail    view.View
-	TabAction view.View
-	Add       view.View
-	Delete    view.View
-	SetStatus view.View
+	routes           entydad.WorkspaceUserRoutes
+	List             view.View
+	Detail           view.View
+	TabAction        view.View
+	Add              view.View
+	Delete           view.View
+	SetStatus        view.View
 	// UserSearch is an http.HandlerFunc for the user autocomplete endpoint.
-	UserSearch http.HandlerFunc
+	UserSearch       http.HandlerFunc
+	AttachmentUpload view.View
+	AttachmentDelete view.View
 }
 
 // NewModule constructs all workspace_user views from deps.
@@ -89,9 +100,16 @@ func NewModule(deps *ModuleDeps) *Module {
 		GetWorkspaceUserRoleListPageData: deps.GetWorkspaceUserRoleListPageData,
 		WorkspaceUserRoleAddURL:          deps.WorkspaceUserRoleAddURL,
 		WorkspaceUserRoleDeleteURL:       deps.WorkspaceUserRoleDeleteURL,
+		AttachmentOps: attachment.AttachmentOps{
+			UploadFile:       deps.UploadFile,
+			ListAttachments:  deps.ListAttachments,
+			CreateAttachment: deps.CreateAttachment,
+			DeleteAttachment: deps.DeleteAttachment,
+			NewAttachmentID:  deps.NewID,
+		},
 	}
 
-	return &Module{
+	m := &Module{
 		routes:     deps.Routes,
 		List:       workspaceuserlist.NewView(listDeps),
 		Detail:     workspaceuserdetail.NewView(detailDeps),
@@ -101,6 +119,11 @@ func NewModule(deps *ModuleDeps) *Module {
 		SetStatus:  workspaceaction.NewSetStatusAction(actionDeps),
 		UserSearch: workspaceaction.NewUserSearchAction(actionDeps),
 	}
+	if deps.UploadFile != nil {
+		m.AttachmentUpload = workspaceuserdetail.NewAttachmentUploadAction(detailDeps)
+		m.AttachmentDelete = workspaceuserdetail.NewAttachmentDeleteAction(detailDeps)
+	}
+	return m
 }
 
 // RegisterRoutes registers all workspace_user routes into the app router.
@@ -129,5 +152,11 @@ func (m *Module) RegisterRoutes(r view.RouteRegistrar) {
 		if full, ok := r.(routeRegistrarFull); ok {
 			full.HandleFunc("GET", m.routes.SearchURL, m.UserSearch)
 		}
+	}
+	// Attachments
+	if m.AttachmentUpload != nil {
+		r.GET(m.routes.AttachmentUploadURL, m.AttachmentUpload)
+		r.POST(m.routes.AttachmentUploadURL, m.AttachmentUpload)
+		r.POST(m.routes.AttachmentDeleteURL, m.AttachmentDelete)
 	}
 }

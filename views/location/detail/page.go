@@ -47,8 +47,7 @@ type PageData struct {
 	StatusVariant   string
 	EditDetailURL   string
 	// Attachments
-	AttachmentTable     *types.TableConfig
-	AttachmentUploadURL string
+	AttachmentTable *types.TableConfig
 	// Audit history tab
 	AuditEntries    []auditlog.AuditEntryView
 	AuditHasNext    bool

@@ -34,6 +34,8 @@
         {{template "workspace-tab-info" .}}
         {{else if eq .ActiveTab "users"}}
         {{template "workspace-tab-users" .}}
+        {{else if eq .ActiveTab "attachments"}}
+        {{template "attachment-tab" .}}
         {{end}}
     </div>
 </div>

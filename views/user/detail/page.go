@@ -55,10 +55,9 @@ type PageData struct {
 	StatusVariant       string
 	RoleNames           []string
 	RolesTable          *types.TableConfig
-	ResetPasswordURL    string
-	EditURL             string
-	AttachmentTable     *types.TableConfig
-	AttachmentUploadURL string
+	ResetPasswordURL string
+	EditURL          string
+	AttachmentTable  *types.TableConfig
 	// Audit history tab
 	AuditEntries    []auditlog.AuditEntryView
 	AuditHasNext    bool
@@ -212,7 +211,6 @@ func buildPageData(ctx context.Context, deps *DetailViewDeps, id, activeTab stri
 			}
 			pageData.AttachmentTable = attachment.BuildTable(items, cfg, id)
 		}
-		pageData.AttachmentUploadURL = route.ResolveURL(deps.Routes.AttachmentUploadURL, "id", id)
 	case "audit-history":
 		if deps.ListAuditHistory != nil {
 			cursor := viewCtx.Request.URL.Query().Get("cursor")

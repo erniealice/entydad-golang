@@ -111,25 +111,29 @@ const (
 	RoleDetailPermissionsAssignURL = "/action/role/detail/{id}/permissions/assign"
 	RoleDetailPermissionsRemoveURL = "/action/role/detail/{id}/permissions/remove"
 
-	WorkspaceListURL          = "/app/workspaces/list/{status}"
-	WorkspaceTableURL         = "/action/workspace/table/{status}"
-	WorkspaceAddURL           = "/action/workspace/add"
-	WorkspaceEditURL          = "/action/workspace/edit/{id}"
-	WorkspaceDeleteURL        = "/action/workspace/delete"
-	WorkspaceBulkDeleteURL    = "/action/workspace/bulk-delete"
-	WorkspaceSetStatusURL     = "/action/workspace/set-status"
-	WorkspaceBulkSetStatusURL = "/action/workspace/bulk-set-status"
-	WorkspaceSwitchURL        = "/action/admin/switch-workspace"
-	WorkspaceDetailURL        = "/app/workspaces/detail/{id}"
-	WorkspaceTabActionURL     = "/action/workspace/{id}/tab/{tab}"
+	WorkspaceListURL             = "/app/workspaces/list/{status}"
+	WorkspaceTableURL            = "/action/workspace/table/{status}"
+	WorkspaceAddURL              = "/action/workspace/add"
+	WorkspaceEditURL             = "/action/workspace/edit/{id}"
+	WorkspaceDeleteURL           = "/action/workspace/delete"
+	WorkspaceBulkDeleteURL       = "/action/workspace/bulk-delete"
+	WorkspaceSetStatusURL        = "/action/workspace/set-status"
+	WorkspaceBulkSetStatusURL    = "/action/workspace/bulk-set-status"
+	WorkspaceSwitchURL           = "/action/admin/switch-workspace"
+	WorkspaceDetailURL           = "/app/workspaces/detail/{id}"
+	WorkspaceTabActionURL        = "/action/workspace/{id}/tab/{tab}"
+	WorkspaceAttachmentUploadURL = "/action/workspace/{id}/attachments/upload"
+	WorkspaceAttachmentDeleteURL = "/action/workspace/{id}/attachments/delete"
 
-	WorkspaceUserListURL      = "/app/workspace-users/list/{status}"
-	WorkspaceUserDetailURL    = "/app/workspace-users/detail/{id}"
-	WorkspaceUserTabActionURL = "/action/workspace_user/{id}/tab/{tab}"
-	WorkspaceUserAddURL       = "/action/workspace_user/add"
-	WorkspaceUserDeleteURL    = "/action/workspace_user/delete/{id}"
-	WorkspaceUserSetStatusURL = "/action/workspace_user/set-status/{id}"
-	WorkspaceUserSearchURL    = "/action/workspace_user/search"
+	WorkspaceUserListURL             = "/app/workspace-users/list/{status}"
+	WorkspaceUserDetailURL           = "/app/workspace-users/detail/{id}"
+	WorkspaceUserTabActionURL        = "/action/workspace_user/{id}/tab/{tab}"
+	WorkspaceUserAddURL              = "/action/workspace_user/add"
+	WorkspaceUserDeleteURL           = "/action/workspace_user/delete/{id}"
+	WorkspaceUserSetStatusURL        = "/action/workspace_user/set-status/{id}"
+	WorkspaceUserSearchURL           = "/action/workspace_user/search"
+	WorkspaceUserAttachmentUploadURL = "/action/workspace_user/{id}/attachments/upload"
+	WorkspaceUserAttachmentDeleteURL = "/action/workspace_user/{id}/attachments/delete"
 
 	// WorkspaceUserRole — Phase 3 assignment drawer routes.
 	WorkspaceUserRoleAddURL         = "/action/workspace_user_role/add"
@@ -146,6 +150,11 @@ const (
 
 	// Client statement export
 	ClientStatementExportURL = "/action/client/{id}/statement/export"
+
+	// ClientRevenueRunURL is the per-client "Run Invoices" drawer endpoint.
+	// Static verb segment "revenue-run" comes before {id} so the Go ServeMux
+	// does not conflict with the /action/client/table/{status} pattern.
+	ClientRevenueRunURL = "/action/client/revenue-run/{id}"
 
 	// Supplier routes
 	SupplierDashboardURL        = "/app/suppliers/dashboard"

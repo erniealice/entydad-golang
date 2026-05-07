@@ -11,8 +11,10 @@ import (
 	workspaceaction "github.com/erniealice/entydad-golang/views/workspace/action"
 	workspacedetail "github.com/erniealice/entydad-golang/views/workspace/detail"
 	workspacelist "github.com/erniealice/entydad-golang/views/workspace/list"
+	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
 	workspacepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace"
 	workspaceuserpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace_user"
+	"github.com/erniealice/hybra-golang/views/attachment"
 )
 
 // ModuleDeps holds all dependencies for the workspace module.
@@ -38,21 +40,30 @@ type ModuleDeps struct {
 	// WorkspaceUserAddURL is the drawer action for "Add user to workspace".
 	// Phase 2 will register this route; Phase 1 just emits the URL in the button.
 	WorkspaceUserAddURL string
+
+	// Attachment operations
+	UploadFile       func(ctx context.Context, bucket, key string, content []byte, contentType string) error
+	ListAttachments  func(ctx context.Context, moduleKey, foreignKey string) (*attachmentpb.ListAttachmentsResponse, error)
+	CreateAttachment func(ctx context.Context, req *attachmentpb.CreateAttachmentRequest) (*attachmentpb.CreateAttachmentResponse, error)
+	DeleteAttachment func(ctx context.Context, req *attachmentpb.DeleteAttachmentRequest) (*attachmentpb.DeleteAttachmentResponse, error)
+	NewID            func() string
 }
 
 // Module holds all constructed workspace views.
 type Module struct {
-	routes        entydad.WorkspaceRoutes
-	List          view.View
-	Table         view.View
-	Add           view.View
-	Edit          view.View
-	Delete        view.View
-	BulkDelete    view.View
-	SetStatus     view.View
-	BulkSetStatus view.View
-	Detail        view.View
-	TabAction     view.View
+	routes           entydad.WorkspaceRoutes
+	List             view.View
+	Table            view.View
+	Add              view.View
+	Edit             view.View
+	Delete           view.View
+	BulkDelete       view.View
+	SetStatus        view.View
+	BulkSetStatus    view.View
+	Detail           view.View
+	TabAction        view.View
+	AttachmentUpload view.View
+	AttachmentDelete view.View
 }
 
 func NewModule(deps *ModuleDeps) *Module {
@@ -82,9 +93,16 @@ func NewModule(deps *ModuleDeps) *Module {
 		TableLabels:                  deps.TableLabels,
 		WorkspaceUserDetailURL:       deps.WorkspaceUserDetailURL,
 		WorkspaceUserAddURL:          deps.WorkspaceUserAddURL,
+		AttachmentOps: attachment.AttachmentOps{
+			UploadFile:       deps.UploadFile,
+			ListAttachments:  deps.ListAttachments,
+			CreateAttachment: deps.CreateAttachment,
+			DeleteAttachment: deps.DeleteAttachment,
+			NewAttachmentID:  deps.NewID,
+		},
 	}
 
-	return &Module{
+	m := &Module{
 		routes:        deps.Routes,
 		List:          workspacelist.NewView(listDeps),
 		Table:         workspacelist.NewTableView(listDeps),
@@ -97,6 +115,11 @@ func NewModule(deps *ModuleDeps) *Module {
 		Detail:        workspacedetail.NewView(detailDeps),
 		TabAction:     workspacedetail.NewTabAction(detailDeps),
 	}
+	if deps.UploadFile != nil {
+		m.AttachmentUpload = workspacedetail.NewAttachmentUploadAction(detailDeps)
+		m.AttachmentDelete = workspacedetail.NewAttachmentDeleteAction(detailDeps)
+	}
+	return m
 }
 
 func (m *Module) RegisterRoutes(r view.RouteRegistrar) {
@@ -115,5 +138,11 @@ func (m *Module) RegisterRoutes(r view.RouteRegistrar) {
 	}
 	if m.routes.TabActionURL != "" {
 		r.GET(m.routes.TabActionURL, m.TabAction)
+	}
+	// Attachments
+	if m.AttachmentUpload != nil {
+		r.GET(m.routes.AttachmentUploadURL, m.AttachmentUpload)
+		r.POST(m.routes.AttachmentUploadURL, m.AttachmentUpload)
+		r.POST(m.routes.AttachmentDeleteURL, m.AttachmentDelete)
 	}
 }

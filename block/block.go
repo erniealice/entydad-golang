@@ -438,6 +438,99 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 					return resp.GetData(), nil
 				}
 			}
+
+			// Wire Revenue Run drawer shims. Both use cases must be present for
+			// either callback to be wired, ensuring the drawer is either fully
+			// functional or fully absent.
+			if uc.Revenue != nil && uc.Revenue.Revenue != nil &&
+				uc.Revenue.Revenue.ListRevenueRunCandidates != nil &&
+				uc.Revenue.Revenue.GenerateRevenueRun != nil {
+				clientDeps.ListRevenueRunCandidates = func(fctx context.Context, scope clientdetail.RevenueRunScope) ([]clientdetail.RevenueRunCandidate, string, error) {
+					candidates, nextCursor, err := consumer.ListRevenueRunCandidates(uc, fctx, consumer.RevenueRunScope{
+						WorkspaceID:    scope.WorkspaceID,
+						ClientID:       scope.ClientID,
+						SubscriptionID: scope.SubscriptionID,
+						AsOfDate:       scope.AsOfDate,
+						Cursor:         scope.Cursor,
+						Limit:          scope.Limit,
+					})
+					if err != nil {
+						return nil, "", err
+					}
+					out := make([]clientdetail.RevenueRunCandidate, 0, len(candidates))
+					for _, c := range candidates {
+						amtDisplay := fmt.Sprintf("%.2f", float64(c.Amount)/100)
+						out = append(out, clientdetail.RevenueRunCandidate{
+							SubscriptionID:    c.SubscriptionID,
+							SubscriptionName:  c.SubscriptionName,
+							ClientID:          c.ClientID,
+							ClientName:        c.ClientName,
+							PlanName:          c.PlanName,
+							BillingCycleLabel: c.BillingCycleLabel,
+							Currency:          c.Currency,
+							PeriodStart:       c.PeriodStart,
+							PeriodEnd:         c.PeriodEnd,
+							PeriodLabel:       c.PeriodLabel,
+							PeriodMarker:      c.PeriodMarker,
+							Amount:            c.Amount,
+							AmountDisplay:     amtDisplay,
+							LineItemCount:     c.LineItemCount,
+							Eligible:          c.Eligible,
+							BlockerReason:     c.BlockerReason,
+						})
+					}
+					return out, nextCursor, nil
+				}
+
+				clientDeps.GenerateRevenueRun = func(fctx context.Context, scope clientdetail.RevenueRunScope, selections clientdetail.RevenueRunSelections) (*clientdetail.RevenueRunResult, error) {
+					consumerSelections := consumer.RevenueRunSelections{
+						FilterToken: selections.FilterToken,
+					}
+					for _, s := range selections.ExplicitList {
+						consumerSelections.ExplicitList = append(consumerSelections.ExplicitList, consumer.SelectedRevenueRunCandidate{
+							SubscriptionID: s.SubscriptionID,
+							PeriodStart:    s.PeriodStart,
+							PeriodEnd:      s.PeriodEnd,
+							PeriodMarker:   s.PeriodMarker,
+						})
+					}
+					result, err := consumer.GenerateRevenueRun(uc, fctx, consumer.RevenueRunScope{
+						WorkspaceID:    scope.WorkspaceID,
+						ClientID:       scope.ClientID,
+						SubscriptionID: scope.SubscriptionID,
+						AsOfDate:       scope.AsOfDate,
+					}, consumerSelections)
+					if err != nil || result == nil {
+						return nil, err
+					}
+					run := result.Run
+					runID := ""
+					runStatus := ""
+					if run != nil {
+						runID = run.GetId()
+						runStatus = run.GetStatus().String()
+					}
+					var created, skipped, errored int32
+					for _, a := range result.Attempts {
+						switch a.GetOutcome().String() {
+						case "REVENUE_RUN_ATTEMPT_OUTCOME_CREATED":
+							created++
+						case "REVENUE_RUN_ATTEMPT_OUTCOME_SKIPPED":
+							skipped++
+						default:
+							errored++
+						}
+					}
+					return &clientdetail.RevenueRunResult{
+						RunID:   runID,
+						Status:  runStatus,
+						Created: created,
+						Skipped: skipped,
+						Errored: errored,
+					}, nil
+				}
+			}
+
 			clientmod.NewModule(clientDeps).RegisterRoutes(ctx.Routes)
 		}
 
@@ -708,6 +801,11 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 				// now that Phase 2 has registered those route constants.
 				WorkspaceUserDetailURL: entydad.WorkspaceUserDetailURL,
 				WorkspaceUserAddURL:    entydad.WorkspaceUserAddURL,
+				UploadFile:             uploadFile,
+				ListAttachments:        listAttachments,
+				CreateAttachment:       createAttachment,
+				DeleteAttachment:       deleteAttachment,
+				NewID:                  newAttachmentID,
 			}
 			if uc.Entity.WorkspaceUser != nil && uc.Entity.WorkspaceUser.GetWorkspaceUserListPageData != nil {
 				wsMod.GetWorkspaceUserListPageData = uc.Entity.WorkspaceUser.GetWorkspaceUserListPageData.Execute
@@ -744,6 +842,11 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 					// Phase 3 closeout: wire WorkspaceUserRole routes now that Phase 3 has registered them.
 					WorkspaceUserRoleAddURL:    entydad.WorkspaceUserRoleAddURL,
 					WorkspaceUserRoleDeleteURL: entydad.WorkspaceUserRoleDeleteURL,
+					UploadFile:                 uploadFile,
+					ListAttachments:            listAttachments,
+					CreateAttachment:           createAttachment,
+					DeleteAttachment:           deleteAttachment,
+					NewID:                      newAttachmentID,
 				}
 				// ListUsers — needed for the user-search autocomplete on the add form.
 				if uc.Entity.User != nil && uc.Entity.User.ListUsers != nil {

@@ -77,6 +77,16 @@ type DetailViewDeps struct {
 	// has the given client_id. Used to compute paid-amount per revenue on the
 	// outstanding-revenue table.
 	ListCollectionsByClient func(ctx context.Context, clientID string) ([]*collectionpb.Collection, error)
+
+	// ListRevenueRunCandidates enumerates un-invoiced billing periods for the
+	// given scope. Wired from espyna's consumer.ListRevenueRunCandidates via
+	// block.go. Nil-safe: if nil, the Revenue Run drawer returns an error.
+	ListRevenueRunCandidates func(ctx context.Context, scope RevenueRunScope) ([]RevenueRunCandidate, string, error)
+
+	// GenerateRevenueRun executes a batch revenue generation run. Wired from
+	// espyna's consumer.GenerateRevenueRun via block.go. Nil-safe: if nil, the
+	// Revenue Run drawer returns an error.
+	GenerateRevenueRun func(ctx context.Context, scope RevenueRunScope, selections RevenueRunSelections) (*RevenueRunResult, error)
 }
 
 // TagChip represents a tag displayed as a chip on the detail page.
@@ -139,8 +149,7 @@ type PageData struct {
 	StatementTable          *types.TableConfig
 	OutstandingTable        *types.TableConfig
 	// Attachments tab
-	AttachmentTable     *types.TableConfig
-	AttachmentUploadURL string
+	AttachmentTable *types.TableConfig
 	// Audit history tab
 	AuditEntries    []auditlog.AuditEntryView
 	AuditHasNext    bool
@@ -923,12 +932,27 @@ func buildOutstandingRevenueTable(ctx context.Context, deps *DetailViewDeps, cli
 		ShowEntries:          true,
 		DefaultSortColumn:    "revenue_date",
 		DefaultSortDirection: "desc",
-		PrimaryAction:        nil,
 		BulkActions:          nil,
 		EmptyState: types.TableEmptyState{
 			Title:   labels.Empty.Title,
 			Message: labels.Empty.Message,
 		},
+	}
+
+	// Wire the "Run Invoices" CTA when the route and callbacks are available
+	// and the operator has the required permissions.
+	if deps.Routes.RevenueRunURL != "" &&
+		deps.ListRevenueRunCandidates != nil &&
+		deps.GenerateRevenueRun != nil &&
+		labels.RunInvoicesLabel != "" {
+		perms := view.GetUserPermissions(ctx)
+		canRun := perms != nil && perms.Can("revenue", "create") && perms.Can("subscription", "read")
+		tc.PrimaryAction = &types.PrimaryAction{
+			Label:     labels.RunInvoicesLabel,
+			ActionURL: route.ResolveURL(deps.Routes.RevenueRunURL, "id", clientID),
+			Icon:      "icon-zap",
+			Disabled:  !canRun,
+		}
 	}
 
 	types.ApplyTableSettings(tc)

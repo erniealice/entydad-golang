@@ -110,6 +110,14 @@ type ModuleDeps struct {
 	// has the given client_id. Used to compute paid-amount per revenue on the
 	// outstanding-revenue table. Nil-safe.
 	ListCollectionsByClient func(ctx context.Context, clientID string) ([]*collectionpb.Collection, error)
+
+	// ListRevenueRunCandidates enumerates un-invoiced billing periods for the
+	// given scope. Nil-safe: if nil, the Revenue Run drawer is not registered.
+	ListRevenueRunCandidates func(ctx context.Context, scope clientdetail.RevenueRunScope) ([]clientdetail.RevenueRunCandidate, string, error)
+
+	// GenerateRevenueRun executes a batch revenue generation run. Nil-safe: if
+	// nil, the Revenue Run drawer is not registered.
+	GenerateRevenueRun func(ctx context.Context, scope clientdetail.RevenueRunScope, selections clientdetail.RevenueRunSelections) (*clientdetail.RevenueRunResult, error)
 }
 
 // Module holds all constructed client views.
@@ -129,6 +137,7 @@ type Module struct {
 	AttachmentUpload view.View
 	AttachmentDelete view.View
 	StatementExport  http.HandlerFunc
+	RevenueRun       view.View
 }
 
 func NewModule(deps *ModuleDeps) *Module {
@@ -186,13 +195,15 @@ func NewModule(deps *ModuleDeps) *Module {
 		AuditOps: auditlog.AuditOps{
 			ListAuditHistory: deps.ListAuditHistory,
 		},
-		ListClientPriceSchedules: deps.ListClientPriceSchedules,
-		PriceScheduleAddURL:      deps.PriceScheduleAddURL,
-		ListRevenuesByClient:     deps.ListRevenuesByClient,
-		ListCollectionsByClient:  deps.ListCollectionsByClient,
+		ListClientPriceSchedules:  deps.ListClientPriceSchedules,
+		PriceScheduleAddURL:       deps.PriceScheduleAddURL,
+		ListRevenuesByClient:      deps.ListRevenuesByClient,
+		ListCollectionsByClient:   deps.ListCollectionsByClient,
+		ListRevenueRunCandidates:  deps.ListRevenueRunCandidates,
+		GenerateRevenueRun:        deps.GenerateRevenueRun,
 	}
 
-	return &Module{
+	m := &Module{
 		routes:           deps.Routes,
 		Dashboard:        clientdashboard.NewView(&clientdashboard.Deps{DashboardLabels: deps.DashboardTitleLabels, CommonLabels: deps.CommonLabels, Dashboard: deps.DashboardLabels, Routes: deps.Routes}),
 		List:             clientlist.NewView(listDeps),
@@ -209,6 +220,13 @@ func NewModule(deps *ModuleDeps) *Module {
 		AttachmentDelete: clientdetail.NewAttachmentDeleteAction(detailDeps),
 		StatementExport:  clientdetail.NewStatementExportHandler(detailDeps),
 	}
+
+	// Wire the Revenue Run drawer when both callbacks are provided.
+	if deps.ListRevenueRunCandidates != nil && deps.GenerateRevenueRun != nil {
+		m.RevenueRun = clientdetail.NewRevenueRunAction(detailDeps)
+	}
+
+	return m
 }
 
 // routeRegistrarFull extends view.RouteRegistrar with HandleFunc support
@@ -253,4 +271,10 @@ func (m *Module) RegisterRoutes(r view.RouteRegistrar) {
 	}
 	// Statement CSV export
 	handleFunc(r, "GET", m.routes.StatementExportURL, m.StatementExport)
+
+	// Revenue Run drawer — only registered when the callbacks are wired.
+	if m.RevenueRun != nil && m.routes.RevenueRunURL != "" {
+		r.GET(m.routes.RevenueRunURL, m.RevenueRun)
+		r.POST(m.routes.RevenueRunURL, m.RevenueRun)
+	}
 }
