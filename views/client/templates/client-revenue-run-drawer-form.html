@@ -1,0 +1,270 @@
+{{/*
+client-revenue-run-drawer-form — per-client "Run Invoices" drawer.
+
+Loaded into #sheetContent via HTMX GET from the outstanding-revenue table
+primary action. Shared template for both the outer form (full drawer) and the
+inner candidates partial (HTMX inner-swap on as_of_date change).
+
+Data: detailform.RevenueRunDrawerData (see views/client/detail/form/revenue_run.go)
+Labels: all text via .Labels.* — no English literals.
+*/}}
+
+{{define "client-revenue-run-drawer-form"}}
+<form
+    hx-post="{{.FormAction}}"
+    hx-swap="none"
+    hx-on::after-request="lf.Sheet.handleResponse(event)"
+    data-testid="revenue-run-form"
+>
+    <input type="hidden" name="client_id" value="{{.ClientID}}">
+    <input type="hidden" name="as_of_date" value="{{.AsOfDate}}">
+
+    <div class="sheet-body">
+        {{template "form-section" (dict "Title" .Labels.Title)}}
+
+        {{if .Subtitle}}
+        <div class="form-row single">
+            <p class="form-hint" data-testid="revenue-run-subtitle">{{.Subtitle}}</p>
+        </div>
+        {{end}}
+
+        {{/* As-of date picker — HTMX inner-swap on change to reload candidates */}}
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type"     "date"
+                "Name"     "as_of_date_picker"
+                "Label"    .Labels.AsOfDateLabel
+                "Value"    .AsOfDate
+                "Max"      .MaxAsOfDate
+                "Required" true
+                "Hint"     .Labels.AsOfDateHint
+                "ID"       "revenue-run-as-of-date"
+                "TestId"   "revenue-run-as-of-date"
+            )}}
+        </div>
+
+        {{/* Candidates partial — replaced on date change via HTMX */}}
+        <div
+            id="revenue-run-candidates"
+            hx-get="{{.FragmentURL}}"
+            hx-trigger="change from:#revenue-run-as-of-date"
+            hx-include="#revenue-run-as-of-date"
+            hx-target="#revenue-run-candidates"
+            hx-swap="outerHTML"
+            data-testid="revenue-run-candidates-container"
+        >
+            {{template "client-revenue-run-candidates" .}}
+        </div>
+    </div>
+
+    <div class="sheet-footer" data-testid="revenue-run-footer">
+        <button
+            type="button"
+            class="btn btn-secondary"
+            onclick="lf.Sheet.close()"
+            data-testid="revenue-run-cancel-btn"
+        >
+            {{.Labels.CancelButton}}
+        </button>
+        <button
+            type="submit"
+            class="btn btn-primary"
+            id="revenue-run-submit-btn"
+            data-testid="revenue-run-submit-btn"
+            {{if eq .EligibleCount 0}}disabled aria-disabled="true"{{end}}
+        >
+            <span id="revenue-run-btn-label">
+                {{if gt .EligibleCount 0}}
+                    {{.Labels.GenerateButton}}
+                {{else}}
+                    {{.Labels.GenerateButton}}
+                {{end}}
+            </span>
+        </button>
+    </div>
+</form>
+
+<script>
+(function () {
+    var form = document.currentScript.previousElementSibling;
+    while (form && form.tagName !== 'FORM') { form = form.previousElementSibling; }
+    if (!form) { return; }
+
+    var submitBtn = form.querySelector('#revenue-run-submit-btn');
+    var btnLabel  = form.querySelector('#revenue-run-btn-label');
+    var asOfInput = form.querySelector('#revenue-run-as-of-date');
+
+    var generateLabel     = {{.Labels.GenerateButton | js}};
+    var generateCountTmpl = {{.Labels.GenerateButtonCount | js}};
+
+    function countChecked() {
+        return form.querySelectorAll('input[name="selection"]:checked').length;
+    }
+
+    function refreshBtn() {
+        var n = countChecked();
+        if (submitBtn) {
+            submitBtn.disabled = n === 0;
+            submitBtn.setAttribute('aria-disabled', n === 0 ? 'true' : 'false');
+        }
+        if (btnLabel) {
+            if (n > 0 && generateCountTmpl) {
+                btnLabel.textContent = generateCountTmpl.replace('{count}', n);
+            } else {
+                btnLabel.textContent = generateLabel;
+            }
+        }
+    }
+
+    // Re-run on any checkbox change inside the candidates container.
+    // Uses event delegation so it survives the HTMX inner-swap on date change.
+    form.addEventListener('change', function (e) {
+        if (e.target && e.target.name === 'selection') {
+            refreshBtn();
+        }
+    });
+
+    // Re-bind after HTMX swaps the candidates partial.
+    form.addEventListener('htmx:afterSwap', function () {
+        refreshBtn();
+    });
+
+    // Master-checkbox: select/deselect all eligible periods in a group.
+    form.addEventListener('change', function (e) {
+        var master = e.target && e.target.closest('.revenue-run-group-master');
+        if (!master) { return; }
+        var group = master.closest('.revenue-run-group');
+        if (!group) { return; }
+        group.querySelectorAll('input[name="selection"]:not(:disabled)').forEach(function (cb) {
+            cb.checked = master.checked;
+        });
+        refreshBtn();
+    });
+
+    // Update hidden as_of_date when the date picker changes.
+    if (asOfInput) {
+        asOfInput.addEventListener('change', function () {
+            var hidden = form.querySelector('input[name="as_of_date"]');
+            if (hidden) { hidden.value = asOfInput.value; }
+        });
+    }
+
+    refreshBtn();
+}());
+</script>
+{{end}}
+
+
+{{/*
+client-revenue-run-candidates — inner partial, swapped on date change.
+
+Renders the per-subscription accordion groups. This define is used both by the
+outer template above (initial paint) and as a standalone HTMX swap target when
+the as_of_date changes.
+*/}}
+{{define "client-revenue-run-candidates"}}
+<div
+    id="revenue-run-candidates"
+    data-testid="revenue-run-candidates-container"
+>
+    {{if not .SubscriptionGroups}}
+        {{template "empty-state" (dict
+            "Icon"  "icon-file-text"
+            "Title" .Labels.EmptyTitle
+            "Desc"  .Labels.EmptyMessage
+        )}}
+    {{else}}
+        {{range .SubscriptionGroups}}
+        <details class="revenue-run-group pyeza-accordion" open
+            data-subscription-id="{{.SubscriptionID}}"
+            data-testid="revenue-run-group"
+        >
+            <summary class="pyeza-accordion__header revenue-run-group__header">
+                <span class="pyeza-accordion__chevron" aria-hidden="true"></span>
+                <label class="revenue-run-group__master-label">
+                    <input
+                        type="checkbox"
+                        class="revenue-run-group-master"
+                        {{if .HasEligible}}checked{{end}}
+                        {{if not .HasEligible}}disabled{{end}}
+                        aria-label="{{$.Labels.ColumnEngagement}}: {{.SubscriptionName}}"
+                        data-testid="revenue-run-group-master"
+                    >
+                    <strong>{{.SubscriptionName}}</strong>
+                </label>
+                <span class="pyeza-accordion__meta revenue-run-group__meta">
+                    {{if .PlanName}}
+                    <span class="revenue-run-group__plan">{{.PlanName}}</span>
+                    {{end}}
+                    {{if .BillingCycleLabel}}
+                    <span class="revenue-run-group__cycle">{{.BillingCycleLabel}}</span>
+                    {{end}}
+                    {{if .CurrencyMismatch}}
+                    {{/* Currency-mismatch warning — informational, non-blocking. Uses status-badge variant since pyeza `chip` is a selectable multi-select primitive, not a warning indicator. */}}
+                    {{template "badge" (dict
+                        "Label"   $.Labels.GroupCurrencyMismatch
+                        "Variant" "status"
+                        "Status"  "warning"
+                    )}}
+                    {{end}}
+                    {{if .HasEligible}}
+                    <span class="revenue-run-group__total">
+                        {{$.Labels.GroupTotalLabel}}: {{.GroupTotalDisplay}} {{.Currency}}
+                    </span>
+                    {{end}}
+                </span>
+            </summary>
+
+            <div class="pyeza-accordion__body revenue-run-group__body">
+                {{if not .Periods}}
+                    {{template "alert" (dict
+                        "Message" $.Labels.GroupNoPending
+                        "State"   "info"
+                    )}}
+                {{else}}
+                <table class="data-table data-table--compact revenue-run-periods-table"
+                    data-testid="revenue-run-periods-table">
+                    <thead>
+                        <tr>
+                            <th class="col-checkbox" aria-label="{{$.Labels.ColumnSelectAriaLabel}}"></th>
+                            <th>{{$.Labels.ColumnEngagement}}</th>
+                            <th>{{$.Labels.ColumnPeriod}}</th>
+                            <th class="cell-right">{{$.Labels.ColumnAmount}}</th>
+                            <th class="cell-right">{{$.Labels.ColumnLines}}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .Periods}}
+                        <tr
+                            class="revenue-run-period-row{{if not .Eligible}} revenue-run-period-row--blocked{{end}}"
+                            data-testid="revenue-run-period-row"
+                            {{if .BlockerReason}}title="{{.BlockerReason}}"{{end}}
+                        >
+                            <td class="col-checkbox">
+                                <input
+                                    type="checkbox"
+                                    name="selection"
+                                    value="{{.SelectionValue}}"
+                                    {{if not .Eligible}}disabled{{end}}
+                                    {{if .Eligible}}checked{{end}}
+                                    data-testid="revenue-run-period-checkbox"
+                                    aria-label="{{.PeriodLabel}}"
+                                >
+                            </td>
+                            <td>{{.SubscriptionID}}</td>
+                            <td data-testid="revenue-run-period-label">{{.PeriodLabel}}</td>
+                            <td class="cell-right" data-testid="revenue-run-period-amount">
+                                {{.AmountDisplay}}
+                            </td>
+                            <td class="cell-right">{{.LineItemCount}}</td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+                {{end}}
+            </div>
+        </details>
+        {{end}}
+    {{end}}
+</div>
+{{end}}
