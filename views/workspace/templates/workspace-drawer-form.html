@@ -42,6 +42,71 @@ Data: .Name, .Description, .Private, .Active, .ID, .FormAction, .IsEdit, .Common
                 {{template "toggle" (dict "Name" "active" "Checked" .Active "Value" "true")}}
             </div>
         </div>
+
+        {{/* ── Tax section ── */}}
+        {{template "form-section" (dict "Title" .Labels.SectionTax)}}
+
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "tin"
+                "Label" .Labels.TIN
+                "Value" .TIN
+                "Placeholder" .Labels.TINPlaceholder
+                "Info" .Labels.TINInfo
+            )}}
+        </div>
+
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "home_jurisdiction"
+                "Label" .Labels.HomeJurisdiction
+                "Value" .HomeJurisdiction
+                "Placeholder" .Labels.HomeJurisdictionPlaceholder
+                "Info" .Labels.HomeJurisdictionInfo
+            )}}
+        </div>
+
+        <div class="form-row single">
+            <div class="form-group form-group-toggle">
+                <label class="form-label" for="tax_computation_enabled">
+                    {{.Labels.TaxComputationEnabled}}
+                    {{if .Labels.TaxComputationEnabledInfo}}
+                    <span class="form-label-info" data-popover data-popover-trigger="hover click" data-popover-position="top">
+                        <button type="button" class="popover-trigger form-label-info-btn" aria-label="{{if .Labels.MoreInfo}}{{.Labels.MoreInfo}}{{else}}More info{{end}}" tabindex="0">
+                            {{template "icon-info"}}
+                        </button>
+                        <div class="popover-panel form-label-info-panel" role="tooltip">
+                            <div class="popover-arrow"></div>
+                            {{.Labels.TaxComputationEnabledInfo}}
+                        </div>
+                    </span>
+                    {{end}}
+                </label>
+                {{template "toggle" (dict "Name" "tax_computation_enabled" "Checked" .TaxComputationEnabled "Value" "true")}}
+            </div>
+        </div>
+
+        <div class="form-row single">
+            <div class="form-group form-group-toggle">
+                <label class="form-label" for="tax_inclusive_pricing">
+                    {{.Labels.TaxInclusivePricing}}
+                    {{if .Labels.TaxInclusivePricingInfo}}
+                    <span class="form-label-info" data-popover data-popover-trigger="hover click" data-popover-position="top">
+                        <button type="button" class="popover-trigger form-label-info-btn" aria-label="{{if .Labels.MoreInfo}}{{.Labels.MoreInfo}}{{else}}More info{{end}}" tabindex="0">
+                            {{template "icon-info"}}
+                        </button>
+                        <div class="popover-panel form-label-info-panel" role="tooltip">
+                            <div class="popover-arrow"></div>
+                            {{.Labels.TaxInclusivePricingInfo}}
+                        </div>
+                    </span>
+                    {{end}}
+                </label>
+                {{template "toggle" (dict "Name" "tax_inclusive_pricing" "Checked" .TaxInclusivePricing "Value" "true")}}
+            </div>
+        </div>
     </div>
 
     {{template "sheet-form-footer" (dict "CommonLabels" .CommonLabels "ShowCancel" true "IsEdit" .IsEdit)}}

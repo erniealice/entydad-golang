@@ -87,6 +87,11 @@ type DetailViewDeps struct {
 	// espyna's consumer.GenerateRevenueRun via block.go. Nil-safe: if nil, the
 	// Revenue Run drawer returns an error.
 	GenerateRevenueRun func(ctx context.Context, scope RevenueRunScope, selections RevenueRunSelections) (*RevenueRunResult, error)
+
+	// TaxRegistrationListURL is the URL of the client-scoped tax registrations list
+	// (ClientTaxRegistrationListURL with {id} resolved). When set, the Tax Registrations
+	// tab is shown on the client detail page. Nil-safe: tab is hidden when empty.
+	TaxRegistrationListURL string
 }
 
 // TagChip represents a tag displayed as a chip on the detail page.
@@ -155,6 +160,8 @@ type PageData struct {
 	AuditHasNext    bool
 	AuditNextCursor string
 	AuditHistoryURL string
+	// Tax registrations tab
+	TaxRegistrationListURL string
 }
 
 // StatementSummaryDisplay holds pre-formatted money cells for the statement summary bar.
@@ -340,7 +347,7 @@ func buildTabItems(id string, deps *DetailViewDeps, subscriptionCount, priceSche
 	action := route.ResolveURL(routes.TabActionURL, "id", id, "tab", "")
 	subscriptionsSlug := deps.Labels.Detail.Tabs.ResolveTabSlug("subscriptions")
 	priceSchedulesSlug := deps.Labels.Detail.Tabs.ResolveTabSlug("priceSchedules")
-	return []pyeza.TabItem{
+	tabs := []pyeza.TabItem{
 		{Key: "info", Label: deps.Labels.Detail.Tabs.Info, Href: base + "?tab=info", HxGet: action + "info", Icon: "icon-info"},
 		{Key: "representative", Label: deps.Labels.Detail.Tabs.Representative, Href: base + "?tab=representative", HxGet: action + "representative", Icon: "icon-user"},
 		{Key: "priceSchedules", Label: deps.Labels.Detail.Tabs.PriceSchedules, Href: base + "?tab=" + priceSchedulesSlug, HxGet: action + priceSchedulesSlug, Icon: "icon-calendar", Count: priceScheduleCount},
@@ -349,6 +356,21 @@ func buildTabItems(id string, deps *DetailViewDeps, subscriptionCount, priceSche
 		{Key: "attachments", Label: deps.Labels.Detail.Tabs.Attachments, Href: base + "?tab=attachments", HxGet: action + "attachments", Icon: "icon-paperclip"},
 		{Key: "audit-history", Label: deps.Labels.Detail.Tabs.AuditHistory, Href: base + "?tab=audit-history", HxGet: action + "audit-history", Icon: "icon-clock"},
 	}
+	// Phase 2 H1 — Tax Registrations tab (shown only when routes are wired)
+	if deps.TaxRegistrationListURL != "" {
+		taxLabel := deps.Labels.Detail.Tabs.TaxRegistrations
+		if taxLabel == "" {
+			taxLabel = "Tax Registrations"
+		}
+		tabs = append(tabs, pyeza.TabItem{
+			Key:   "tax-registrations",
+			Label: taxLabel,
+			Href:  base + "?tab=tax-registrations",
+			HxGet: action + "tax-registrations",
+			Icon:  "icon-file-text",
+		})
+	}
+	return tabs
 }
 
 // NewTabAction creates the tab action view (partial — returns only the tab content).
@@ -476,6 +498,13 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 				}
 			}
 			pageData.AuditHistoryURL = route.ResolveURL(deps.Routes.TabActionURL, "id", id, "tab", "") + "audit-history"
+		case "tax-registrations":
+			// Populate the URL so the template can render the embedded list.
+			// The list view itself is served by the TaxRegistration module's
+			// ClientListURL route; the tab template embeds it via hx-get.
+			if deps.TaxRegistrationListURL != "" {
+				pageData.TaxRegistrationListURL = deps.TaxRegistrationListURL + "?party_id=" + id
+			}
 		}
 
 		templateName := "client-tab-" + tab
@@ -487,6 +516,9 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 		}
 		if tab == "priceSchedules" {
 			templateName = "client-tab-priceSchedules"
+		}
+		if tab == "tax-registrations" {
+			templateName = "client-tab-tax-registrations"
 		}
 		return view.OK(templateName, pageData)
 	})

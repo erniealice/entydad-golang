@@ -36,6 +36,8 @@
         {{template "workspace-tab-users" .}}
         {{else if eq .ActiveTab "attachments"}}
         {{template "attachment-tab" .}}
+        {{else if eq .ActiveTab "tax-registrations"}}
+        {{template "workspace-tab-tax-registrations" .}}
         {{end}}
     </div>
 </div>
@@ -86,5 +88,26 @@
             onclick="lf.Sheet.open()">
         <span class="icon icon-edit"></span> {{.CommonLabels.Buttons.Edit}}
     </button>
+</div>
+{{end}}
+
+{{/* Tax Registrations Tab — Phase 2 H1 */}}
+{{define "workspace-tab-tax-registrations"}}
+<div class="tab-scroll" data-testid="workspace-tab-tax-registrations">
+    {{if .TaxRegistrationListURL}}
+    <div hx-get="{{.TaxRegistrationListURL}}"
+         hx-trigger="load"
+         hx-swap="innerHTML"
+         data-testid="workspace-tax-registrations-embed">
+        <div class="coming-soon-panel">
+            <div class="coming-soon-title">Loading tax registrations…</div>
+        </div>
+    </div>
+    {{else}}
+    <div class="coming-soon-panel">
+        <div class="coming-soon-title">Tax Registrations</div>
+        <p class="coming-soon-text">Tax registration routes are not configured for this deployment.</p>
+    </div>
+    {{end}}
 </div>
 {{end}}

@@ -313,6 +313,8 @@ func NewAddAction(deps *Deps) view.View {
 				RegistrationNumber: optionalString(r.FormValue("registration_number")),
 				CreditLimit:        optionalInt64Money(r.FormValue("credit_limit")),
 				LeadTimeDays:       optionalInt32(r.FormValue("lead_time_days")),
+				Tin:                optionalString(r.FormValue("tin")),
+				CountryCode:        optionalString(r.FormValue("country_code")),
 				User:               repUser,
 			},
 		})
@@ -411,6 +413,8 @@ func NewEditAction(deps *Deps) view.View {
 				BillingCurrency:          c.GetBillingCurrency(),
 				TaxID:                    c.GetTaxId(),
 				RegistrationNumber:       c.GetRegistrationNumber(),
+				TIN:                      c.GetTin(),
+				CountryCode:              c.GetCountryCode(),
 				CreditLimit:              creditLimitDisplay,
 				LeadTimeDays:             leadTimeDaysDisplay,
 				SearchTimezonesURL:       deps.SearchTimezonesURL,
@@ -462,6 +466,8 @@ func NewEditAction(deps *Deps) view.View {
 			clientData.RegistrationNumber = optionalString(r.FormValue("registration_number"))
 			clientData.CreditLimit = optionalInt64Money(r.FormValue("credit_limit"))
 			clientData.LeadTimeDays = optionalInt32(r.FormValue("lead_time_days"))
+			clientData.Tin = optionalString(r.FormValue("tin"))
+			clientData.CountryCode = optionalString(r.FormValue("country_code"))
 		case "representative":
 			// Only update representative (user) fields; leave company fields untouched
 			userData.FirstName = r.FormValue("first_name")
@@ -489,6 +495,8 @@ func NewEditAction(deps *Deps) view.View {
 			clientData.RegistrationNumber = optionalString(r.FormValue("registration_number"))
 			clientData.CreditLimit = optionalInt64Money(r.FormValue("credit_limit"))
 			clientData.LeadTimeDays = optionalInt32(r.FormValue("lead_time_days"))
+			clientData.Tin = optionalString(r.FormValue("tin"))
+			clientData.CountryCode = optionalString(r.FormValue("country_code"))
 			userData.FirstName = r.FormValue("first_name")
 			userData.LastName = r.FormValue("last_name")
 			userData.EmailAddress = r.FormValue("email_address")

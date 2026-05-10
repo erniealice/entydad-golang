@@ -35,6 +35,11 @@ type DetailViewDeps struct {
 
 	// Attachment operations (embedded from hybra)
 	attachment.AttachmentOps
+
+	// TaxRegistrationListURL is the URL of the workspace-scoped tax registrations list
+	// (WorkspaceTaxRegistrationListURL). When set, the Tax Registrations tab is shown
+	// on the workspace detail page. Nil-safe: tab is hidden when empty.
+	TaxRegistrationListURL string
 }
 
 // WorkspaceUserRow holds display data for a single workspace_user in the Users tab table.
@@ -67,14 +72,17 @@ type PageData struct {
 	WorkspaceUserAddURL string
 	// Attachments tab
 	AttachmentTable *types.TableConfig
+	// Tax Registrations tab (Phase 2 H1)
+	TaxRegistrationListURL string
 }
 
 // tabLabels holds the resolved tab display strings, sourced from the lyngua
 // workspace.json keys added in Phase 1.
 type tabLabels struct {
-	Info        string
-	Users       string
-	Attachments string
+	Info             string
+	Users            string
+	Attachments      string
+	TaxRegistrations string
 }
 
 // resolveTabLabels returns display strings for the tabs.
@@ -93,7 +101,11 @@ func resolveTabLabels(l entydad.WorkspaceLabels) tabLabels {
 	if attachments == "" {
 		attachments = "Attachments"
 	}
-	return tabLabels{Info: info, Users: users, Attachments: attachments}
+	taxReg := l.Detail.Tabs.TaxRegistrations
+	if taxReg == "" {
+		taxReg = "Tax Registrations"
+	}
+	return tabLabels{Info: info, Users: users, Attachments: attachments, TaxRegistrations: taxReg}
 }
 
 // NewView creates the workspace detail view (full page load).
@@ -121,6 +133,10 @@ func NewView(deps *DetailViewDeps) view.View {
 			pageData.UsersTable = buildUsersTable(ctx, deps, id, tl)
 		case "attachments":
 			loadAttachments(ctx, deps, id, pageData)
+		case "tax-registrations":
+			if deps.TaxRegistrationListURL != "" {
+				pageData.TaxRegistrationListURL = deps.TaxRegistrationListURL
+			}
 		}
 
 		return view.OK("workspace-detail", pageData)
@@ -153,6 +169,14 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 		case "attachments":
 			loadAttachments(ctx, deps, id, pageData)
 			return view.OK("attachment-tab", pageData)
+		case "tax-registrations":
+			// Phase 2 H1 — tax registrations tab
+			// The list view is served by the TaxRegistration module;
+			// the tab template embeds it via hx-get.
+			if deps.TaxRegistrationListURL != "" {
+				pageData.TaxRegistrationListURL = deps.TaxRegistrationListURL
+			}
+			return view.OK("workspace-tab-tax-registrations", pageData)
 		default:
 			return view.OK("workspace-tab-info", pageData)
 		}
@@ -213,11 +237,22 @@ func buildPageData(viewCtx *view.ViewContext, id string, ws *workspacepb.Workspa
 func buildTabItems(id string, deps *DetailViewDeps, tl tabLabels) []pyeza.TabItem {
 	base := route.ResolveURL(deps.Routes.DetailURL, "id", id)
 	action := route.ResolveURL(deps.Routes.TabActionURL, "id", id, "tab", "")
-	return []pyeza.TabItem{
+	tabs := []pyeza.TabItem{
 		{Key: "info", Label: tl.Info, Href: base + "?tab=info", HxGet: action + "info", Icon: "icon-info"},
 		{Key: "users", Label: tl.Users, Href: base + "?tab=users", HxGet: action + "users", Icon: "icon-users"},
 		{Key: "attachments", Label: tl.Attachments, Href: base + "?tab=attachments", HxGet: action + "attachments", Icon: "icon-paperclip"},
 	}
+	// Phase 2 H1 — Tax Registrations tab (shown only when routes are wired)
+	if deps.TaxRegistrationListURL != "" {
+		tabs = append(tabs, pyeza.TabItem{
+			Key:   "tax-registrations",
+			Label: tl.TaxRegistrations,
+			Href:  base + "?tab=tax-registrations",
+			HxGet: action + "tax-registrations",
+			Icon:  "icon-file-text",
+		})
+	}
+	return tabs
 }
 
 // buildUsersTable loads workspace_user rows filtered by workspace_id and returns a TableConfig.

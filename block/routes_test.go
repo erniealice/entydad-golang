@@ -15,16 +15,16 @@ func TestLoadBlockRoutes_ServiceBusinessTypeLoadsSubscriptionOverrides(t *testin
 	if got, want := routes.Subscription.ListURL, "/app/memberships/list/{status}"; got != want {
 		t.Fatalf("subscription list_url mismatch: got=%q want=%q", got, want)
 	}
-	if got, want := routes.Subscription.DetailURL, "/app/memberships/{id}"; got != want {
+	if got, want := routes.Subscription.DetailURL, "/app/memberships/detail/{id}"; got != want {
 		t.Fatalf("subscription detail_url mismatch: got=%q want=%q", got, want)
 	}
-	if got, want := routes.Subscription.AddURL, "/action/memberships/add"; got != want {
+	if got, want := routes.Subscription.AddURL, "/action/membership/add"; got != want {
 		t.Fatalf("subscription add_url mismatch: got=%q want=%q", got, want)
 	}
-	if got, want := routes.Subscription.EditURL, "/action/memberships/edit/{id}"; got != want {
+	if got, want := routes.Subscription.EditURL, "/action/membership/edit/{id}"; got != want {
 		t.Fatalf("subscription edit_url mismatch: got=%q want=%q", got, want)
 	}
-	if got, want := routes.Subscription.DeleteURL, "/action/memberships/delete"; got != want {
+	if got, want := routes.Subscription.DeleteURL, "/action/membership/delete"; got != want {
 		t.Fatalf("subscription delete_url mismatch: got=%q want=%q", got, want)
 	}
 }

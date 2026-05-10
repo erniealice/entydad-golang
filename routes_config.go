@@ -1030,3 +1030,64 @@ func (r AuthRoutes) RouteMap() map[string]string {
 		"auth.logout":              r.LogoutURL,
 	}
 }
+
+// ---------------------------------------------------------------------------
+// TaxRegistrationRoutes
+// ---------------------------------------------------------------------------
+
+// TaxRegistrationRoutes holds route paths for the polymorphic TaxRegistration
+// views. v1 surfaces client + workspace party types only.
+// The AddURL and DeleteURL are party-scoped (include party_id in path).
+type TaxRegistrationRoutes struct {
+	// Client-scoped routes
+	ClientListURL   string `json:"client_list_url"`
+	ClientAddURL    string `json:"client_add_url"`
+	ClientEditURL   string `json:"client_edit_url"`
+	ClientDeleteURL string `json:"client_delete_url"`
+
+	// Workspace-scoped routes
+	WorkspaceListURL   string `json:"workspace_list_url"`
+	WorkspaceAddURL    string `json:"workspace_add_url"`
+	WorkspaceEditURL   string `json:"workspace_edit_url"`
+	WorkspaceDeleteURL string `json:"workspace_delete_url"`
+
+	// AddURL and DeleteURL are the active-context URLs (set by the view wiring).
+	// For client views: same as ClientAddURL / ClientDeleteURL.
+	// For workspace views: same as WorkspaceAddURL / WorkspaceDeleteURL.
+	AddURL    string `json:"add_url"`
+	DeleteURL string `json:"delete_url"`
+}
+
+// DefaultTaxRegistrationRoutes returns a TaxRegistrationRoutes populated from
+// the package-level route constants.
+func DefaultTaxRegistrationRoutes() TaxRegistrationRoutes {
+	return TaxRegistrationRoutes{
+		ClientListURL:   ClientTaxRegistrationListURL,
+		ClientAddURL:    ClientTaxRegistrationAddURL,
+		ClientEditURL:   ClientTaxRegistrationEditURL,
+		ClientDeleteURL: ClientTaxRegistrationDeleteURL,
+
+		WorkspaceListURL:   WorkspaceTaxRegistrationListURL,
+		WorkspaceAddURL:    WorkspaceTaxRegistrationAddURL,
+		WorkspaceEditURL:   WorkspaceTaxRegistrationEditURL,
+		WorkspaceDeleteURL: WorkspaceTaxRegistrationDeleteURL,
+
+		// Default to client context; override at wiring time for workspace.
+		AddURL:    ClientTaxRegistrationAddURL,
+		DeleteURL: ClientTaxRegistrationDeleteURL,
+	}
+}
+
+// RouteMap returns a map of dot-notation keys to route paths.
+func (r TaxRegistrationRoutes) RouteMap() map[string]string {
+	return map[string]string{
+		"tax_registration.client.list":      r.ClientListURL,
+		"tax_registration.client.add":       r.ClientAddURL,
+		"tax_registration.client.edit":      r.ClientEditURL,
+		"tax_registration.client.delete":    r.ClientDeleteURL,
+		"tax_registration.workspace.list":   r.WorkspaceListURL,
+		"tax_registration.workspace.add":    r.WorkspaceAddURL,
+		"tax_registration.workspace.edit":   r.WorkspaceEditURL,
+		"tax_registration.workspace.delete": r.WorkspaceDeleteURL,
+	}
+}

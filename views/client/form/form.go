@@ -85,6 +85,17 @@ type Labels struct {
 	LeadTimeDays               string
 	LeadTimeDaysPlaceholder    string
 	LeadTimeDaysInfo           string
+
+	// Tax identity fields (Phase 5)
+	TIN                        string
+	TINPlaceholder             string
+	TINInfo                    string
+
+	// CountryCode — ISO 3166-1 alpha-2 (Phase 5 H2).
+	// Separate from the legacy Country free-text field; drives jurisdiction lookup.
+	CountryCode            string
+	CountryCodePlaceholder string
+	CountryCodeInfo        string
 }
 
 // PaymentTermOption is a minimal struct for rendering payment term options in the form.
@@ -134,6 +145,9 @@ type Data struct {
 	CreditLimit              string // form-input string; converted to int64 centavos in POST
 	LeadTimeDays             string
 	SearchTimezonesURL       string
+	// Tax identity fields (Phase 5)
+	TIN         string
+	CountryCode string
 	PaymentTerms             []*PaymentTermOption
 	SelectedPaymentTermID    string
 	PaymentTermSelectOptions []pyeza.SelectOption
@@ -222,5 +236,13 @@ func BuildLabels(t func(string) string) Labels {
 		LeadTimeDays:               t("client.form.leadTimeDays"),
 		LeadTimeDaysPlaceholder:    t("client.form.leadTimeDaysPlaceholder"),
 		LeadTimeDaysInfo:           t("client.form.leadTimeDaysInfo"),
+		// Tax identity (Phase 5)
+		TIN:            t("client.form.tin"),
+		TINPlaceholder: t("client.form.tinPlaceholder"),
+		TINInfo:        t("client.form.tinInfo"),
+		// CountryCode (Phase 5 H2)
+		CountryCode:            t("client.form.countryCode"),
+		CountryCodePlaceholder: t("client.form.countryCodePlaceholder"),
+		CountryCodeInfo:        t("client.form.countryCodeInfo"),
 	}
 }

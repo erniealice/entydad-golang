@@ -27,6 +27,8 @@
         {{template "attachment-tab" .}}
         {{else if eq .ActiveTab "audit-history"}}
         {{template "audit-history-tab" .}}
+        {{else if eq .ActiveTab "tax-registrations"}}
+        {{template "client-tab-tax-registrations" .}}
         {{end}}
     </div>
 </div>
@@ -197,6 +199,27 @@
             <div class="coming-soon-title">{{.Labels.Detail.OutstandingTable.Empty.Title}}</div>
             <p class="coming-soon-text">{{.Labels.Detail.OutstandingTable.Empty.Message}}</p>
         </div>
+    {{end}}
+</div>
+{{end}}
+
+{{/* Tax Registrations Tab — Phase 2 H1 */}}
+{{define "client-tab-tax-registrations"}}
+<div class="tab-scroll" data-testid="client-tab-tax-registrations">
+    {{if .TaxRegistrationListURL}}
+    <div hx-get="{{.TaxRegistrationListURL}}"
+         hx-trigger="load"
+         hx-swap="innerHTML"
+         data-testid="client-tax-registrations-embed">
+        <div class="coming-soon-panel">
+            <div class="coming-soon-title">Loading tax registrations…</div>
+        </div>
+    </div>
+    {{else}}
+    <div class="coming-soon-panel">
+        <div class="coming-soon-title">Tax Registrations</div>
+        <p class="coming-soon-text">Tax registration routes are not configured for this deployment.</p>
+    </div>
     {{end}}
 </div>
 {{end}}

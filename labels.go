@@ -100,6 +100,10 @@ type ClientFormLabels struct {
 	StatusProspect        string `json:"statusProspect"`
 	Country               string `json:"country"`
 	CountryPlaceholder    string `json:"countryPlaceholder"`
+	// Phase 5 H2 — ISO 3166 alpha-2 country code separate from legacy Country
+	CountryCode            string `json:"countryCode"`
+	CountryCodePlaceholder string `json:"countryCodePlaceholder"`
+	CountryCodeInfo        string `json:"countryCodeInfo"`
 	Website               string `json:"website"`
 	WebsitePlaceholder    string `json:"websitePlaceholder"`
 	SectionCompany        string `json:"sectionCompany"`
@@ -190,6 +194,8 @@ type ClientDetailTabLabels struct {
 	PriceSchedulesSlug string `json:"priceSchedulesSlug"`
 	Attachments        string `json:"attachments"`
 	AuditHistory       string `json:"auditHistory"`
+	// Phase 2 — polymorphic tax registrations tab
+	TaxRegistrations string `json:"taxRegistrations"`
 }
 
 // ClientPriceSchedulesLabels holds labels for the PriceSchedules tab on the
@@ -1000,9 +1006,11 @@ type WorkspaceDetailLabels struct {
 
 // WorkspaceDetailTabLabels holds the tab display names for the workspace detail page.
 type WorkspaceDetailTabLabels struct {
-	Info        string `json:"info"`
-	Users       string `json:"users"`
-	Attachments string `json:"attachments"`
+	Info             string `json:"info"`
+	Users            string `json:"users"`
+	Attachments      string `json:"attachments"`
+	// Phase 2 — polymorphic tax registrations tab
+	TaxRegistrations string `json:"taxRegistrations"`
 }
 
 // WorkspaceDetailUserLabels holds i18n strings for the Users tab on the workspace detail page.
@@ -1984,5 +1992,141 @@ func MapBulkConfig(common pyeza.CommonLabels) types.BulkActionsConfig {
 		SelectAllLabel: common.Bulk.SelectAll,
 		SelectedLabel:  common.Bulk.Selected,
 		CancelLabel:    common.Bulk.ClearSelection,
+	}
+}
+
+// ---------------------------------------------------------------------------
+// TaxRegistrationLabels
+// Lyngua root key: "taxRegistration"
+// ---------------------------------------------------------------------------
+
+// TaxRegistrationLabels holds all translatable strings for the polymorphic
+// Tax Registration views (client + workspace party types in v1).
+type TaxRegistrationLabels struct {
+	Page    TaxRegistrationPageLabels    `json:"page"`
+	Columns TaxRegistrationColumnLabels  `json:"columns"`
+	Buttons TaxRegistrationButtonLabels  `json:"buttons"`
+	Actions TaxRegistrationActionLabels  `json:"actions"`
+	Empty   TaxRegistrationEmptyLabels   `json:"empty"`
+	Fields  TaxRegistrationFieldLabels   `json:"fields"`
+	Revoke  TaxRegistrationRevokeLabels  `json:"revoke"`
+}
+
+// TaxRegistrationPageLabels holds page heading strings.
+type TaxRegistrationPageLabels struct {
+	Heading        string `json:"heading"`
+	HeadingClient  string `json:"headingClient"`
+	HeadingWorkspace string `json:"headingWorkspace"`
+	Caption        string `json:"caption"`
+	AddDrawerTitle string `json:"addDrawerTitle"`
+	EditDrawerTitle string `json:"editDrawerTitle"`
+}
+
+// TaxRegistrationColumnLabels holds table column headers.
+type TaxRegistrationColumnLabels struct {
+	KindName      string `json:"kindName"`
+	ComputePath   string `json:"computePath"`
+	PartyRole     string `json:"partyRole"`
+	Status        string `json:"status"`
+	EffectiveFrom string `json:"effectiveFrom"`
+	RegistrationNumber string `json:"registrationNumber"`
+}
+
+// TaxRegistrationButtonLabels holds button text.
+type TaxRegistrationButtonLabels struct {
+	Add    string `json:"add"`
+	Edit   string `json:"edit"`
+	Delete string `json:"delete"`
+}
+
+// TaxRegistrationActionLabels holds action dropdown labels.
+type TaxRegistrationActionLabels struct {
+	View         string `json:"view"`
+	Edit         string `json:"edit"`
+	Delete       string `json:"delete"`
+	NoPermission string `json:"noPermission"`
+}
+
+// TaxRegistrationEmptyLabels holds empty-state strings.
+type TaxRegistrationEmptyLabels struct {
+	Title   string `json:"title"`
+	Message string `json:"message"`
+}
+
+// TaxRegistrationFieldLabels holds drawer form field labels.
+type TaxRegistrationFieldLabels struct {
+	TaxRegistrationKindID string `json:"taxRegistrationKindId"`
+	RegistrationNumber    string `json:"registrationNumber"`
+	EffectiveFrom         string `json:"effectiveFrom"`
+	Notes                 string `json:"notes"`
+	Status                string `json:"status"`
+}
+
+// TaxRegistrationRevokeLabels holds strings for the revoke confirm dialog.
+type TaxRegistrationRevokeLabels struct {
+	WarningMessage           string `json:"warningMessage"`
+	EffectiveTo              string `json:"effectiveTo"`
+	AffectedPeriodsNotice    string `json:"affectedPeriodsNotice"`
+	// AffectedPeriodsCount is the row label for the pending-period count (Phase 5 M3).
+	AffectedPeriodsCount     string `json:"affectedPeriodsCount"`
+	// AffectedSubscriptionsCount is the row label for the subscription count (Phase 5 M3).
+	AffectedSubscriptionsCount string `json:"affectedSubscriptionsCount"`
+	ReasonLabel                string `json:"reasonLabel"`
+	ReasonPlaceholder          string `json:"reasonPlaceholder"`
+	ConfirmButton              string `json:"confirmButton"`
+}
+
+// DefaultTaxRegistrationLabels returns TaxRegistrationLabels with sensible
+// English defaults.
+func DefaultTaxRegistrationLabels() TaxRegistrationLabels {
+	return TaxRegistrationLabels{
+		Page: TaxRegistrationPageLabels{
+			Heading:          "Tax Registrations",
+			HeadingClient:    "Client Tax Registrations",
+			HeadingWorkspace: "Workspace Tax Registrations",
+			Caption:          "Active tax registrations determine compute path during revenue recognition",
+			AddDrawerTitle:   "Add Tax Registration",
+			EditDrawerTitle:  "Edit Tax Registration",
+		},
+		Columns: TaxRegistrationColumnLabels{
+			KindName:           "Kind",
+			ComputePath:        "Compute Path",
+			PartyRole:          "Party Role",
+			Status:             "Status",
+			EffectiveFrom:      "Effective From",
+			RegistrationNumber: "Registration No.",
+		},
+		Buttons: TaxRegistrationButtonLabels{
+			Add:    "Add Tax Registration",
+			Edit:   "Edit",
+			Delete: "Delete",
+		},
+		Actions: TaxRegistrationActionLabels{
+			View:         "View",
+			Edit:         "Edit",
+			Delete:       "Delete",
+			NoPermission: "You do not have permission to manage tax registrations",
+		},
+		Empty: TaxRegistrationEmptyLabels{
+			Title:   "No tax registrations",
+			Message: "Add a tax registration to enable tax computation for this party.",
+		},
+		Fields: TaxRegistrationFieldLabels{
+			TaxRegistrationKindID: "Tax Registration Kind",
+			RegistrationNumber:    "Registration Number",
+			EffectiveFrom:         "Effective From",
+			Notes:                 "Notes",
+			Status:                "Status",
+		},
+		Revoke: TaxRegistrationRevokeLabels{
+			WarningMessage:             "Revoking this registration will affect pending billing periods. Ensure all outstanding periods are settled before proceeding.",
+			EffectiveTo:                "Effective To",
+			AffectedPeriodsNotice:      "Some pending subscription billing periods fall within the revocation window and may need to be reprocessed.",
+			AffectedPeriodsCount:       "Affected billing periods",
+			AffectedSubscriptionsCount: "Affected subscriptions",
+			ReasonLabel:                "Reason for revocation",
+			ReasonPlaceholder:          "Describe why this registration is being revoked",
+			ConfirmButton:              "Revoke Registration",
+		},
 	}
 }

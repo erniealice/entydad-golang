@@ -1,0 +1,78 @@
+{{/*
+Tax Registration revoke confirm dialog.
+Loaded into a modal/sheet. Shows affected pending periods across subscriptions
+so the operator understands the downstream impact before revoking.
+
+Data:
+  .PartyName             string  — display name (client or workspace)
+  .KindName              string  — e.g. "Top Withholding Agent (PH)"
+  .EffectiveTo           string  — operator-entered effective-to date
+  .AffectedPeriodCount   int     — how many pending periods will be affected
+  .AffectedSubCount      int     — how many subscriptions span those periods
+  .Reason                string  — operator-entered reason
+  .RevokeURL             string  — POST target
+  .Labels                entydad.TaxRegistrationLabels
+  .CommonLabels
+*/}}
+{{define "tax-registration-revoke-confirm"}}
+<form hx-post="{{.RevokeURL}}" hx-swap="none" hx-on::after-request="lf.Sheet.handleResponse(event)">
+    {{if .ID}}<input type="hidden" name="id" value="{{.ID}}">{{end}}
+
+    <div class="sheet-body">
+        <div class="form-row single">
+            {{template "alert" (dict
+                "State" "warning"
+                "Message" .Labels.Revoke.WarningMessage
+                "Title" .KindName
+            )}}
+        </div>
+
+        {{if .EffectiveTo}}
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "date"
+                "Name" "effective_to"
+                "Label" .Labels.Revoke.EffectiveTo
+                "Value" .EffectiveTo
+                "Required" true
+            )}}
+        </div>
+        {{end}}
+
+        {{/* Affected pending periods notice — Phase 5 M3: show actual counts */}}
+        {{if gt .AffectedPeriodCount 0}}
+        <div class="form-row single" data-testid="revoke-affected-notice">
+            {{template "alert" (dict
+                "State" "warning"
+                "Message" .Labels.Revoke.AffectedPeriodsNotice
+                "Variant" "subtle"
+            )}}
+            <dl class="form-summary" style="margin-top: 0.5rem;" data-testid="revoke-affected-counts">
+                <dt>{{.Labels.Revoke.AffectedPeriodsCount}}</dt>
+                <dd data-testid="revoke-affected-period-count">{{.AffectedPeriodCount}}</dd>
+                <dt>{{.Labels.Revoke.AffectedSubscriptionsCount}}</dt>
+                <dd data-testid="revoke-affected-sub-count">{{.AffectedSubCount}}</dd>
+            </dl>
+        </div>
+        {{end}}
+
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "textarea"
+                "Name" "reason"
+                "Label" .Labels.Revoke.ReasonLabel
+                "Value" .Reason
+                "Placeholder" .Labels.Revoke.ReasonPlaceholder
+                "Rows" 3
+            )}}
+        </div>
+    </div>
+
+    {{template "sheet-form-footer" (dict
+        "CommonLabels" .CommonLabels
+        "ShowCancel" true
+        "IsEdit" false
+        "SubmitLabel" .Labels.Revoke.ConfirmButton
+    )}}
+</form>
+{{end}}

@@ -1,0 +1,80 @@
+{{/*
+Tax Registration drawer form — add and supersede.
+Loaded into the side sheet from the Tax Registrations tab on the client or
+workspace detail page.
+
+Data:
+  .FormAction         string               — POST target URL
+  .IsEdit             bool                 — true on supersede; false on add
+  .ID                 string               — record ID (supersede only)
+  .PartyType          string               — "client" or "workspace"
+  .PartyID            string               — party record ID
+  .KindOptions        []form.KindOption    — filtered by FindByPartyType
+  .SelectedKindID     string               — pre-selected kind ID
+  .RegistrationNumber string
+  .EffectiveFrom      string
+  .Notes              string
+  .Labels             form.Labels
+  .CommonLabels
+*/}}
+{{define "tax-registration-drawer-form"}}
+<form hx-post="{{.FormAction}}"
+      hx-swap="none"
+      hx-on::after-request="lf.Sheet.handleResponse(event)"
+      data-testid="tax-registration-drawer-form">
+    {{if .IsEdit}}<input type="hidden" name="id" value="{{.ID}}">{{end}}
+    <input type="hidden" name="party_type" value="{{.PartyType}}">
+    <input type="hidden" name="party_id" value="{{.PartyID}}">
+
+    <div class="sheet-body">
+        {{/* ── Kind dropdown — filtered by party type via FindByPartyType ── */}}
+        <div class="form-row single">
+            <div class="form-group" data-testid="tax-registration-kind">
+                <label class="form-label">{{.Labels.KindID}}</label>
+                <select name="tax_registration_kind_id" class="form-control" required>
+                    <option value="">— select —</option>
+                    {{range .KindOptions}}
+                    <option value="{{.Value}}"{{if .Selected}} selected{{end}}>{{.Label}}</option>
+                    {{end}}
+                </select>
+            </div>
+        </div>
+
+        {{/* ── Registration number ── */}}
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "registration_number"
+                "Label" .Labels.RegistrationNumber
+                "Value" .RegistrationNumber
+                "TestId" "tax-registration-number"
+            )}}
+        </div>
+
+        {{/* ── Effective from ── */}}
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "date"
+                "Name" "effective_from"
+                "Label" .Labels.EffectiveFrom
+                "Value" .EffectiveFrom
+                "Required" true
+                "TestId" "tax-registration-effective-from"
+            )}}
+        </div>
+
+        {{/* ── Notes (optional) ── */}}
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "textarea"
+                "Name" "notes"
+                "Label" .Labels.Notes
+                "Value" .Notes
+                "TestId" "tax-registration-notes"
+            )}}
+        </div>
+    </div>
+
+    {{template "sheet-form-footer" (dict "CommonLabels" .CommonLabels "ShowCancel" true "IsEdit" .IsEdit)}}
+</form>
+{{end}}

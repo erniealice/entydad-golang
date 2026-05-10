@@ -216,6 +216,32 @@ and preserved by the Update Client use case when the request omits it.
             )}}
         </div>
 
+        {{/* TIN — tax identity number for this client (Phase 5) */}}
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "tin"
+                "Label" .Labels.TIN
+                "Value" .TIN
+                "Placeholder" .Labels.TINPlaceholder
+                "Info" .Labels.TINInfo
+                "TestId" "client-tin"
+            )}}
+        </div>
+
+        {{/* CountryCode — ISO 3166-1 alpha-2 (Phase 5 H2); separate from legacy Country free-text */}}
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "country_code"
+                "Label" .Labels.CountryCode
+                "Value" .CountryCode
+                "Placeholder" .Labels.CountryCodePlaceholder
+                "Info" .Labels.CountryCodeInfo
+                "TestId" "client-country-code"
+            )}}
+        </div>
+
         {{/* --- Others Section --- */}}
         {{template "form-section" (dict "Title" .Labels.SectionOthers)}}
 

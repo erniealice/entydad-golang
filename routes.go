@@ -236,4 +236,16 @@ const (
 	// DefaultAppRedirectURL is the default post-login redirect path.
 	// Consumer apps should set Deps.RedirectURL to override this.
 	DefaultAppRedirectURL = "/app/"
+
+	// TaxRegistration — polymorphic (client + workspace party types in v1)
+	// URL convention: party_type + party_id come from the parent detail page context.
+	ClientTaxRegistrationListURL    = "/app/clients/detail/{id}/tax-registrations"
+	ClientTaxRegistrationAddURL     = "/action/client/{id}/tax-registration/add"
+	ClientTaxRegistrationEditURL    = "/action/client/{id}/tax-registration/edit/{reg_id}"
+	ClientTaxRegistrationDeleteURL  = "/action/client/{id}/tax-registration/delete"
+
+	WorkspaceTaxRegistrationListURL   = "/app/workspace/settings/tax-registrations"
+	WorkspaceTaxRegistrationAddURL    = "/action/workspace/tax-registration/add"
+	WorkspaceTaxRegistrationEditURL   = "/action/workspace/tax-registration/edit/{reg_id}"
+	WorkspaceTaxRegistrationDeleteURL = "/action/workspace/tax-registration/delete"
 )

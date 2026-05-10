@@ -33,10 +33,11 @@ func NewAddAction(deps *Deps) view.View {
 		}
 		if viewCtx.Request.Method == http.MethodGet {
 			return view.OK("workspace-drawer-form", &form.Data{
-				FormAction:   deps.Routes.AddURL,
-				Active:       true,
-				Labels:       form.BuildLabels(viewCtx.T),
-				CommonLabels: nil, // injected by ViewAdapter
+				FormAction:            deps.Routes.AddURL,
+				Active:                true,
+				TaxComputationEnabled: true, // default: enabled
+				Labels:                form.BuildLabels(viewCtx.T),
+				CommonLabels:          nil, // injected by ViewAdapter
 			})
 		}
 
@@ -48,13 +49,19 @@ func NewAddAction(deps *Deps) view.View {
 		r := viewCtx.Request
 		active := r.FormValue("active") == "true"
 		private := r.FormValue("private") == "true"
+		taxComputationEnabled := r.FormValue("tax_computation_enabled") == "true"
+		taxInclusivePricing := r.FormValue("tax_inclusive_pricing") == "true"
 
 		_, err := deps.CreateWorkspace(ctx, &workspacepb.CreateWorkspaceRequest{
 			Data: &workspacepb.Workspace{
-				Name:        r.FormValue("name"),
-				Description: r.FormValue("description"),
-				Private:     private,
-				Active:      active,
+				Name:                  r.FormValue("name"),
+				Description:           r.FormValue("description"),
+				Private:               private,
+				Active:                active,
+				Tin:                   optionalString(r.FormValue("tin")),
+				HomeJurisdiction:      optionalString(r.FormValue("home_jurisdiction")),
+				TaxComputationEnabled: optionalBool(taxComputationEnabled),
+				TaxInclusivePricing:   optionalBool(taxInclusivePricing),
 			},
 		})
 		if err != nil {
@@ -87,15 +94,19 @@ func NewEditAction(deps *Deps) view.View {
 			ws := resp.GetData()[0]
 
 			return view.OK("workspace-drawer-form", &form.Data{
-				FormAction:   route.ResolveURL(deps.Routes.EditURL, "id", id),
-				IsEdit:       true,
-				ID:           id,
-				Name:         ws.GetName(),
-				Description:  ws.GetDescription(),
-				Private:      ws.GetPrivate(),
-				Active:       ws.GetActive(),
-				Labels:       form.BuildLabels(viewCtx.T),
-				CommonLabels: nil, // injected by ViewAdapter
+				FormAction:            route.ResolveURL(deps.Routes.EditURL, "id", id),
+				IsEdit:                true,
+				ID:                    id,
+				Name:                  ws.GetName(),
+				Description:           ws.GetDescription(),
+				Private:               ws.GetPrivate(),
+				Active:                ws.GetActive(),
+				TaxInclusivePricing:   ws.GetTaxInclusivePricing(),
+				TaxComputationEnabled: ws.GetTaxComputationEnabled(),
+				HomeJurisdiction:      ws.GetHomeJurisdiction(),
+				TIN:                   ws.GetTin(),
+				Labels:                form.BuildLabels(viewCtx.T),
+				CommonLabels:          nil, // injected by ViewAdapter
 			})
 		}
 
@@ -107,14 +118,20 @@ func NewEditAction(deps *Deps) view.View {
 		r := viewCtx.Request
 		active := r.FormValue("active") == "true"
 		private := r.FormValue("private") == "true"
+		taxComputationEnabled := r.FormValue("tax_computation_enabled") == "true"
+		taxInclusivePricing := r.FormValue("tax_inclusive_pricing") == "true"
 
 		_, err := deps.UpdateWorkspace(ctx, &workspacepb.UpdateWorkspaceRequest{
 			Data: &workspacepb.Workspace{
-				Id:          id,
-				Name:        r.FormValue("name"),
-				Description: r.FormValue("description"),
-				Private:     private,
-				Active:      active,
+				Id:                    id,
+				Name:                  r.FormValue("name"),
+				Description:           r.FormValue("description"),
+				Private:               private,
+				Active:                active,
+				Tin:                   optionalString(r.FormValue("tin")),
+				HomeJurisdiction:      optionalString(r.FormValue("home_jurisdiction")),
+				TaxComputationEnabled: optionalBool(taxComputationEnabled),
+				TaxInclusivePricing:   optionalBool(taxInclusivePricing),
 			},
 		})
 		if err != nil {
@@ -241,4 +258,17 @@ func NewBulkSetStatusAction(deps *Deps) view.View {
 
 		return entydad.HTMXSuccess("workspaces-table")
 	})
+}
+
+// optionalString returns a pointer to s if non-empty, nil otherwise.
+func optionalString(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
+}
+
+// optionalBool returns a pointer to b.
+func optionalBool(b bool) *bool {
+	return &b
 }
