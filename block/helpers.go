@@ -15,7 +15,20 @@ import (
 
 	"github.com/erniealice/entydad-golang"
 	categorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
+	clientstmtpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/ledger/reporting/client_statement"
+	suppstmtpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/reporting/supplier_statement"
 )
+
+// LedgerReportingService is the subset of the espyna consumer.LedgerReportingService
+// interface that entydad's block actually calls. The concrete implementation
+// (espyna's postgres adapter) satisfies this interface implicitly.
+// Defined here so the block package does not need to import consumer.
+type LedgerReportingService interface {
+	GetClientStatement(ctx context.Context, req *clientstmtpb.ClientStatementRequest) (*clientstmtpb.ClientStatementResponse, error)
+	GetClientBalances(ctx context.Context) (map[string]int64, error)
+	GetSupplierStatement(ctx context.Context, req *suppstmtpb.SupplierStatementRequest) (*suppstmtpb.SupplierStatementResponse, error)
+	GetSupplierBalances(ctx context.Context) (map[string]int64, error)
+}
 
 // categoryListPageDataGetter is a local interface satisfied by the PostgresCategoryRepository
 // concrete type, allowing GetCategoryListPageData to be called via type assertion without

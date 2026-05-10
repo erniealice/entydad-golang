@@ -53,7 +53,6 @@ import (
 	workspaceusermod     "github.com/erniealice/entydad-golang/views/workspace_user"
 	workspaceuserrolemod "github.com/erniealice/entydad-golang/views/workspace_user_role"
 	taxregistrationmod "github.com/erniealice/entydad-golang/views/tax_registration"
-	"github.com/erniealice/espyna-golang/consumer"
 	"github.com/erniealice/espyna-golang/reference"
 	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/espyna-golang/registry"
@@ -61,10 +60,10 @@ import (
 	attachmentpb    "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
 	categorypb      "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
 	paymenttermpb   "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/payment_term"
-	userpb          "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/user"
 	workspacepb     "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace"
 	clientstmtpb    "github.com/erniealice/esqyma/pkg/schema/v1/domain/ledger/reporting/client_statement"
 	revenuepb       "github.com/erniealice/esqyma/pkg/schema/v1/domain/revenue/revenue"
+	revrunpb        "github.com/erniealice/esqyma/pkg/schema/v1/domain/revenue/revenue_run"
 	priceplanpb     "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/price_plan"
 	priceschedulepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/price_schedule"
 	subscriptionpb  "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/subscription"
@@ -73,6 +72,7 @@ import (
 	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
 	pyeza "github.com/erniealice/pyeza-golang"
 	pyezatypes "github.com/erniealice/pyeza-golang/types"
+	"google.golang.org/protobuf/proto"
 )
 
 // routeRegistrarFull — optional extension for raw http.HandlerFunc routes.
@@ -113,6 +113,15 @@ type blockConfig struct {
 	workspaceUserRole  bool
 	supplier           bool
 	taxRegistration    bool
+	useCases           *UseCases
+}
+
+// WithUseCases supplies the typed use-case closures to Block().
+// Required: Block() returns an error if this option is not provided.
+// Service-admin constructs the *UseCases via an adapter function that
+// bridges espyna's consumer container to entydad's typed shape.
+func WithUseCases(uc *UseCases) BlockOption {
+	return func(c *blockConfig) { c.useCases = uc }
 }
 
 // WithAdmin enables the Admin dashboard module in Block().
@@ -171,7 +180,6 @@ func WithTaxRegistration() BlockOption { return func(c *blockConfig) { c.taxRegi
 // When called with specific WithXxx() options, only those modules are registered.
 //
 // Expected ctx fields (type-asserted from any):
-//   - ctx.UseCases     → *consumer.UseCases
 //   - ctx.DB           → UpdateableSource (entydad.DataSource + Update method)
 //   - ctx.RefChecker   → reference.Checker
 //   - ctx.Translations → *lynguaV1.TranslationProvider
@@ -181,21 +189,31 @@ func WithTaxRegistration() BlockOption { return func(c *blockConfig) { c.taxRegi
 //     ctx.GetUserWorkspacesMap — user/workspace helpers
 //   - ctx.Routes, ctx.Common, ctx.Table, ctx.BusinessType — from pyeza.AppContext
 func Block(opts ...BlockOption) pyeza.AppOption {
-	cfg := &blockConfig{enableAll: len(opts) == 0}
+	cfg := &blockConfig{}
 	for _, opt := range opts {
 		opt(cfg)
 	}
+	// "Enable all modules" is derived — true when no module-toggling option was
+	// passed. Non-module options (WithUseCases, future config options) must NOT
+	// flip this off, otherwise the service-admin adapter that calls
+	// `Block(WithUseCases(...))` would silently register zero modules (which
+	// breaks workspace switch + every other admin route).
+	moduleSelected := cfg.admin || cfg.client || cfg.clientTag || cfg.supplierTag ||
+		cfg.paymentTerm || cfg.user || cfg.role || cfg.location || cfg.locationArea ||
+		cfg.permission || cfg.workspace || cfg.workspaceUser || cfg.workspaceUserRole ||
+		cfg.supplier || cfg.taxRegistration
+	cfg.enableAll = !moduleSelected
 
 	return func(ctx *pyeza.AppContext) error {
-		// --- type-assert opaque fields ---
+		// --- typed UseCases supplied via WithUseCases() ---
 
-		uc, ok := ctx.UseCases.(*consumer.UseCases)
-		if !ok || uc == nil {
-			return fmt.Errorf("entydad.Block: UseCases must be *consumer.UseCases")
+		if cfg.useCases == nil {
+			return fmt.Errorf("entydad.Block: WithUseCases(...) is required")
 		}
-		if uc.Entity == nil {
-			return fmt.Errorf("entydad.Block: entity use cases not initialized")
+		if err := cfg.useCases.RequireFor(cfg); err != nil {
+			return err
 		}
+		uc := cfg.useCases // local alias for brevity
 
 		db, ok := ctx.DB.(UpdateableSource)
 		if !ok {
@@ -226,7 +244,7 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 		getUserWorkspacesMap, _ := ctx.GetUserWorkspacesMap.(func(ctx context.Context) (map[string][]pyezatypes.ChipData, error))
 
 		// type-assert ledger reporting service (nil-safe)
-		ledgerReportingSvc, _ := ctx.LedgerReportingSvc.(consumer.LedgerReportingService)
+		ledgerReportingSvc, _ := ctx.LedgerReportingSvc.(LedgerReportingService)
 
 		// --- load labels from lyngua ---
 		labels := loadBlockLabels(translations, ctx.BusinessType)
@@ -237,9 +255,6 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 		// --- register modules ---
 
 		if cfg.enableAll || cfg.client {
-			if uc.Entity.Client == nil {
-				return fmt.Errorf("entydad.Block: client use cases not initialized")
-			}
 			clientDeps := &clientmod.ModuleDeps{
 				Routes:               routes.Client,
 				// User module owns the timezone search endpoint; the client
@@ -251,12 +266,12 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 				DashboardLabels:      labels.ClientDashboard,
 				DashboardTitleLabels: labels.Dashboard,
 				TableLabels:          ctx.Table,
-				GetListPageData:      uc.Entity.Client.GetClientListPageData.Execute,
+				GetListPageData:      uc.Client.GetListPageData,
 				GetInUseIDs:          refChecker.GetClientInUseIDs,
-				CreateClient:         uc.Entity.Client.CreateClient.Execute,
-				ReadClient:           uc.Entity.Client.ReadClient.Execute,
-				UpdateClient:         uc.Entity.Client.UpdateClient.Execute,
-				DeleteClient:         uc.Entity.Client.DeleteClient.Execute,
+				CreateClient:         uc.Client.Create,
+				ReadClient:           uc.Client.Read,
+				UpdateClient:         uc.Client.Update,
+				DeleteClient:         uc.Client.Delete,
 				SetStatus: func(fctx context.Context, id string, status string) error {
 					// Keep the legacy `active` boolean in sync with the lifecycle
 					// status so consumers that still filter on c.active see
@@ -307,17 +322,17 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 				DeleteAttachment:      deleteAttachment,
 				NewID:                 newAttachmentID,
 			}
-			if uc.Common != nil && uc.Common.Category != nil {
-				clientDeps.ListCategories = uc.Common.Category.ListCategories.Execute
+			if uc.Category.List != nil {
+				clientDeps.ListCategories = uc.Category.List
 			}
-			if uc.Entity.ClientCategory != nil {
-				clientDeps.ListClientCategories = uc.Entity.ClientCategory.ListClientCategories.Execute
-				clientDeps.CreateClientCategory = uc.Entity.ClientCategory.CreateClientCategory.Execute
-				clientDeps.DeleteClientCategory = uc.Entity.ClientCategory.DeleteClientCategory.Execute
+			if uc.Client.Category.List != nil {
+				clientDeps.ListClientCategories = uc.Client.Category.List
+				clientDeps.CreateClientCategory = uc.Client.Category.Create
+				clientDeps.DeleteClientCategory = uc.Client.Category.Delete
 			}
-			if uc.Subscription != nil && uc.Subscription.Subscription != nil {
-				clientDeps.ListSubscriptions = uc.Subscription.Subscription.ListSubscriptions.Execute
-				clientDeps.GetSubscriptionListPageData = uc.Subscription.Subscription.GetSubscriptionListPageData.Execute
+			if uc.Subscription.List != nil {
+				clientDeps.ListSubscriptions = uc.Subscription.List
+				clientDeps.GetSubscriptionListPageData = uc.Subscription.GetListPageData
 			}
 			// Wire the PriceSchedules tab: list all price_schedules, filter to
 			// client_id == clientID, then map each to a ClientPriceScheduleRow.
@@ -325,11 +340,11 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 			// build a map[scheduleID]int once, then injected per row. DetailURL
 			// resolved from the active PriceSchedule route config (lyngua overrides
 			// per business type).
-			if uc.Subscription != nil && uc.Subscription.PriceSchedule != nil && uc.Subscription.PriceSchedule.ListPriceSchedules != nil {
-				listPriceSchedules := uc.Subscription.PriceSchedule.ListPriceSchedules.Execute
+			if uc.PriceSchedule.List != nil {
+				listPriceSchedules := uc.PriceSchedule.List
 				var listPricePlans func(context.Context, *priceplanpb.ListPricePlansRequest) (*priceplanpb.ListPricePlansResponse, error)
-				if uc.Subscription.PricePlan != nil && uc.Subscription.PricePlan.ListPricePlans != nil {
-					listPricePlans = uc.Subscription.PricePlan.ListPricePlans.Execute
+				if uc.PricePlan.List != nil {
+					listPricePlans = uc.PricePlan.List
 				}
 				psDetailURL := routes.PriceSchedule.DetailURL
 				clientDeps.ListClientPriceSchedules = func(fctx context.Context, clientID string) ([]clientdetail.ClientPriceScheduleRow, error) {
@@ -380,8 +395,8 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 				}
 				clientDeps.PriceScheduleAddURL = routes.PriceSchedule.AddURL
 			}
-			if uc.Entity.Workspace != nil && uc.Entity.Workspace.ReadWorkspace != nil {
-				readWorkspace := uc.Entity.Workspace.ReadWorkspace.Execute
+			if uc.Workspace.Read != nil {
+				readWorkspace := uc.Workspace.Read
 				wsID := getDefaultWorkspaceID()
 				clientDeps.GetFunctionalCurrency = func(fctx context.Context) string {
 					resp, err := readWorkspace(fctx, &workspacepb.ReadWorkspaceRequest{
@@ -402,10 +417,10 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 					return ledgerReportingSvc.GetClientBalances(fctx)
 				}
 			}
-			if uc.Subscription != nil && uc.Subscription.Subscription != nil && uc.Subscription.Subscription.CountActiveByClientIds != nil {
-				countActiveUC := uc.Subscription.Subscription.CountActiveByClientIds
+			if uc.Subscription.CountActiveByClientIDs != nil {
+				countActive := uc.Subscription.CountActiveByClientIDs
 				clientDeps.GetActiveEngagementCounts = func(fctx context.Context) (map[string]int32, error) {
-					resp, err := countActiveUC.Execute(fctx, &subscriptionpb.CountActiveByClientIdsRequest{})
+					resp, err := countActive(fctx, &subscriptionpb.CountActiveByClientIdsRequest{})
 					if err != nil {
 						return nil, err
 					}
@@ -415,8 +430,8 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 			// Wire ListRevenuesByClient using the typed Revenue use case with a
 			// client_id StringFilter. The postgres adapter supports BuildFilterWhere
 			// on the revenue table which includes client_id as a filterable column.
-			if uc.Revenue != nil && uc.Revenue.Revenue != nil && uc.Revenue.Revenue.ListRevenues != nil {
-				listRevenues := uc.Revenue.Revenue.ListRevenues.Execute
+			if uc.Revenue.List != nil {
+				listRevenues := uc.Revenue.List
 				clientDeps.ListRevenuesByClient = func(fctx context.Context, clientID string) ([]*revenuepb.Revenue, error) {
 					resp, err := listRevenues(fctx, &revenuepb.ListRevenuesRequest{
 						Filters: &categorypb.FilterRequest{
@@ -440,10 +455,10 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 					return resp.GetData(), nil
 				}
 			}
-			if uc.Treasury != nil && uc.Treasury.Collection != nil && uc.Treasury.Collection.ListByClient != nil {
-				listByClientUC := uc.Treasury.Collection.ListByClient
+			if uc.Collection.ListByClient != nil {
+				listByClient := uc.Collection.ListByClient
 				clientDeps.ListCollectionsByClient = func(fctx context.Context, clientID string) ([]*collectionpb.Collection, error) {
-					resp, err := listByClientUC.Execute(fctx, &collectionpb.ListByClientRequest{ClientId: clientID})
+					resp, err := listByClient(fctx, &collectionpb.ListByClientRequest{ClientId: clientID})
 					if err != nil {
 						return nil, err
 					}
@@ -454,68 +469,72 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 			// Wire Revenue Run drawer shims. Both use cases must be present for
 			// either callback to be wired, ensuring the drawer is either fully
 			// functional or fully absent.
-			if uc.Revenue != nil && uc.Revenue.Revenue != nil &&
-				uc.Revenue.Revenue.ListRevenueRunCandidates != nil &&
-				uc.Revenue.Revenue.GenerateRevenueRun != nil {
+			if uc.Revenue.ListRevenueRunCandidates != nil &&
+				uc.Revenue.GenerateRevenueRun != nil {
+				listCandidates := uc.Revenue.ListRevenueRunCandidates
+				generateRun := uc.Revenue.GenerateRevenueRun
 				clientDeps.ListRevenueRunCandidates = func(fctx context.Context, scope clientdetail.RevenueRunScope) ([]clientdetail.RevenueRunCandidate, string, error) {
-					candidates, nextCursor, err := consumer.ListRevenueRunCandidates(uc, fctx, consumer.RevenueRunScope{
-						WorkspaceID:    scope.WorkspaceID,
-						ClientID:       scope.ClientID,
-						SubscriptionID: scope.SubscriptionID,
-						AsOfDate:       scope.AsOfDate,
-						Cursor:         scope.Cursor,
-						Limit:          scope.Limit,
+					resp, err := listCandidates(fctx, &revrunpb.ListRevenueRunCandidatesRequest{
+						Scope: &revrunpb.RevenueRunScope{
+							WorkspaceId:    proto.String(scope.WorkspaceID),
+							ClientId:       proto.String(scope.ClientID),
+							SubscriptionId: proto.String(scope.SubscriptionID),
+							AsOfDate:       proto.String(scope.AsOfDate),
+						},
 					})
-					if err != nil {
+					if err != nil || resp == nil {
 						return nil, "", err
 					}
-					out := make([]clientdetail.RevenueRunCandidate, 0, len(candidates))
-					for _, c := range candidates {
-						amtDisplay := fmt.Sprintf("%.2f", float64(c.Amount)/100)
+					out := make([]clientdetail.RevenueRunCandidate, 0, len(resp.GetData()))
+					for _, c := range resp.GetData() {
+						amtDisplay := fmt.Sprintf("%.2f", float64(c.GetAmount())/100)
 						out = append(out, clientdetail.RevenueRunCandidate{
-							SubscriptionID:    c.SubscriptionID,
-							SubscriptionName:  c.SubscriptionName,
-							ClientID:          c.ClientID,
-							ClientName:        c.ClientName,
-							PlanName:          c.PlanName,
-							BillingCycleLabel: c.BillingCycleLabel,
-							Currency:          c.Currency,
-							PeriodStart:       c.PeriodStart,
-							PeriodEnd:         c.PeriodEnd,
-							PeriodLabel:       c.PeriodLabel,
-							PeriodMarker:      c.PeriodMarker,
-							Amount:            c.Amount,
+							SubscriptionID:    c.GetSubscriptionId(),
+							SubscriptionName:  c.GetSubscriptionName(),
+							ClientID:          c.GetClientId(),
+							ClientName:        c.GetClientName(),
+							PlanName:          c.GetPlanName(),
+							BillingCycleLabel: c.GetBillingCycleLabel(),
+							Currency:          c.GetCurrency(),
+							PeriodStart:       c.GetPeriodStart(),
+							PeriodEnd:         c.GetPeriodEnd(),
+							PeriodLabel:       c.GetPeriodLabel(),
+							PeriodMarker:      c.GetPeriodMarker(),
+							Amount:            c.GetAmount(),
 							AmountDisplay:     amtDisplay,
-							LineItemCount:     c.LineItemCount,
-							Eligible:          c.Eligible,
-							BlockerReason:     c.BlockerReason,
+							LineItemCount:     int(c.GetLineItemCount()),
+							Eligible:          c.GetEligible(),
+							BlockerReason:     c.GetBlockerReason(),
 						})
 					}
-					return out, nextCursor, nil
+					return out, resp.GetNextCursor(), nil
 				}
 
 				clientDeps.GenerateRevenueRun = func(fctx context.Context, scope clientdetail.RevenueRunScope, selections clientdetail.RevenueRunSelections) (*clientdetail.RevenueRunResult, error) {
-					consumerSelections := consumer.RevenueRunSelections{
-						FilterToken: selections.FilterToken,
+					protoSelections := &revrunpb.RevenueRunSelections{
+						FilterToken: proto.String(selections.FilterToken),
 					}
 					for _, s := range selections.ExplicitList {
-						consumerSelections.ExplicitList = append(consumerSelections.ExplicitList, consumer.SelectedRevenueRunCandidate{
-							SubscriptionID: s.SubscriptionID,
+						protoSelections.ExplicitList = append(protoSelections.ExplicitList, &revrunpb.SelectedRevenueRunCandidate{
+							SubscriptionId: s.SubscriptionID,
 							PeriodStart:    s.PeriodStart,
 							PeriodEnd:      s.PeriodEnd,
 							PeriodMarker:   s.PeriodMarker,
 						})
 					}
-					result, err := consumer.GenerateRevenueRun(uc, fctx, consumer.RevenueRunScope{
-						WorkspaceID:    scope.WorkspaceID,
-						ClientID:       scope.ClientID,
-						SubscriptionID: scope.SubscriptionID,
-						AsOfDate:       scope.AsOfDate,
-					}, consumerSelections)
-					if err != nil || result == nil {
+					resp, err := generateRun(fctx, &revrunpb.GenerateRevenueRunRequest{
+						Scope: &revrunpb.RevenueRunScope{
+							WorkspaceId:    proto.String(scope.WorkspaceID),
+							ClientId:       proto.String(scope.ClientID),
+							SubscriptionId: proto.String(scope.SubscriptionID),
+							AsOfDate:       proto.String(scope.AsOfDate),
+						},
+						Selections: protoSelections,
+					})
+					if err != nil || resp == nil {
 						return nil, err
 					}
-					run := result.Run
+					run := resp.GetRun()
 					runID := ""
 					runStatus := ""
 					if run != nil {
@@ -523,7 +542,7 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 						runStatus = run.GetStatus().String()
 					}
 					var created, skipped, errored int32
-					for _, a := range result.Attempts {
+					for _, a := range resp.GetAttempts() {
 						switch a.GetOutcome().String() {
 						case "REVENUE_RUN_ATTEMPT_OUTCOME_CREATED":
 							created++
@@ -547,9 +566,6 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 		}
 
 		if cfg.enableAll || cfg.user {
-			if uc.Entity.User == nil {
-				return fmt.Errorf("entydad.Block: user use cases not initialized")
-			}
 			usermod.NewModule(&usermod.ModuleDeps{
 				Routes:               routes.User,
 				CommonLabels:         ctx.Common,
@@ -559,23 +575,23 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 				DashboardTitleLabels: labels.Dashboard,
 				UserRoleLabels:       labels.UserRole,
 				TableLabels:          ctx.Table,
-				GetListPageData:      uc.Entity.User.GetUserListPageData.Execute,
+				GetListPageData:      uc.User.GetListPageData,
 				GetUserWorkspacesMap: getUserWorkspacesMap,
-				CreateUser:      uc.Entity.User.CreateUser.Execute,
-				ReadUser:        uc.Entity.User.ReadUser.Execute,
-				UpdateUser:      uc.Entity.User.UpdateUser.Execute,
-				DeleteUser:      uc.Entity.User.DeleteUser.Execute,
+				CreateUser:      uc.User.Create,
+				ReadUser:        uc.User.Read,
+				UpdateUser:      uc.User.Update,
+				DeleteUser:      uc.User.Delete,
 				SetActive: func(fctx context.Context, id string, active bool) error {
 					_, err := db.Update(fctx, "user", id, map[string]any{"active": active})
 					return err
 				},
-				CreateWorkspaceUser:          uc.Entity.WorkspaceUser.CreateWorkspaceUser.Execute,
-				ListWorkspaceUsers:           uc.Entity.WorkspaceUser.ListWorkspaceUsers.Execute,
-				GetWorkspaceUserItemPageData: uc.Entity.WorkspaceUser.GetWorkspaceUserItemPageData.Execute,
+				CreateWorkspaceUser:          uc.WorkspaceUser.Create,
+				ListWorkspaceUsers:           uc.WorkspaceUser.List,
+				GetWorkspaceUserItemPageData: uc.WorkspaceUser.GetItemPageData,
 				DefaultWorkspaceID:           getDefaultWorkspaceID(),
-				CreateWorkspaceUserRole:      uc.Entity.WorkspaceUserRole.CreateWorkspaceUserRole.Execute,
-				DeleteWorkspaceUserRole:      uc.Entity.WorkspaceUserRole.DeleteWorkspaceUserRole.Execute,
-				ListRoles:                    uc.Entity.Role.ListRoles.Execute,
+				CreateWorkspaceUserRole:      uc.WorkspaceUserRole.Create,
+				DeleteWorkspaceUserRole:      uc.WorkspaceUserRole.Delete,
+				ListRoles:                    uc.Role.List,
 				GetDashboardData:             getDashboardData,
 				HashPassword:                 hashPassword,
 				UploadFile:                   uploadFile,
@@ -587,9 +603,6 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 		}
 
 		if cfg.enableAll || cfg.role {
-			if uc.Entity.Role == nil {
-				return fmt.Errorf("entydad.Block: role use cases not initialized")
-			}
 			rolemod.NewModule(&rolemod.ModuleDeps{
 				Routes:               routes.Role,
 				CommonLabels:         ctx.Common,
@@ -598,24 +611,24 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 				RolePermissionLabels: labels.RolePermission,
 				RoleUserLabels:       labels.RoleUser,
 				TableLabels:          ctx.Table,
-				GetListPageData:      uc.Entity.Role.GetRoleListPageData.Execute,
+				GetListPageData:      uc.Role.GetListPageData,
 				GetInUseIDs:          refChecker.GetRoleInUseIDs,
-				CreateRole:           uc.Entity.Role.CreateRole.Execute,
-				ReadRole:             uc.Entity.Role.ReadRole.Execute,
-				UpdateRole:           uc.Entity.Role.UpdateRole.Execute,
-				DeleteRole:           uc.Entity.Role.DeleteRole.Execute,
+				CreateRole:           uc.Role.Create,
+				ReadRole:             uc.Role.Read,
+				UpdateRole:           uc.Role.Update,
+				DeleteRole:           uc.Role.Delete,
 				SetActive: func(fctx context.Context, id string, active bool) error {
 					_, err := db.Update(fctx, "role", id, map[string]any{"active": active})
 					return err
 				},
-				GetItemPageData:         uc.Entity.Role.GetRoleItemPageData.Execute,
-				CreateRolePermission:    uc.Entity.RolePermission.CreateRolePermission.Execute,
-				DeleteRolePermission:    uc.Entity.RolePermission.DeleteRolePermission.Execute,
-				ListPermissions:         uc.Entity.Permission.ListPermissions.Execute,
+				GetItemPageData:         uc.Role.GetItemPageData,
+				CreateRolePermission:    uc.RolePermission.Create,
+				DeleteRolePermission:    uc.RolePermission.Delete,
+				ListPermissions:         uc.Permission.List,
 				GetUsersByRoleID:        getUsersByRoleID,
-				ListWorkspaceUsers:      uc.Entity.WorkspaceUser.ListWorkspaceUsers.Execute,
-				CreateWorkspaceUserRole: uc.Entity.WorkspaceUserRole.CreateWorkspaceUserRole.Execute,
-				DeleteWorkspaceUserRole: uc.Entity.WorkspaceUserRole.DeleteWorkspaceUserRole.Execute,
+				ListWorkspaceUsers:      uc.WorkspaceUser.List,
+				CreateWorkspaceUserRole: uc.WorkspaceUserRole.Create,
+				DeleteWorkspaceUserRole: uc.WorkspaceUserRole.Delete,
 				UploadFile:              uploadFile,
 				ListAttachments:         listAttachments,
 				CreateAttachment:        createAttachment,
@@ -625,26 +638,23 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 
 			// Role-User search (http.HandlerFunc — uses HandleFunc, not GET)
 			handleFunc(ctx.Routes, "GET", routes.Role.UsersSearchURL, roleusers.NewSearchUsersAction(&roleusers.SearchDeps{
-				ListWorkspaceUsers: uc.Entity.WorkspaceUser.ListWorkspaceUsers.Execute,
+				ListWorkspaceUsers: uc.WorkspaceUser.List,
 			}))
 		}
 
 		if cfg.enableAll || cfg.location {
-			if uc.Entity.Location == nil {
-				return fmt.Errorf("entydad.Block: location use cases not initialized")
-			}
 			locationDeps := &locationmod.ModuleDeps{
 				Routes:          routes.Location,
 				CommonLabels:    ctx.Common,
 				SharedLabels:    labels.Shared,
 				Labels:          labels.Location,
 				TableLabels:     ctx.Table,
-				GetListPageData: uc.Entity.Location.GetLocationListPageData.Execute,
+				GetListPageData: uc.Location.GetListPageData,
 				GetInUseIDs:     refChecker.GetLocationInUseIDs,
-				CreateLocation:  uc.Entity.Location.CreateLocation.Execute,
-				ReadLocation:    uc.Entity.Location.ReadLocation.Execute,
-				UpdateLocation:  uc.Entity.Location.UpdateLocation.Execute,
-				DeleteLocation:  uc.Entity.Location.DeleteLocation.Execute,
+				CreateLocation:  uc.Location.Create,
+				ReadLocation:    uc.Location.Read,
+				UpdateLocation:  uc.Location.Update,
+				DeleteLocation:  uc.Location.Delete,
 				SetActive: func(fctx context.Context, id string, active bool) error {
 					_, err := db.Update(fctx, "location", id, map[string]any{"active": active})
 					return err
@@ -677,7 +687,9 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 					return opts, nil
 				}
 			}
-			wireLocationDashboard(locationDeps, uc)
+			if uc.GetLocationDashboardPageData != nil {
+				locationDeps.GetLocationDashboardPageData = uc.GetLocationDashboardPageData
+			}
 			locationmod.NewModule(locationDeps).RegisterRoutes(ctx.Routes)
 		}
 
@@ -769,20 +781,17 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 		}
 
 		if cfg.enableAll || cfg.permission {
-			if uc.Entity.Permission == nil {
-				return fmt.Errorf("entydad.Block: permission use cases not initialized")
-			}
 			permissionmod.NewModule(&permissionmod.ModuleDeps{
 				Routes:           routes.Permission,
 				CommonLabels:     ctx.Common,
 				SharedLabels:     labels.Shared,
 				Labels:           labels.Permission,
 				TableLabels:      ctx.Table,
-				GetListPageData:  uc.Entity.Permission.GetPermissionListPageData.Execute,
-				CreatePermission: uc.Entity.Permission.CreatePermission.Execute,
-				ReadPermission:   uc.Entity.Permission.ReadPermission.Execute,
-				UpdatePermission: uc.Entity.Permission.UpdatePermission.Execute,
-				DeletePermission: uc.Entity.Permission.DeletePermission.Execute,
+				GetListPageData:  uc.Permission.GetListPageData,
+				CreatePermission: uc.Permission.Create,
+				ReadPermission:   uc.Permission.Read,
+				UpdatePermission: uc.Permission.Update,
+				DeletePermission: uc.Permission.Delete,
 				SetActive: func(fctx context.Context, id string, active bool) error {
 					_, err := db.Update(fctx, "permission", id, map[string]any{"active": active})
 					return err
@@ -791,20 +800,17 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 		}
 
 		if cfg.enableAll || cfg.workspace {
-			if uc.Entity.Workspace == nil {
-				return fmt.Errorf("entydad.Block: workspace use cases not initialized")
-			}
 			wsMod := &workspacemod.ModuleDeps{
 				Routes:          routes.Workspace,
 				CommonLabels:    ctx.Common,
 				SharedLabels:    labels.Shared,
 				Labels:          labels.Workspace,
 				TableLabels:     ctx.Table,
-				GetListPageData: uc.Entity.Workspace.GetWorkspaceListPageData.Execute,
-				CreateWorkspace: uc.Entity.Workspace.CreateWorkspace.Execute,
-				ReadWorkspace:   uc.Entity.Workspace.ReadWorkspace.Execute,
-				UpdateWorkspace: uc.Entity.Workspace.UpdateWorkspace.Execute,
-				DeleteWorkspace: uc.Entity.Workspace.DeleteWorkspace.Execute,
+				GetListPageData: uc.Workspace.GetListPageData,
+				CreateWorkspace: uc.Workspace.Create,
+				ReadWorkspace:   uc.Workspace.Read,
+				UpdateWorkspace: uc.Workspace.Update,
+				DeleteWorkspace: uc.Workspace.Delete,
 				SetActive: func(fctx context.Context, id string, active bool) error {
 					_, err := db.Update(fctx, "workspace", id, map[string]any{"active": active})
 					return err
@@ -819,21 +825,21 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 				DeleteAttachment:       deleteAttachment,
 				NewID:                  newAttachmentID,
 			}
-			if uc.Entity.WorkspaceUser != nil && uc.Entity.WorkspaceUser.GetWorkspaceUserListPageData != nil {
-				wsMod.GetWorkspaceUserListPageData = uc.Entity.WorkspaceUser.GetWorkspaceUserListPageData.Execute
+			if uc.WorkspaceUser.GetListPageData != nil {
+				wsMod.GetWorkspaceUserListPageData = uc.WorkspaceUser.GetListPageData
 			}
 			workspacemod.NewModule(wsMod).RegisterRoutes(ctx.Routes)
 
 			// Switch workspace (raw POST — uses session cookie, issues HX-Redirect)
-			if uc.Entity.Workspace.SwitchWorkspace != nil {
+			if uc.Workspace.Switch != nil {
 				handleFunc(ctx.Routes, "POST", routes.Workspace.SwitchURL, workspaceaction.NewSwitchWorkspaceHandler(&workspaceaction.SwitchWorkspaceDeps{
-					SwitchWorkspace: uc.Entity.Workspace.SwitchWorkspace.Execute,
+					SwitchWorkspace: uc.Workspace.Switch,
 				}))
 			}
 		}
 
 		if cfg.enableAll || cfg.workspaceUser {
-			if uc.Entity.WorkspaceUser == nil {
+			if uc.WorkspaceUser.GetListPageData == nil {
 				log.Println("entydad.Block: warning: workspace_user use cases not initialized — workspace_user detail routes will be unavailable")
 			} else {
 				wuRoutes := routes.WorkspaceUser
@@ -843,10 +849,10 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 					CommonLabels:       ctx.Common,
 					Labels:             labels.WorkspaceUser,
 					TableLabels:        ctx.Table,
-					GetListPageData:    uc.Entity.WorkspaceUser.GetWorkspaceUserListPageData.Execute,
-					GetWorkspaceUserItemPageData: uc.Entity.WorkspaceUser.GetWorkspaceUserItemPageData.Execute,
-					CreateWorkspaceUser: uc.Entity.WorkspaceUser.CreateWorkspaceUser.Execute,
-					DeleteWorkspaceUser: uc.Entity.WorkspaceUser.DeleteWorkspaceUser.Execute,
+					GetListPageData:    uc.WorkspaceUser.GetListPageData,
+					GetWorkspaceUserItemPageData: uc.WorkspaceUser.GetItemPageData,
+					CreateWorkspaceUser: uc.WorkspaceUser.Create,
+					DeleteWorkspaceUser: uc.WorkspaceUser.Delete,
 					SetWorkspaceUserActive: func(fctx context.Context, id string, active bool) error {
 						_, err := db.Update(fctx, "workspace_user", id, map[string]any{"active": active})
 						return err
@@ -861,14 +867,12 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 					NewID:                      newAttachmentID,
 				}
 				// ListUsers — needed for the user-search autocomplete on the add form.
-				if uc.Entity.User != nil && uc.Entity.User.ListUsers != nil {
-					wuMod.ListUsers = func(fctx context.Context, req *userpb.ListUsersRequest) (*userpb.ListUsersResponse, error) {
-						return uc.Entity.User.ListUsers.Execute(fctx, req)
-					}
+				if uc.User.List != nil {
+					wuMod.ListUsers = uc.User.List
 				}
 				// Phase 3 closeout: wire workspace_user_role list page data.
-				if uc.Entity.WorkspaceUserRole != nil && uc.Entity.WorkspaceUserRole.GetWorkspaceUserRoleListPageData != nil {
-					wuMod.GetWorkspaceUserRoleListPageData = uc.Entity.WorkspaceUserRole.GetWorkspaceUserRoleListPageData.Execute
+				if uc.WorkspaceUserRole.GetListPageData != nil {
+					wuMod.GetWorkspaceUserRoleListPageData = uc.WorkspaceUserRole.GetListPageData
 				}
 				workspaceusermod.NewModule(wuMod).RegisterRoutes(ctx.Routes)
 				log.Println("  ✓ WorkspaceUser module initialized (entydad.Block)")
@@ -876,7 +880,7 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 		}
 
 		if cfg.enableAll || cfg.workspaceUserRole {
-			if uc.Entity.WorkspaceUserRole == nil {
+			if uc.WorkspaceUserRole.Create == nil {
 				log.Println("entydad.Block: warning: workspace_user_role use cases not initialized — workspace_user_role drawer routes will be unavailable")
 			} else {
 				wurRoutes := routes.WorkspaceUserRole
@@ -884,14 +888,14 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 					Routes:                      wurRoutes,
 					Labels:                      labels.WorkspaceUserRole,
 					CommonLabels:                ctx.Common,
-					CreateWorkspaceUserRole:     uc.Entity.WorkspaceUserRole.CreateWorkspaceUserRole.Execute,
-					DeleteWorkspaceUserRole:     uc.Entity.WorkspaceUserRole.DeleteWorkspaceUserRole.Execute,
+					CreateWorkspaceUserRole:     uc.WorkspaceUserRole.Create,
+					DeleteWorkspaceUserRole:     uc.WorkspaceUserRole.Delete,
 				}
-				if uc.Entity.WorkspaceUser != nil && uc.Entity.WorkspaceUser.GetWorkspaceUserItemPageData != nil {
-					wurMod.GetWorkspaceUserItemPageData = uc.Entity.WorkspaceUser.GetWorkspaceUserItemPageData.Execute
+				if uc.WorkspaceUser.GetItemPageData != nil {
+					wurMod.GetWorkspaceUserItemPageData = uc.WorkspaceUser.GetItemPageData
 				}
-				if uc.Entity.Role != nil && uc.Entity.Role.ListRoles != nil {
-					wurMod.ListRoles = uc.Entity.Role.ListRoles.Execute
+				if uc.Role.List != nil {
+					wurMod.ListRoles = uc.Role.List
 				}
 				workspaceuserrolemod.NewModule(wurMod).RegisterRoutes(ctx.Routes)
 				log.Println("  ✓ WorkspaceUserRole module initialized (entydad.Block)")
@@ -949,15 +953,15 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 				DeleteAttachment: deleteAttachment,
 				NewID:            newAttachmentID,
 			}
-			if uc.Entity.Supplier != nil {
-				supplierDeps.GetListPageData = uc.Entity.Supplier.GetSupplierListPageData.Execute
-				supplierDeps.CreateSupplier = uc.Entity.Supplier.CreateSupplier.Execute
-				supplierDeps.ReadSupplier = uc.Entity.Supplier.ReadSupplier.Execute
-				supplierDeps.UpdateSupplier = uc.Entity.Supplier.UpdateSupplier.Execute
-				supplierDeps.DeleteSupplier = uc.Entity.Supplier.DeleteSupplier.Execute
+			if uc.Supplier.GetListPageData != nil {
+				supplierDeps.GetListPageData = uc.Supplier.GetListPageData
+				supplierDeps.CreateSupplier = uc.Supplier.Create
+				supplierDeps.ReadSupplier = uc.Supplier.Read
+				supplierDeps.UpdateSupplier = uc.Supplier.Update
+				supplierDeps.DeleteSupplier = uc.Supplier.Delete
 			}
-			if uc.Expenditure != nil && uc.Expenditure.PurchaseOrder != nil && uc.Expenditure.PurchaseOrder.ListPurchaseOrders != nil {
-				supplierDeps.ListPurchaseOrders = uc.Expenditure.PurchaseOrder.ListPurchaseOrders.Execute
+			if uc.PurchaseOrder.List != nil {
+				supplierDeps.ListPurchaseOrders = uc.PurchaseOrder.List
 			}
 			if ledgerReportingSvc != nil {
 				supplierDeps.GetSupplierStatement = func(fctx context.Context, req *suppstmtpb.SupplierStatementRequest) (*suppstmtpb.SupplierStatementResponse, error) {
@@ -968,13 +972,13 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 				}
 			}
 			// Tag-related deps for supplier form multi-select
-			if uc.Common != nil && uc.Common.Category != nil {
-				supplierDeps.ListCategories = uc.Common.Category.ListCategories.Execute
+			if uc.Category.List != nil {
+				supplierDeps.ListCategories = uc.Category.List
 			}
-			if uc.Entity.SupplierCategory != nil {
-				supplierDeps.ListSupplierCategories = uc.Entity.SupplierCategory.ListSupplierCategories.Execute
-				supplierDeps.CreateSupplierCategory = uc.Entity.SupplierCategory.CreateSupplierCategory.Execute
-				supplierDeps.DeleteSupplierCategory = uc.Entity.SupplierCategory.DeleteSupplierCategory.Execute
+			if uc.Supplier.Category.List != nil {
+				supplierDeps.ListSupplierCategories = uc.Supplier.Category.List
+				supplierDeps.CreateSupplierCategory = uc.Supplier.Category.Create
+				supplierDeps.DeleteSupplierCategory = uc.Supplier.Category.Delete
 			}
 			suppliermod.NewModule(supplierDeps).RegisterRoutes(ctx.Routes)
 		}
@@ -992,12 +996,12 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 					return err
 				},
 			}
-			if uc.Common != nil && uc.Common.Category != nil {
-				clienttagDeps.ListCategories = uc.Common.Category.ListCategories.Execute
-				clienttagDeps.CreateCategory = uc.Common.Category.CreateCategory.Execute
-				clienttagDeps.ReadCategory = uc.Common.Category.ReadCategory.Execute
-				clienttagDeps.UpdateCategory = uc.Common.Category.UpdateCategory.Execute
-				clienttagDeps.DeleteCategory = uc.Common.Category.DeleteCategory.Execute
+			if uc.Category.List != nil {
+				clienttagDeps.ListCategories = uc.Category.List
+				clienttagDeps.CreateCategory = uc.Category.Create
+				clienttagDeps.ReadCategory = uc.Category.Read
+				clienttagDeps.UpdateCategory = uc.Category.Update
+				clienttagDeps.DeleteCategory = uc.Category.Delete
 			}
 			if ctx.SqlDB != nil {
 				repoAny, err := registry.CreateRepository("postgresql", entityid.Category, ctx.SqlDB, "category")
@@ -1007,8 +1011,8 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 					}
 				}
 			}
-			if uc.Entity.ClientCategory != nil {
-				clienttagDeps.ListClientCategories = uc.Entity.ClientCategory.ListClientCategories.Execute
+			if uc.Client.Category.List != nil {
+				clienttagDeps.ListClientCategories = uc.Client.Category.List
 			}
 			clienttagmod.NewModule(clienttagDeps).RegisterRoutes(ctx.Routes)
 		}
@@ -1026,12 +1030,12 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 					return err
 				},
 			}
-			if uc.Common != nil && uc.Common.Category != nil {
-				suppliertagDeps.ListCategories = uc.Common.Category.ListCategories.Execute
-				suppliertagDeps.CreateCategory = uc.Common.Category.CreateCategory.Execute
-				suppliertagDeps.ReadCategory = uc.Common.Category.ReadCategory.Execute
-				suppliertagDeps.UpdateCategory = uc.Common.Category.UpdateCategory.Execute
-				suppliertagDeps.DeleteCategory = uc.Common.Category.DeleteCategory.Execute
+			if uc.Category.List != nil {
+				suppliertagDeps.ListCategories = uc.Category.List
+				suppliertagDeps.CreateCategory = uc.Category.Create
+				suppliertagDeps.ReadCategory = uc.Category.Read
+				suppliertagDeps.UpdateCategory = uc.Category.Update
+				suppliertagDeps.DeleteCategory = uc.Category.Delete
 			}
 			if ctx.SqlDB != nil {
 				repoAny, err := registry.CreateRepository("postgresql", entityid.Category, ctx.SqlDB, "category")
@@ -1041,8 +1045,8 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 					}
 				}
 			}
-			if uc.Entity.SupplierCategory != nil {
-				suppliertagDeps.ListSupplierCategories = uc.Entity.SupplierCategory.ListSupplierCategories.Execute
+			if uc.Supplier.Category.List != nil {
+				suppliertagDeps.ListSupplierCategories = uc.Supplier.Category.List
 			}
 			suppliertagmod.NewModule(suppliertagDeps).RegisterRoutes(ctx.Routes)
 		}
@@ -1116,7 +1120,9 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 					WorkspaceUserListURL: routes.WorkspaceUser.ListURL,
 				},
 			}
-			wireAdminDashboard(adminDeps, uc)
+			if uc.GetAdminDashboardPageData != nil {
+				adminDeps.GetDashboardData = uc.GetAdminDashboardPageData
+			}
 			adminmod.NewModule(adminDeps).RegisterRoutes(ctx.Routes)
 		}
 
@@ -1131,8 +1137,8 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 				CommonLabels: ctx.Common,
 				TableLabels:  ctx.Table,
 			}
-			if uc.Tax != nil && uc.Tax.TaxRegistration != nil {
-				taxRegDeps.ListTaxRegistrations = uc.Tax.TaxRegistration.ListTaxRegistrations.Execute
+			if uc.TaxRegistration.List != nil {
+				taxRegDeps.ListTaxRegistrations = uc.TaxRegistration.List
 			}
 			taxregistrationmod.NewModule(taxRegDeps).RegisterRoutes(ctx.Routes)
 		}
