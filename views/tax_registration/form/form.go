@@ -10,13 +10,13 @@ import (
 
 // Labels holds the translatable strings used by the drawer template.
 type Labels struct {
-	DrawerTitleAdd    string
-	DrawerTitleEdit   string
-	KindID            string
+	DrawerTitleAdd     string
+	DrawerTitleEdit    string
+	KindID             string
 	RegistrationNumber string
-	EffectiveFrom     string
-	Notes             string
-	Status            string
+	EffectiveFrom      string
+	Notes              string
+	Status             string
 }
 
 // BuildLabels converts TaxRegistrationLabels.Fields to the flat Labels struct.
@@ -41,12 +41,12 @@ type KindOption struct {
 
 // Data is the template data for the tax registration drawer form.
 type Data struct {
-	FormAction         string
-	IsEdit             bool
-	ID                 string
+	FormAction string
+	IsEdit     bool
+	ID         string
 	// PartyType is "client" or "workspace" — drives the filtered Kind dropdown.
-	PartyType          string
-	PartyID            string
+	PartyType string
+	PartyID   string
 	// KindOptions is filtered by FindByPartyType when the use case is wired,
 	// or all kinds when the use case is not yet available (TODO fallback).
 	KindOptions        []KindOption

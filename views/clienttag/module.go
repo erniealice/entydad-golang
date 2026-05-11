@@ -16,20 +16,20 @@ import (
 
 // ModuleDeps holds all dependencies for the client tag module.
 type ModuleDeps struct {
-	Routes               entydad.ClientTagRoutes
-	Labels               entydad.ClientTagLabels
-	SharedLabels         entydad.SharedLabels
-	CommonLabels         pyeza.CommonLabels
-	TableLabels          types.TableLabels
-	GetInUseIDs              func(ctx context.Context, ids []string) (map[string]bool, error)
-	GetCategoryListPageData  func(ctx context.Context) ([]*categorypb.Category, error)
-	ListCategories           func(ctx context.Context, req *categorypb.ListCategoriesRequest) (*categorypb.ListCategoriesResponse, error)
-	CreateCategory           func(ctx context.Context, req *categorypb.CreateCategoryRequest) (*categorypb.CreateCategoryResponse, error)
-	ReadCategory         func(ctx context.Context, req *categorypb.ReadCategoryRequest) (*categorypb.ReadCategoryResponse, error)
-	UpdateCategory       func(ctx context.Context, req *categorypb.UpdateCategoryRequest) (*categorypb.UpdateCategoryResponse, error)
-	DeleteCategory       func(ctx context.Context, req *categorypb.DeleteCategoryRequest) (*categorypb.DeleteCategoryResponse, error)
-	ListClientCategories func(ctx context.Context, req *clientcategorypb.ListClientCategoriesRequest) (*clientcategorypb.ListClientCategoriesResponse, error)
-	SetCategoryActive    func(ctx context.Context, id string, active bool) error
+	Routes                  entydad.ClientTagRoutes
+	Labels                  entydad.ClientTagLabels
+	SharedLabels            entydad.SharedLabels
+	CommonLabels            pyeza.CommonLabels
+	TableLabels             types.TableLabels
+	GetInUseIDs             func(ctx context.Context, ids []string) (map[string]bool, error)
+	GetCategoryListPageData func(ctx context.Context) ([]*categorypb.Category, error)
+	ListCategories          func(ctx context.Context, req *categorypb.ListCategoriesRequest) (*categorypb.ListCategoriesResponse, error)
+	CreateCategory          func(ctx context.Context, req *categorypb.CreateCategoryRequest) (*categorypb.CreateCategoryResponse, error)
+	ReadCategory            func(ctx context.Context, req *categorypb.ReadCategoryRequest) (*categorypb.ReadCategoryResponse, error)
+	UpdateCategory          func(ctx context.Context, req *categorypb.UpdateCategoryRequest) (*categorypb.UpdateCategoryResponse, error)
+	DeleteCategory          func(ctx context.Context, req *categorypb.DeleteCategoryRequest) (*categorypb.DeleteCategoryResponse, error)
+	ListClientCategories    func(ctx context.Context, req *clientcategorypb.ListClientCategoriesRequest) (*clientcategorypb.ListClientCategoriesResponse, error)
+	SetCategoryActive       func(ctx context.Context, id string, active bool) error
 }
 
 // Module holds all constructed client tag views.
@@ -63,10 +63,10 @@ func NewModule(deps *ModuleDeps) *Module {
 		GetCategoryListPageData: deps.GetCategoryListPageData,
 		ListClientCategories:    deps.ListClientCategories,
 		RefreshURL:              deps.Routes.TableURL,
-		Labels:               deps.Labels,
-		SharedLabels:         deps.SharedLabels,
-		CommonLabels:         deps.CommonLabels,
-		TableLabels:          deps.TableLabels,
+		Labels:                  deps.Labels,
+		SharedLabels:            deps.SharedLabels,
+		CommonLabels:            deps.CommonLabels,
+		TableLabels:             deps.TableLabels,
 	}
 
 	return &Module{

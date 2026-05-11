@@ -25,23 +25,23 @@ import (
 
 // blockLabels holds the subset of entydad label structs needed by Block().
 type blockLabels struct {
-	Shared          entydad.SharedLabels
-	Dashboard       entydad.DashboardLabels
-	Admin           entydad.AdminDashboardLabels
-	Client          entydad.ClientLabels
-	ClientDashboard entydad.ClientDashboardLabels
-	ClientTag       entydad.ClientTagLabels
-	SupplierTag     entydad.SupplierTagLabels
-	PaymentTerm     entydad.PaymentTermLabels
-	User            entydad.UserLabels
-	UserDashboard   entydad.UserDashboardLabels
-	UserRole        entydad.UserRoleLabels
-	RoleUser        entydad.RoleUserLabels
-	Role            entydad.RoleLabels
-	RolePermission  entydad.RolePermissionLabels
-	Location        entydad.LocationLabels
-	LocationArea    entydad.LocationAreaLabels
-	Permission      entydad.PermissionLabels
+	Shared            entydad.SharedLabels
+	Dashboard         entydad.DashboardLabels
+	Admin             entydad.AdminDashboardLabels
+	Client            entydad.ClientLabels
+	ClientDashboard   entydad.ClientDashboardLabels
+	ClientTag         entydad.ClientTagLabels
+	SupplierTag       entydad.SupplierTagLabels
+	PaymentTerm       entydad.PaymentTermLabels
+	User              entydad.UserLabels
+	UserDashboard     entydad.UserDashboardLabels
+	UserRole          entydad.UserRoleLabels
+	RoleUser          entydad.RoleUserLabels
+	Role              entydad.RoleLabels
+	RolePermission    entydad.RolePermissionLabels
+	Location          entydad.LocationLabels
+	LocationArea      entydad.LocationAreaLabels
+	Permission        entydad.PermissionLabels
 	Workspace         entydad.WorkspaceLabels
 	WorkspaceUser     entydad.WorkspaceUserLabels
 	WorkspaceUserRole entydad.WorkspaceUserRoleLabels

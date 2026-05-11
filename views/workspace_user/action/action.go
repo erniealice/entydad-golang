@@ -21,9 +21,9 @@ import (
 
 // Deps holds dependencies for workspace_user action handlers.
 type Deps struct {
-	Routes              entydad.WorkspaceUserRoutes
-	CreateWorkspaceUser func(ctx context.Context, req *workspaceuserpb.CreateWorkspaceUserRequest) (*workspaceuserpb.CreateWorkspaceUserResponse, error)
-	DeleteWorkspaceUser func(ctx context.Context, req *workspaceuserpb.DeleteWorkspaceUserRequest) (*workspaceuserpb.DeleteWorkspaceUserResponse, error)
+	Routes                 entydad.WorkspaceUserRoutes
+	CreateWorkspaceUser    func(ctx context.Context, req *workspaceuserpb.CreateWorkspaceUserRequest) (*workspaceuserpb.CreateWorkspaceUserResponse, error)
+	DeleteWorkspaceUser    func(ctx context.Context, req *workspaceuserpb.DeleteWorkspaceUserRequest) (*workspaceuserpb.DeleteWorkspaceUserResponse, error)
 	SetWorkspaceUserActive func(ctx context.Context, id string, active bool) error
 	// ListUsers is used by the user search endpoint to find users for autocomplete.
 	ListUsers func(ctx context.Context, req *userpb.ListUsersRequest) (*userpb.ListUsersResponse, error)

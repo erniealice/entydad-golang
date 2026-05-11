@@ -44,16 +44,16 @@ type DetailViewDeps struct {
 // PageData holds the data for the role detail page.
 type PageData struct {
 	types.PageData
-	ContentTemplate     string
-	Labels              entydad.RoleLabels
-	ActiveTab           string
-	TabItems            []pyeza.TabItem
-	ID                  string
-	RoleName            string
-	RoleDescription     string
-	RoleColor           string
-	RoleStatus          string
-	StatusVariant       string
+	ContentTemplate  string
+	Labels           entydad.RoleLabels
+	ActiveTab        string
+	TabItems         []pyeza.TabItem
+	ID               string
+	RoleName         string
+	RoleDescription  string
+	RoleColor        string
+	RoleStatus       string
+	StatusVariant    string
 	PermissionsTable *types.TableConfig
 	UsersTable       *types.TableConfig
 	AttachmentTable  *types.TableConfig

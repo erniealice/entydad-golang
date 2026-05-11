@@ -17,38 +17,38 @@ import (
 	"github.com/erniealice/entydad-golang"
 	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
 
-	categorypb       "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
-	clientpb         "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client"
+	categorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
+	clientpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client"
 	clientcategorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client_category"
-	clientstmtpb     "github.com/erniealice/esqyma/pkg/schema/v1/domain/ledger/reporting/client_statement"
-	revenuepb        "github.com/erniealice/esqyma/pkg/schema/v1/domain/revenue/revenue"
-	collectionpb     "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/collection"
-	subscriptionpb   "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/subscription"
+	clientstmtpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/ledger/reporting/client_statement"
+	revenuepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/revenue/revenue"
+	subscriptionpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/subscription"
+	collectionpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/collection"
 )
 
 // DetailViewDeps holds view dependencies.
 type DetailViewDeps struct {
-	Routes                entydad.ClientRoutes
-	ReadClient            func(ctx context.Context, req *clientpb.ReadClientRequest) (*clientpb.ReadClientResponse, error)
-	ListCategories        func(ctx context.Context, req *categorypb.ListCategoriesRequest) (*categorypb.ListCategoriesResponse, error)
-	ListClientCategories  func(ctx context.Context, req *clientcategorypb.ListClientCategoriesRequest) (*clientcategorypb.ListClientCategoriesResponse, error)
+	Routes                      entydad.ClientRoutes
+	ReadClient                  func(ctx context.Context, req *clientpb.ReadClientRequest) (*clientpb.ReadClientResponse, error)
+	ListCategories              func(ctx context.Context, req *categorypb.ListCategoriesRequest) (*categorypb.ListCategoriesResponse, error)
+	ListClientCategories        func(ctx context.Context, req *clientcategorypb.ListClientCategoriesRequest) (*clientcategorypb.ListClientCategoriesResponse, error)
 	ListRevenues                func(ctx context.Context, collection string) ([]map[string]any, error)
 	GetClientStatement          func(ctx context.Context, req *clientstmtpb.ClientStatementRequest) (*clientstmtpb.ClientStatementResponse, error)
 	ListSubscriptions           func(ctx context.Context, req *subscriptionpb.ListSubscriptionsRequest) (*subscriptionpb.ListSubscriptionsResponse, error)
 	GetSubscriptionListPageData func(ctx context.Context, req *subscriptionpb.GetSubscriptionListPageDataRequest) (*subscriptionpb.GetSubscriptionListPageDataResponse, error)
-	SubscriptionAddURL    string
-	SubscriptionDetailURL string
+	SubscriptionAddURL          string
+	SubscriptionDetailURL       string
 	// SubscriptionUnderClientDetailURL is the nested-route template (e.g.
 	// "/app/clients/detail/{client_id}/subscriptions/{id}"). When set, the
 	// engagements row link uses this so the subscription detail page renders
 	// with a "client → subscription" breadcrumb. Falls back to the flat
 	// SubscriptionDetailURL when empty.
 	SubscriptionUnderClientDetailURL string
-	SubscriptionEditURL   string
-	SubscriptionDeleteURL string
-	Labels                entydad.ClientLabels
-	CommonLabels          pyeza.CommonLabels
-	TableLabels           types.TableLabels
+	SubscriptionEditURL              string
+	SubscriptionDeleteURL            string
+	Labels                           entydad.ClientLabels
+	CommonLabels                     pyeza.CommonLabels
+	TableLabels                      types.TableLabels
 
 	// Attachment operations (embedded from hybra)
 	attachment.AttachmentOps
@@ -696,6 +696,7 @@ func buildSubscriptionsTable(rows []SubscriptionRow, addURL string, clientID str
 		ShowEntries:          true,
 		DefaultSortColumn:    "name",
 		DefaultSortDirection: "asc",
+		RefreshURL:           route.ResolveURL(deps.Routes.TabActionURL, "id", clientID, "tab", deps.Labels.Detail.Tabs.ResolveTabSlug("subscriptions")),
 		EmptyState: types.TableEmptyState{
 			Title:   deps.Labels.Detail.EmptySubscriptionsTitle,
 			Message: deps.Labels.Detail.EmptySubscriptions,

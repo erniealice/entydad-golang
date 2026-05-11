@@ -20,8 +20,10 @@ Labels: all text via .Labels.* — no English literals.
     <input type="hidden" name="as_of_date" value="{{.AsOfDate}}">
 
     <div class="sheet-body">
-        {{template "form-section" (dict "Title" .Labels.Title)}}
-
+        {{template "alert" (dict
+            "Message" .Labels.IntroMessage
+            "State"   "info"
+        )}}
         {{if .Subtitle}}
         <div class="form-row single">
             <p class="form-hint" data-testid="revenue-run-subtitle">{{.Subtitle}}</p>
@@ -90,12 +92,19 @@ Labels: all text via .Labels.* — no English literals.
     while (form && form.tagName !== 'FORM') { form = form.previousElementSibling; }
     if (!form) { return; }
 
+    var sheetPanel = document.querySelector('#sheet .sheet-panel');
+    if (sheetPanel) {
+        sheetPanel.classList.remove('sheet-panel-sm', 'sheet-panel-md', 'sheet-panel-lg', 'sheet-panel-xl', 'sheet-panel-2xl', 'sheet-panel-3xl');
+        sheetPanel.classList.add('sheet-panel-xl');
+    }
+
     var submitBtn = form.querySelector('#revenue-run-submit-btn');
     var btnLabel  = form.querySelector('#revenue-run-btn-label');
     var asOfInput = form.querySelector('#revenue-run-as-of-date');
 
     var generateLabel     = {{.Labels.GenerateButton | js}};
-    var generateCountTmpl = {{.Labels.GenerateButtonCount | js}};
+    var generateCountOne  = {{.Labels.GenerateButtonCountOne  | js}};
+    var generateCountMany = {{.Labels.GenerateButtonCountMany | js}};
 
     function countChecked() {
         return form.querySelectorAll('input[name="selection"]:checked').length;
@@ -108,8 +117,9 @@ Labels: all text via .Labels.* — no English literals.
             submitBtn.setAttribute('aria-disabled', n === 0 ? 'true' : 'false');
         }
         if (btnLabel) {
-            if (n > 0 && generateCountTmpl) {
-                btnLabel.textContent = generateCountTmpl.replace('{count}', n);
+            if (n > 0) {
+                var tmpl = (n === 1) ? generateCountOne : generateCountMany;
+                btnLabel.textContent = tmpl.replace('{count}', n);
             } else {
                 btnLabel.textContent = generateLabel;
             }
@@ -175,7 +185,8 @@ the as_of_date changes.
         )}}
     {{else}}
         {{range .SubscriptionGroups}}
-        <details class="revenue-run-group pyeza-accordion" open
+        {{$group := .}}
+        <details class="revenue-run-group pyeza-accordion pyeza-accordion--chevron-right" open
             data-subscription-id="{{.SubscriptionID}}"
             data-testid="revenue-run-group"
         >
@@ -251,10 +262,13 @@ the as_of_date changes.
                                     aria-label="{{.PeriodLabel}}"
                                 >
                             </td>
-                            <td>{{.SubscriptionID}}</td>
+                            <td>{{if $group.SubscriptionName}}{{$group.SubscriptionName}}{{else}}{{.SubscriptionID}}{{end}}</td>
                             <td data-testid="revenue-run-period-label">{{.PeriodLabel}}</td>
                             <td class="cell-right" data-testid="revenue-run-period-amount">
-                                {{.AmountDisplay}}
+                                <span class="money-cell">
+                                    <span class="money-currency">{{$group.Currency}}</span>
+                                    <span class="money-amount">{{.AmountDisplay}}</span>
+                                </span>
                             </td>
                             <td class="cell-right">{{.LineItemCount}}</td>
                         </tr>

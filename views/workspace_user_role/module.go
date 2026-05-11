@@ -3,12 +3,13 @@
 // This is Phase 3 of the bootstrap-auth plan.
 //
 // Routes registered:
-//   GET  /action/workspace_user_role/add?workspace_user_id={wu}  — drawer form
-//   POST /action/workspace_user_role/add                         — create junction
-//   GET  /action/workspace_user_role/permissions?role_id={id}    — permissions partial
-//   GET  /action/workspace_user_role/search-roles?q={q}          — autocomplete JSON
-//   GET  /action/workspace_user_role/delete/{id}                 — delete confirm
-//   POST /action/workspace_user_role/delete/{id}                 — soft-delete
+//
+//	GET  /action/workspace_user_role/add?workspace_user_id={wu}  — drawer form
+//	POST /action/workspace_user_role/add                         — create junction
+//	GET  /action/workspace_user_role/permissions?role_id={id}    — permissions partial
+//	GET  /action/workspace_user_role/search-roles?q={q}          — autocomplete JSON
+//	GET  /action/workspace_user_role/delete/{id}                 — delete confirm
+//	POST /action/workspace_user_role/delete/{id}                 — soft-delete
 package workspace_user_role
 
 import (
@@ -58,13 +59,13 @@ type Module struct {
 // NewModule constructs all workspace_user_role views from deps.
 func NewModule(deps *ModuleDeps) *Module {
 	actionDeps := &wuaction.Deps{
-		Routes:                      deps.Routes,
+		Routes:                       deps.Routes,
 		GetWorkspaceUserItemPageData: deps.GetWorkspaceUserItemPageData,
-		CreateWorkspaceUserRole:     deps.CreateWorkspaceUserRole,
-		DeleteWorkspaceUserRole:     deps.DeleteWorkspaceUserRole,
-		ListRoles:                   deps.ListRoles,
-		Labels:                      deps.Labels,
-		CommonLabels:                deps.CommonLabels,
+		CreateWorkspaceUserRole:      deps.CreateWorkspaceUserRole,
+		DeleteWorkspaceUserRole:      deps.DeleteWorkspaceUserRole,
+		ListRoles:                    deps.ListRoles,
+		Labels:                       deps.Labels,
+		CommonLabels:                 deps.CommonLabels,
 	}
 
 	return &Module{

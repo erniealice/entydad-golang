@@ -16,11 +16,11 @@ import (
 	"github.com/erniealice/entydad-golang"
 	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
 
-	categorypb         "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
-	supplierpb         "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/supplier"
+	categorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
+	supplierpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/supplier"
 	suppliercategorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/supplier_category"
-	purchaseorderpb    "github.com/erniealice/esqyma/pkg/schema/v1/domain/expenditure/purchase_order"
-	suppstmtpb         "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/reporting/supplier_statement"
+	purchaseorderpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/expenditure/purchase_order"
+	suppstmtpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/reporting/supplier_statement"
 )
 
 // TagChip holds display data for a single tag chip on the supplier detail page.

@@ -33,7 +33,7 @@ type ModuleDeps struct {
 	DashboardLabels      entydad.UserDashboardLabels
 	DashboardTitleLabels entydad.DashboardLabels
 	UserRoleLabels       entydad.UserRoleLabels
-	TableLabels     types.TableLabels
+	TableLabels          types.TableLabels
 	// User list page data
 	GetListPageData      func(ctx context.Context, req *userpb.GetUserListPageDataRequest) (*userpb.GetUserListPageDataResponse, error)
 	GetUserWorkspacesMap func(ctx context.Context) (map[string][]types.ChipData, error)

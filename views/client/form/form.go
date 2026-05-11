@@ -6,44 +6,44 @@ import (
 
 // Labels holds i18n labels for the client drawer form template.
 type Labels struct {
-	Name                     string
-	NamePlaceholder          string
-	CompanyDetails           string
-	Representative           string
-	FirstName                string
-	FirstNamePlaceholder     string
-	LastName                 string
-	LastNamePlaceholder      string
-	Email                    string
-	EmailPlaceholder         string
-	Mobile                   string
-	MobilePlaceholder        string
-	Active                   string
-	StreetAddress            string
-	StreetAddressPlaceholder string
-	City                     string
-	CityPlaceholder          string
-	Province                 string
-	ProvincePlaceholder      string
-	PostalCode               string
-	PostalCodePlaceholder    string
-	Notes                    string
-	NotesPlaceholder         string
-	PaymentTerms             string
-	SelectPaymentTerm        string
-	Tags                     string
-	TagsPlaceholder          string
-	TagsSearchPlaceholder    string
-	TagsNoResults            string
+	Name                       string
+	NamePlaceholder            string
+	CompanyDetails             string
+	Representative             string
+	FirstName                  string
+	FirstNamePlaceholder       string
+	LastName                   string
+	LastNamePlaceholder        string
+	Email                      string
+	EmailPlaceholder           string
+	Mobile                     string
+	MobilePlaceholder          string
+	Active                     string
+	StreetAddress              string
+	StreetAddressPlaceholder   string
+	City                       string
+	CityPlaceholder            string
+	Province                   string
+	ProvincePlaceholder        string
+	PostalCode                 string
+	PostalCodePlaceholder      string
+	Notes                      string
+	NotesPlaceholder           string
+	PaymentTerms               string
+	SelectPaymentTerm          string
+	Tags                       string
+	TagsPlaceholder            string
+	TagsSearchPlaceholder      string
+	TagsNoResults              string
 	Accounting                 string
 	BillingCurrency            string
 	BillingCurrencyPlaceholder string
 	BillingCurrencyInfo        string
-	Timezone                  string
-	TimezonePlaceholder       string
-	TimezoneSearchPlaceholder string
-	TimezoneNoResults         string
-	TimezoneInfo              string
+	Timezone                   string
+	TimezonePlaceholder        string
+	TimezoneSearchPlaceholder  string
+	TimezoneNoResults          string
+	TimezoneInfo               string
 
 	// Field-level info text surfaced via an info button beside each label.
 	NameInfo         string
@@ -73,23 +73,23 @@ type Labels struct {
 	SectionOthers         string
 
 	// Accounting fields (mirrored from supplier)
-	TaxID                      string
-	TaxIDPlaceholder           string
-	TaxIDInfo                  string
-	RegistrationNumber         string
+	TaxID                         string
+	TaxIDPlaceholder              string
+	TaxIDInfo                     string
+	RegistrationNumber            string
 	RegistrationNumberPlaceholder string
-	RegistrationNumberInfo     string
-	CreditLimit                string
-	CreditLimitPlaceholder     string
-	CreditLimitInfo            string
-	LeadTimeDays               string
-	LeadTimeDaysPlaceholder    string
-	LeadTimeDaysInfo           string
+	RegistrationNumberInfo        string
+	CreditLimit                   string
+	CreditLimitPlaceholder        string
+	CreditLimitInfo               string
+	LeadTimeDays                  string
+	LeadTimeDaysPlaceholder       string
+	LeadTimeDaysInfo              string
 
 	// Tax identity fields (Phase 5)
-	TIN                        string
-	TINPlaceholder             string
-	TINInfo                    string
+	TIN            string
+	TINPlaceholder string
+	TINInfo        string
 
 	// CountryCode — ISO 3166-1 alpha-2 (Phase 5 H2).
 	// Separate from the legacy Country free-text field; drives jurisdiction lookup.
@@ -120,34 +120,34 @@ type SelectedTag struct {
 
 // Data is the template data for the client drawer form.
 type Data struct {
-	FormAction               string
-	IsEdit                   bool
-	ID                       string
-	Mode                     string
-	Name                     string
-	FirstName                string
-	LastName                 string
-	Email                    string
-	Mobile                   string
-	Timezone                 string
-	Active                   bool
-	Status                   string
-	Country                  string
-	Website                  string
-	StreetAddress            string
-	City                     string
-	Province                 string
-	PostalCode               string
-	Notes                    string
-	BillingCurrency          string
-	TaxID                    string
-	RegistrationNumber       string
-	CreditLimit              string // form-input string; converted to int64 centavos in POST
-	LeadTimeDays             string
-	SearchTimezonesURL       string
+	FormAction         string
+	IsEdit             bool
+	ID                 string
+	Mode               string
+	Name               string
+	FirstName          string
+	LastName           string
+	Email              string
+	Mobile             string
+	Timezone           string
+	Active             bool
+	Status             string
+	Country            string
+	Website            string
+	StreetAddress      string
+	City               string
+	Province           string
+	PostalCode         string
+	Notes              string
+	BillingCurrency    string
+	TaxID              string
+	RegistrationNumber string
+	CreditLimit        string // form-input string; converted to int64 centavos in POST
+	LeadTimeDays       string
+	SearchTimezonesURL string
 	// Tax identity fields (Phase 5)
-	TIN         string
-	CountryCode string
+	TIN                      string
+	CountryCode              string
 	PaymentTerms             []*PaymentTermOption
 	SelectedPaymentTermID    string
 	PaymentTermSelectOptions []pyeza.SelectOption
@@ -163,79 +163,79 @@ type Data struct {
 // t is typically viewCtx.T — a narrow func(string) string with no Deps or storage access.
 func BuildLabels(t func(string) string) Labels {
 	return Labels{
-		Name:                     t("client.form.name"),
-		NamePlaceholder:          t("client.form.namePlaceholder"),
-		CompanyDetails:           t("client.form.companyDetails"),
-		Representative:           t("client.form.representative"),
-		FirstName:                t("client.form.firstName"),
-		FirstNamePlaceholder:     t("client.form.firstNamePlaceholder"),
-		LastName:                 t("client.form.lastName"),
-		LastNamePlaceholder:      t("client.form.lastNamePlaceholder"),
-		Email:                    t("client.form.email"),
-		EmailPlaceholder:         t("client.form.emailPlaceholder"),
-		Mobile:                   t("client.form.phone"),
-		MobilePlaceholder:        t("client.form.phonePlaceholder"),
-		Active:                   t("client.form.active"),
-		StreetAddress:            t("client.form.streetAddress"),
-		StreetAddressPlaceholder: t("client.form.streetAddressPlaceholder"),
-		City:                     t("client.form.city"),
-		CityPlaceholder:          t("client.form.cityPlaceholder"),
-		Province:                 t("client.form.province"),
-		ProvincePlaceholder:      t("client.form.provincePlaceholder"),
-		PostalCode:               t("client.form.postalCode"),
-		PostalCodePlaceholder:    t("client.form.postalCodePlaceholder"),
-		Notes:                    t("client.form.notes"),
-		NotesPlaceholder:         t("client.form.notesPlaceholder"),
-		PaymentTerms:             t("client.form.paymentTerms"),
-		SelectPaymentTerm:        t("client.form.selectPaymentTerm"),
-		Tags:                     t("client.form.tags"),
-		TagsPlaceholder:          t("client.form.tagsPlaceholder"),
-		TagsSearchPlaceholder:    t("client.form.tagsSearchPlaceholder"),
-		TagsNoResults:            t("client.form.tagsNoResults"),
-		NameInfo:                   t("client.form.nameInfo"),
-		EmailInfo:                  t("client.form.emailInfo"),
-		MobileInfo:                 t("client.form.mobileInfo"),
-		NotesInfo:                  t("client.form.notesInfo"),
-		PaymentTermsInfo:           t("client.form.paymentTermsInfo"),
-		TagsInfo:                   t("client.form.tagsInfo"),
-		ActiveInfo:                 t("client.form.activeInfo"),
-		Accounting:                 t("client.form.accounting"),
-		BillingCurrency:            t("client.form.billingCurrency"),
-		BillingCurrencyPlaceholder: t("client.form.billingCurrencyPlaceholder"),
-		BillingCurrencyInfo:        t("client.form.billingCurrencyInfo"),
-		Timezone:                  t("client.form.timezone"),
-		TimezonePlaceholder:       t("client.form.timezonePlaceholder"),
-		TimezoneSearchPlaceholder: t("client.form.timezoneSearchPlaceholder"),
-		TimezoneNoResults:         t("client.form.timezoneNoResults"),
-		TimezoneInfo:              t("client.form.timezoneInfo"),
-		Status:                t("client.form.status"),
-		StatusPlaceholder:     t("client.form.statusPlaceholder"),
-		StatusActive:          t("client.form.statusActive"),
-		StatusBlocked:         t("client.form.statusBlocked"),
-		StatusOnHold:          t("client.form.statusOnHold"),
-		StatusInactive:        t("client.form.statusInactive"),
-		StatusProspect:        t("client.form.statusProspect"),
-		Country:               t("client.form.country"),
-		CountryPlaceholder:    t("client.form.countryPlaceholder"),
-		Website:               t("client.form.website"),
-		WebsitePlaceholder:    t("client.form.websitePlaceholder"),
-		SectionCompany:        t("client.form.sectionCompany"),
-		SectionAddress:        t("client.form.sectionAddress"),
-		SectionRepresentative: t("client.form.sectionRepresentative"),
-		SectionAccounting:     t("client.form.sectionAccounting"),
-		SectionOthers:         t("client.form.sectionOthers"),
-		TaxID:                      t("client.form.taxId"),
-		TaxIDPlaceholder:           t("client.form.taxIdPlaceholder"),
-		TaxIDInfo:                  t("client.form.taxIdInfo"),
-		RegistrationNumber:         t("client.form.registrationNumber"),
+		Name:                          t("client.form.name"),
+		NamePlaceholder:               t("client.form.namePlaceholder"),
+		CompanyDetails:                t("client.form.companyDetails"),
+		Representative:                t("client.form.representative"),
+		FirstName:                     t("client.form.firstName"),
+		FirstNamePlaceholder:          t("client.form.firstNamePlaceholder"),
+		LastName:                      t("client.form.lastName"),
+		LastNamePlaceholder:           t("client.form.lastNamePlaceholder"),
+		Email:                         t("client.form.email"),
+		EmailPlaceholder:              t("client.form.emailPlaceholder"),
+		Mobile:                        t("client.form.phone"),
+		MobilePlaceholder:             t("client.form.phonePlaceholder"),
+		Active:                        t("client.form.active"),
+		StreetAddress:                 t("client.form.streetAddress"),
+		StreetAddressPlaceholder:      t("client.form.streetAddressPlaceholder"),
+		City:                          t("client.form.city"),
+		CityPlaceholder:               t("client.form.cityPlaceholder"),
+		Province:                      t("client.form.province"),
+		ProvincePlaceholder:           t("client.form.provincePlaceholder"),
+		PostalCode:                    t("client.form.postalCode"),
+		PostalCodePlaceholder:         t("client.form.postalCodePlaceholder"),
+		Notes:                         t("client.form.notes"),
+		NotesPlaceholder:              t("client.form.notesPlaceholder"),
+		PaymentTerms:                  t("client.form.paymentTerms"),
+		SelectPaymentTerm:             t("client.form.selectPaymentTerm"),
+		Tags:                          t("client.form.tags"),
+		TagsPlaceholder:               t("client.form.tagsPlaceholder"),
+		TagsSearchPlaceholder:         t("client.form.tagsSearchPlaceholder"),
+		TagsNoResults:                 t("client.form.tagsNoResults"),
+		NameInfo:                      t("client.form.nameInfo"),
+		EmailInfo:                     t("client.form.emailInfo"),
+		MobileInfo:                    t("client.form.mobileInfo"),
+		NotesInfo:                     t("client.form.notesInfo"),
+		PaymentTermsInfo:              t("client.form.paymentTermsInfo"),
+		TagsInfo:                      t("client.form.tagsInfo"),
+		ActiveInfo:                    t("client.form.activeInfo"),
+		Accounting:                    t("client.form.accounting"),
+		BillingCurrency:               t("client.form.billingCurrency"),
+		BillingCurrencyPlaceholder:    t("client.form.billingCurrencyPlaceholder"),
+		BillingCurrencyInfo:           t("client.form.billingCurrencyInfo"),
+		Timezone:                      t("client.form.timezone"),
+		TimezonePlaceholder:           t("client.form.timezonePlaceholder"),
+		TimezoneSearchPlaceholder:     t("client.form.timezoneSearchPlaceholder"),
+		TimezoneNoResults:             t("client.form.timezoneNoResults"),
+		TimezoneInfo:                  t("client.form.timezoneInfo"),
+		Status:                        t("client.form.status"),
+		StatusPlaceholder:             t("client.form.statusPlaceholder"),
+		StatusActive:                  t("client.form.statusActive"),
+		StatusBlocked:                 t("client.form.statusBlocked"),
+		StatusOnHold:                  t("client.form.statusOnHold"),
+		StatusInactive:                t("client.form.statusInactive"),
+		StatusProspect:                t("client.form.statusProspect"),
+		Country:                       t("client.form.country"),
+		CountryPlaceholder:            t("client.form.countryPlaceholder"),
+		Website:                       t("client.form.website"),
+		WebsitePlaceholder:            t("client.form.websitePlaceholder"),
+		SectionCompany:                t("client.form.sectionCompany"),
+		SectionAddress:                t("client.form.sectionAddress"),
+		SectionRepresentative:         t("client.form.sectionRepresentative"),
+		SectionAccounting:             t("client.form.sectionAccounting"),
+		SectionOthers:                 t("client.form.sectionOthers"),
+		TaxID:                         t("client.form.taxId"),
+		TaxIDPlaceholder:              t("client.form.taxIdPlaceholder"),
+		TaxIDInfo:                     t("client.form.taxIdInfo"),
+		RegistrationNumber:            t("client.form.registrationNumber"),
 		RegistrationNumberPlaceholder: t("client.form.registrationNumberPlaceholder"),
-		RegistrationNumberInfo:     t("client.form.registrationNumberInfo"),
-		CreditLimit:                t("client.form.creditLimit"),
-		CreditLimitPlaceholder:     t("client.form.creditLimitPlaceholder"),
-		CreditLimitInfo:            t("client.form.creditLimitInfo"),
-		LeadTimeDays:               t("client.form.leadTimeDays"),
-		LeadTimeDaysPlaceholder:    t("client.form.leadTimeDaysPlaceholder"),
-		LeadTimeDaysInfo:           t("client.form.leadTimeDaysInfo"),
+		RegistrationNumberInfo:        t("client.form.registrationNumberInfo"),
+		CreditLimit:                   t("client.form.creditLimit"),
+		CreditLimitPlaceholder:        t("client.form.creditLimitPlaceholder"),
+		CreditLimitInfo:               t("client.form.creditLimitInfo"),
+		LeadTimeDays:                  t("client.form.leadTimeDays"),
+		LeadTimeDaysPlaceholder:       t("client.form.leadTimeDaysPlaceholder"),
+		LeadTimeDaysInfo:              t("client.form.leadTimeDaysInfo"),
 		// Tax identity (Phase 5)
 		TIN:            t("client.form.tin"),
 		TINPlaceholder: t("client.form.tinPlaceholder"),

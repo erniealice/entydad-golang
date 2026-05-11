@@ -57,9 +57,9 @@ type Labels struct {
 	IsDefaultInfo          string
 
 	// Error messages for server-side validation.
-	ErrTypeRequired        string
-	ErrTypeInvalid         string
-	ErrNetDaysRequired     string
+	ErrTypeRequired         string
+	ErrTypeInvalid          string
+	ErrNetDaysRequired      string
 	ErrProximateDayRequired string
 }
 
@@ -146,22 +146,22 @@ func BuildLabels(t func(string) string) Labels {
 		ProximateDay:            t("paymentTerm.form.proximateDay"),
 		ProximateDayPlaceholder: t("paymentTerm.form.proximateDayPlaceholder"),
 
-		ScopesBoth:         t("paymentTerm.form.scopesBoth"),
-		ScopesSupplierOnly: t("paymentTerm.form.scopesSupplierOnly"),
-		ScopesClientOnly:   t("paymentTerm.form.scopesClientOnly"),
-		NameInfo:               t("paymentTerm.form.nameInfo"),
-		CodeInfo:               t("paymentTerm.form.codeInfo"),
-		CodeHint:               t("paymentTerm.form.codeHint"),
-		DescriptionInfo:        t("paymentTerm.form.descriptionInfo"),
-		TypeInfo:               t("paymentTerm.form.typeInfo"),
-		ProximateDayHint:       t("paymentTerm.form.proximateDayHint"),
-		ProximateDayInfo:       t("paymentTerm.form.proximateDayInfo"),
-		DiscountDaysInfo:       t("paymentTerm.form.discountDaysInfo"),
-		DiscountPercentBpsInfo: t("paymentTerm.form.discountPercentBpsInfo"),
-		IsDefaultInfo:          t("paymentTerm.form.isDefaultInfo"),
-		ErrTypeRequired:        t("paymentTerm.form.errors.typeRequired"),
-		ErrTypeInvalid:         t("paymentTerm.form.errors.typeInvalid"),
-		ErrNetDaysRequired:     t("paymentTerm.form.errors.netDaysRequired"),
+		ScopesBoth:              t("paymentTerm.form.scopesBoth"),
+		ScopesSupplierOnly:      t("paymentTerm.form.scopesSupplierOnly"),
+		ScopesClientOnly:        t("paymentTerm.form.scopesClientOnly"),
+		NameInfo:                t("paymentTerm.form.nameInfo"),
+		CodeInfo:                t("paymentTerm.form.codeInfo"),
+		CodeHint:                t("paymentTerm.form.codeHint"),
+		DescriptionInfo:         t("paymentTerm.form.descriptionInfo"),
+		TypeInfo:                t("paymentTerm.form.typeInfo"),
+		ProximateDayHint:        t("paymentTerm.form.proximateDayHint"),
+		ProximateDayInfo:        t("paymentTerm.form.proximateDayInfo"),
+		DiscountDaysInfo:        t("paymentTerm.form.discountDaysInfo"),
+		DiscountPercentBpsInfo:  t("paymentTerm.form.discountPercentBpsInfo"),
+		IsDefaultInfo:           t("paymentTerm.form.isDefaultInfo"),
+		ErrTypeRequired:         t("paymentTerm.form.errors.typeRequired"),
+		ErrTypeInvalid:          t("paymentTerm.form.errors.typeInvalid"),
+		ErrNetDaysRequired:      t("paymentTerm.form.errors.netDaysRequired"),
 		ErrProximateDayRequired: t("paymentTerm.form.errors.proximateDayRequired"),
 	}
 }

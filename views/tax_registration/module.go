@@ -9,11 +9,11 @@ import (
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
 
-	taxregistrationpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/tax/tax_registration"
-	taxregistrationkindpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/tax/tax_registration_kind"
 	entydad "github.com/erniealice/entydad-golang"
 	"github.com/erniealice/entydad-golang/views/tax_registration/action"
 	listview "github.com/erniealice/entydad-golang/views/tax_registration/list"
+	taxregistrationpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/tax/tax_registration"
+	taxregistrationkindpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/tax/tax_registration_kind"
 )
 
 // ModuleDeps holds all dependencies for the tax_registration module.

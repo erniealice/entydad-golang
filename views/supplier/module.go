@@ -15,12 +15,12 @@ import (
 	supplierdetail "github.com/erniealice/entydad-golang/views/supplier/detail"
 	supplierform "github.com/erniealice/entydad-golang/views/supplier/form"
 	supplierlist "github.com/erniealice/entydad-golang/views/supplier/list"
-	categorypb      "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
-	attachmentpb    "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
-	supplierpb      "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/supplier"
+	categorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
+	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
+	supplierpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/supplier"
 	suppliercategorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/supplier_category"
 	purchaseorderpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/expenditure/purchase_order"
-	suppstmtpb      "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/reporting/supplier_statement"
+	suppstmtpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/reporting/supplier_statement"
 	"github.com/erniealice/hybra-golang/views/attachment"
 	"github.com/erniealice/hybra-golang/views/auditlog"
 )
@@ -30,7 +30,7 @@ type PaymentTermOption = supplierform.PaymentTermOption
 
 // ModuleDeps holds all dependencies for the supplier module.
 type ModuleDeps struct {
-	Routes               entydad.SupplierRoutes
+	Routes entydad.SupplierRoutes
 	// SearchTimezonesURL is the URL of the timezone autocomplete JSON endpoint
 	// (owned by the user module; passed through so the supplier representative
 	// section can wire its own auto-complete to the same handler).
@@ -41,8 +41,8 @@ type ModuleDeps struct {
 	DashboardLabels      entydad.SupplierDashboardLabels
 	DashboardTitleLabels entydad.DashboardLabels
 	TableLabels          types.TableLabels
-	GetListPageData func(ctx context.Context, req *supplierpb.GetSupplierListPageDataRequest) (*supplierpb.GetSupplierListPageDataResponse, error)
-	GetInUseIDs     func(ctx context.Context, ids []string) (map[string]bool, error)
+	GetListPageData      func(ctx context.Context, req *supplierpb.GetSupplierListPageDataRequest) (*supplierpb.GetSupplierListPageDataResponse, error)
+	GetInUseIDs          func(ctx context.Context, ids []string) (map[string]bool, error)
 	// Supplier CRUD
 	CreateSupplier   func(ctx context.Context, req *supplierpb.CreateSupplierRequest) (*supplierpb.CreateSupplierResponse, error)
 	ReadSupplier     func(ctx context.Context, req *supplierpb.ReadSupplierRequest) (*supplierpb.ReadSupplierResponse, error)

@@ -42,19 +42,19 @@ type DetailViewDeps struct {
 // PageData holds the data for the user detail page.
 type PageData struct {
 	types.PageData
-	ContentTemplate     string
-	Labels              entydad.UserLabels
-	ActiveTab           string
-	TabItems            []pyeza.TabItem
-	ID                  string
-	UserFirstName       string
-	UserLastName        string
-	UserEmail           string
-	UserMobile          string
-	UserStatus          string
-	StatusVariant       string
-	RoleNames           []string
-	RolesTable          *types.TableConfig
+	ContentTemplate  string
+	Labels           entydad.UserLabels
+	ActiveTab        string
+	TabItems         []pyeza.TabItem
+	ID               string
+	UserFirstName    string
+	UserLastName     string
+	UserEmail        string
+	UserMobile       string
+	UserStatus       string
+	StatusVariant    string
+	RoleNames        []string
+	RolesTable       *types.TableConfig
 	ResetPasswordURL string
 	EditURL          string
 	AttachmentTable  *types.TableConfig

@@ -2,12 +2,13 @@
 // Phase 3 of the bootstrap-auth plan.
 //
 // Routes served:
-//   GET  /action/workspace_user_role/add?workspace_user_id={wu}  — drawer form
-//   POST /action/workspace_user_role/add                         — create junction row
-//   GET  /action/workspace_user_role/permissions?role_id={id}    — reactive permissions partial
-//   GET  /action/workspace_user_role/search-roles?q={q}&workspace_id={ws} — autocomplete JSON
-//   GET  /action/workspace_user_role/delete/{id}                 — confirm (unused; form-based)
-//   POST /action/workspace_user_role/delete/{id}                 — soft-delete
+//
+//	GET  /action/workspace_user_role/add?workspace_user_id={wu}  — drawer form
+//	POST /action/workspace_user_role/add                         — create junction row
+//	GET  /action/workspace_user_role/permissions?role_id={id}    — reactive permissions partial
+//	GET  /action/workspace_user_role/search-roles?q={q}&workspace_id={ws} — autocomplete JSON
+//	GET  /action/workspace_user_role/delete/{id}                 — confirm (unused; form-based)
+//	POST /action/workspace_user_role/delete/{id}                 — soft-delete
 package action
 
 import (

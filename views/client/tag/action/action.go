@@ -82,13 +82,13 @@ func resolveCode(code, name string) string {
 
 // Deps holds dependencies for client tag action handlers.
 type Deps struct {
-	Routes           entydad.ClientTagRoutes
-	CommonLabels     pyeza.CommonLabels
-	ListCategories   func(ctx context.Context, req *categorypb.ListCategoriesRequest) (*categorypb.ListCategoriesResponse, error)
-	CreateCategory   func(ctx context.Context, req *categorypb.CreateCategoryRequest) (*categorypb.CreateCategoryResponse, error)
-	ReadCategory     func(ctx context.Context, req *categorypb.ReadCategoryRequest) (*categorypb.ReadCategoryResponse, error)
-	UpdateCategory   func(ctx context.Context, req *categorypb.UpdateCategoryRequest) (*categorypb.UpdateCategoryResponse, error)
-	DeleteCategory   func(ctx context.Context, req *categorypb.DeleteCategoryRequest) (*categorypb.DeleteCategoryResponse, error)
+	Routes            entydad.ClientTagRoutes
+	CommonLabels      pyeza.CommonLabels
+	ListCategories    func(ctx context.Context, req *categorypb.ListCategoriesRequest) (*categorypb.ListCategoriesResponse, error)
+	CreateCategory    func(ctx context.Context, req *categorypb.CreateCategoryRequest) (*categorypb.CreateCategoryResponse, error)
+	ReadCategory      func(ctx context.Context, req *categorypb.ReadCategoryRequest) (*categorypb.ReadCategoryResponse, error)
+	UpdateCategory    func(ctx context.Context, req *categorypb.UpdateCategoryRequest) (*categorypb.UpdateCategoryResponse, error)
+	DeleteCategory    func(ctx context.Context, req *categorypb.DeleteCategoryRequest) (*categorypb.DeleteCategoryResponse, error)
 	SetCategoryActive func(ctx context.Context, id string, active bool) error
 }
 

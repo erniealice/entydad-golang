@@ -19,15 +19,15 @@ import (
 
 // Deps holds view dependencies.
 type Deps struct {
-	Routes                   entydad.ClientTagRoutes
-	GetCategoryListPageData  func(ctx context.Context) ([]*categorypb.Category, error)
-	ListClientCategories     func(ctx context.Context, req *clientcategorypb.ListClientCategoriesRequest) (*clientcategorypb.ListClientCategoriesResponse, error)
-	GetInUseIDs              func(ctx context.Context, ids []string) (map[string]bool, error)
-	RefreshURL               string
-	Labels                   entydad.ClientTagLabels
-	SharedLabels             entydad.SharedLabels
-	CommonLabels             pyeza.CommonLabels
-	TableLabels              types.TableLabels
+	Routes                  entydad.ClientTagRoutes
+	GetCategoryListPageData func(ctx context.Context) ([]*categorypb.Category, error)
+	ListClientCategories    func(ctx context.Context, req *clientcategorypb.ListClientCategoriesRequest) (*clientcategorypb.ListClientCategoriesResponse, error)
+	GetInUseIDs             func(ctx context.Context, ids []string) (map[string]bool, error)
+	RefreshURL              string
+	Labels                  entydad.ClientTagLabels
+	SharedLabels            entydad.SharedLabels
+	CommonLabels            pyeza.CommonLabels
+	TableLabels             types.TableLabels
 }
 
 // PageData holds the data for the client tags list page.

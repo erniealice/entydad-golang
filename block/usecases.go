@@ -15,29 +15,29 @@ import (
 	"context"
 	"fmt"
 
-	clientpb       "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client"
-	clientcatpb    "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client_category"
-	locationpb     "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/location"
-	permissionpb   "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/permission"
-	rolepb         "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/role"
+	commonpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
+	clientpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client"
+	clientcatpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client_category"
+	locationpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/location"
+	permissionpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/permission"
+	rolepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/role"
 	rolepermissionpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/role_permission"
-	supplierpb     "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/supplier"
-	suppliercatpb  "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/supplier_category"
-	userpb         "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/user"
-	workspacepb    "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace"
+	supplierpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/supplier"
+	suppliercatpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/supplier_category"
+	userpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/user"
+	workspacepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace"
 	workspaceuserpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace_user"
-	wurpb          "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace_user_role"
-	commonpb       "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
+	wurpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace_user_role"
 	purchaseorderpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/expenditure/purchase_order"
-	revenuepb      "github.com/erniealice/esqyma/pkg/schema/v1/domain/revenue/revenue"
-	revrunpb       "github.com/erniealice/esqyma/pkg/schema/v1/domain/revenue/revenue_run"
+	revenuepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/revenue/revenue"
+	revrunpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/revenue/revenue_run"
+	priceplanpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/price_plan"
 	priceschedulepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/price_schedule"
-	priceplanpb    "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/price_plan"
 	subscriptionpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/subscription"
 	taxregistrationpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/tax/tax_registration"
-	collectionpb   "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/collection"
+	collectionpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/collection"
 
-	admindashboard   "github.com/erniealice/entydad-golang/views/admin/dashboard"
+	admindashboard "github.com/erniealice/entydad-golang/views/admin/dashboard"
 	locationdashboard "github.com/erniealice/entydad-golang/views/location/dashboard"
 )
 
@@ -188,7 +188,7 @@ type SubscriptionUseCases struct {
 }
 
 type RevenueUseCases struct {
-	List                     func(context.Context, *revenuepb.ListRevenuesRequest) (*revenuepb.ListRevenuesResponse, error)
+	List func(context.Context, *revenuepb.ListRevenuesRequest) (*revenuepb.ListRevenuesResponse, error)
 	// Ex-helpers promoted to proto-defined use cases in Phase 0.
 	ListRevenueRunCandidates func(context.Context, *revrunpb.ListRevenueRunCandidatesRequest) (*revrunpb.ListRevenueRunCandidatesResponse, error)
 	GenerateRevenueRun       func(context.Context, *revrunpb.GenerateRevenueRunRequest) (*revrunpb.GenerateRevenueRunResponse, error)

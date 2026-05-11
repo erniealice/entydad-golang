@@ -18,11 +18,11 @@ import (
 
 // ListViewDeps holds dependencies for the workspace_user list view.
 type ListViewDeps struct {
-	Routes              entydad.WorkspaceUserRoutes
-	Labels              entydad.WorkspaceUserLabels
-	CommonLabels        pyeza.CommonLabels
-	TableLabels         types.TableLabels
-	GetListPageData     func(ctx context.Context, req *workspaceuserpb.GetWorkspaceUserListPageDataRequest) (*workspaceuserpb.GetWorkspaceUserListPageDataResponse, error)
+	Routes          entydad.WorkspaceUserRoutes
+	Labels          entydad.WorkspaceUserLabels
+	CommonLabels    pyeza.CommonLabels
+	TableLabels     types.TableLabels
+	GetListPageData func(ctx context.Context, req *workspaceuserpb.GetWorkspaceUserListPageDataRequest) (*workspaceuserpb.GetWorkspaceUserListPageDataResponse, error)
 }
 
 // PageData is the template data for the workspace_user list page.

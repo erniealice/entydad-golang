@@ -32,24 +32,24 @@ type routeRegistrarFull interface {
 
 // ModuleDeps holds all dependencies for the workspace_user module.
 type ModuleDeps struct {
-	Routes              entydad.WorkspaceUserRoutes
-	WorkspaceDetailURL  string // /app/workspaces/detail/{id} — for "Back to workspace" link
-	CommonLabels        pyeza.CommonLabels
-	Labels              entydad.WorkspaceUserLabels
-	TableLabels         types.TableLabels
-	GetListPageData     func(ctx context.Context, req *workspaceuserpb.GetWorkspaceUserListPageDataRequest) (*workspaceuserpb.GetWorkspaceUserListPageDataResponse, error)
+	Routes                       entydad.WorkspaceUserRoutes
+	WorkspaceDetailURL           string // /app/workspaces/detail/{id} — for "Back to workspace" link
+	CommonLabels                 pyeza.CommonLabels
+	Labels                       entydad.WorkspaceUserLabels
+	TableLabels                  types.TableLabels
+	GetListPageData              func(ctx context.Context, req *workspaceuserpb.GetWorkspaceUserListPageDataRequest) (*workspaceuserpb.GetWorkspaceUserListPageDataResponse, error)
 	GetWorkspaceUserItemPageData func(ctx context.Context, req *workspaceuserpb.GetWorkspaceUserItemPageDataRequest) (*workspaceuserpb.GetWorkspaceUserItemPageDataResponse, error)
-	CreateWorkspaceUser func(ctx context.Context, req *workspaceuserpb.CreateWorkspaceUserRequest) (*workspaceuserpb.CreateWorkspaceUserResponse, error)
-	DeleteWorkspaceUser func(ctx context.Context, req *workspaceuserpb.DeleteWorkspaceUserRequest) (*workspaceuserpb.DeleteWorkspaceUserResponse, error)
-	SetWorkspaceUserActive func(ctx context.Context, id string, active bool) error
+	CreateWorkspaceUser          func(ctx context.Context, req *workspaceuserpb.CreateWorkspaceUserRequest) (*workspaceuserpb.CreateWorkspaceUserResponse, error)
+	DeleteWorkspaceUser          func(ctx context.Context, req *workspaceuserpb.DeleteWorkspaceUserRequest) (*workspaceuserpb.DeleteWorkspaceUserResponse, error)
+	SetWorkspaceUserActive       func(ctx context.Context, id string, active bool) error
 	// ListUsers is used by the user search autocomplete on the add form.
 	ListUsers func(ctx context.Context, req *userpb.ListUsersRequest) (*userpb.ListUsersResponse, error)
 
 	// Phase 3 wired: GetWorkspaceUserRoleListPageData, WorkspaceUserRoleAddURL, WorkspaceUserRoleDeleteURL
 	// are supplied by block.go after Phase 3 registered the workspace_user_role routes.
 	GetWorkspaceUserRoleListPageData func(ctx context.Context, req *workspaceuserrolepb.GetWorkspaceUserRoleListPageDataRequest) (*workspaceuserrolepb.GetWorkspaceUserRoleListPageDataResponse, error)
-	WorkspaceUserRoleAddURL    string
-	WorkspaceUserRoleDeleteURL string
+	WorkspaceUserRoleAddURL          string
+	WorkspaceUserRoleDeleteURL       string
 
 	// Attachment operations
 	UploadFile       func(ctx context.Context, bucket, key string, content []byte, contentType string) error
@@ -61,13 +61,13 @@ type ModuleDeps struct {
 
 // Module holds all constructed workspace_user views.
 type Module struct {
-	routes           entydad.WorkspaceUserRoutes
-	List             view.View
-	Detail           view.View
-	TabAction        view.View
-	Add              view.View
-	Delete           view.View
-	SetStatus        view.View
+	routes    entydad.WorkspaceUserRoutes
+	List      view.View
+	Detail    view.View
+	TabAction view.View
+	Add       view.View
+	Delete    view.View
+	SetStatus view.View
 	// UserSearch is an http.HandlerFunc for the user autocomplete endpoint.
 	UserSearch       http.HandlerFunc
 	AttachmentUpload view.View

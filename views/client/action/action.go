@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/erniealice/pyeza-golang/route"
-	"github.com/erniealice/pyeza-golang/view"
 	pyezatypes "github.com/erniealice/pyeza-golang/types"
+	"github.com/erniealice/pyeza-golang/view"
 
 	categorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
 	clientpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client"
@@ -27,16 +27,16 @@ type PaymentTermOption = clientform.PaymentTermOption
 
 // Deps holds dependencies for client action handlers.
 type Deps struct {
-	Routes          entydad.ClientRoutes
+	Routes entydad.ClientRoutes
 	// SearchTimezonesURL is the URL of the timezone autocomplete JSON endpoint
 	// (owned by the user module; passed through so the client representative
 	// section can wire its own auto-complete to the same handler).
 	SearchTimezonesURL string
-	CreateClient    func(ctx context.Context, req *clientpb.CreateClientRequest) (*clientpb.CreateClientResponse, error)
-	ReadClient      func(ctx context.Context, req *clientpb.ReadClientRequest) (*clientpb.ReadClientResponse, error)
-	UpdateClient    func(ctx context.Context, req *clientpb.UpdateClientRequest) (*clientpb.UpdateClientResponse, error)
-	DeleteClient    func(ctx context.Context, req *clientpb.DeleteClientRequest) (*clientpb.DeleteClientResponse, error)
-	SetClientStatus func(ctx context.Context, id string, status string) error
+	CreateClient       func(ctx context.Context, req *clientpb.CreateClientRequest) (*clientpb.CreateClientResponse, error)
+	ReadClient         func(ctx context.Context, req *clientpb.ReadClientRequest) (*clientpb.ReadClientResponse, error)
+	UpdateClient       func(ctx context.Context, req *clientpb.UpdateClientRequest) (*clientpb.UpdateClientResponse, error)
+	DeleteClient       func(ctx context.Context, req *clientpb.DeleteClientRequest) (*clientpb.DeleteClientResponse, error)
+	SetClientStatus    func(ctx context.Context, id string, status string) error
 	// Payment terms dropdown
 	ListPaymentTerms func(ctx context.Context) ([]*PaymentTermOption, error)
 	// Tag-related deps for multi-select tags on the client form

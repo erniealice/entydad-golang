@@ -91,26 +91,26 @@ type ClientFormLabels struct {
 	BillingCurrencyPlaceholder string `json:"billingCurrencyPlaceholder"`
 	BillingCurrencyInfo        string `json:"billingCurrencyInfo"`
 	// New fields
-	Status                string `json:"status"`
-	StatusPlaceholder     string `json:"statusPlaceholder"`
-	StatusActive          string `json:"statusActive"`
-	StatusBlocked         string `json:"statusBlocked"`
-	StatusOnHold          string `json:"statusOnHold"`
-	StatusInactive        string `json:"statusInactive"`
-	StatusProspect        string `json:"statusProspect"`
-	Country               string `json:"country"`
-	CountryPlaceholder    string `json:"countryPlaceholder"`
+	Status             string `json:"status"`
+	StatusPlaceholder  string `json:"statusPlaceholder"`
+	StatusActive       string `json:"statusActive"`
+	StatusBlocked      string `json:"statusBlocked"`
+	StatusOnHold       string `json:"statusOnHold"`
+	StatusInactive     string `json:"statusInactive"`
+	StatusProspect     string `json:"statusProspect"`
+	Country            string `json:"country"`
+	CountryPlaceholder string `json:"countryPlaceholder"`
 	// Phase 5 H2 — ISO 3166 alpha-2 country code separate from legacy Country
 	CountryCode            string `json:"countryCode"`
 	CountryCodePlaceholder string `json:"countryCodePlaceholder"`
 	CountryCodeInfo        string `json:"countryCodeInfo"`
-	Website               string `json:"website"`
-	WebsitePlaceholder    string `json:"websitePlaceholder"`
-	SectionCompany        string `json:"sectionCompany"`
-	SectionAddress        string `json:"sectionAddress"`
-	SectionRepresentative string `json:"sectionRepresentative"`
-	SectionAccounting     string `json:"sectionAccounting"`
-	SectionOthers         string `json:"sectionOthers"`
+	Website                string `json:"website"`
+	WebsitePlaceholder     string `json:"websitePlaceholder"`
+	SectionCompany         string `json:"sectionCompany"`
+	SectionAddress         string `json:"sectionAddress"`
+	SectionRepresentative  string `json:"sectionRepresentative"`
+	SectionAccounting      string `json:"sectionAccounting"`
+	SectionOthers          string `json:"sectionOthers"`
 }
 
 type ClientDetailLabels struct {
@@ -183,12 +183,12 @@ type ClientPurchaseHistoryLabels struct {
 
 // ClientDetailTabLabels holds labels for the client detail page tabs.
 type ClientDetailTabLabels struct {
-	Info              string `json:"info"`
-	Representative    string `json:"representative"`
-	Subscriptions     string `json:"subscriptions"`
-	SubscriptionsSlug string `json:"subscriptionsSlug"`
-	Accounting        string `json:"accounting"`
-	History           string `json:"history"`
+	Info               string `json:"info"`
+	Representative     string `json:"representative"`
+	Subscriptions      string `json:"subscriptions"`
+	SubscriptionsSlug  string `json:"subscriptionsSlug"`
+	Accounting         string `json:"accounting"`
+	History            string `json:"history"`
 	Statement          string `json:"statement"`
 	PriceSchedules     string `json:"priceSchedules"`
 	PriceSchedulesSlug string `json:"priceSchedulesSlug"`
@@ -266,26 +266,28 @@ type ClientOutstandingTableEmptyLabels struct {
 // ClientRevenueRunLabels holds labels for the per-client Run Invoices
 // drawer surfaced from the Statement-tab outstanding table.
 type ClientRevenueRunLabels struct {
-	Title                 string                     `json:"title"`
-	SubtitleTemplate      string                     `json:"subtitleTemplate"`
-	AsOfDateLabel         string                     `json:"asOfDateLabel"`
-	AsOfDateHint          string                     `json:"asOfDateHint"`
-	BillThroughTodayLabel string                     `json:"billThroughTodayLabel"`
-	ColumnEngagement      string                     `json:"columnEngagement"`
-	ColumnPeriod          string                     `json:"columnPeriod"`
-	ColumnAmount          string                     `json:"columnAmount"`
-	ColumnLines           string                     `json:"columnLines"`
-	GroupTotalLabel       string                     `json:"groupTotalLabel"`
-	GroupNoPending        string                     `json:"groupNoPending"`
-	GroupCurrencyMismatch string                     `json:"groupCurrencyMismatch"`
-	ColumnSelectAriaLabel string                     `json:"columnSelectAriaLabel"`
-	EmptyTitle            string                     `json:"emptyTitle"`
-	EmptyMessage          string                     `json:"emptyMessage"`
-	GenerateButton        string                     `json:"generateButton"`
-	GenerateButtonCount   string                     `json:"generateButtonCount"`
-	CancelButton          string                     `json:"cancelButton"`
-	ToastSuccess          string                     `json:"toastSuccess"`
-	ViewRunLink           string                     `json:"viewRunLink"`
+	Title                 string                      `json:"title"`
+	SubtitleTemplate      string                      `json:"subtitleTemplate"`
+	AsOfDateLabel         string                      `json:"asOfDateLabel"`
+	AsOfDateHint          string                      `json:"asOfDateHint"`
+	BillThroughTodayLabel string                      `json:"billThroughTodayLabel"`
+	ColumnEngagement      string                      `json:"columnEngagement"`
+	ColumnPeriod          string                      `json:"columnPeriod"`
+	ColumnAmount          string                      `json:"columnAmount"`
+	ColumnLines           string                      `json:"columnLines"`
+	GroupTotalLabel       string                      `json:"groupTotalLabel"`
+	GroupNoPending        string                      `json:"groupNoPending"`
+	GroupCurrencyMismatch string                      `json:"groupCurrencyMismatch"`
+	ColumnSelectAriaLabel string                      `json:"columnSelectAriaLabel"`
+	EmptyTitle            string                      `json:"emptyTitle"`
+	EmptyMessage          string                      `json:"emptyMessage"`
+	IntroMessage            string                      `json:"introMessage"`
+	GenerateButton          string                      `json:"generateButton"`
+	GenerateButtonCountOne  string                      `json:"generateButtonCountOne"`
+	GenerateButtonCountMany string                      `json:"generateButtonCountMany"`
+	CancelButton            string                      `json:"cancelButton"`
+	ToastSuccess          string                      `json:"toastSuccess"`
+	ViewRunLink           string                      `json:"viewRunLink"`
 	Errors                ClientRevenueRunErrorLabels `json:"errors"`
 }
 
@@ -1006,9 +1008,9 @@ type WorkspaceDetailLabels struct {
 
 // WorkspaceDetailTabLabels holds the tab display names for the workspace detail page.
 type WorkspaceDetailTabLabels struct {
-	Info             string `json:"info"`
-	Users            string `json:"users"`
-	Attachments      string `json:"attachments"`
+	Info        string `json:"info"`
+	Users       string `json:"users"`
+	Attachments string `json:"attachments"`
 	// Phase 2 — polymorphic tax registrations tab
 	TaxRegistrations string `json:"taxRegistrations"`
 }
@@ -1817,10 +1819,10 @@ type LocationDashboardLabels struct {
 	AreasCount     string `json:"areasCount"`
 
 	// Widget titles
-	LocationsByRegion string `json:"locationsByRegion"`
+	LocationsByRegion  string `json:"locationsByRegion"`
 	TopLocationsByArea string `json:"topLocationsByArea"`
-	RecentAdditions   string `json:"recentAdditions"`
-	ViewAll           string `json:"viewAll"`
+	RecentAdditions    string `json:"recentAdditions"`
+	ViewAll            string `json:"viewAll"`
 
 	// Chart filter labels
 	FilterWeek  string `json:"filterWeek"`
@@ -1854,10 +1856,10 @@ type AdminDashboardLabels struct {
 	RecentRoleChanges string `json:"recentRoleChanges"`
 
 	// Widget titles
-	UsersPerRole         string `json:"usersPerRole"`
+	UsersPerRole           string `json:"usersPerRole"`
 	RolesByPermissionCount string `json:"rolesByPermissionCount"`
-	RecentRoleChangesList string `json:"recentRoleChangesList"`
-	ViewAll              string `json:"viewAll"`
+	RecentRoleChangesList  string `json:"recentRoleChangesList"`
+	ViewAll                string `json:"viewAll"`
 
 	// Quick action labels
 	QuickNewUser      string `json:"quickNewUser"`
@@ -2003,32 +2005,32 @@ func MapBulkConfig(common pyeza.CommonLabels) types.BulkActionsConfig {
 // TaxRegistrationLabels holds all translatable strings for the polymorphic
 // Tax Registration views (client + workspace party types in v1).
 type TaxRegistrationLabels struct {
-	Page    TaxRegistrationPageLabels    `json:"page"`
-	Columns TaxRegistrationColumnLabels  `json:"columns"`
-	Buttons TaxRegistrationButtonLabels  `json:"buttons"`
-	Actions TaxRegistrationActionLabels  `json:"actions"`
-	Empty   TaxRegistrationEmptyLabels   `json:"empty"`
-	Fields  TaxRegistrationFieldLabels   `json:"fields"`
-	Revoke  TaxRegistrationRevokeLabels  `json:"revoke"`
+	Page    TaxRegistrationPageLabels   `json:"page"`
+	Columns TaxRegistrationColumnLabels `json:"columns"`
+	Buttons TaxRegistrationButtonLabels `json:"buttons"`
+	Actions TaxRegistrationActionLabels `json:"actions"`
+	Empty   TaxRegistrationEmptyLabels  `json:"empty"`
+	Fields  TaxRegistrationFieldLabels  `json:"fields"`
+	Revoke  TaxRegistrationRevokeLabels `json:"revoke"`
 }
 
 // TaxRegistrationPageLabels holds page heading strings.
 type TaxRegistrationPageLabels struct {
-	Heading        string `json:"heading"`
-	HeadingClient  string `json:"headingClient"`
+	Heading          string `json:"heading"`
+	HeadingClient    string `json:"headingClient"`
 	HeadingWorkspace string `json:"headingWorkspace"`
-	Caption        string `json:"caption"`
-	AddDrawerTitle string `json:"addDrawerTitle"`
-	EditDrawerTitle string `json:"editDrawerTitle"`
+	Caption          string `json:"caption"`
+	AddDrawerTitle   string `json:"addDrawerTitle"`
+	EditDrawerTitle  string `json:"editDrawerTitle"`
 }
 
 // TaxRegistrationColumnLabels holds table column headers.
 type TaxRegistrationColumnLabels struct {
-	KindName      string `json:"kindName"`
-	ComputePath   string `json:"computePath"`
-	PartyRole     string `json:"partyRole"`
-	Status        string `json:"status"`
-	EffectiveFrom string `json:"effectiveFrom"`
+	KindName           string `json:"kindName"`
+	ComputePath        string `json:"computePath"`
+	PartyRole          string `json:"partyRole"`
+	Status             string `json:"status"`
+	EffectiveFrom      string `json:"effectiveFrom"`
 	RegistrationNumber string `json:"registrationNumber"`
 }
 
@@ -2064,11 +2066,11 @@ type TaxRegistrationFieldLabels struct {
 
 // TaxRegistrationRevokeLabels holds strings for the revoke confirm dialog.
 type TaxRegistrationRevokeLabels struct {
-	WarningMessage           string `json:"warningMessage"`
-	EffectiveTo              string `json:"effectiveTo"`
-	AffectedPeriodsNotice    string `json:"affectedPeriodsNotice"`
+	WarningMessage        string `json:"warningMessage"`
+	EffectiveTo           string `json:"effectiveTo"`
+	AffectedPeriodsNotice string `json:"affectedPeriodsNotice"`
 	// AffectedPeriodsCount is the row label for the pending-period count (Phase 5 M3).
-	AffectedPeriodsCount     string `json:"affectedPeriodsCount"`
+	AffectedPeriodsCount string `json:"affectedPeriodsCount"`
 	// AffectedSubscriptionsCount is the row label for the subscription count (Phase 5 M3).
 	AffectedSubscriptionsCount string `json:"affectedSubscriptionsCount"`
 	ReasonLabel                string `json:"reasonLabel"`

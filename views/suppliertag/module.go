@@ -16,20 +16,20 @@ import (
 
 // ModuleDeps holds all dependencies for the supplier tag module.
 type ModuleDeps struct {
-	Routes               entydad.SupplierTagRoutes
-	Labels               entydad.SupplierTagLabels
-	SharedLabels         entydad.SharedLabels
-	CommonLabels         pyeza.CommonLabels
-	TableLabels          types.TableLabels
-	GetInUseIDs              func(ctx context.Context, ids []string) (map[string]bool, error)
-	GetCategoryListPageData  func(ctx context.Context) ([]*categorypb.Category, error)
-	ListCategories           func(ctx context.Context, req *categorypb.ListCategoriesRequest) (*categorypb.ListCategoriesResponse, error)
-	CreateCategory           func(ctx context.Context, req *categorypb.CreateCategoryRequest) (*categorypb.CreateCategoryResponse, error)
-	ReadCategory             func(ctx context.Context, req *categorypb.ReadCategoryRequest) (*categorypb.ReadCategoryResponse, error)
-	UpdateCategory           func(ctx context.Context, req *categorypb.UpdateCategoryRequest) (*categorypb.UpdateCategoryResponse, error)
-	DeleteCategory           func(ctx context.Context, req *categorypb.DeleteCategoryRequest) (*categorypb.DeleteCategoryResponse, error)
-	ListSupplierCategories   func(ctx context.Context, req *suppliercategorypb.ListSupplierCategoriesRequest) (*suppliercategorypb.ListSupplierCategoriesResponse, error)
-	SetCategoryActive        func(ctx context.Context, id string, active bool) error
+	Routes                  entydad.SupplierTagRoutes
+	Labels                  entydad.SupplierTagLabels
+	SharedLabels            entydad.SharedLabels
+	CommonLabels            pyeza.CommonLabels
+	TableLabels             types.TableLabels
+	GetInUseIDs             func(ctx context.Context, ids []string) (map[string]bool, error)
+	GetCategoryListPageData func(ctx context.Context) ([]*categorypb.Category, error)
+	ListCategories          func(ctx context.Context, req *categorypb.ListCategoriesRequest) (*categorypb.ListCategoriesResponse, error)
+	CreateCategory          func(ctx context.Context, req *categorypb.CreateCategoryRequest) (*categorypb.CreateCategoryResponse, error)
+	ReadCategory            func(ctx context.Context, req *categorypb.ReadCategoryRequest) (*categorypb.ReadCategoryResponse, error)
+	UpdateCategory          func(ctx context.Context, req *categorypb.UpdateCategoryRequest) (*categorypb.UpdateCategoryResponse, error)
+	DeleteCategory          func(ctx context.Context, req *categorypb.DeleteCategoryRequest) (*categorypb.DeleteCategoryResponse, error)
+	ListSupplierCategories  func(ctx context.Context, req *suppliercategorypb.ListSupplierCategoriesRequest) (*suppliercategorypb.ListSupplierCategoriesResponse, error)
+	SetCategoryActive       func(ctx context.Context, id string, active bool) error
 }
 
 // Module holds all constructed supplier tag views.

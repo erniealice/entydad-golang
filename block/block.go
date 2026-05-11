@@ -7,11 +7,11 @@
 //
 // Companion files in this directory:
 //   - helpers.go       — DB interface types (UpdateableSource, CRUDSource,
-//                        categoryListPageDataGetter) and getDefaultWorkspaceID.
+//     categoryListPageDataGetter) and getDefaultWorkspaceID.
 //   - route_loading.go — blockLabels / blockRoutes types and their lyngua loaders
-//                        (loadBlockLabels, loadBlockRoutes).
+//     (loadBlockLabels, loadBlockRoutes).
 //   - wiring.go        — dashboard reflective wiring helpers (wireLocationDashboard,
-//                        wireAdminDashboard).
+//     wireAdminDashboard).
 //
 // Usage:
 //
@@ -32,10 +32,9 @@ import (
 	"github.com/erniealice/entydad-golang"
 	adminmod "github.com/erniealice/entydad-golang/views/admin"
 	admindashboardroutes "github.com/erniealice/entydad-golang/views/admin/dashboard"
-	clientmod    "github.com/erniealice/entydad-golang/views/client"
+	clientmod "github.com/erniealice/entydad-golang/views/client"
 	clientdetail "github.com/erniealice/entydad-golang/views/client/detail"
 	clienttagmod "github.com/erniealice/entydad-golang/views/clienttag"
-	suppliertagmod "github.com/erniealice/entydad-golang/views/suppliertag"
 	locationmod "github.com/erniealice/entydad-golang/views/location"
 	locationaction "github.com/erniealice/entydad-golang/views/location/action"
 	locationareamod "github.com/erniealice/entydad-golang/views/location_area"
@@ -46,31 +45,32 @@ import (
 	rolemod "github.com/erniealice/entydad-golang/views/role"
 	roleusers "github.com/erniealice/entydad-golang/views/role/users"
 	suppliermod "github.com/erniealice/entydad-golang/views/supplier"
+	suppliertagmod "github.com/erniealice/entydad-golang/views/suppliertag"
+	taxregistrationmod "github.com/erniealice/entydad-golang/views/tax_registration"
 	usermod "github.com/erniealice/entydad-golang/views/user"
 	userdashboard "github.com/erniealice/entydad-golang/views/user/dashboard"
-	workspacemod         "github.com/erniealice/entydad-golang/views/workspace"
-	workspaceaction      "github.com/erniealice/entydad-golang/views/workspace/action"
-	workspaceusermod     "github.com/erniealice/entydad-golang/views/workspace_user"
+	workspacemod "github.com/erniealice/entydad-golang/views/workspace"
+	workspaceaction "github.com/erniealice/entydad-golang/views/workspace/action"
+	workspaceusermod "github.com/erniealice/entydad-golang/views/workspace_user"
 	workspaceuserrolemod "github.com/erniealice/entydad-golang/views/workspace_user_role"
-	taxregistrationmod "github.com/erniealice/entydad-golang/views/tax_registration"
 	"github.com/erniealice/espyna-golang/reference"
-	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/espyna-golang/registry"
 	entityid "github.com/erniealice/espyna-golang/registry/entityid"
-	attachmentpb    "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
-	categorypb      "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
-	paymenttermpb   "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/payment_term"
-	workspacepb     "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace"
-	clientstmtpb    "github.com/erniealice/esqyma/pkg/schema/v1/domain/ledger/reporting/client_statement"
-	revenuepb       "github.com/erniealice/esqyma/pkg/schema/v1/domain/revenue/revenue"
-	revrunpb        "github.com/erniealice/esqyma/pkg/schema/v1/domain/revenue/revenue_run"
-	priceplanpb     "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/price_plan"
+	categorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
+	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
+	paymenttermpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/payment_term"
+	workspacepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace"
+	clientstmtpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/ledger/reporting/client_statement"
+	revenuepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/revenue/revenue"
+	revrunpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/revenue/revenue_run"
+	priceplanpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/price_plan"
 	priceschedulepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/price_schedule"
-	subscriptionpb  "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/subscription"
-	collectionpb    "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/collection"
-	suppstmtpb      "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/reporting/supplier_statement"
+	subscriptionpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/subscription"
+	collectionpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/collection"
+	suppstmtpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/reporting/supplier_statement"
 	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
 	pyeza "github.com/erniealice/pyeza-golang"
+	"github.com/erniealice/pyeza-golang/route"
 	pyezatypes "github.com/erniealice/pyeza-golang/types"
 	"google.golang.org/protobuf/proto"
 )
@@ -97,23 +97,23 @@ func handleFunc(r pyeza.RouteRegistrar, method, path string, handler http.Handle
 type BlockOption func(*blockConfig)
 
 type blockConfig struct {
-	enableAll          bool
-	admin              bool
-	client             bool
-	clientTag          bool
-	supplierTag        bool
-	paymentTerm        bool
-	user               bool
-	role               bool
-	location           bool
-	locationArea       bool
-	permission         bool
-	workspace          bool
-	workspaceUser      bool
-	workspaceUserRole  bool
-	supplier           bool
-	taxRegistration    bool
-	useCases           *UseCases
+	enableAll         bool
+	admin             bool
+	client            bool
+	clientTag         bool
+	supplierTag       bool
+	paymentTerm       bool
+	user              bool
+	role              bool
+	location          bool
+	locationArea      bool
+	permission        bool
+	workspace         bool
+	workspaceUser     bool
+	workspaceUserRole bool
+	supplier          bool
+	taxRegistration   bool
+	useCases          *UseCases
 }
 
 // WithUseCases supplies the typed use-case closures to Block().
@@ -256,7 +256,7 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 
 		if cfg.enableAll || cfg.client {
 			clientDeps := &clientmod.ModuleDeps{
-				Routes:               routes.Client,
+				Routes: routes.Client,
 				// User module owns the timezone search endpoint; the client
 				// representative form reuses the same JSON handler.
 				SearchTimezonesURL:   routes.User.SearchTimezonesURL,
@@ -304,23 +304,23 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 					}
 					return opts, nil
 				},
-				ListRevenues:          db.ListSimple,
+				ListRevenues: db.ListSimple,
 				GetClientStatement: func(fctx context.Context, req *clientstmtpb.ClientStatementRequest) (*clientstmtpb.ClientStatementResponse, error) {
 					if ledgerReportingSvc == nil {
 						return nil, nil
 					}
 					return ledgerReportingSvc.GetClientStatement(fctx, req)
 				},
-				SubscriptionAddURL:                routes.Subscription.AddURL,
-				SubscriptionDetailURL:             routes.Subscription.DetailURL,
-				SubscriptionUnderClientDetailURL:  routes.Subscription.UnderClientDetailURL,
-				SubscriptionEditURL:               routes.Subscription.EditURL,
-				SubscriptionDeleteURL:             routes.Subscription.DeleteURL,
-				UploadFile:            uploadFile,
-				ListAttachments:       listAttachments,
-				CreateAttachment:      createAttachment,
-				DeleteAttachment:      deleteAttachment,
-				NewID:                 newAttachmentID,
+				SubscriptionAddURL:               routes.Subscription.AddURL,
+				SubscriptionDetailURL:            routes.Subscription.DetailURL,
+				SubscriptionUnderClientDetailURL: routes.Subscription.UnderClientDetailURL,
+				SubscriptionEditURL:              routes.Subscription.EditURL,
+				SubscriptionDeleteURL:            routes.Subscription.DeleteURL,
+				UploadFile:                       uploadFile,
+				ListAttachments:                  listAttachments,
+				CreateAttachment:                 createAttachment,
+				DeleteAttachment:                 deleteAttachment,
+				NewID:                            newAttachmentID,
 			}
 			if uc.Category.List != nil {
 				clientDeps.ListCategories = uc.Category.List
@@ -577,10 +577,10 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 				TableLabels:          ctx.Table,
 				GetListPageData:      uc.User.GetListPageData,
 				GetUserWorkspacesMap: getUserWorkspacesMap,
-				CreateUser:      uc.User.Create,
-				ReadUser:        uc.User.Read,
-				UpdateUser:      uc.User.Update,
-				DeleteUser:      uc.User.Delete,
+				CreateUser:           uc.User.Create,
+				ReadUser:             uc.User.Read,
+				UpdateUser:           uc.User.Update,
+				DeleteUser:           uc.User.Delete,
 				SetActive: func(fctx context.Context, id string, active bool) error {
 					_, err := db.Update(fctx, "user", id, map[string]any{"active": active})
 					return err
@@ -844,15 +844,15 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 			} else {
 				wuRoutes := routes.WorkspaceUser
 				wuMod := &workspaceusermod.ModuleDeps{
-					Routes:             wuRoutes,
-					WorkspaceDetailURL: entydad.WorkspaceDetailURL,
-					CommonLabels:       ctx.Common,
-					Labels:             labels.WorkspaceUser,
-					TableLabels:        ctx.Table,
-					GetListPageData:    uc.WorkspaceUser.GetListPageData,
+					Routes:                       wuRoutes,
+					WorkspaceDetailURL:           entydad.WorkspaceDetailURL,
+					CommonLabels:                 ctx.Common,
+					Labels:                       labels.WorkspaceUser,
+					TableLabels:                  ctx.Table,
+					GetListPageData:              uc.WorkspaceUser.GetListPageData,
 					GetWorkspaceUserItemPageData: uc.WorkspaceUser.GetItemPageData,
-					CreateWorkspaceUser: uc.WorkspaceUser.Create,
-					DeleteWorkspaceUser: uc.WorkspaceUser.Delete,
+					CreateWorkspaceUser:          uc.WorkspaceUser.Create,
+					DeleteWorkspaceUser:          uc.WorkspaceUser.Delete,
 					SetWorkspaceUserActive: func(fctx context.Context, id string, active bool) error {
 						_, err := db.Update(fctx, "workspace_user", id, map[string]any{"active": active})
 						return err
@@ -885,11 +885,11 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 			} else {
 				wurRoutes := routes.WorkspaceUserRole
 				wurMod := &workspaceuserrolemod.ModuleDeps{
-					Routes:                      wurRoutes,
-					Labels:                      labels.WorkspaceUserRole,
-					CommonLabels:                ctx.Common,
-					CreateWorkspaceUserRole:     uc.WorkspaceUserRole.Create,
-					DeleteWorkspaceUserRole:     uc.WorkspaceUserRole.Delete,
+					Routes:                  wurRoutes,
+					Labels:                  labels.WorkspaceUserRole,
+					CommonLabels:            ctx.Common,
+					CreateWorkspaceUserRole: uc.WorkspaceUserRole.Create,
+					DeleteWorkspaceUserRole: uc.WorkspaceUserRole.Delete,
 				}
 				if uc.WorkspaceUser.GetItemPageData != nil {
 					wurMod.GetWorkspaceUserItemPageData = uc.WorkspaceUser.GetItemPageData
@@ -914,7 +914,7 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 				DashboardLabels:      labels.SupplierDashboard,
 				DashboardTitleLabels: labels.Dashboard,
 				TableLabels:          ctx.Table,
-				GetInUseIDs: refChecker.GetSupplierInUseIDs,
+				GetInUseIDs:          refChecker.GetSupplierInUseIDs,
 				SetStatus: func(fctx context.Context, id string, status string) error {
 					// `active` is the soft-delete flag; status transitions
 					// (active/blocked/on_hold) must NOT flip it, otherwise
@@ -1075,7 +1075,7 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 					Labels:               labels.PaymentTerm,
 					TableLabels:          ctx.Table,
 					GetListPageData:      ptRepo.GetPaymentTermListPageData,
-					GetInUseIDs:         refChecker.GetPaymentTermInUseIDs,
+					GetInUseIDs:          refChecker.GetPaymentTermInUseIDs,
 					CreatePaymentTerm:    ptRepo.CreatePaymentTerm,
 					ReadPaymentTerm:      ptRepo.ReadPaymentTerm,
 					UpdatePaymentTerm:    ptRepo.UpdatePaymentTerm,
@@ -1091,7 +1091,7 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 					Labels:               labels.PaymentTerm,
 					TableLabels:          ctx.Table,
 					GetListPageData:      ptRepo.GetPaymentTermListPageData,
-					GetInUseIDs:         refChecker.GetPaymentTermInUseIDs,
+					GetInUseIDs:          refChecker.GetPaymentTermInUseIDs,
 					CreatePaymentTerm:    ptRepo.CreatePaymentTerm,
 					ReadPaymentTerm:      ptRepo.ReadPaymentTerm,
 					UpdatePaymentTerm:    ptRepo.UpdatePaymentTerm,

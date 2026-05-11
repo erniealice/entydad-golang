@@ -19,15 +19,15 @@ import (
 
 // Deps holds view dependencies.
 type Deps struct {
-	Routes                   entydad.SupplierTagRoutes
-	GetCategoryListPageData  func(ctx context.Context) ([]*categorypb.Category, error)
-	ListSupplierCategories   func(ctx context.Context, req *suppliercategorypb.ListSupplierCategoriesRequest) (*suppliercategorypb.ListSupplierCategoriesResponse, error)
-	GetInUseIDs              func(ctx context.Context, ids []string) (map[string]bool, error)
-	RefreshURL               string
-	Labels                   entydad.SupplierTagLabels
-	SharedLabels             entydad.SharedLabels
-	CommonLabels             pyeza.CommonLabels
-	TableLabels              types.TableLabels
+	Routes                  entydad.SupplierTagRoutes
+	GetCategoryListPageData func(ctx context.Context) ([]*categorypb.Category, error)
+	ListSupplierCategories  func(ctx context.Context, req *suppliercategorypb.ListSupplierCategoriesRequest) (*suppliercategorypb.ListSupplierCategoriesResponse, error)
+	GetInUseIDs             func(ctx context.Context, ids []string) (map[string]bool, error)
+	RefreshURL              string
+	Labels                  entydad.SupplierTagLabels
+	SharedLabels            entydad.SharedLabels
+	CommonLabels            pyeza.CommonLabels
+	TableLabels             types.TableLabels
 }
 
 // PageData holds the data for the supplier tags list page.

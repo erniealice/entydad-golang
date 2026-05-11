@@ -114,32 +114,32 @@ type SelectedTag struct {
 
 // Data is the template data for the supplier drawer form.
 type Data struct {
-	FormAction            string
-	IsEdit                bool
-	ID                    string
-	Name                  string
-	Timezone              string
-	SearchTimezonesURL    string
-	SupplierType          string
-	TaxID                 string
-	RegistrationNumber    string
-	StreetAddress         string
-	City                  string
-	Province              string
-	PostalCode            string
-	Country               string
-	BillingCurrency       string
-	PaymentTerms          []*PaymentTermOption
-	SelectedPaymentTermID string
-	LeadTimeDays          string
-	CreditLimit           string
-	Status                string
-	Website               string
-	Notes                 string
-	FirstName             string
-	LastName              string
-	Email                 string
-	Phone                 string
+	FormAction               string
+	IsEdit                   bool
+	ID                       string
+	Name                     string
+	Timezone                 string
+	SearchTimezonesURL       string
+	SupplierType             string
+	TaxID                    string
+	RegistrationNumber       string
+	StreetAddress            string
+	City                     string
+	Province                 string
+	PostalCode               string
+	Country                  string
+	BillingCurrency          string
+	PaymentTerms             []*PaymentTermOption
+	SelectedPaymentTermID    string
+	LeadTimeDays             string
+	CreditLimit              string
+	Status                   string
+	Website                  string
+	Notes                    string
+	FirstName                string
+	LastName                 string
+	Email                    string
+	Phone                    string
 	Active                   bool
 	Labels                   Labels
 	CommonLabels             any
@@ -223,10 +223,10 @@ func BuildLabels(t func(string) string) Labels {
 
 		SelectPaymentTerm: t("supplier.form.selectPaymentTerm"),
 
-		Tags:                  t("supplier.form.tags"),
-		TagsPlaceholder:       t("supplier.form.tagsPlaceholder"),
-		TagsSearchPlaceholder: t("supplier.form.tagsSearchPlaceholder"),
-		TagsNoResults:         t("supplier.form.tagsNoResults"),
+		Tags:                   t("supplier.form.tags"),
+		TagsPlaceholder:        t("supplier.form.tagsPlaceholder"),
+		TagsSearchPlaceholder:  t("supplier.form.tagsSearchPlaceholder"),
+		TagsNoResults:          t("supplier.form.tagsNoResults"),
 		NameInfo:               t("supplier.form.nameInfo"),
 		SupplierTypeInfo:       t("supplier.form.supplierTypeInfo"),
 		StatusInfo:             t("supplier.form.statusInfo"),

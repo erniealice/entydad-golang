@@ -22,11 +22,11 @@ type Deps struct {
 // PageData holds the template data for the change-password page.
 type PageData struct {
 	types.PageData
-	Labels   entydad.ChangePasswordLabels
-	PostURL  string
-	BackURL  string
-	Error    string // error message shown in the error banner
-	Success  bool   // true after a successful password change
+	Labels  entydad.ChangePasswordLabels
+	PostURL string
+	BackURL string
+	Error   string // error message shown in the error banner
+	Success bool   // true after a successful password change
 }
 
 // NewView creates the change-password GET view (GET /auth/change-password).

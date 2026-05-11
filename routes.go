@@ -18,16 +18,16 @@ const (
 	ClientBulkSetStatusURL    = "/action/client/bulk-set-status"
 	ClientSearchURL           = "/action/client/search"
 
-	UserDashboardURL        = "/app/users/dashboard"
-	UserListURL             = "/app/users/list/{status}"
-	UserTableURL            = "/action/user/table/{status}"
-	UserAddURL              = "/action/user/add"
-	UserEditURL             = "/action/user/edit/{id}"
-	UserDeleteURL           = "/action/user/delete"
-	UserBulkDeleteURL       = "/action/user/bulk-delete"
-	UserSetStatusURL        = "/action/user/set-status"
-	UserBulkSetStatusURL    = "/action/user/bulk-set-status"
-	UserSearchTimezonesURL  = "/action/user/search-timezones"
+	UserDashboardURL       = "/app/users/dashboard"
+	UserListURL            = "/app/users/list/{status}"
+	UserTableURL           = "/action/user/table/{status}"
+	UserAddURL             = "/action/user/add"
+	UserEditURL            = "/action/user/edit/{id}"
+	UserDeleteURL          = "/action/user/delete"
+	UserBulkDeleteURL      = "/action/user/bulk-delete"
+	UserSetStatusURL       = "/action/user/set-status"
+	UserBulkSetStatusURL   = "/action/user/bulk-set-status"
+	UserSearchTimezonesURL = "/action/user/search-timezones"
 
 	LocationDashboardURL        = "/app/locations/dashboard"
 	LocationDetailURL           = "/app/locations/detail/{id}"
@@ -239,10 +239,10 @@ const (
 
 	// TaxRegistration — polymorphic (client + workspace party types in v1)
 	// URL convention: party_type + party_id come from the parent detail page context.
-	ClientTaxRegistrationListURL    = "/app/clients/detail/{id}/tax-registrations"
-	ClientTaxRegistrationAddURL     = "/action/client/{id}/tax-registration/add"
-	ClientTaxRegistrationEditURL    = "/action/client/{id}/tax-registration/edit/{reg_id}"
-	ClientTaxRegistrationDeleteURL  = "/action/client/{id}/tax-registration/delete"
+	ClientTaxRegistrationListURL   = "/app/clients/detail/{id}/tax-registrations"
+	ClientTaxRegistrationAddURL    = "/action/client/{id}/tax-registration/add"
+	ClientTaxRegistrationEditURL   = "/action/client/{id}/tax-registration/edit/{reg_id}"
+	ClientTaxRegistrationDeleteURL = "/action/client/{id}/tax-registration/delete"
 
 	WorkspaceTaxRegistrationListURL   = "/app/workspace/settings/tax-registrations"
 	WorkspaceTaxRegistrationAddURL    = "/action/workspace/tax-registration/add"

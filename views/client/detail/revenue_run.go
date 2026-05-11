@@ -11,7 +11,10 @@ import (
 
 	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/pyeza-golang/route"
+	pyezatypes "github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
+
+	consumer "github.com/erniealice/espyna-golang/consumer"
 
 	"github.com/erniealice/entydad-golang"
 	detailform "github.com/erniealice/entydad-golang/views/client/detail/form"
@@ -69,11 +72,11 @@ type RevenueRunSelections struct {
 
 // RevenueRunResult is the output of a successful GenerateRevenueRun call.
 type RevenueRunResult struct {
-	RunID    string
-	Status   string
-	Created  int32
-	Skipped  int32
-	Errored  int32
+	RunID   string
+	Status  string
+	Created int32
+	Skipped int32
+	Errored int32
 }
 
 // ---------------------------------------------------------------------------
@@ -124,16 +127,19 @@ func renderRevenueRunDrawer(
 ) view.ViewResult {
 	l := deps.Labels.Detail.RevenueRun
 
-	// Resolve as-of date: prefer query param, fall back to today.
+	// Resolve as-of date: prefer query param, fall back to today in workspace TZ.
+	tz := pyezatypes.LocationFromContext(ctx)
+	today := time.Now().In(tz).Format(pyezatypes.DateInputLayout)
+
 	asOfDate := viewCtx.Request.URL.Query().Get("as_of_date")
 	if asOfDate == "" {
-		asOfDate = time.Now().Format("2006-01-02")
+		asOfDate = today
 	}
-	today := time.Now().Format("2006-01-02")
 
 	scope := RevenueRunScope{
-		ClientID: clientID,
-		AsOfDate: asOfDate,
+		WorkspaceID: consumer.GetWorkspaceIDFromContext(ctx),
+		ClientID:    clientID,
+		AsOfDate:    asOfDate,
 	}
 
 	candidates, _, err := deps.ListRevenueRunCandidates(ctx, scope)
@@ -182,7 +188,8 @@ func submitRevenueRun(
 
 	asOfDate := viewCtx.Request.FormValue("as_of_date")
 	if asOfDate == "" {
-		asOfDate = time.Now().Format("2006-01-02")
+		tz := pyezatypes.LocationFromContext(ctx)
+		asOfDate = time.Now().In(tz).Format(pyezatypes.DateInputLayout)
 	}
 
 	// Parse "selection" form values: each is "{sub_id}|{start}|{end}|{marker}"
@@ -209,8 +216,9 @@ func submitRevenueRun(
 	}
 
 	scope := RevenueRunScope{
-		ClientID: clientID,
-		AsOfDate: asOfDate,
+		WorkspaceID: consumer.GetWorkspaceIDFromContext(ctx),
+		ClientID:    clientID,
+		AsOfDate:    asOfDate,
 	}
 
 	result, err := deps.GenerateRevenueRun(ctx, scope, selections)
@@ -396,4 +404,3 @@ func formatCentavos(centavos int64) string {
 	}
 	return result
 }
-

@@ -15,14 +15,14 @@ import (
 	clientdetail "github.com/erniealice/entydad-golang/views/client/detail"
 	clientform "github.com/erniealice/entydad-golang/views/client/form"
 	clientlist "github.com/erniealice/entydad-golang/views/client/list"
-	categorypb       "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
-	attachmentpb     "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
-	clientpb         "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client"
+	categorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
+	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
+	clientpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client"
 	clientcategorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client_category"
-	clientstmtpb     "github.com/erniealice/esqyma/pkg/schema/v1/domain/ledger/reporting/client_statement"
-	revenuepb        "github.com/erniealice/esqyma/pkg/schema/v1/domain/revenue/revenue"
-	collectionpb     "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/collection"
-	subscriptionpb   "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/subscription"
+	clientstmtpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/ledger/reporting/client_statement"
+	revenuepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/revenue/revenue"
+	subscriptionpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/subscription"
+	collectionpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/collection"
 	"github.com/erniealice/hybra-golang/views/attachment"
 	"github.com/erniealice/hybra-golang/views/auditlog"
 )
@@ -32,17 +32,17 @@ type PaymentTermOption = clientform.PaymentTermOption
 
 // ModuleDeps holds all dependencies for the client module.
 type ModuleDeps struct {
-	Routes               entydad.ClientRoutes
+	Routes entydad.ClientRoutes
 	// SearchTimezonesURL points to the timezone autocomplete JSON endpoint
 	// (provided by the user module). The client representative section reuses
 	// the same handler for its timezone picker.
-	SearchTimezonesURL string
-	CommonLabels         pyeza.CommonLabels
-	SharedLabels         entydad.SharedLabels
-	Labels               entydad.ClientLabels
-	DashboardLabels      entydad.ClientDashboardLabels
-	DashboardTitleLabels entydad.DashboardLabels
-	TableLabels          types.TableLabels
+	SearchTimezonesURL        string
+	CommonLabels              pyeza.CommonLabels
+	SharedLabels              entydad.SharedLabels
+	Labels                    entydad.ClientLabels
+	DashboardLabels           entydad.ClientDashboardLabels
+	DashboardTitleLabels      entydad.DashboardLabels
+	TableLabels               types.TableLabels
 	GetListPageData           func(ctx context.Context, req *clientpb.GetClientListPageDataRequest) (*clientpb.GetClientListPageDataResponse, error)
 	GetInUseIDs               func(ctx context.Context, ids []string) (map[string]bool, error)
 	GetClientBalances         func(ctx context.Context) (map[string]int64, error)
@@ -142,16 +142,16 @@ type Module struct {
 
 func NewModule(deps *ModuleDeps) *Module {
 	actionDeps := &clientaction.Deps{
-		Routes:               deps.Routes,
-		SearchTimezonesURL:   deps.SearchTimezonesURL,
-		CreateClient:         deps.CreateClient,
-		ReadClient:           deps.ReadClient,
-		UpdateClient:         deps.UpdateClient,
-		DeleteClient:         deps.DeleteClient,
-		SetClientStatus:      deps.SetStatus,
-		ListPaymentTerms:     deps.ListPaymentTerms,
-		ListCategories:       deps.ListCategories,
-		ListClientCategories: deps.ListClientCategories,
+		Routes:                deps.Routes,
+		SearchTimezonesURL:    deps.SearchTimezonesURL,
+		CreateClient:          deps.CreateClient,
+		ReadClient:            deps.ReadClient,
+		UpdateClient:          deps.UpdateClient,
+		DeleteClient:          deps.DeleteClient,
+		SetClientStatus:       deps.SetStatus,
+		ListPaymentTerms:      deps.ListPaymentTerms,
+		ListCategories:        deps.ListCategories,
+		ListClientCategories:  deps.ListClientCategories,
 		CreateClientCategory:  deps.CreateClientCategory,
 		DeleteClientCategory:  deps.DeleteClientCategory,
 		GetFunctionalCurrency: deps.GetFunctionalCurrency,
@@ -169,22 +169,22 @@ func NewModule(deps *ModuleDeps) *Module {
 		TableLabels:               deps.TableLabels,
 	}
 	detailDeps := &clientdetail.DetailViewDeps{
-		Routes:                      deps.Routes,
-		ReadClient:                  deps.ReadClient,
-		ListCategories:              deps.ListCategories,
-		ListClientCategories:        deps.ListClientCategories,
-		ListRevenues:                deps.ListRevenues,
-		GetClientStatement:          deps.GetClientStatement,
-		ListSubscriptions:           deps.ListSubscriptions,
-		GetSubscriptionListPageData: deps.GetSubscriptionListPageData,
-		SubscriptionAddURL:                deps.SubscriptionAddURL,
-		SubscriptionDetailURL:             deps.SubscriptionDetailURL,
-		SubscriptionUnderClientDetailURL:  deps.SubscriptionUnderClientDetailURL,
-		SubscriptionEditURL:               deps.SubscriptionEditURL,
-		SubscriptionDeleteURL:             deps.SubscriptionDeleteURL,
-		Labels:                deps.Labels,
-		CommonLabels:          deps.CommonLabels,
-		TableLabels:           deps.TableLabels,
+		Routes:                           deps.Routes,
+		ReadClient:                       deps.ReadClient,
+		ListCategories:                   deps.ListCategories,
+		ListClientCategories:             deps.ListClientCategories,
+		ListRevenues:                     deps.ListRevenues,
+		GetClientStatement:               deps.GetClientStatement,
+		ListSubscriptions:                deps.ListSubscriptions,
+		GetSubscriptionListPageData:      deps.GetSubscriptionListPageData,
+		SubscriptionAddURL:               deps.SubscriptionAddURL,
+		SubscriptionDetailURL:            deps.SubscriptionDetailURL,
+		SubscriptionUnderClientDetailURL: deps.SubscriptionUnderClientDetailURL,
+		SubscriptionEditURL:              deps.SubscriptionEditURL,
+		SubscriptionDeleteURL:            deps.SubscriptionDeleteURL,
+		Labels:                           deps.Labels,
+		CommonLabels:                     deps.CommonLabels,
+		TableLabels:                      deps.TableLabels,
 		AttachmentOps: attachment.AttachmentOps{
 			UploadFile:       deps.UploadFile,
 			ListAttachments:  deps.ListAttachments,
@@ -195,12 +195,12 @@ func NewModule(deps *ModuleDeps) *Module {
 		AuditOps: auditlog.AuditOps{
 			ListAuditHistory: deps.ListAuditHistory,
 		},
-		ListClientPriceSchedules:  deps.ListClientPriceSchedules,
-		PriceScheduleAddURL:       deps.PriceScheduleAddURL,
-		ListRevenuesByClient:      deps.ListRevenuesByClient,
-		ListCollectionsByClient:   deps.ListCollectionsByClient,
-		ListRevenueRunCandidates:  deps.ListRevenueRunCandidates,
-		GenerateRevenueRun:        deps.GenerateRevenueRun,
+		ListClientPriceSchedules: deps.ListClientPriceSchedules,
+		PriceScheduleAddURL:      deps.PriceScheduleAddURL,
+		ListRevenuesByClient:     deps.ListRevenuesByClient,
+		ListCollectionsByClient:  deps.ListCollectionsByClient,
+		ListRevenueRunCandidates: deps.ListRevenueRunCandidates,
+		GenerateRevenueRun:       deps.GenerateRevenueRun,
 	}
 
 	m := &Module{

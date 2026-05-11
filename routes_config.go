@@ -112,8 +112,8 @@ func (r ClientRoutes) RouteMap() map[string]string {
 
 		"client.receivables_aging": r.ReceivablesAgingURL,
 
-		"client.payment_terms":  r.PaymentTermsURL,
-		"client.revenue_run":    r.RevenueRunURL,
+		"client.payment_terms": r.PaymentTermsURL,
+		"client.revenue_run":   r.RevenueRunURL,
 	}
 }
 
@@ -640,10 +640,10 @@ func (r WorkspaceUserRoutes) RouteMap() map[string]string {
 // WorkspaceUserRoleRoutes holds all route paths for the workspace_user_role
 // assignment drawer (Phase 3).
 type WorkspaceUserRoleRoutes struct {
-	AddURL          string `json:"add_url"`
-	DeleteURL       string `json:"delete_url"`
-	PermissionsURL  string `json:"permissions_url"`
-	SearchRolesURL  string `json:"search_roles_url"`
+	AddURL         string `json:"add_url"`
+	DeleteURL      string `json:"delete_url"`
+	PermissionsURL string `json:"permissions_url"`
+	SearchRolesURL string `json:"search_roles_url"`
 }
 
 // DefaultWorkspaceUserRoleRoutes returns a WorkspaceUserRoleRoutes populated from
@@ -816,14 +816,14 @@ func DefaultPaymentTermRoutes() PaymentTermRoutes {
 // RouteMap returns a map of dot-notation keys to route path values.
 func (r PaymentTermRoutes) RouteMap() map[string]string {
 	return map[string]string{
-		"payment_term.list":             r.ListURL,
-		"payment_term.table":            r.TableURL,
-		"payment_term.add":              r.AddURL,
-		"payment_term.edit":             r.EditURL,
-		"payment_term.delete":           r.DeleteURL,
-		"payment_term.bulk_delete":      r.BulkDeleteURL,
-		"payment_term.set_status":       r.SetStatusURL,
-		"payment_term.bulk_set_status":  r.BulkSetStatusURL,
+		"payment_term.list":            r.ListURL,
+		"payment_term.table":           r.TableURL,
+		"payment_term.add":             r.AddURL,
+		"payment_term.edit":            r.EditURL,
+		"payment_term.delete":          r.DeleteURL,
+		"payment_term.bulk_delete":     r.BulkDeleteURL,
+		"payment_term.set_status":      r.SetStatusURL,
+		"payment_term.bulk_set_status": r.BulkSetStatusURL,
 	}
 }
 
@@ -907,14 +907,14 @@ func DefaultClientTagRoutes() ClientTagRoutes {
 // RouteMap returns a map of dot-notation keys to route path values.
 func (r ClientTagRoutes) RouteMap() map[string]string {
 	return map[string]string{
-		"client_tag.list":             r.ListURL,
-		"client_tag.table":            r.TableURL,
-		"client_tag.add":              r.AddURL,
-		"client_tag.edit":             r.EditURL,
-		"client_tag.delete":           r.DeleteURL,
-		"client_tag.bulk_delete":      r.BulkDeleteURL,
-		"client_tag.set_status":       r.SetStatusURL,
-		"client_tag.bulk_set_status":  r.BulkSetStatusURL,
+		"client_tag.list":            r.ListURL,
+		"client_tag.table":           r.TableURL,
+		"client_tag.add":             r.AddURL,
+		"client_tag.edit":            r.EditURL,
+		"client_tag.delete":          r.DeleteURL,
+		"client_tag.bulk_delete":     r.BulkDeleteURL,
+		"client_tag.set_status":      r.SetStatusURL,
+		"client_tag.bulk_set_status": r.BulkSetStatusURL,
 	}
 }
 

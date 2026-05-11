@@ -12,20 +12,20 @@ import (
 	"github.com/erniealice/pyeza-golang/view"
 
 	"github.com/erniealice/entydad-golang"
-	"github.com/erniealice/hybra-golang/views/attachment"
 	commonpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
 	workspacepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace"
 	workspaceuserpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace_user"
+	"github.com/erniealice/hybra-golang/views/attachment"
 )
 
 // DetailViewDeps holds view dependencies for the workspace detail page.
 type DetailViewDeps struct {
-	Routes                        entydad.WorkspaceRoutes
-	ReadWorkspace                 func(ctx context.Context, req *workspacepb.ReadWorkspaceRequest) (*workspacepb.ReadWorkspaceResponse, error)
-	GetWorkspaceUserListPageData  func(ctx context.Context, req *workspaceuserpb.GetWorkspaceUserListPageDataRequest) (*workspaceuserpb.GetWorkspaceUserListPageDataResponse, error)
-	Labels                        entydad.WorkspaceLabels
-	CommonLabels                  pyeza.CommonLabels
-	TableLabels                   types.TableLabels
+	Routes                       entydad.WorkspaceRoutes
+	ReadWorkspace                func(ctx context.Context, req *workspacepb.ReadWorkspaceRequest) (*workspacepb.ReadWorkspaceResponse, error)
+	GetWorkspaceUserListPageData func(ctx context.Context, req *workspaceuserpb.GetWorkspaceUserListPageDataRequest) (*workspaceuserpb.GetWorkspaceUserListPageDataResponse, error)
+	Labels                       entydad.WorkspaceLabels
+	CommonLabels                 pyeza.CommonLabels
+	TableLabels                  types.TableLabels
 	// WorkspaceUserDetailURL is the target route for the "View" row action on each workspace_user row.
 	// Phase 2 will add this page; for now emit the URL so Phase 2 can register it.
 	WorkspaceUserDetailURL string
@@ -44,12 +44,12 @@ type DetailViewDeps struct {
 
 // WorkspaceUserRow holds display data for a single workspace_user in the Users tab table.
 type WorkspaceUserRow struct {
-	ID         string
-	UserName   string
-	Email      string
-	RoleCount  int
-	Active     bool
-	ViewURL    string
+	ID        string
+	UserName  string
+	Email     string
+	RoleCount int
+	Active    bool
+	ViewURL   string
 }
 
 // PageData holds the data for the workspace detail page.

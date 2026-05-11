@@ -34,6 +34,7 @@ func attachmentConfig(deps *DetailViewDeps, id string) *attachment.Config {
 	return &attachment.Config{
 		EntityType:       "workspace_user",
 		BucketName:       "attachments",
+		RefreshURL:       deps.Routes.TabActionURL,
 		UploadURL:        deps.Routes.AttachmentUploadURL,
 		DeleteURL:        deps.Routes.AttachmentDeleteURL,
 		RedirectURL:      route.ResolveURL(deps.Routes.DetailURL, "id", id) + "?tab=attachments",

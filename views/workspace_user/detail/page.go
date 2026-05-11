@@ -15,23 +15,23 @@ import (
 	"github.com/erniealice/pyeza-golang/view"
 
 	"github.com/erniealice/entydad-golang"
-	"github.com/erniealice/hybra-golang/views/attachment"
 	workspaceuserpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace_user"
 	workspaceuserrolepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace_user_role"
+	"github.com/erniealice/hybra-golang/views/attachment"
 )
 
 // DetailViewDeps holds view dependencies for the workspace_user detail page.
 type DetailViewDeps struct {
-	Routes                        entydad.WorkspaceUserRoutes
-	WorkspaceDetailURL            string // /app/workspaces/detail/{id} — for "Back to workspace" link
-	GetWorkspaceUserItemPageData  func(ctx context.Context, req *workspaceuserpb.GetWorkspaceUserItemPageDataRequest) (*workspaceuserpb.GetWorkspaceUserItemPageDataResponse, error)
-	Labels                        entydad.WorkspaceUserLabels
-	CommonLabels                  pyeza.CommonLabels
-	TableLabels                   types.TableLabels
+	Routes                       entydad.WorkspaceUserRoutes
+	WorkspaceDetailURL           string // /app/workspaces/detail/{id} — for "Back to workspace" link
+	GetWorkspaceUserItemPageData func(ctx context.Context, req *workspaceuserpb.GetWorkspaceUserItemPageDataRequest) (*workspaceuserpb.GetWorkspaceUserItemPageDataResponse, error)
+	Labels                       entydad.WorkspaceUserLabels
+	CommonLabels                 pyeza.CommonLabels
+	TableLabels                  types.TableLabels
 	// Phase 3 wired: these are now supplied from block.go / container.go after Phase 3 shipped.
 	GetWorkspaceUserRoleListPageData func(ctx context.Context, req *workspaceuserrolepb.GetWorkspaceUserRoleListPageDataRequest) (*workspaceuserrolepb.GetWorkspaceUserRoleListPageDataResponse, error)
-	WorkspaceUserRoleAddURL    string
-	WorkspaceUserRoleDeleteURL string
+	WorkspaceUserRoleAddURL          string
+	WorkspaceUserRoleDeleteURL       string
 
 	// Attachment operations (embedded from hybra)
 	attachment.AttachmentOps
@@ -42,23 +42,23 @@ type PageData struct {
 	types.PageData
 	ContentTemplate string
 	// WorkspaceUser fields for Info tab
-	WorkspaceUserID   string
-	UserName          string
-	Email             string
-	WorkspaceName     string
-	WorkspaceID       string
-	DateJoined        string
-	Active            bool
-	StatusVariant     string
-	Labels            entydad.WorkspaceUserLabels
-	ActiveTab         string
-	TabItems          []pyeza.TabItem
+	WorkspaceUserID string
+	UserName        string
+	Email           string
+	WorkspaceName   string
+	WorkspaceID     string
+	DateJoined      string
+	Active          bool
+	StatusVariant   string
+	Labels          entydad.WorkspaceUserLabels
+	ActiveTab       string
+	TabItems        []pyeza.TabItem
 	// "Back to workspace" link
 	BackToWorkspaceURL  string
 	BackToWorkspaceName string
 	// Roles tab
-	RolesTable                  *types.TableConfig
-	WorkspaceUserRoleAddURL     string
+	RolesTable              *types.TableConfig
+	WorkspaceUserRoleAddURL string
 	// Attachments tab
 	AttachmentTable *types.TableConfig
 }
@@ -222,21 +222,21 @@ func buildPageData(viewCtx *view.ViewContext, id string, wu *workspaceuserpb.Wor
 			HeaderIcon:     "icon-user",
 			CommonLabels:   deps.CommonLabels,
 		},
-		ContentTemplate:             "workspace-user-detail-content",
-		WorkspaceUserID:             id,
-		UserName:                    userName,
-		Email:                       email,
-		WorkspaceName:               workspaceName,
-		WorkspaceID:                 workspaceID,
-		DateJoined:                  wu.GetDateCreatedString(),
-		Active:                      active,
-		StatusVariant:               statusVariant,
-		Labels:                      deps.Labels,
-		ActiveTab:                   activeTab,
-		TabItems:                    tabItems,
-		BackToWorkspaceURL:          backURL,
-		BackToWorkspaceName:         workspaceName,
-		WorkspaceUserRoleAddURL:     roleAddURL,
+		ContentTemplate:         "workspace-user-detail-content",
+		WorkspaceUserID:         id,
+		UserName:                userName,
+		Email:                   email,
+		WorkspaceName:           workspaceName,
+		WorkspaceID:             workspaceID,
+		DateJoined:              wu.GetDateCreatedString(),
+		Active:                  active,
+		StatusVariant:           statusVariant,
+		Labels:                  deps.Labels,
+		ActiveTab:               activeTab,
+		TabItems:                tabItems,
+		BackToWorkspaceURL:      backURL,
+		BackToWorkspaceName:     workspaceName,
+		WorkspaceUserRoleAddURL: roleAddURL,
 	}
 }
 
@@ -324,6 +324,7 @@ func buildRolesTable(ctx context.Context, deps *DetailViewDeps, wu *workspaceuse
 		ShowEntries:          false,
 		DefaultSortColumn:    "role_name",
 		DefaultSortDirection: "asc",
+		RefreshURL:           route.ResolveURL(deps.Routes.TabActionURL, "id", wu.GetId(), "tab", "roles"),
 		EmptyState: types.TableEmptyState{
 			Title:   "No roles",
 			Message: "No roles have been assigned to this workspace user yet.",

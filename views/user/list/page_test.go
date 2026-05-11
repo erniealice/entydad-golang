@@ -198,7 +198,7 @@ func newListViewDeps(
 			}, nil
 		},
 		GetUserWorkspacesMap: getWorkspaces,
-		Labels:          entydad.UserLabels{},
+		Labels:               entydad.UserLabels{},
 		SharedLabels: entydad.SharedLabels{
 			Confirm: entydad.SharedConfirmLabels{
 				Activate:   "activate %s",

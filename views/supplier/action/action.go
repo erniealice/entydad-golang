@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/erniealice/pyeza-golang/route"
-	"github.com/erniealice/pyeza-golang/view"
 	pyezatypes "github.com/erniealice/pyeza-golang/types"
+	"github.com/erniealice/pyeza-golang/view"
 
 	categorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
 	supplierpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/supplier"
@@ -27,15 +27,15 @@ type PaymentTermOption = supplierform.PaymentTermOption
 
 // Deps holds dependencies for supplier action handlers.
 type Deps struct {
-	Routes             entydad.SupplierRoutes
+	Routes entydad.SupplierRoutes
 	// SearchTimezonesURL is the URL of the timezone autocomplete JSON endpoint.
 	SearchTimezonesURL string
-	CreateSupplier    func(ctx context.Context, req *supplierpb.CreateSupplierRequest) (*supplierpb.CreateSupplierResponse, error)
-	ReadSupplier      func(ctx context.Context, req *supplierpb.ReadSupplierRequest) (*supplierpb.ReadSupplierResponse, error)
-	UpdateSupplier    func(ctx context.Context, req *supplierpb.UpdateSupplierRequest) (*supplierpb.UpdateSupplierResponse, error)
-	DeleteSupplier    func(ctx context.Context, req *supplierpb.DeleteSupplierRequest) (*supplierpb.DeleteSupplierResponse, error)
-	SetSupplierStatus func(ctx context.Context, id string, status string) error
-	ListPaymentTerms  func(ctx context.Context) ([]*PaymentTermOption, error)
+	CreateSupplier     func(ctx context.Context, req *supplierpb.CreateSupplierRequest) (*supplierpb.CreateSupplierResponse, error)
+	ReadSupplier       func(ctx context.Context, req *supplierpb.ReadSupplierRequest) (*supplierpb.ReadSupplierResponse, error)
+	UpdateSupplier     func(ctx context.Context, req *supplierpb.UpdateSupplierRequest) (*supplierpb.UpdateSupplierResponse, error)
+	DeleteSupplier     func(ctx context.Context, req *supplierpb.DeleteSupplierRequest) (*supplierpb.DeleteSupplierResponse, error)
+	SetSupplierStatus  func(ctx context.Context, id string, status string) error
+	ListPaymentTerms   func(ctx context.Context) ([]*PaymentTermOption, error)
 
 	// Tag-related deps for multi-select tags on the supplier form
 	ListCategories         func(ctx context.Context, req *categorypb.ListCategoriesRequest) (*categorypb.ListCategoriesResponse, error)
@@ -252,8 +252,8 @@ func NewAddAction(deps *Deps) view.View {
 		// in sync with status on subsequent updates.
 		resp, err := deps.CreateSupplier(ctx, &supplierpb.CreateSupplierRequest{
 			Data: &supplierpb.Supplier{
-				Active: true,
-				Name:   r.FormValue("name"),
+				Active:             true,
+				Name:               r.FormValue("name"),
 				SupplierType:       r.FormValue("supplier_type"),
 				TaxId:              optionalString(r.FormValue("tax_id")),
 				RegistrationNumber: optionalString(r.FormValue("registration_number")),
@@ -421,8 +421,8 @@ func NewEditAction(deps *Deps) view.View {
 		// the supplier.
 		_, err := deps.UpdateSupplier(ctx, &supplierpb.UpdateSupplierRequest{
 			Data: &supplierpb.Supplier{
-				Id:   id,
-				Name: r.FormValue("name"),
+				Id:                 id,
+				Name:               r.FormValue("name"),
 				SupplierType:       r.FormValue("supplier_type"),
 				TaxId:              optionalString(r.FormValue("tax_id")),
 				RegistrationNumber: optionalString(r.FormValue("registration_number")),

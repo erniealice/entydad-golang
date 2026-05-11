@@ -54,15 +54,15 @@ type AdminDashboardData struct {
 // actions and link buttons resolve to. Sourced from the orchestrator's
 // composed entydad.UserRoutes / WorkspaceRoutes / etc.
 type Routes struct {
-	DashboardURL          string
-	NewUserURL            string // workspace_user.AddURL
-	NewWorkspaceURL       string // workspace.AddURL
-	AssignRoleURL         string // workspace_user_role.AddURL
-	AuditLogURL           string // optional — defaults to "#"
-	PermissionListURL     string // permission.list (active)
-	RoleListURL           string // role.list
-	WorkspaceListURL      string // workspace.list (active)
-	WorkspaceUserListURL  string // workspace_user.list (active)
+	DashboardURL         string
+	NewUserURL           string // workspace_user.AddURL
+	NewWorkspaceURL      string // workspace.AddURL
+	AssignRoleURL        string // workspace_user_role.AddURL
+	AuditLogURL          string // optional — defaults to "#"
+	PermissionListURL    string // permission.list (active)
+	RoleListURL          string // role.list
+	WorkspaceListURL     string // workspace.list (active)
+	WorkspaceUserListURL string // workspace_user.list (active)
 }
 
 // Deps holds view dependencies.
