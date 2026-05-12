@@ -46,7 +46,7 @@ type ModuleDeps struct {
 	GetListPageData           func(ctx context.Context, req *clientpb.GetClientListPageDataRequest) (*clientpb.GetClientListPageDataResponse, error)
 	GetInUseIDs               func(ctx context.Context, ids []string) (map[string]bool, error)
 	GetClientBalances         func(ctx context.Context) (map[string]int64, error)
-	GetActiveEngagementCounts func(ctx context.Context) (map[string]int32, error)
+	GetActiveSubscriptionCounts func(ctx context.Context) (map[string]int32, error)
 	// Client CRUD
 	CreateClient func(ctx context.Context, req *clientpb.CreateClientRequest) (*clientpb.CreateClientResponse, error)
 	ReadClient   func(ctx context.Context, req *clientpb.ReadClientRequest) (*clientpb.ReadClientResponse, error)
@@ -162,7 +162,7 @@ func NewModule(deps *ModuleDeps) *Module {
 		GetListPageData:           deps.GetListPageData,
 		GetInUseIDs:               deps.GetInUseIDs,
 		GetClientBalances:         deps.GetClientBalances,
-		GetActiveEngagementCounts: deps.GetActiveEngagementCounts,
+		GetActiveSubscriptionCounts: deps.GetActiveSubscriptionCounts,
 		Labels:                    deps.Labels,
 		SharedLabels:              deps.SharedLabels,
 		CommonLabels:              deps.CommonLabels,

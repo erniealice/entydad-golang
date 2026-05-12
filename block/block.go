@@ -419,7 +419,7 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 			}
 			if uc.Subscription.CountActiveByClientIDs != nil {
 				countActive := uc.Subscription.CountActiveByClientIDs
-				clientDeps.GetActiveEngagementCounts = func(fctx context.Context) (map[string]int32, error) {
+				clientDeps.GetActiveSubscriptionCounts = func(fctx context.Context) (map[string]int32, error) {
 					resp, err := countActive(fctx, &subscriptionpb.CountActiveByClientIdsRequest{})
 					if err != nil {
 						return nil, err

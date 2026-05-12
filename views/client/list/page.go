@@ -28,10 +28,10 @@ type ListViewDeps struct {
 	GetListPageData   func(ctx context.Context, req *clientpb.GetClientListPageDataRequest) (*clientpb.GetClientListPageDataResponse, error)
 	GetInUseIDs       func(ctx context.Context, ids []string) (map[string]bool, error)
 	GetClientBalances func(ctx context.Context) (map[string]int64, error)
-	// GetActiveEngagementCounts returns a map of client_id → count of active
+	// GetActiveSubscriptionCounts returns a map of client_id → count of active
 	// subscriptions for that client. Fetched once per page render so the per-row
 	// cell lookup is O(1). Empty map when nil — the cell falls back to "0".
-	GetActiveEngagementCounts func(ctx context.Context) (map[string]int32, error)
+	GetActiveSubscriptionCounts func(ctx context.Context) (map[string]int32, error)
 	Labels                    entydad.ClientLabels
 	SharedLabels              entydad.SharedLabels
 	CommonLabels              pyeza.CommonLabels
@@ -175,13 +175,13 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, columns []types.T
 		clientBalances, _ = deps.GetClientBalances(ctx)
 	}
 
-	var engagementCounts map[string]int32
-	if deps.GetActiveEngagementCounts != nil {
-		engagementCounts, _ = deps.GetActiveEngagementCounts(ctx)
+	var subscriptionCounts map[string]int32
+	if deps.GetActiveSubscriptionCounts != nil {
+		subscriptionCounts, _ = deps.GetActiveSubscriptionCounts(ctx)
 	}
 
 	l := deps.Labels
-	rows := buildTableRows(resp.GetClientList(), status, l, deps.SharedLabels, deps.CommonLabels, deps.Routes, inUseIDs, clientBalances, engagementCounts, perms)
+	rows := buildTableRows(resp.GetClientList(), status, l, deps.SharedLabels, deps.CommonLabels, deps.Routes, inUseIDs, clientBalances, subscriptionCounts, perms)
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
@@ -258,7 +258,7 @@ func clientColumns(l entydad.ClientLabels) []types.TableColumn {
 		// the rep_name expression — at that point set NoSort:false and
 		// SortKey:"rep_name". Tracked in docs/plan/20260503-sortkey-positive-form-and-rep-sort/.
 		{Key: "representative", Label: l.Columns.Representative, NoSort: true},
-		{Key: "active_engagements", Label: l.Columns.ActiveEngagements, NoFilter: true, NoSort: true, Align: "right", WidthClass: "col-3xl"},
+		{Key: "active_subscriptions", Label: l.Columns.ActiveSubscriptions, NoFilter: true, Align: "right", WidthClass: "col-3xl"},
 		{Key: "payment_term", Label: l.Columns.PaymentTerm, NoFilter: true, WidthClass: "col-3xl"},
 		{Key: "outstanding_balance", Label: "Outstanding", NoSort: true, NoFilter: true, Align: "right", WidthClass: "col-4xl"},
 	}
@@ -269,7 +269,7 @@ func clientColumns(l entydad.ClientLabels) []types.TableColumn {
 // actions key off that, not the proto field, so transitions stay correct even
 // when individual rows have stale/unmigrated status values. The badge cell
 // still reflects each row's own recordStatus.
-func buildTableRows(clients []*clientpb.Client, listStatus string, l entydad.ClientLabels, sl entydad.SharedLabels, cl pyeza.CommonLabels, routes entydad.ClientRoutes, inUseIDs map[string]bool, balances map[string]int64, engagementCounts map[string]int32, perms *types.UserPermissions) []types.TableRow {
+func buildTableRows(clients []*clientpb.Client, listStatus string, l entydad.ClientLabels, sl entydad.SharedLabels, cl pyeza.CommonLabels, routes entydad.ClientRoutes, inUseIDs map[string]bool, balances map[string]int64, subscriptionCounts map[string]int32, perms *types.UserPermissions) []types.TableRow {
 	rows := []types.TableRow{}
 	for _, c := range clients {
 		recordStatus := clientStatus(c)
@@ -291,10 +291,14 @@ func buildTableRows(clients []*clientpb.Client, listStatus string, l entydad.Cli
 		}
 		isInUse := inUseIDs[id]
 
-		// Build active engagements count cell
-		countCell := types.TableCell{Type: "text", Value: "0"}
-		if n, ok := engagementCounts[id]; ok {
-			countCell = types.TableCell{Type: "text", Value: strconv.FormatInt(int64(n), 10)}
+		// Build active subscriptions count cell. Type: "number" wires through
+		// DeriveSortKind → "number" so the toolbar Sort dropdown labels the
+		// directions as "Low → High" / "High → Low" and the JS first-click
+		// default goes to desc (biggest first). Without this the value sorts
+		// lexicographically ("10" < "2").
+		countCell := types.TableCell{Type: "number", Value: "0"}
+		if n, ok := subscriptionCounts[id]; ok {
+			countCell = types.TableCell{Type: "number", Value: strconv.FormatInt(int64(n), 10)}
 		}
 
 		// Build payment term badge cell
@@ -512,7 +516,9 @@ func buildRowActions(id, name, status string, isInUse bool, l entydad.ClientLabe
 
 	// Cross-status transitions: every status filter exposes moves to all 4
 	// other lifecycle states, so users can always reach any status from any
-	// list without round-tripping through detail.
+	// list without round-tripping through detail. Overflow:true collapses
+	// these into the row's ⋮ menu so the inline action bar stays compact
+	// (view / edit / clone / delete only).
 	for _, tr := range clientStatusTransitions {
 		if tr.target == status {
 			continue
@@ -524,6 +530,7 @@ func buildRowActions(id, name, status string, isInUse bool, l entydad.ClientLabe
 			ConfirmTitle:   rowLabel,
 			ConfirmMessage: fmt.Sprintf(confirmRow, name),
 			Disabled:       !canUpdate, DisabledTooltip: tooltip,
+			Overflow: true,
 		})
 	}
 

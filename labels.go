@@ -47,7 +47,7 @@ type ClientColumnLabels struct {
 	Representative    string `json:"representative"`
 	Status            string `json:"status"`
 	Category          string `json:"category"`
-	ActiveEngagements string `json:"activeEngagements"`
+	ActiveSubscriptions string `json:"activeSubscriptions"`
 	PaymentTerm       string `json:"paymentTerm"`
 	DateCreated       string `json:"dateCreated"`
 }
@@ -271,7 +271,7 @@ type ClientRevenueRunLabels struct {
 	AsOfDateLabel         string                      `json:"asOfDateLabel"`
 	AsOfDateHint          string                      `json:"asOfDateHint"`
 	BillThroughTodayLabel string                      `json:"billThroughTodayLabel"`
-	ColumnEngagement      string                      `json:"columnEngagement"`
+	ColumnSubscription    string                      `json:"columnSubscription"`
 	ColumnPeriod          string                      `json:"columnPeriod"`
 	ColumnAmount          string                      `json:"columnAmount"`
 	ColumnLines           string                      `json:"columnLines"`

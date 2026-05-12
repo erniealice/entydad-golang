@@ -198,7 +198,7 @@ the as_of_date changes.
                         class="revenue-run-group-master"
                         {{if .HasEligible}}checked{{end}}
                         {{if not .HasEligible}}disabled{{end}}
-                        aria-label="{{$.Labels.ColumnEngagement}}: {{.SubscriptionName}}"
+                        aria-label="{{$.Labels.ColumnSubscription}}: {{.SubscriptionName}}"
                         data-testid="revenue-run-group-master"
                     >
                     <strong>{{.SubscriptionName}}</strong>
@@ -238,7 +238,7 @@ the as_of_date changes.
                     <thead>
                         <tr>
                             <th class="col-checkbox" aria-label="{{$.Labels.ColumnSelectAriaLabel}}"></th>
-                            <th>{{$.Labels.ColumnEngagement}}</th>
+                            <th>{{$.Labels.ColumnSubscription}}</th>
                             <th>{{$.Labels.ColumnPeriod}}</th>
                             <th class="cell-right">{{$.Labels.ColumnAmount}}</th>
                             <th class="cell-right">{{$.Labels.ColumnLines}}</th>

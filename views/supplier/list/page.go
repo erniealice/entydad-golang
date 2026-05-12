@@ -296,6 +296,15 @@ func buildTableRows(suppliers []*supplierpb.Supplier, status string, l entydad.S
 		}
 		categoryCell := types.BuildChipCellFromLabels(catLabels, 3)
 
+		// Render payment_terms as a badge (consistent with client list).
+		// Suppliers populate s.PaymentTerms via SQL JOIN with payment_term.name
+		// in the postgres adapter, so the value is already the human-readable
+		// term name when present.
+		ptCell := types.TableCell{Type: "text", Value: ""}
+		if paymentTerms != "" {
+			ptCell = types.TableCell{Type: "badge", Value: paymentTerms, Variant: "default"}
+		}
+
 		rows = append(rows, types.TableRow{
 			ID: id,
 			Cells: []types.TableCell{
@@ -304,7 +313,7 @@ func buildTableRows(suppliers []*supplierpb.Supplier, status string, l entydad.S
 				{Type: "text", Value: internalID},
 				{Type: "badge", Value: statusLabel(cl, recordStatus), Variant: statusVariant(recordStatus)},
 				categoryCell,
-				{Type: "text", Value: paymentTerms},
+				ptCell,
 				{Type: "text", Value: contactName},
 				balanceCell,
 				types.DateTimeCell(dateCreated, types.DateReadable),
@@ -479,7 +488,9 @@ func buildRowActions(id, name, status string, isInUse bool, l entydad.SupplierLa
 	tooltip := sl.Badges.NoPermission
 
 	// Cross-status transitions: every status filter exposes moves to all
-	// other supplier lifecycle states (active/on_hold/blocked).
+	// other supplier lifecycle states (active/on_hold/blocked). Overflow:true
+	// collapses these into the row's ⋮ menu so the inline action bar stays
+	// compact (view / edit / clone / delete only).
 	for _, tr := range supplierStatusTransitions {
 		if tr.target == status {
 			continue
@@ -491,6 +502,7 @@ func buildRowActions(id, name, status string, isInUse bool, l entydad.SupplierLa
 			ConfirmTitle:   rowLabel,
 			ConfirmMessage: fmt.Sprintf(confirmRow, name),
 			Disabled:       !canUpdate, DisabledTooltip: tooltip,
+			Overflow: true,
 		})
 	}
 
