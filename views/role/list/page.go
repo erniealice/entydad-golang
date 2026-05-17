@@ -43,6 +43,10 @@ var roleSearchFields = []string{"name", "description"}
 // NewView creates the role list view (full page).
 func NewView(deps *ListViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		if !view.GetUserPermissions(ctx).Can("role", "list") {
+			return view.Forbidden("role:list")
+		}
+
 		columns := roleColumns(deps.Labels)
 		p, err := espynahttp.ParseTableParamsWithFilters(viewCtx.Request, types.SortableKeys(columns), types.FilterableKeys(columns), "name", "asc")
 		if err != nil {
@@ -89,6 +93,10 @@ func NewView(deps *ListViewDeps) view.View {
 // is swapped (not the entire page content).
 func NewTableView(deps *ListViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		if !view.GetUserPermissions(ctx).Can("role", "list") {
+			return view.Forbidden("role:list")
+		}
+
 		columns := roleColumns(deps.Labels)
 		p, err := espynahttp.ParseTableParamsWithFilters(viewCtx.Request, types.SortableKeys(columns), types.FilterableKeys(columns), "name", "asc")
 		if err != nil {
@@ -135,7 +143,7 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, columns []types.T
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
-	bulkCfg.Actions = buildBulkActions(l, deps.SharedLabels, deps.CommonLabels, deps.Routes)
+	bulkCfg.Actions = buildBulkActions(l, deps.SharedLabels, deps.CommonLabels, deps.Routes, perms)
 
 	refreshURL := deps.Routes.TableURL
 
@@ -182,7 +190,7 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, columns []types.T
 			ActionURL:       deps.Routes.AddURL,
 			Icon:            "icon-plus",
 			Disabled:        !perms.Can("role", "create"),
-			DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
+			DisabledTooltip: fmt.Sprintf(deps.CommonLabels.Errors.MissingPermission, "role:create"),
 		},
 		BulkActions:      &bulkCfg,
 		ServerPagination: sp,
@@ -292,7 +300,9 @@ func statusVariant(status string) string {
 	}
 }
 
-func buildBulkActions(l entydad.RoleLabels, sl entydad.SharedLabels, common pyeza.CommonLabels, routes entydad.RoleRoutes) []types.BulkAction {
+func buildBulkActions(l entydad.RoleLabels, sl entydad.SharedLabels, common pyeza.CommonLabels, routes entydad.RoleRoutes, perms *types.UserPermissions) []types.BulkAction {
+	canUpdate := perms.Can("role", "update")
+	canDelete := perms.Can("role", "delete")
 	return []types.BulkAction{
 		{
 			Key:             "activate",
@@ -303,6 +313,8 @@ func buildBulkActions(l entydad.RoleLabels, sl entydad.SharedLabels, common pyez
 			ConfirmTitle:    l.Actions.Activate,
 			ConfirmMessage:  sl.Confirm.BulkActivate,
 			ExtraParamsJSON: `{"target_status":"active"}`,
+			Disabled:        !canUpdate,
+			DisabledTooltip: fmt.Sprintf(common.Errors.MissingPermission, "role:update"),
 		},
 		{
 			Key:             "deactivate",
@@ -313,6 +325,8 @@ func buildBulkActions(l entydad.RoleLabels, sl entydad.SharedLabels, common pyez
 			ConfirmTitle:    l.Actions.Deactivate,
 			ConfirmMessage:  sl.Confirm.BulkDeactivate,
 			ExtraParamsJSON: `{"target_status":"inactive"}`,
+			Disabled:        !canUpdate,
+			DisabledTooltip: fmt.Sprintf(common.Errors.MissingPermission, "role:update"),
 		},
 		{
 			Key:              "delete",
@@ -323,6 +337,8 @@ func buildBulkActions(l entydad.RoleLabels, sl entydad.SharedLabels, common pyez
 			ConfirmTitle:     common.Bulk.Delete,
 			ConfirmMessage:   sl.Confirm.BulkDelete,
 			RequiresDataAttr: "deletable",
+			Disabled:         !canDelete,
+			DisabledTooltip:  fmt.Sprintf(common.Errors.MissingPermission, "role:delete"),
 		},
 	}
 }

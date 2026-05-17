@@ -45,6 +45,10 @@ var locationSearchFields = []string{"name", "address"}
 // NewView creates the location list view (full page).
 func NewView(deps *ListViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		if !view.GetUserPermissions(ctx).Can("location", "list") {
+			return view.Forbidden("location:list")
+		}
+
 		status := viewCtx.Request.PathValue("status")
 		if status == "" {
 			status = "active"
@@ -96,6 +100,10 @@ func NewView(deps *ListViewDeps) view.View {
 // is swapped (not the entire page content).
 func NewTableView(deps *ListViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		if !view.GetUserPermissions(ctx).Can("location", "list") {
+			return view.Forbidden("location:list")
+		}
+
 		status := viewCtx.Request.PathValue("status")
 		if status == "" {
 			status = "active"
@@ -160,7 +168,7 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, columns []types.T
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
-	bulkCfg.Actions = buildBulkActions(l, deps.SharedLabels, deps.CommonLabels, status, deps.Routes)
+	bulkCfg.Actions = buildBulkActions(l, deps.SharedLabels, deps.CommonLabels, status, deps.Routes, perms)
 
 	refreshURL := route.ResolveURL(deps.Routes.TableURL, "status", status)
 
@@ -207,7 +215,7 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, columns []types.T
 			ActionURL:       deps.Routes.AddURL,
 			Icon:            "icon-plus",
 			Disabled:        !perms.Can("location", "create"),
-			DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
+			DisabledTooltip: fmt.Sprintf(deps.CommonLabels.Errors.MissingPermission, "location:create"),
 		},
 		BulkActions:      &bulkCfg,
 		ServerPagination: sp,
@@ -357,8 +365,11 @@ func statusVariant(status string) string {
 	}
 }
 
-func buildBulkActions(l entydad.LocationLabels, sl entydad.SharedLabels, common pyeza.CommonLabels, status string, routes entydad.LocationRoutes) []types.BulkAction {
+func buildBulkActions(l entydad.LocationLabels, sl entydad.SharedLabels, common pyeza.CommonLabels, status string, routes entydad.LocationRoutes, perms *types.UserPermissions) []types.BulkAction {
 	actions := []types.BulkAction{}
+
+	canUpdate := perms.Can("location", "update")
+	canDelete := perms.Can("location", "delete")
 
 	switch status {
 	case "active":
@@ -371,6 +382,8 @@ func buildBulkActions(l entydad.LocationLabels, sl entydad.SharedLabels, common 
 			ConfirmTitle:    l.Actions.Deactivate,
 			ConfirmMessage:  sl.Confirm.BulkDeactivate,
 			ExtraParamsJSON: `{"target_status":"inactive"}`,
+			Disabled:        !canUpdate,
+			DisabledTooltip: fmt.Sprintf(common.Errors.MissingPermission, "location:update"),
 		})
 	case "inactive":
 		actions = append(actions, types.BulkAction{
@@ -382,6 +395,8 @@ func buildBulkActions(l entydad.LocationLabels, sl entydad.SharedLabels, common 
 			ConfirmTitle:    l.Actions.Activate,
 			ConfirmMessage:  sl.Confirm.BulkActivate,
 			ExtraParamsJSON: `{"target_status":"active"}`,
+			Disabled:        !canUpdate,
+			DisabledTooltip: fmt.Sprintf(common.Errors.MissingPermission, "location:update"),
 		})
 	}
 
@@ -394,6 +409,8 @@ func buildBulkActions(l entydad.LocationLabels, sl entydad.SharedLabels, common 
 		ConfirmTitle:     common.Bulk.Delete,
 		ConfirmMessage:   sl.Confirm.BulkDelete,
 		RequiresDataAttr: "deletable",
+		Disabled:         !canDelete,
+		DisabledTooltip:  fmt.Sprintf(common.Errors.MissingPermission, "location:delete"),
 	})
 
 	return actions

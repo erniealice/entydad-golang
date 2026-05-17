@@ -1,0 +1,42 @@
+{{/* /app/preferences — three horizontal tabs.
+     Tabs: appearance | notifications | language-region. */}}
+{{define "preferences-page"}}
+    {{template "app-shell" .}}
+{{end}}
+
+{{define "preferences-page-content"}}
+{{template "header-oob" .}}
+<div class="account-page" data-account-area-page="preferences" data-page-css="/assets/css/app/account-area.css?v={{.CacheVersion}}">
+    {{template "tabs" (dict "Items" .TabItems "ActiveTab" .ActiveTab "Variant" "main" "ID" "preferences-page-tabs" "Label" (.T "memberPages.preferences.tabsAriaLabel"))}}
+
+    <section class="account-page-section" id="tabContent">
+        {{if eq .ActiveTab "appearance"}}
+        <div class="account-section-card">
+            <header class="account-section-card-header">
+                <h2 class="account-section-card-title">{{.T "memberPages.preferences.appearance.title"}}</h2>
+                <p class="account-section-card-help">{{.T "memberPages.preferences.appearance.help"}}</p>
+            </header>
+            <p class="account-section-empty-hint">{{.T "memberPages.preferences.appearance.empty"}}</p>
+        </div>
+
+        {{else if eq .ActiveTab "notifications"}}
+        <div class="account-section-card">
+            <header class="account-section-card-header">
+                <h2 class="account-section-card-title">{{.T "memberPages.preferences.notifications.title"}}</h2>
+                <p class="account-section-card-help">{{.T "memberPages.preferences.notifications.help"}}</p>
+            </header>
+            <p class="account-section-empty-hint">{{.T "memberPages.preferences.notifications.empty"}}</p>
+        </div>
+
+        {{else if eq .ActiveTab "language-region"}}
+        <div class="account-section-card">
+            <header class="account-section-card-header">
+                <h2 class="account-section-card-title">{{.T "memberPages.preferences.languageRegion.title"}}</h2>
+                <p class="account-section-card-help">{{.T "memberPages.preferences.languageRegion.help"}}</p>
+            </header>
+            <p class="account-section-empty-hint">{{.T "memberPages.preferences.languageRegion.empty"}}</p>
+        </div>
+        {{end}}
+    </section>
+</div>
+{{end}}

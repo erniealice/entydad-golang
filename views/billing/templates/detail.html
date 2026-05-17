@@ -1,0 +1,42 @@
+{{/* /app/billing — three horizontal tabs.
+     Tabs: subscription | payment-method | invoices. */}}
+{{define "billing-page"}}
+    {{template "app-shell" .}}
+{{end}}
+
+{{define "billing-page-content"}}
+{{template "header-oob" .}}
+<div class="account-page" data-account-area-page="billing" data-page-css="/assets/css/app/account-area.css?v={{.CacheVersion}}">
+    {{template "tabs" (dict "Items" .TabItems "ActiveTab" .ActiveTab "Variant" "main" "ID" "billing-page-tabs" "Label" (.T "memberPages.billing.tabsAriaLabel"))}}
+
+    <section class="account-page-section" id="tabContent">
+        {{if eq .ActiveTab "subscription"}}
+        <div class="account-section-card">
+            <header class="account-section-card-header">
+                <h2 class="account-section-card-title">{{.T "memberPages.billing.subscription.title"}}</h2>
+                <p class="account-section-card-help">{{.T "memberPages.billing.subscription.help"}}</p>
+            </header>
+            <p class="account-section-empty-hint">{{.T "memberPages.billing.subscription.empty"}}</p>
+        </div>
+
+        {{else if eq .ActiveTab "payment-method"}}
+        <div class="account-section-card">
+            <header class="account-section-card-header">
+                <h2 class="account-section-card-title">{{.T "memberPages.billing.paymentMethod.title"}}</h2>
+                <p class="account-section-card-help">{{.T "memberPages.billing.paymentMethod.help"}}</p>
+            </header>
+            <p class="account-section-empty-hint">{{.T "memberPages.billing.paymentMethod.empty"}}</p>
+        </div>
+
+        {{else if eq .ActiveTab "invoices"}}
+        <div class="account-section-card">
+            <header class="account-section-card-header">
+                <h2 class="account-section-card-title">{{.T "memberPages.billing.invoices.title"}}</h2>
+                <p class="account-section-card-help">{{.T "memberPages.billing.invoices.help"}}</p>
+            </header>
+            <p class="account-section-empty-hint">{{.T "memberPages.billing.invoices.empty"}}</p>
+        </div>
+        {{end}}
+    </section>
+</div>
+{{end}}

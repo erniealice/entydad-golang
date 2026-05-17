@@ -77,8 +77,12 @@ func NewView(deps *Deps) view.View {
 			if q.Get("sent") == "true" {
 				success = true
 			}
-			if e := q.Get("error"); e != "" {
-				errorMsg = e
+			if code := q.Get("error"); code != "" {
+				// Map the short error code from the action handler to a lyngua-
+				// loaded label. Anything unrecognized falls through to the
+				// generic Error label. Raw err.Error() strings are never
+				// displayed — they may leak internals and aren't localisable.
+				errorMsg = resolveErrorLabel(code, deps.Labels)
 			}
 		}
 
@@ -105,4 +109,30 @@ func NewView(deps *Deps) view.View {
 
 		return view.OK("reset-password02", pageData)
 	})
+}
+
+// resolveErrorLabel maps a short error code from the action handler to the
+// matching localised label on ResetPassword02Labels. Anything unrecognized
+// returns the generic Error label so the user always sees a meaningful
+// message (and never a raw Go error string).
+func resolveErrorLabel(code string, l entydad.ResetPassword02Labels) string {
+	switch code {
+	case "mismatch":
+		if l.ErrorMismatch != "" {
+			return l.ErrorMismatch
+		}
+	case "invalid_token":
+		if l.ErrorInvalidToken != "" {
+			return l.ErrorInvalidToken
+		}
+	case "expired_token":
+		if l.ErrorExpiredToken != "" {
+			return l.ErrorExpiredToken
+		}
+	case "weak_password":
+		if l.ErrorWeakPassword != "" {
+			return l.ErrorWeakPassword
+		}
+	}
+	return l.Error
 }

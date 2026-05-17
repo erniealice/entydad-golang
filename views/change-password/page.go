@@ -49,7 +49,13 @@ func NewView(deps *Deps) view.View {
 
 		if viewCtx.Request != nil {
 			q := viewCtx.Request.URL.Query()
-			errorMsg = q.Get("error")
+			if code := q.Get("error"); code != "" {
+				// Map the short error code from the action handler to a lyngua-
+				// loaded label. Anything unrecognized falls through to the
+				// generic Error label. Raw err.Error() strings are never
+				// displayed — they may leak internals and aren't localisable.
+				errorMsg = resolveErrorLabel(code, deps.Labels)
+			}
 			success = q.Get("success") == "1"
 		}
 
@@ -69,4 +75,26 @@ func NewView(deps *Deps) view.View {
 
 		return view.OK("change-password", pageData)
 	})
+}
+
+// resolveErrorLabel maps a short error code from the action handler to the
+// matching localised label on ChangePasswordLabels. Anything unrecognized
+// returns the generic Error label so the user always sees a meaningful
+// message (and never a raw Go error string).
+func resolveErrorLabel(code string, l entydad.ChangePasswordLabels) string {
+	switch code {
+	case "mismatch":
+		if l.ErrorMismatch != "" {
+			return l.ErrorMismatch
+		}
+	case "incorrect":
+		if l.ErrorCurrentIncorrect != "" {
+			return l.ErrorCurrentIncorrect
+		}
+	case "too_short":
+		if l.ErrorTooShort != "" {
+			return l.ErrorTooShort
+		}
+	}
+	return l.Error
 }

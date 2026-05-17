@@ -298,6 +298,10 @@ func NewSetStatusAction(deps *Deps) view.View {
 // Reads the existing user first so all required fields are present for the update.
 func NewResetPasswordAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("user", "update") {
+			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+		}
 		id := viewCtx.Request.PathValue("id")
 		if id == "" {
 			return entydad.HTMXError(viewCtx.T("shared.errors.idRequired"))

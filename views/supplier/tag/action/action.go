@@ -120,6 +120,10 @@ func isDuplicateTagName(ctx context.Context, listFn func(context.Context, *categ
 // NewAddAction creates the supplier tag add action (GET = form, POST = create).
 func NewAddAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("supplier", "update") {
+			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+		}
 		if viewCtx.Request.Method == http.MethodGet {
 			return view.OK("supplier-tag-drawer-form", &FormData{
 				FormAction:   deps.Routes.AddURL,
@@ -162,6 +166,10 @@ func NewAddAction(deps *Deps) view.View {
 // NewEditAction creates the supplier tag edit action (GET = form, POST = update).
 func NewEditAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("supplier", "update") {
+			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+		}
 		id := viewCtx.Request.PathValue("id")
 
 		if viewCtx.Request.Method == http.MethodGet {
@@ -226,6 +234,10 @@ func NewEditAction(deps *Deps) view.View {
 // NewDeleteAction creates the supplier tag delete action (POST only).
 func NewDeleteAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("supplier", "update") {
+			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+		}
 		id := viewCtx.Request.URL.Query().Get("id")
 		if id == "" {
 			_ = viewCtx.Request.ParseForm()
@@ -250,6 +262,10 @@ func NewDeleteAction(deps *Deps) view.View {
 // NewBulkDeleteAction creates the supplier tag bulk delete action (POST only).
 func NewBulkDeleteAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("supplier", "update") {
+			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+		}
 		_ = viewCtx.Request.ParseMultipartForm(32 << 20)
 
 		ids := viewCtx.Request.Form["id"]
@@ -273,6 +289,10 @@ func NewBulkDeleteAction(deps *Deps) view.View {
 // NewSetStatusAction creates the supplier tag activate/deactivate action (POST only).
 func NewSetStatusAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("supplier", "update") {
+			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+		}
 		id := viewCtx.Request.URL.Query().Get("id")
 		targetStatus := viewCtx.Request.URL.Query().Get("status")
 
@@ -300,6 +320,10 @@ func NewSetStatusAction(deps *Deps) view.View {
 // NewBulkSetStatusAction creates the supplier tag bulk activate/deactivate action (POST only).
 func NewBulkSetStatusAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("supplier", "update") {
+			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+		}
 		_ = viewCtx.Request.ParseMultipartForm(32 << 20)
 
 		ids := viewCtx.Request.Form["id"]

@@ -7,8 +7,11 @@
     <title>{{.Labels.Title}}</title>
     {{template "fonts"}}
     <link rel="stylesheet" href="/assets/css/app/main.css?v={{.CacheVersion}}">
+    <link rel="stylesheet" href="/assets/css/pyeza/alert.css?v={{.CacheVersion}}">
+    <link rel="stylesheet" href="/assets/css/pyeza/form-password.css?v={{.CacheVersion}}">
     <link rel="stylesheet" href="/assets/css/pyeza/carousel.css?v={{.CacheVersion}}">
     <link rel="stylesheet" href="/assets/css/entydad/entydad-login02.css?v={{.CacheVersion}}">
+    <script src="/assets/js/pyeza/form-password.js?v={{.CacheVersion}}" defer></script>
 </head>
 <body>
     <a href="#main-content" class="skip-link">Skip to main content</a>
@@ -134,16 +137,15 @@
                     </div>
 
                     <div class="auth-form-group">
-                        <label class="auth-form-label" for="password">{{.Labels.PasswordLabel}}</label>
-                        <input
-                            type="password"
-                            id="password"
-                            name="password"
-                            class="auth-form-input"
-                            placeholder="{{.Labels.PasswordPlaceholder}}"
-                            required
-                            autocomplete="current-password"
-                        >
+                        {{template "form-password" (dict
+                            "Name"         "password"
+                            "ID"           "password"
+                            "Label"        .Labels.PasswordLabel
+                            "LabelClass"   "auth-form-label"
+                            "Placeholder"  .Labels.PasswordPlaceholder
+                            "Required"     true
+                            "Autocomplete" "current-password"
+                            "InputClass"   "auth-form-input")}}
                         <span class="auth-form-error" id="passwordError"></span>
                     </div>
 
@@ -159,13 +161,11 @@
                 </form>
 
                 {{if .Error}}
-                <div class="reset02-error" role="alert" data-testid="login-error">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <circle cx="12" cy="12" r="10"/>
-                        <line x1="12" y1="8" x2="12" y2="12"/>
-                        <line x1="12" y1="16" x2="12.01" y2="16"/>
-                    </svg>
-                    <span>{{.Error}}</span>
+                <div data-testid="login-error" class="auth-form-alert">
+                    {{template "alert" (dict "Message" .Error
+                                             "State"   "error"
+                                             "Variant" "filled"
+                                             "ID"      "login-error-banner")}}
                 </div>
                 {{end}}
 

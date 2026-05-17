@@ -1,0 +1,10 @@
+{{define "portal-supplier-profile"}}
+    {{template "portal-shell" .}}
+{{end}}
+
+{{define "portal-supplier-profile-content"}}
+<div class="portal-page" data-page-title="{{.Title}}">
+    <h1 data-testid="portal-supplier-profile-heading" class="portal-page-title">{{.Labels.Page.Profile.Title}}</h1>
+    <p class="portal-empty-hint">{{.Labels.Page.Profile.ComingSoon}}</p>
+</div>
+{{end}}

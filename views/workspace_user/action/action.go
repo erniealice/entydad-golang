@@ -147,6 +147,12 @@ func NewSetStatusAction(deps *Deps) view.View {
 func NewUserSearchAction(deps *Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("workspace_user", "create") {
+			w.WriteHeader(http.StatusForbidden)
+			writeSearchJSON(w, []searchOption{})
+			return
+		}
 		query := strings.ToLower(strings.TrimSpace(r.URL.Query().Get("q")))
 
 		if query == "" {

@@ -67,6 +67,10 @@ type PageData struct {
 // NewView creates the role detail view (full page).
 func NewView(deps *DetailViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		if !view.GetUserPermissions(ctx).Can("role", "read") {
+			return view.Forbidden("role:read")
+		}
+
 		id := viewCtx.Request.PathValue("id")
 
 		activeTab := viewCtx.Request.URL.Query().Get("tab")
@@ -97,6 +101,10 @@ func NewView(deps *DetailViewDeps) view.View {
 // Handles GET /action/roles/{id}/tab/{tab}
 func NewTabAction(deps *DetailViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		if !view.GetUserPermissions(ctx).Can("role", "read") {
+			return view.Forbidden("role:read")
+		}
+
 		id := viewCtx.Request.PathValue("id")
 		tab := viewCtx.Request.PathValue("tab")
 		if tab == "" {
@@ -320,7 +328,7 @@ func buildPermissionsTable(ctx context.Context, deps *DetailViewDeps, roleID str
 				ItemName:       permName,
 				ConfirmTitle:   l.Actions.Remove,
 				ConfirmMessage: fmt.Sprintf(deps.SharedLabels.Confirm.Remove, permName),
-				Disabled:       !perms.Can("role", "update"), DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
+				Disabled:       !perms.Can("role_permission", "delete"), DisabledTooltip: fmt.Sprintf(deps.CommonLabels.Errors.MissingPermission, "role_permission:delete"),
 			},
 		}
 
@@ -367,8 +375,8 @@ func buildPermissionsTable(ctx context.Context, deps *DetailViewDeps, roleID str
 			Label:           l.Buttons.AssignPermission,
 			ActionURL:       route.ResolveURL(deps.Routes.DetailPermissionsAssignURL, "id", roleID),
 			Icon:            "icon-plus",
-			Disabled:        !perms.Can("role", "update"),
-			DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
+			Disabled:        !perms.Can("role_permission", "create"),
+			DisabledTooltip: fmt.Sprintf(deps.CommonLabels.Errors.MissingPermission, "role_permission:create"),
 		},
 	}
 	types.ApplyTableSettings(tableConfig)
@@ -408,7 +416,7 @@ func buildUsersTable(ctx context.Context, deps *DetailViewDeps, roleID string, p
 				ItemName:       u.UserName,
 				ConfirmTitle:   l.Actions.Remove,
 				ConfirmMessage: fmt.Sprintf(deps.SharedLabels.Confirm.Remove, u.UserName),
-				Disabled:       !perms.Can("role", "update"), DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
+				Disabled:       !perms.Can("workspace_user_role", "delete"), DisabledTooltip: fmt.Sprintf(deps.CommonLabels.Errors.MissingPermission, "workspace_user_role:delete"),
 			},
 		}
 
@@ -453,8 +461,8 @@ func buildUsersTable(ctx context.Context, deps *DetailViewDeps, roleID string, p
 			Label:           l.Buttons.AssignUser,
 			ActionURL:       route.ResolveURL(deps.Routes.UsersAssignURL, "id", roleID),
 			Icon:            "icon-plus",
-			Disabled:        !perms.Can("role", "update"),
-			DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
+			Disabled:        !perms.Can("workspace_user_role", "create"),
+			DisabledTooltip: fmt.Sprintf(deps.CommonLabels.Errors.MissingPermission, "workspace_user_role:create"),
 		},
 	}
 	types.ApplyTableSettings(tableConfig)

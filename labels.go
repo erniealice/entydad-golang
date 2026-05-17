@@ -1290,13 +1290,35 @@ type ResetPassword02Labels struct {
 	ResetButton                string `json:"resetButton"`
 	SuccessHeading             string `json:"successHeading"`
 	SuccessMessage             string `json:"successMessage"`
-	Error                      string `json:"error"`
+	// Generic + code-specific error messages.
+	// Action handlers emit short codes via the `?error=` query param; the
+	// page handler maps each code to one of these fields. Never display
+	// raw err.Error() — it's not localisable and may leak internals.
+	//   ?error=mismatch       → ErrorMismatch
+	//   ?error=invalid_token  → ErrorInvalidToken
+	//   ?error=expired_token  → ErrorExpiredToken
+	//   ?error=weak_password  → ErrorWeakPassword
+	//   ?error=generic (and anything unrecognized) → Error
+	Error             string `json:"error"`
+	ErrorMismatch     string `json:"errorMismatch"`
+	ErrorInvalidToken string `json:"errorInvalidToken"`
+	ErrorExpiredToken string `json:"errorExpiredToken"`
+	ErrorWeakPassword string `json:"errorWeakPassword"`
 	// Carousel navigation
 	PreviousSlide string `json:"previousSlide"`
 	NextSlide     string `json:"nextSlide"`
 }
 
 // ChangePasswordLabels holds i18n strings for the change-password page.
+//
+// Error fields are addressed by code: the action handler emits a short
+// code via `?error=...`, and the page handler maps each code to one of
+// these fields. Raw err.Error() must never be rendered.
+//
+//	?error=mismatch  → ErrorMismatch
+//	?error=incorrect → ErrorCurrentIncorrect
+//	?error=too_short → ErrorTooShort
+//	?error=generic (and anything unrecognized) → Error
 type ChangePasswordLabels struct {
 	Title                      string `json:"title"`
 	Heading                    string `json:"heading"`
@@ -1309,9 +1331,12 @@ type ChangePasswordLabels struct {
 	ConfirmPasswordPlaceholder string `json:"confirmPasswordPlaceholder"`
 	SubmitButton               string `json:"submitButton"`
 	SuccessMessage             string `json:"successMessage"`
-	ErrorCurrentIncorrect      string `json:"errorCurrentIncorrect"`
-	ErrorTooShort              string `json:"errorTooShort"`
-	BackToApp                  string `json:"backToApp"`
+	// Generic fallback + code-specific error messages.
+	Error                 string `json:"error"`
+	ErrorMismatch         string `json:"errorMismatch"`
+	ErrorCurrentIncorrect string `json:"errorCurrentIncorrect"`
+	ErrorTooShort         string `json:"errorTooShort"`
+	BackToApp             string `json:"backToApp"`
 }
 
 // ---------------------------------------------------------------------------

@@ -117,11 +117,21 @@
     font-size: var(--text-base);
 }
 
-/* Form */
+/* Form
+   spacing-md (12px) is the token's documented "form gaps" value;
+   the previous spacing-xl (20px) was mis-applied as inter-field gap
+   (its own comment reserves it for "between sections"). */
 .auth-form {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-xl);
+    gap: var(--spacing-md);
+}
+
+/* Give the submit button + alert row a touch more breathing room
+   than the inter-field gap, so the call-to-action reads as separated. */
+.auth-form > .auth-button,
+.auth-form > .auth-form-alert {
+    margin-top: var(--spacing-2xs);
 }
 
 .auth-form-group {
@@ -161,6 +171,14 @@
     font-size: var(--text-sm);
     color: var(--status-error);
     min-height: 1rem;
+}
+
+.auth-form-alert {
+    margin-top: var(--spacing-md, 1rem);
+}
+
+.auth-form-alert .alert {
+    width: 100%;
 }
 
 .auth-form-row {

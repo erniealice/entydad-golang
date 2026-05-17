@@ -1,0 +1,100 @@
+{{define "choose-principal"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Labels.Title}}</title>
+    {{template "fonts"}}
+    <link rel="stylesheet" href="/assets/css/app/main.css?v={{.CacheVersion}}">
+    <link rel="stylesheet" href="/assets/css/pyeza/alert.css?v={{.CacheVersion}}">
+    <link rel="stylesheet" href="/assets/css/entydad/entydad-login02.css?v={{.CacheVersion}}">
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <main id="main-content" data-testid="choose-principal-page">
+        {{template "choose-principal-content" .}}
+    </main>
+</body>
+</html>
+{{end}}
+
+{{define "choose-principal-content"}}
+<div class="auth-page">
+    <div class="auth-split">
+        <!-- Right Side - Chooser Form (reuses login02 right column for visual parity) -->
+        <div class="auth-form-section auth-form-section--centered">
+            <div class="auth-form-container">
+                <!-- Logo -->
+                {{if .LogoText}}
+                <a href="/" class="auth-logo">
+                    {{if .LogoIcon}}
+                    <div class="auth-logo-mark">
+                        {{renderContent .LogoIcon .}}
+                    </div>
+                    {{end}}
+                    <span class="auth-logo-text">{{.LogoText}}</span>
+                </a>
+                {{end}}
+
+                <h1 class="auth-heading" data-testid="choose-principal-heading">{{.Labels.Heading}}</h1>
+                <p class="auth-subheading">{{.Labels.Subheading}}</p>
+
+                {{if .Error}}
+                <div data-testid="choose-principal-error" class="auth-form-alert">
+                    {{template "alert" (dict "Message" .Error
+                                             "State"   "error"
+                                             "Variant" "filled"
+                                             "ID"      "choose-principal-error-banner")}}
+                </div>
+                {{end}}
+
+                {{if .Cards}}
+                <ul class="auth-principal-list" role="list" data-testid="choose-principal-list">
+                    {{range $card := .Cards}}
+                    <li class="auth-principal-card">
+                        <form method="POST" action="{{$.SwitchPostURL}}" class="auth-principal-form">
+                            <input type="hidden" name="principal_id" value="{{$card.PrincipalID}}">
+                            <input type="hidden" name="principal_kind" value="{{$card.Kind}}">
+                            <button
+                                type="submit"
+                                class="auth-principal-button"
+                                {{if $card.HasMultipleOfKind}}
+                                data-testid="choose-principal-{{$card.Kind}}-{{$card.PrincipalID}}"
+                                {{else}}
+                                data-testid="choose-principal-{{$card.Kind}}"
+                                {{end}}
+                                data-principal-kind="{{$card.Kind}}"
+                                data-principal-id="{{$card.PrincipalID}}"
+                                aria-label="{{$.Labels.SubmitLabel}} {{$card.DisplayName}}"
+                            >
+                                {{if $card.IconName}}
+                                <span class="auth-principal-icon" aria-hidden="true">
+                                    {{renderContent $card.IconName $}}
+                                </span>
+                                {{end}}
+                                <span class="auth-principal-text">
+                                    <span class="auth-principal-name">{{$card.DisplayName}}</span>
+                                    {{if $card.Subtitle}}
+                                    <span class="auth-principal-subtitle">{{$card.Subtitle}}</span>
+                                    {{end}}
+                                </span>
+                            </button>
+                        </form>
+                    </li>
+                    {{end}}
+                </ul>
+                {{else}}
+                <p class="auth-empty-state" data-testid="choose-principal-empty">
+                    {{.Labels.EmptyState}}
+                </p>
+                {{end}}
+
+                <div class="auth-form-footer auth-form-footer--spaced">
+                    <a href="{{.LogoutURL}}" class="auth-form-link" data-testid="choose-principal-signout">{{.Labels.SignOutLink}}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

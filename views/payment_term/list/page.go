@@ -51,6 +51,10 @@ type PageData struct {
 // NewView creates the payment term list view (full page).
 func NewView(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		if !view.GetUserPermissions(ctx).Can("payment_term", "list") {
+			return view.Forbidden("payment_term:list")
+		}
+
 		tableConfig, err := buildTableConfig(ctx, deps)
 		if err != nil {
 			return view.Error(err)
@@ -94,6 +98,10 @@ func NewView(deps *Deps) view.View {
 // NewTableView creates a view that returns only the table-card HTML.
 func NewTableView(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		if !view.GetUserPermissions(ctx).Can("payment_term", "list") {
+			return view.Forbidden("payment_term:list")
+		}
+
 		tableConfig, err := buildTableConfig(ctx, deps)
 		if err != nil {
 			return view.Error(err)
@@ -146,7 +154,7 @@ func buildTableConfig(ctx context.Context, deps *Deps) (*types.TableConfig, erro
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
-	bulkCfg.Actions = buildBulkActions(deps.Labels, deps.SharedLabels, deps.CommonLabels, deps.Routes)
+	bulkCfg.Actions = buildBulkActions(deps.Labels, deps.SharedLabels, deps.CommonLabels, deps.Routes, perms)
 
 	refreshURL := deps.RefreshURL
 	if refreshURL == "" {
@@ -178,7 +186,7 @@ func buildTableConfig(ctx context.Context, deps *Deps) (*types.TableConfig, erro
 			ActionURL:       deps.Routes.AddURL,
 			Icon:            "icon-plus",
 			Disabled:        !perms.Can("payment_term", "create"),
-			DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
+			DisabledTooltip: fmt.Sprintf(deps.CommonLabels.Errors.MissingPermission, "payment_term:create"),
 		},
 		BulkActions: &bulkCfg,
 	}
@@ -309,7 +317,9 @@ func buildTableRows(items []*paymenttermpb.PaymentTerm, l entydad.PaymentTermLab
 	return rows
 }
 
-func buildBulkActions(l entydad.PaymentTermLabels, sl entydad.SharedLabels, cl pyeza.CommonLabels, routes entydad.PaymentTermRoutes) []types.BulkAction {
+func buildBulkActions(l entydad.PaymentTermLabels, sl entydad.SharedLabels, cl pyeza.CommonLabels, routes entydad.PaymentTermRoutes, perms *types.UserPermissions) []types.BulkAction {
+	canUpdate := perms.Can("payment_term", "update")
+	canDelete := perms.Can("payment_term", "delete")
 	return []types.BulkAction{
 		{
 			Key:              "deactivate",
@@ -321,6 +331,8 @@ func buildBulkActions(l entydad.PaymentTermLabels, sl entydad.SharedLabels, cl p
 			ConfirmMessage:   sl.Confirm.BulkDeactivate,
 			ExtraParamsJSON:  `{"target_status":"inactive"}`,
 			RequiresDataAttr: "deactivatable",
+			Disabled:         !canUpdate,
+			DisabledTooltip:  fmt.Sprintf(cl.Errors.MissingPermission, "payment_term:update"),
 		},
 		{
 			Key:              "activate",
@@ -332,6 +344,8 @@ func buildBulkActions(l entydad.PaymentTermLabels, sl entydad.SharedLabels, cl p
 			ConfirmMessage:   sl.Confirm.BulkActivate,
 			ExtraParamsJSON:  `{"target_status":"active"}`,
 			RequiresDataAttr: "activatable",
+			Disabled:         !canUpdate,
+			DisabledTooltip:  fmt.Sprintf(cl.Errors.MissingPermission, "payment_term:update"),
 		},
 		{
 			Key:              "delete",
@@ -342,6 +356,8 @@ func buildBulkActions(l entydad.PaymentTermLabels, sl entydad.SharedLabels, cl p
 			ConfirmTitle:     cl.Bulk.Delete,
 			ConfirmMessage:   sl.Confirm.BulkDelete,
 			RequiresDataAttr: "deletable",
+			Disabled:         !canDelete,
+			DisabledTooltip:  fmt.Sprintf(cl.Errors.MissingPermission, "payment_term:delete"),
 		},
 	}
 }

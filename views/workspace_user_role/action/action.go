@@ -175,6 +175,10 @@ func NewDeleteAction(deps *Deps) view.View {
 // Empty list when role_id is blank.
 func NewPermissionsAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("workspace_user_role", "create") {
+			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+		}
 		roleID := viewCtx.Request.URL.Query().Get("role_id")
 
 		data := &form.PermissionsData{
@@ -219,6 +223,12 @@ func NewPermissionsAction(deps *Deps) view.View {
 func NewSearchRolesAction(deps *Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("workspace_user_role", "create") {
+			w.WriteHeader(http.StatusForbidden)
+			writeSearchJSON(w, []searchOption{})
+			return
+		}
 		query := strings.ToLower(strings.TrimSpace(r.URL.Query().Get("q")))
 		workspaceID := r.URL.Query().Get("workspace_id")
 

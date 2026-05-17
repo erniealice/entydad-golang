@@ -90,6 +90,10 @@ func resolveTabLabels(l entydad.WorkspaceUserLabels) tabLabels {
 // NewView creates the workspace_user detail view (full page load).
 func NewView(deps *DetailViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		if !view.GetUserPermissions(ctx).Can("workspace_user", "read") {
+			return view.Forbidden("workspace_user:read")
+		}
+
 		id := viewCtx.Request.PathValue("id")
 
 		activeTab := viewCtx.Request.URL.Query().Get("tab")
@@ -121,6 +125,10 @@ func NewView(deps *DetailViewDeps) view.View {
 // Route: GET /action/workspace_user/{id}/tab/{tab}
 func NewTabAction(deps *DetailViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		if !view.GetUserPermissions(ctx).Can("workspace_user", "read") {
+			return view.Forbidden("workspace_user:read")
+		}
+
 		id := viewCtx.Request.PathValue("id")
 		tab := viewCtx.Request.PathValue("tab")
 		if tab == "" {

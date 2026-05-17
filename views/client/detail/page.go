@@ -162,6 +162,9 @@ type PageData struct {
 	AuditHistoryURL string
 	// Tax registrations tab
 	TaxRegistrationListURL string
+	// Permission flags (computed once in buildPageData for UI gating).
+	CanUpdate                  bool
+	MissingUpdatePermTooltip   string
 }
 
 // StatementSummaryDisplay holds pre-formatted money cells for the statement summary bar.
@@ -174,6 +177,11 @@ type StatementSummaryDisplay struct {
 // NewView creates the client detail view.
 func NewView(deps *DetailViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("client", "read") {
+			return view.Forbidden("client:read")
+		}
+
 		id := viewCtx.Request.PathValue("id")
 
 		activeTab := deps.Labels.Detail.Tabs.CanonicalizeTab(viewCtx.Request.URL.Query().Get("tab"))
@@ -273,8 +281,10 @@ func NewView(deps *DetailViewDeps) view.View {
 			HasName:            hasName,
 			HasAddress:         hasAddress,
 			HasNotes:           hasNotes,
-			HasTags:            hasTags,
-			BillingCurrency:    client.GetBillingCurrency(),
+			HasTags:                  hasTags,
+			BillingCurrency:          client.GetBillingCurrency(),
+			CanUpdate:                perms.Can("client", "update"),
+			MissingUpdatePermTooltip: fmt.Sprintf(deps.CommonLabels.Errors.MissingPermission, "client:update"),
 		}
 
 		// Load tab-specific data for the active tab on full page load
@@ -282,7 +292,7 @@ func NewView(deps *DetailViewDeps) view.View {
 		case "subscriptions":
 			subs := loadClientSubscriptions(ctx, deps, id)
 			pageData.Subscriptions = subs
-			pageData.SubscriptionsTable = buildSubscriptionsTable(subs, pageData.SubscriptionAddURL, id, clientName, deps)
+			pageData.SubscriptionsTable = buildSubscriptionsTable(subs, pageData.SubscriptionAddURL, id, clientName, deps, perms)
 		case "priceSchedules":
 			pageData.PriceSchedulesTable = buildPriceSchedulesTable(ctx, deps, id, clientName)
 		case "statement":
@@ -376,6 +386,11 @@ func buildTabItems(id string, deps *DetailViewDeps, subscriptionCount, priceSche
 // NewTabAction creates the tab action view (partial — returns only the tab content).
 func NewTabAction(deps *DetailViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("client", "read") {
+			return view.Forbidden("client:read")
+		}
+
 		id := viewCtx.Request.PathValue("id")
 		tab := deps.Labels.Detail.Tabs.CanonicalizeTab(viewCtx.Request.PathValue("tab"))
 		if tab == "" {
@@ -431,8 +446,10 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 			ClientPhone:        clientPhone,
 			ClientStatus:       clientStatus,
 			StatusVariant:      statusVariant,
-			EditURL:            route.ResolveURL(deps.Routes.EditURL, "id", id),
-			SubscriptionAddURL: buildSubscriptionAddURL(deps.SubscriptionAddURL, id, clientName, client.GetBillingCurrency()),
+			EditURL:                  route.ResolveURL(deps.Routes.EditURL, "id", id),
+			SubscriptionAddURL:       buildSubscriptionAddURL(deps.SubscriptionAddURL, id, clientName, client.GetBillingCurrency()),
+			CanUpdate:                perms.Can("client", "update"),
+			MissingUpdatePermTooltip: fmt.Sprintf(deps.CommonLabels.Errors.MissingPermission, "client:update"),
 		}
 
 		switch tab {
@@ -455,7 +472,7 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 			// user fields already on client via GetUser()
 		case "subscriptions":
 			pageData.Subscriptions = loadClientSubscriptions(ctx, deps, id)
-			pageData.SubscriptionsTable = buildSubscriptionsTable(pageData.Subscriptions, pageData.SubscriptionAddURL, id, clientName, deps)
+			pageData.SubscriptionsTable = buildSubscriptionsTable(pageData.Subscriptions, pageData.SubscriptionAddURL, id, clientName, deps, perms)
 		case "priceSchedules":
 			pageData.PriceSchedulesTable = buildPriceSchedulesTable(ctx, deps, id, clientName)
 		case "statement":
@@ -642,7 +659,7 @@ func buildSubscriptionAddURL(base, clientID, clientName, billingCurrency string)
 // buildSubscriptionsTable builds a TableConfig for the subscriptions tab.
 // The table is always returned (even when empty) so the primary action
 // stays visible and the table's own empty state renders.
-func buildSubscriptionsTable(rows []SubscriptionRow, addURL string, clientID string, clientName string, deps *DetailViewDeps) *types.TableConfig {
+func buildSubscriptionsTable(rows []SubscriptionRow, addURL string, clientID string, clientName string, deps *DetailViewDeps, perms *types.UserPermissions) *types.TableConfig {
 	columns := []types.TableColumn{
 		{Key: "name", Label: deps.Labels.Detail.Subscriptions.ColumnName},
 		{Key: "plan", Label: deps.Labels.Detail.Subscriptions.ColumnPlan},
@@ -675,8 +692,10 @@ func buildSubscriptionsTable(rows []SubscriptionRow, addURL string, clientID str
 			},
 			Actions: []types.TableAction{
 				{Type: "view", Label: deps.CommonLabels.Actions.View, Action: "view", Href: detailURL},
-				{Type: "edit", Label: deps.CommonLabels.Actions.Edit, Action: "edit", URL: editURL, DrawerTitle: r.Name},
-				{Type: "delete", Label: deps.CommonLabels.Actions.Delete, Action: "delete", URL: deps.SubscriptionDeleteURL, ItemName: r.Name, ConfirmTitle: deps.Labels.Detail.Subscriptions.ConfirmDeleteTitle, ConfirmMessage: fmt.Sprintf(deps.Labels.Detail.Subscriptions.ConfirmDeleteMessage, r.Name)},
+				{Type: "edit", Label: deps.CommonLabels.Actions.Edit, Action: "edit", URL: editURL, DrawerTitle: r.Name,
+					Disabled: !perms.Can("subscription", "update"), DisabledTooltip: fmt.Sprintf(deps.CommonLabels.Errors.MissingPermission, "subscription:update")},
+				{Type: "delete", Label: deps.CommonLabels.Actions.Delete, Action: "delete", URL: deps.SubscriptionDeleteURL, ItemName: r.Name, ConfirmTitle: deps.Labels.Detail.Subscriptions.ConfirmDeleteTitle, ConfirmMessage: fmt.Sprintf(deps.Labels.Detail.Subscriptions.ConfirmDeleteMessage, r.Name),
+					Disabled: !perms.Can("subscription", "delete"), DisabledTooltip: fmt.Sprintf(deps.CommonLabels.Errors.MissingPermission, "subscription:delete")},
 			},
 		})
 	}
@@ -705,9 +724,11 @@ func buildSubscriptionsTable(rows []SubscriptionRow, addURL string, clientID str
 
 	if addURL != "" {
 		tc.PrimaryAction = &types.PrimaryAction{
-			Label:     deps.Labels.Detail.AddSubscription,
-			ActionURL: addURL,
-			Icon:      "icon-plus",
+			Label:           deps.Labels.Detail.AddSubscription,
+			ActionURL:       addURL,
+			Icon:            "icon-plus",
+			Disabled:        !perms.Can("subscription", "create"),
+			DisabledTooltip: fmt.Sprintf(deps.CommonLabels.Errors.MissingPermission, "subscription:create"),
 		}
 	}
 
@@ -981,10 +1002,11 @@ func buildOutstandingRevenueTable(ctx context.Context, deps *DetailViewDeps, cli
 		perms := view.GetUserPermissions(ctx)
 		canRun := perms != nil && perms.Can("revenue", "create") && perms.Can("subscription", "read")
 		tc.PrimaryAction = &types.PrimaryAction{
-			Label:     labels.RunInvoicesLabel,
-			ActionURL: route.ResolveURL(deps.Routes.RevenueRunURL, "id", clientID),
-			Icon:      "icon-zap",
-			Disabled:  !canRun,
+			Label:           labels.RunInvoicesLabel,
+			ActionURL:       route.ResolveURL(deps.Routes.RevenueRunURL, "id", clientID),
+			Icon:            "icon-zap",
+			Disabled:        !canRun,
+			DisabledTooltip: fmt.Sprintf(deps.CommonLabels.Errors.MissingPermission, "revenue:create"),
 		}
 	}
 

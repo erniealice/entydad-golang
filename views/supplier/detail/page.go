@@ -125,6 +125,10 @@ type StatementSummaryDisplay struct {
 // NewView creates the supplier detail view.
 func NewView(deps *DetailViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		if !view.GetUserPermissions(ctx).Can("supplier", "read") {
+			return view.Forbidden("supplier:read")
+		}
+
 		id := viewCtx.Request.PathValue("id")
 
 		activeTab := viewCtx.Request.URL.Query().Get("tab")
@@ -246,6 +250,10 @@ func NewView(deps *DetailViewDeps) view.View {
 // NewTabAction creates the tab action view (partial -- returns only the tab content).
 func NewTabAction(deps *DetailViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		if !view.GetUserPermissions(ctx).Can("supplier", "read") {
+			return view.Forbidden("supplier:read")
+		}
+
 		id := viewCtx.Request.PathValue("id")
 		tab := viewCtx.Request.PathValue("tab")
 		if tab == "" {

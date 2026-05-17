@@ -60,6 +60,11 @@ type TaxRegistrationRow struct {
 // NewView creates the tax registration list view.
 func NewView(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("tax_registration", "list") {
+			return view.Forbidden("tax_registration:list")
+		}
+
 		// Party ID may come from URL path parameter if not pre-populated in deps.
 		partyID := deps.PartyID
 		if partyID == "" {
@@ -67,7 +72,6 @@ func NewView(deps *Deps) view.View {
 		}
 
 		rows := fetchRegistrations(ctx, deps, partyID)
-		perms := view.GetUserPermissions(ctx)
 		tableConfig := buildTableConfig(deps, rows, partyID, perms)
 
 		heading := headingForPartyType(deps.Labels, deps.PartyType)

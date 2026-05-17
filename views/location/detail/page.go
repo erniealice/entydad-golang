@@ -58,6 +58,10 @@ type PageData struct {
 // NewView creates the location detail view (full page).
 func NewView(deps *DetailViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		if !view.GetUserPermissions(ctx).Can("location", "read") {
+			return view.Forbidden("location:read")
+		}
+
 		id := viewCtx.Request.PathValue("id")
 
 		activeTab := viewCtx.Request.URL.Query().Get("tab")
@@ -85,6 +89,10 @@ func NewView(deps *DetailViewDeps) view.View {
 // Handles GET /action/locations/{id}/tab/{tab}
 func NewTabAction(deps *DetailViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		if !view.GetUserPermissions(ctx).Can("location", "read") {
+			return view.Forbidden("location:read")
+		}
+
 		id := viewCtx.Request.PathValue("id")
 		tab := viewCtx.Request.PathValue("tab")
 		if tab == "" {

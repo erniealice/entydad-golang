@@ -111,6 +111,11 @@ func resolveTabLabels(l entydad.WorkspaceLabels) tabLabels {
 // NewView creates the workspace detail view (full page load).
 func NewView(deps *DetailViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("workspace", "read") {
+			return view.Forbidden("workspace:read")
+		}
+
 		id := viewCtx.Request.PathValue("id")
 
 		activeTab := viewCtx.Request.URL.Query().Get("tab")
@@ -130,7 +135,7 @@ func NewView(deps *DetailViewDeps) view.View {
 
 		switch activeTab {
 		case "users":
-			pageData.UsersTable = buildUsersTable(ctx, deps, id, tl)
+			pageData.UsersTable = buildUsersTable(ctx, deps, id, tl, perms)
 		case "attachments":
 			loadAttachments(ctx, deps, id, pageData)
 		case "tax-registrations":
@@ -147,6 +152,11 @@ func NewView(deps *DetailViewDeps) view.View {
 // Route: GET /action/workspace/{id}/tab/{tab}
 func NewTabAction(deps *DetailViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("workspace", "read") {
+			return view.Forbidden("workspace:read")
+		}
+
 		id := viewCtx.Request.PathValue("id")
 		tab := viewCtx.Request.PathValue("tab")
 		if tab == "" {
@@ -164,7 +174,7 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 
 		switch tab {
 		case "users":
-			pageData.UsersTable = buildUsersTable(ctx, deps, id, tl)
+			pageData.UsersTable = buildUsersTable(ctx, deps, id, tl, perms)
 			return view.OK("workspace-tab-users", pageData)
 		case "attachments":
 			loadAttachments(ctx, deps, id, pageData)
@@ -261,7 +271,7 @@ func buildTabItems(id string, deps *DetailViewDeps, tl tabLabels) []pyeza.TabIte
 //
 // TODO(Phase 2): once espyna exposes a workspace-scoped list page data, replace the manual
 // in-process filter below with a proper server-side filter request.
-func buildUsersTable(ctx context.Context, deps *DetailViewDeps, workspaceID string, tl tabLabels) *types.TableConfig {
+func buildUsersTable(ctx context.Context, deps *DetailViewDeps, workspaceID string, tl tabLabels, perms *types.UserPermissions) *types.TableConfig {
 	columns := []types.TableColumn{
 		{Key: "user_name", Label: "Name"},
 		{Key: "email", Label: "Email"},
@@ -378,9 +388,11 @@ func buildUsersTable(ctx context.Context, deps *DetailViewDeps, workspaceID stri
 			resolvedAddURL = resolvedAddURL + "?workspace_id=" + workspaceID
 		}
 		tc.PrimaryAction = &types.PrimaryAction{
-			Label:     addLabel,
-			ActionURL: resolvedAddURL,
-			Icon:      "icon-plus",
+			Label:           addLabel,
+			ActionURL:       resolvedAddURL,
+			Icon:            "icon-plus",
+			Disabled:        !perms.Can("workspace_user", "create"),
+			DisabledTooltip: fmt.Sprintf(deps.CommonLabels.Errors.MissingPermission, "workspace_user:create"),
 		}
 	}
 	types.ApplyTableSettings(tc)

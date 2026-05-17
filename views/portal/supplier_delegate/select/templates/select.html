@@ -1,0 +1,27 @@
+{{define "portal-supplier-delegate-select"}}
+    {{template "portal-shell" .}}
+{{end}}
+
+{{define "portal-supplier-delegate-select-content"}}
+<div class="portal-page" data-testid="portal-supplier-delegate-select-heading" data-page-title="{{.Title}}">
+    <h1 class="portal-page-title">{{.Labels.SupplierDelegate.Select.Heading}}</h1>
+    <p class="portal-page-subtitle">{{.Labels.SupplierDelegate.Select.Subheading}}</p>
+
+    {{if .Suppliers}}
+    <div class="portal-card-grid" data-testid="portal-supplier-delegate-select-grid">
+        {{range .Suppliers}}
+        <form method="POST" action="{{$.SwitchPostURL}}" data-testid="portal-supplier-delegate-select-form" aria-label="Select {{.DisplayName}}">
+            <input type="hidden" name="principal_id" value="{{$.PrincipalID}}">
+            <input type="hidden" name="principal_kind" value="SUPPLIER_DELEGATE">
+            <input type="hidden" name="acting_as_supplier_id" value="{{.SupplierID}}">
+            <button type="submit" class="portal-acting-as-card" data-testid="acting-as-supplier-{{.SupplierID}}" title="Select {{.DisplayName}}">
+                <span class="portal-acting-as-card-name">{{.DisplayName}}</span>
+            </button>
+        </form>
+        {{end}}
+    </div>
+    {{else}}
+    <p class="portal-empty-hint" data-testid="portal-supplier-delegate-select-empty">{{.Labels.SupplierDelegate.Select.EmptyState}}</p>
+    {{end}}
+</div>
+{{end}}

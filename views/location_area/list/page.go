@@ -56,6 +56,10 @@ var locationAreaSearchFields = []string{"name", "description"}
 // NewView creates the location area list view (full page).
 func NewView(deps *ListViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		if !view.GetUserPermissions(ctx).Can("location_area", "list") {
+			return view.Forbidden("location_area:list")
+		}
+
 		status := viewCtx.Request.PathValue("status")
 		if status == "" {
 			status = "active"
@@ -95,6 +99,10 @@ func NewView(deps *ListViewDeps) view.View {
 // NewTableView creates a view that returns only the table-card HTML.
 func NewTableView(deps *ListViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		if !view.GetUserPermissions(ctx).Can("location_area", "list") {
+			return view.Forbidden("location_area:list")
+		}
+
 		status := viewCtx.Request.PathValue("status")
 		if status == "" {
 			status = "active"
@@ -140,7 +148,7 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, columns []types.T
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
-	bulkCfg.Actions = buildBulkActions(l, deps.SharedLabels, deps.CommonLabels, status, deps.Routes)
+	bulkCfg.Actions = buildBulkActions(l, deps.SharedLabels, deps.CommonLabels, status, deps.Routes, perms)
 
 	refreshURL := route.ResolveURL(deps.Routes.TableURL, "status", status)
 
@@ -186,7 +194,7 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, columns []types.T
 			ActionURL:       deps.Routes.AddURL,
 			Icon:            "icon-plus",
 			Disabled:        !perms.Can("location_area", "create"),
-			DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
+			DisabledTooltip: fmt.Sprintf(deps.CommonLabels.Errors.MissingPermission, "location_area:create"),
 		},
 		BulkActions:      &bulkCfg,
 		ServerPagination: sp,
@@ -316,8 +324,11 @@ func statusEmptyMessage(l entydad.LocationAreaLabels, status string) string {
 	}
 }
 
-func buildBulkActions(l entydad.LocationAreaLabels, sl entydad.SharedLabels, common pyeza.CommonLabels, status string, routes entydad.LocationAreaRoutes) []types.BulkAction {
+func buildBulkActions(l entydad.LocationAreaLabels, sl entydad.SharedLabels, common pyeza.CommonLabels, status string, routes entydad.LocationAreaRoutes, perms *types.UserPermissions) []types.BulkAction {
 	actions := []types.BulkAction{}
+
+	canUpdate := perms.Can("location_area", "update")
+	canDelete := perms.Can("location_area", "delete")
 
 	switch status {
 	case "active":
@@ -330,6 +341,8 @@ func buildBulkActions(l entydad.LocationAreaLabels, sl entydad.SharedLabels, com
 			ConfirmTitle:    l.Actions.Deactivate,
 			ConfirmMessage:  sl.Confirm.BulkDeactivate,
 			ExtraParamsJSON: `{"target_status":"inactive"}`,
+			Disabled:        !canUpdate,
+			DisabledTooltip: fmt.Sprintf(common.Errors.MissingPermission, "location_area:update"),
 		})
 	case "inactive":
 		actions = append(actions, types.BulkAction{
@@ -341,6 +354,8 @@ func buildBulkActions(l entydad.LocationAreaLabels, sl entydad.SharedLabels, com
 			ConfirmTitle:    l.Actions.Activate,
 			ConfirmMessage:  sl.Confirm.BulkActivate,
 			ExtraParamsJSON: `{"target_status":"active"}`,
+			Disabled:        !canUpdate,
+			DisabledTooltip: fmt.Sprintf(common.Errors.MissingPermission, "location_area:update"),
 		})
 	}
 
@@ -353,6 +368,8 @@ func buildBulkActions(l entydad.LocationAreaLabels, sl entydad.SharedLabels, com
 		ConfirmTitle:     common.Bulk.Delete,
 		ConfirmMessage:   sl.Confirm.BulkDelete,
 		RequiresDataAttr: "deletable",
+		Disabled:         !canDelete,
+		DisabledTooltip:  fmt.Sprintf(common.Errors.MissingPermission, "location_area:delete"),
 	})
 
 	return actions

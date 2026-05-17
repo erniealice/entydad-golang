@@ -1,0 +1,53 @@
+{{/* /app/account — Account & security with 3 horizontal tabs.
+     Tabs: email | password | sessions. Active tab read from ?tab=... */}}
+{{define "account-page"}}
+    {{template "app-shell" .}}
+{{end}}
+
+{{define "account-page-content"}}
+{{- $fallback := .T "memberPages.fallback.noValue" -}}
+{{template "header-oob" .}}
+<div class="account-page" data-account-area-page="account" data-page-css="/assets/css/app/account-area.css?v={{.CacheVersion}}">
+    {{template "tabs" (dict "Items" .TabItems "ActiveTab" .ActiveTab "Variant" "main" "ID" "account-page-tabs" "Label" (.T "memberPages.account.tabsAriaLabel"))}}
+
+    <section class="account-page-section" id="tabContent">
+        {{if eq .ActiveTab "email"}}
+        <div class="account-section-card">
+            <header class="account-section-card-header">
+                <h2 class="account-section-card-title">{{.T "memberPages.account.email.title"}}</h2>
+                <p class="account-section-card-help">{{.T "memberPages.account.email.help"}}</p>
+            </header>
+            <dl class="account-section-fields">
+                <div class="account-section-field">
+                    <dt class="account-section-field-label">{{.T "memberPages.account.email.fieldLabel"}}</dt>
+                    <dd class="account-section-field-value">{{if .Sidebar.CurrentUser.Email}}{{.Sidebar.CurrentUser.Email}}{{else}}{{$fallback}}{{end}}</dd>
+                </div>
+            </dl>
+        </div>
+
+        {{else if eq .ActiveTab "password"}}
+        <div class="account-section-card">
+            <header class="account-section-card-header">
+                <h2 class="account-section-card-title">{{.T "memberPages.account.password.title"}}</h2>
+                <p class="account-section-card-help">{{.T "memberPages.account.password.help"}}</p>
+            </header>
+            <div class="account-section-actions">
+                <a href="{{.ChangePasswordURL}}" class="account-section-action" data-testid="account-change-password-link">
+                    {{.T "memberPages.account.password.changeLink"}}
+                    <span class="account-section-action-icon" aria-hidden="true">{{template "icon-arrow-right"}}</span>
+                </a>
+            </div>
+        </div>
+
+        {{else if eq .ActiveTab "sessions"}}
+        <div class="account-section-card">
+            <header class="account-section-card-header">
+                <h2 class="account-section-card-title">{{.T "memberPages.account.sessions.title"}}</h2>
+                <p class="account-section-card-help">{{.T "memberPages.account.sessions.help"}}</p>
+            </header>
+            <p class="account-section-empty-hint">{{.T "memberPages.account.sessions.empty"}}</p>
+        </div>
+        {{end}}
+    </section>
+</div>
+{{end}}

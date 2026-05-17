@@ -38,6 +38,10 @@ type PageData struct {
 // NewView creates the permission list view (full page).
 func NewView(deps *ListViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		if !view.GetUserPermissions(ctx).Can("permission", "list") {
+			return view.Forbidden("permission:list")
+		}
+
 		status := viewCtx.Request.PathValue("status")
 		if status == "" {
 			status = "active"
@@ -71,6 +75,10 @@ func NewView(deps *ListViewDeps) view.View {
 // NewTableView creates a view that returns only the table-card HTML.
 func NewTableView(deps *ListViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		if !view.GetUserPermissions(ctx).Can("permission", "list") {
+			return view.Forbidden("permission:list")
+		}
+
 		status := viewCtx.Request.PathValue("status")
 		if status == "" {
 			status = "active"
@@ -101,7 +109,7 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string) (*
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
-	bulkCfg.Actions = buildBulkActions(l, deps.SharedLabels, deps.CommonLabels, status, deps.Routes)
+	bulkCfg.Actions = buildBulkActions(l, deps.SharedLabels, deps.CommonLabels, status, deps.Routes, perms)
 
 	refreshURL := route.ResolveURL(deps.Routes.TableURL, "status", status)
 
@@ -130,7 +138,7 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string) (*
 			ActionURL:       deps.Routes.AddURL,
 			Icon:            "icon-plus",
 			Disabled:        !perms.Can("permission", "create"),
-			DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
+			DisabledTooltip: fmt.Sprintf(deps.CommonLabels.Errors.MissingPermission, "permission:create"),
 		},
 		BulkActions: &bulkCfg,
 	}
@@ -328,8 +336,11 @@ func statusVariant(status string) string {
 	}
 }
 
-func buildBulkActions(l entydad.PermissionLabels, sl entydad.SharedLabels, common pyeza.CommonLabels, status string, routes entydad.PermissionRoutes) []types.BulkAction {
+func buildBulkActions(l entydad.PermissionLabels, sl entydad.SharedLabels, common pyeza.CommonLabels, status string, routes entydad.PermissionRoutes, perms *types.UserPermissions) []types.BulkAction {
 	actions := []types.BulkAction{}
+
+	canUpdate := perms.Can("permission", "update")
+	canDelete := perms.Can("permission", "delete")
 
 	switch status {
 	case "active":
@@ -342,6 +353,8 @@ func buildBulkActions(l entydad.PermissionLabels, sl entydad.SharedLabels, commo
 			ConfirmTitle:    l.Actions.Deactivate,
 			ConfirmMessage:  sl.Confirm.BulkDeactivate,
 			ExtraParamsJSON: `{"target_status":"inactive"}`,
+			Disabled:        !canUpdate,
+			DisabledTooltip: fmt.Sprintf(common.Errors.MissingPermission, "permission:update"),
 		})
 	case "inactive":
 		actions = append(actions, types.BulkAction{
@@ -353,17 +366,21 @@ func buildBulkActions(l entydad.PermissionLabels, sl entydad.SharedLabels, commo
 			ConfirmTitle:    l.Actions.Activate,
 			ConfirmMessage:  sl.Confirm.BulkActivate,
 			ExtraParamsJSON: `{"target_status":"active"}`,
+			Disabled:        !canUpdate,
+			DisabledTooltip: fmt.Sprintf(common.Errors.MissingPermission, "permission:update"),
 		})
 	}
 
 	actions = append(actions, types.BulkAction{
-		Key:            "delete",
-		Label:          common.Bulk.Delete,
-		Icon:           "icon-trash-2",
-		Variant:        "danger",
-		Endpoint:       routes.BulkDeleteURL,
-		ConfirmTitle:   common.Bulk.Delete,
-		ConfirmMessage: sl.Confirm.BulkDelete,
+		Key:             "delete",
+		Label:           common.Bulk.Delete,
+		Icon:            "icon-trash-2",
+		Variant:         "danger",
+		Endpoint:        routes.BulkDeleteURL,
+		ConfirmTitle:    common.Bulk.Delete,
+		ConfirmMessage:  sl.Confirm.BulkDelete,
+		Disabled:        !canDelete,
+		DisabledTooltip: fmt.Sprintf(common.Errors.MissingPermission, "permission:delete"),
 	})
 
 	return actions

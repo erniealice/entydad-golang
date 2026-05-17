@@ -68,6 +68,10 @@ type PageData struct {
 // NewView creates the user detail view (full page).
 func NewView(deps *DetailViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		if !view.GetUserPermissions(ctx).Can("user", "read") {
+			return view.Forbidden("user:read")
+		}
+
 		id := viewCtx.Request.PathValue("id")
 
 		activeTab := viewCtx.Request.URL.Query().Get("tab")
@@ -98,6 +102,10 @@ func NewView(deps *DetailViewDeps) view.View {
 // Handles GET /action/users/{id}/tab/{tab}
 func NewTabAction(deps *DetailViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		if !view.GetUserPermissions(ctx).Can("user", "read") {
+			return view.Forbidden("user:read")
+		}
+
 		id := viewCtx.Request.PathValue("id")
 		tab := viewCtx.Request.PathValue("tab")
 		if tab == "" {
@@ -312,7 +320,7 @@ func buildRolesTable(ctx context.Context, deps *DetailViewDeps, userID string, p
 	}
 	if wuID == "" {
 		// No workspace user found, return empty table
-		return buildEmptyRolesTable(deps, userID), nil
+		return buildEmptyRolesTable(deps, userID, perms), nil
 	}
 
 	itemResp, err := deps.GetWorkspaceUserItemPageData(ctx, &workspaceuserpb.GetWorkspaceUserItemPageDataRequest{
@@ -320,7 +328,7 @@ func buildRolesTable(ctx context.Context, deps *DetailViewDeps, userID string, p
 	})
 	if err != nil {
 		log.Printf("Failed to get workspace user item page data: %v", err)
-		return buildEmptyRolesTable(deps, userID), nil
+		return buildEmptyRolesTable(deps, userID, perms), nil
 	}
 
 	workspaceUser := itemResp.GetWorkspaceUser()
@@ -358,7 +366,7 @@ func buildRolesTable(ctx context.Context, deps *DetailViewDeps, userID string, p
 				ItemName:       roleName,
 				ConfirmTitle:   l.Actions.Remove,
 				ConfirmMessage: fmt.Sprintf(deps.SharedLabels.Confirm.Remove, roleName),
-				Disabled:       !perms.Can("user", "update"), DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
+				Disabled:       !perms.Can("workspace_user_role", "delete"), DisabledTooltip: fmt.Sprintf(deps.CommonLabels.Errors.MissingPermission, "workspace_user_role:delete"),
 			},
 		}
 
@@ -405,8 +413,8 @@ func buildRolesTable(ctx context.Context, deps *DetailViewDeps, userID string, p
 			Label:           l.Buttons.AssignRole,
 			ActionURL:       route.ResolveURL(deps.Routes.DetailRolesAssignURL, "id", userID),
 			Icon:            "icon-plus",
-			Disabled:        !perms.Can("user", "update"),
-			DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
+			Disabled:        !perms.Can("workspace_user_role", "create"),
+			DisabledTooltip: fmt.Sprintf(deps.CommonLabels.Errors.MissingPermission, "workspace_user_role:create"),
 		},
 	}
 	types.ApplyTableSettings(tableConfig)
@@ -414,7 +422,7 @@ func buildRolesTable(ctx context.Context, deps *DetailViewDeps, userID string, p
 	return tableConfig, nil
 }
 
-func buildEmptyRolesTable(deps *DetailViewDeps, userID string) *types.TableConfig {
+func buildEmptyRolesTable(deps *DetailViewDeps, userID string, perms *types.UserPermissions) *types.TableConfig {
 	l := deps.UserRoleLabels
 	columns := []types.TableColumn{
 		{Key: "roleName", Label: l.Columns.RoleName},
@@ -444,9 +452,11 @@ func buildEmptyRolesTable(deps *DetailViewDeps, userID string) *types.TableConfi
 			Message: l.Empty.Message,
 		},
 		PrimaryAction: &types.PrimaryAction{
-			Label:     l.Buttons.AssignRole,
-			ActionURL: route.ResolveURL(deps.Routes.DetailRolesAssignURL, "id", userID),
-			Icon:      "icon-plus",
+			Label:           l.Buttons.AssignRole,
+			ActionURL:       route.ResolveURL(deps.Routes.DetailRolesAssignURL, "id", userID),
+			Icon:            "icon-plus",
+			Disabled:        !perms.Can("workspace_user_role", "create"),
+			DisabledTooltip: fmt.Sprintf(deps.CommonLabels.Errors.MissingPermission, "workspace_user_role:create"),
 		},
 	}
 	types.ApplyTableSettings(tableConfig)

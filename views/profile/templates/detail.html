@@ -1,0 +1,41 @@
+{{/* /app/profile — single-section page (no internal tabs). */}}
+{{define "profile-page"}}
+    {{template "app-shell" .}}
+{{end}}
+
+{{define "profile-page-content"}}
+{{- $fallback := .T "memberPages.fallback.noValue" -}}
+{{/* Update the global header bar via HTMX OOB swap so the title/subtitle
+     follows boosted navigation. The in-page <h1>/subtitle is deliberately
+     omitted — the header bar is the single source of truth. */}}
+{{template "header-oob" .}}
+<div class="account-page" data-account-area-page="profile" data-page-css="/assets/css/app/account-area.css?v={{.CacheVersion}}">
+    <section class="account-page-section">
+        <div class="account-section-card">
+            <header class="account-section-card-header">
+                <h2 class="account-section-card-title">{{.T "memberPages.profile.personalInfo.title"}}</h2>
+                <p class="account-section-card-help">{{.T "memberPages.profile.personalInfo.help"}}</p>
+            </header>
+
+            <dl class="account-section-fields">
+                <div class="account-section-field">
+                    <dt class="account-section-field-label">{{.T "memberPages.profile.field.firstName"}}</dt>
+                    <dd class="account-section-field-value">{{if .Sidebar.CurrentUser.FirstName}}{{.Sidebar.CurrentUser.FirstName}}{{else}}{{$fallback}}{{end}}</dd>
+                </div>
+                <div class="account-section-field">
+                    <dt class="account-section-field-label">{{.T "memberPages.profile.field.lastName"}}</dt>
+                    <dd class="account-section-field-value">{{if .Sidebar.CurrentUser.LastName}}{{.Sidebar.CurrentUser.LastName}}{{else}}{{$fallback}}{{end}}</dd>
+                </div>
+                <div class="account-section-field">
+                    <dt class="account-section-field-label">{{.T "memberPages.profile.field.email"}}</dt>
+                    <dd class="account-section-field-value">{{if .Sidebar.CurrentUser.Email}}{{.Sidebar.CurrentUser.Email}}{{else}}{{$fallback}}{{end}}</dd>
+                </div>
+            </dl>
+
+            <footer class="account-section-card-footer">
+                <p class="account-section-empty-hint">{{.T "memberPages.profile.editingComingSoon"}}</p>
+            </footer>
+        </div>
+    </section>
+</div>
+{{end}}

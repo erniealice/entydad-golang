@@ -38,6 +38,10 @@ type PageData struct {
 // NewView creates the workspace_user list view.
 func NewView(deps *ListViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		if !view.GetUserPermissions(ctx).Can("workspace_user", "list") {
+			return view.Forbidden("workspace_user:list")
+		}
+
 		status := viewCtx.Request.PathValue("status")
 		if status == "" {
 			status = "active"

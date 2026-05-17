@@ -45,6 +45,10 @@ var supplierSearchFields = []string{"name", "internal_id", "u.first_name", "u.la
 // NewView creates the supplier list view (full page).
 func NewView(deps *ListViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		if !view.GetUserPermissions(ctx).Can("supplier", "list") {
+			return view.Forbidden("supplier:list")
+		}
+
 		status := viewCtx.Request.PathValue("status")
 		if status == "" {
 			status = "active"
@@ -101,6 +105,10 @@ func NewView(deps *ListViewDeps) view.View {
 // is swapped (not the entire page content).
 func NewTableView(deps *ListViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		if !view.GetUserPermissions(ctx).Can("supplier", "list") {
+			return view.Forbidden("supplier:list")
+		}
+
 		status := viewCtx.Request.PathValue("status")
 		if status == "" {
 			status = "active"
@@ -187,7 +195,7 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, columns []types.T
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
-	bulkCfg.Actions = buildBulkActions(l, deps.SharedLabels, deps.CommonLabels, status, deps.Routes)
+	bulkCfg.Actions = buildBulkActions(l, deps.SharedLabels, deps.CommonLabels, status, deps.Routes, perms)
 
 	refreshURL := route.ResolveURL(deps.Routes.TableURL, "status", status)
 
@@ -216,7 +224,7 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, columns []types.T
 			ActionURL:       deps.Routes.AddURL,
 			Icon:            "icon-plus",
 			Disabled:        !perms.Can("supplier", "create"),
-			DisabledTooltip: deps.SharedLabels.Badges.NoPermission,
+			DisabledTooltip: fmt.Sprintf(deps.CommonLabels.Errors.MissingPermission, "supplier:create"),
 		}
 	}
 
@@ -524,8 +532,11 @@ func buildRowActions(id, name, status string, isInUse bool, l entydad.SupplierLa
 	return actions
 }
 
-func buildBulkActions(l entydad.SupplierLabels, sl entydad.SharedLabels, cl pyeza.CommonLabels, status string, routes entydad.SupplierRoutes) []types.BulkAction {
+func buildBulkActions(l entydad.SupplierLabels, sl entydad.SharedLabels, cl pyeza.CommonLabels, status string, routes entydad.SupplierRoutes, perms *types.UserPermissions) []types.BulkAction {
 	actions := []types.BulkAction{}
+
+	canUpdate := perms.Can("supplier", "update")
+	canDelete := perms.Can("supplier", "delete")
 
 	for _, tr := range supplierStatusTransitions {
 		if tr.target == status {
@@ -541,6 +552,8 @@ func buildBulkActions(l entydad.SupplierLabels, sl entydad.SharedLabels, cl pyez
 			ConfirmTitle:    bulkLabel,
 			ConfirmMessage:  confirmBulk,
 			ExtraParamsJSON: `{"target_status":"` + tr.target + `"}`,
+			Disabled:        !canUpdate,
+			DisabledTooltip: fmt.Sprintf(cl.Errors.MissingPermission, "supplier:update"),
 		})
 	}
 
@@ -553,6 +566,8 @@ func buildBulkActions(l entydad.SupplierLabels, sl entydad.SharedLabels, cl pyez
 		ConfirmTitle:     cl.Bulk.Delete,
 		ConfirmMessage:   sl.Confirm.BulkDelete,
 		RequiresDataAttr: "deletable",
+		Disabled:         !canDelete,
+		DisabledTooltip:  fmt.Sprintf(cl.Errors.MissingPermission, "supplier:delete"),
 	})
 
 	return actions

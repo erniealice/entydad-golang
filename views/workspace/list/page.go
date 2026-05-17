@@ -48,6 +48,10 @@ var workspaceSearchFields = []string{"name", "description"}
 // NewView creates the workspace list view (full page).
 func NewView(deps *ListViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		if !view.GetUserPermissions(ctx).Can("workspace", "list") {
+			return view.Forbidden("workspace:list")
+		}
+
 		status := viewCtx.Request.PathValue("status")
 		if status == "" {
 			status = "active"
@@ -102,6 +106,10 @@ func NewView(deps *ListViewDeps) view.View {
 // NewTableView creates a view that returns only the table-card HTML.
 func NewTableView(deps *ListViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		if !view.GetUserPermissions(ctx).Can("workspace", "list") {
+			return view.Forbidden("workspace:list")
+		}
+
 		status := viewCtx.Request.PathValue("status")
 		if status == "" {
 			status = "active"
@@ -156,7 +164,7 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, columns []types.T
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
-	bulkCfg.Actions = buildBulkActions(l, deps.SharedLabels, deps.CommonLabels, status, deps.Routes)
+	bulkCfg.Actions = buildBulkActions(l, deps.SharedLabels, deps.CommonLabels, status, deps.Routes, perms)
 
 	refreshURL := route.ResolveURL(deps.Routes.TableURL, "status", status)
 
@@ -352,8 +360,11 @@ func statusVariant(status string) string {
 	}
 }
 
-func buildBulkActions(l entydad.WorkspaceLabels, sl entydad.SharedLabels, common pyeza.CommonLabels, status string, routes entydad.WorkspaceRoutes) []types.BulkAction {
+func buildBulkActions(l entydad.WorkspaceLabels, sl entydad.SharedLabels, common pyeza.CommonLabels, status string, routes entydad.WorkspaceRoutes, perms *types.UserPermissions) []types.BulkAction {
 	actions := []types.BulkAction{}
+
+	canUpdate := perms.Can("workspace", "update")
+	canDelete := perms.Can("workspace", "delete")
 
 	switch status {
 	case "active":
@@ -366,6 +377,8 @@ func buildBulkActions(l entydad.WorkspaceLabels, sl entydad.SharedLabels, common
 			ConfirmTitle:    l.Actions.Deactivate,
 			ConfirmMessage:  sl.Confirm.BulkDeactivate,
 			ExtraParamsJSON: `{"target_status":"inactive"}`,
+			Disabled:        !canUpdate,
+			DisabledTooltip: fmt.Sprintf(common.Errors.MissingPermission, "workspace:update"),
 		})
 	case "inactive":
 		actions = append(actions, types.BulkAction{
@@ -377,17 +390,21 @@ func buildBulkActions(l entydad.WorkspaceLabels, sl entydad.SharedLabels, common
 			ConfirmTitle:    l.Actions.Activate,
 			ConfirmMessage:  sl.Confirm.BulkActivate,
 			ExtraParamsJSON: `{"target_status":"active"}`,
+			Disabled:        !canUpdate,
+			DisabledTooltip: fmt.Sprintf(common.Errors.MissingPermission, "workspace:update"),
 		})
 	}
 
 	actions = append(actions, types.BulkAction{
-		Key:            "delete",
-		Label:          common.Bulk.Delete,
-		Icon:           "icon-trash-2",
-		Variant:        "danger",
-		Endpoint:       routes.BulkDeleteURL,
-		ConfirmTitle:   common.Bulk.Delete,
-		ConfirmMessage: sl.Confirm.BulkDelete,
+		Key:             "delete",
+		Label:           common.Bulk.Delete,
+		Icon:            "icon-trash-2",
+		Variant:         "danger",
+		Endpoint:        routes.BulkDeleteURL,
+		ConfirmTitle:    common.Bulk.Delete,
+		ConfirmMessage:  sl.Confirm.BulkDelete,
+		Disabled:        !canDelete,
+		DisabledTooltip: fmt.Sprintf(common.Errors.MissingPermission, "workspace:delete"),
 	})
 
 	return actions
