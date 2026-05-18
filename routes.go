@@ -174,6 +174,10 @@ const (
 	// Supplier statement export
 	SupplierStatementExportURL = "/action/supplier/{id}/statement/export"
 
+	// Plan A 20260517-expense-run — Surface A per-supplier drawer URL.
+	// "Run Recognitions" CTA on the Statement tab opens this drawer.
+	SupplierExpenseRecognitionRunURL = "/action/supplier/expense-recognition-run/{id}"
+
 	// Supplier report routes
 	PayablesAgingURL = "/app/suppliers/reports/payables-aging"
 

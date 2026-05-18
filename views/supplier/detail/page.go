@@ -111,6 +111,10 @@ type PageData struct {
 	StatementSummary        *suppstmtpb.SupplierStatementSummary
 	StatementSummaryDisplay *StatementSummaryDisplay
 	StatementTable          *types.TableConfig
+	// ExpenseRecognitionRunURL is the resolved Surface-A drawer URL for the
+	// Statement-tab "Run Recognitions" PrimaryAction. Empty hides the CTA.
+	// Plan A 20260517-expense-run Surface A.
+	ExpenseRecognitionRunURL string
 	// Tags
 	Tags []TagChip
 }
@@ -419,7 +423,7 @@ func buildPageData(supplier *supplierpb.Supplier, id, activeTab string, viewCtx 
 
 	tabItems := buildTabItems(id, deps)
 
-	return &PageData{
+	pd := &PageData{
 		PageData: types.PageData{
 			CacheVersion:   viewCtx.CacheVersion,
 			Title:          displayName,
@@ -462,6 +466,10 @@ func buildPageData(supplier *supplierpb.Supplier, id, activeTab string, viewCtx 
 		HasAddress:         hasAddress,
 		HasNotes:           hasNotes,
 	}
+	if deps.Routes.ExpenseRecognitionRunURL != "" {
+		pd.ExpenseRecognitionRunURL = route.ResolveURL(deps.Routes.ExpenseRecognitionRunURL, "id", id)
+	}
+	return pd
 }
 
 func buildTabItems(id string, deps *DetailViewDeps) []pyeza.TabItem {

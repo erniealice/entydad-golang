@@ -35,6 +35,10 @@ type RevenueRunDrawerData struct {
 	SubscriptionCount int
 	// SubscriptionGroups holds per-subscription candidate groups.
 	SubscriptionGroups []RevenueRunGroup
+	// AdvanceCollectionRows holds advance-Collection tranche rows. Rendered as
+	// a separate source-kind section below the subscription groups. Plan B
+	// Phase 5b.
+	AdvanceCollectionRows []RevenueRunAdvanceRow
 	// TotalsByCurrency holds per-currency totals across all eligible periods,
 	// keyed by currency code.
 	TotalsByCurrency map[string]int64
@@ -42,6 +46,34 @@ type RevenueRunDrawerData struct {
 	Labels entydad.ClientRevenueRunLabels
 	// CommonLabels carries shared UI strings (Save / Cancel / etc.).
 	CommonLabels pyeza.CommonLabels
+}
+
+// RevenueRunAdvanceRow is one advance-Collection tranche row rendered in the
+// drawer's "Advance Collections" section. Plan B Phase 5b.
+type RevenueRunAdvanceRow struct {
+	// AdvanceCollectionID is the treasury_collection.id.
+	AdvanceCollectionID string
+	// Currency is the advance's ISO currency code.
+	Currency string
+	// PeriodStart / PeriodEnd describe the next-due tranche window.
+	PeriodStart string
+	PeriodEnd   string
+	// PeriodMarker is the canonical idempotency anchor (notes-first-line shape).
+	PeriodMarker string
+	// PeriodLabel is the human-readable range.
+	PeriodLabel string
+	// Amount is the tranche amount in centavos.
+	Amount int64
+	// AmountDisplay is the pre-formatted display string (÷100).
+	AmountDisplay string
+	// Eligible indicates the tranche can be recognized.
+	Eligible bool
+	// BlockerReason is the explanation when Eligible=false
+	// (e.g. "already_recognized").
+	BlockerReason string
+	// SelectionValue is the composite checkbox value encoding:
+	// "{AdvanceCollectionID}|{PeriodStart}|{PeriodEnd}|{PeriodMarker}|ADVANCE_COLLECTION"
+	SelectionValue string
 }
 
 // RevenueRunGroup is one subscription's candidate group rendered as a
@@ -95,4 +127,9 @@ type RevenueRunPeriod struct {
 	// SelectionValue is the composite checkbox value encoding:
 	// "{SubscriptionID}|{PeriodStart}|{PeriodEnd}|{PeriodMarker}"
 	SelectionValue string
+	// SuppressingAdvanceCollectionID is set when this subscription cycle is
+	// overlapped by a TIME_BASED advance Collection (Decision A). The drawer
+	// renders the row as a greyed info-only block with a "View advance" link.
+	// Plan B Phase 5b.
+	SuppressingAdvanceCollectionID string
 }

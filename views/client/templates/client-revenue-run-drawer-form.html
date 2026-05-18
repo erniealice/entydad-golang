@@ -177,7 +177,7 @@ the as_of_date changes.
     id="revenue-run-candidates"
     data-testid="revenue-run-candidates-container"
 >
-    {{if not .SubscriptionGroups}}
+    {{if and (not .SubscriptionGroups) (not .AdvanceCollectionRows)}}
         {{template "empty-state" (dict
             "Icon"  "icon-file-text"
             "Title" .Labels.EmptyTitle
@@ -247,8 +247,9 @@ the as_of_date changes.
                     <tbody>
                         {{range .Periods}}
                         <tr
-                            class="revenue-run-period-row{{if not .Eligible}} revenue-run-period-row--blocked{{end}}"
+                            class="revenue-run-period-row{{if not .Eligible}} revenue-run-period-row--blocked{{end}}{{if .SuppressingAdvanceCollectionID}} revenue-run-period-row--suppressed{{end}}"
                             data-testid="revenue-run-period-row"
+                            {{if .SuppressingAdvanceCollectionID}}data-suppressing-advance="{{.SuppressingAdvanceCollectionID}}"{{end}}
                             {{if .BlockerReason}}title="{{.BlockerReason}}"{{end}}
                         >
                             <td class="col-checkbox">
@@ -263,7 +264,16 @@ the as_of_date changes.
                                 >
                             </td>
                             <td>{{if $group.SubscriptionName}}{{$group.SubscriptionName}}{{else}}{{.SubscriptionID}}{{end}}</td>
-                            <td data-testid="revenue-run-period-label">{{.PeriodLabel}}</td>
+                            <td data-testid="revenue-run-period-label">
+                                {{.PeriodLabel}}
+                                {{if .SuppressingAdvanceCollectionID}}
+                                <a
+                                    class="revenue-run-period-link"
+                                    href="/app/cash/collections/detail/{{.SuppressingAdvanceCollectionID}}"
+                                    data-testid="revenue-run-period-view-advance"
+                                >View advance</a>
+                                {{end}}
+                            </td>
                             <td class="cell-right" data-testid="revenue-run-period-amount">
                                 <span class="money-cell">
                                     <span class="money-currency">{{$group.Currency}}</span>
@@ -276,6 +286,64 @@ the as_of_date changes.
                     </tbody>
                 </table>
                 {{end}}
+            </div>
+        </details>
+        {{end}}
+
+        {{if .AdvanceCollectionRows}}
+        {{/* Plan B Phase 5b — advance-Collection tranche section. */}}
+        <details
+            class="revenue-run-group pyeza-accordion pyeza-accordion--chevron-right"
+            open
+            data-source-kind="ADVANCE_COLLECTION"
+            data-testid="revenue-run-group-advance-collection"
+        >
+            <summary class="pyeza-accordion__header revenue-run-group__header">
+                <span class="pyeza-accordion__chevron" aria-hidden="true"></span>
+                <strong>Advance Collections</strong>
+            </summary>
+            <div class="pyeza-accordion__body revenue-run-group__body">
+                <table class="data-table data-table--compact revenue-run-advances-table"
+                    data-testid="revenue-run-advances-table">
+                    <thead>
+                        <tr>
+                            <th class="col-checkbox" aria-label="{{.Labels.ColumnSelectAriaLabel}}"></th>
+                            <th>Advance</th>
+                            <th>{{.Labels.ColumnPeriod}}</th>
+                            <th class="cell-right">{{.Labels.ColumnAmount}}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .AdvanceCollectionRows}}
+                        <tr
+                            class="revenue-run-advance-row{{if not .Eligible}} revenue-run-advance-row--blocked{{end}}"
+                            data-testid="revenue-run-advance-row"
+                            data-advance-collection-id="{{.AdvanceCollectionID}}"
+                            {{if .BlockerReason}}title="{{.BlockerReason}}"{{end}}
+                        >
+                            <td class="col-checkbox">
+                                <input
+                                    type="checkbox"
+                                    name="selection"
+                                    value="{{.SelectionValue}}"
+                                    {{if not .Eligible}}disabled{{end}}
+                                    {{if .Eligible}}checked{{end}}
+                                    data-testid="revenue-run-advance-checkbox"
+                                    aria-label="{{.PeriodLabel}}"
+                                >
+                            </td>
+                            <td>{{.AdvanceCollectionID}}</td>
+                            <td data-testid="revenue-run-advance-label">{{.PeriodLabel}}</td>
+                            <td class="cell-right" data-testid="revenue-run-advance-amount">
+                                <span class="money-cell">
+                                    {{if .Currency}}<span class="money-currency">{{.Currency}}</span>{{end}}
+                                    <span class="money-amount">{{.AmountDisplay}}</span>
+                                </span>
+                            </td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
             </div>
         </details>
         {{end}}

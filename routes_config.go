@@ -727,6 +727,10 @@ type SupplierRoutes struct {
 
 	// Settings routes
 	PaymentTermsURL string `json:"payment_terms_url"`
+
+	// Plan A 20260517-expense-run — Surface A per-supplier drawer URL.
+	// "Run Recognitions" CTA on the Statement tab opens this drawer.
+	ExpenseRecognitionRunURL string `json:"expense_recognition_run_url"`
 }
 
 // DefaultSupplierRoutes returns a SupplierRoutes populated from the
@@ -753,6 +757,8 @@ func DefaultSupplierRoutes() SupplierRoutes {
 		PayablesAgingURL: PayablesAgingURL,
 
 		PaymentTermsURL: SupplierPaymentTermListURL,
+
+		ExpenseRecognitionRunURL: SupplierExpenseRecognitionRunURL,
 	}
 }
 
@@ -779,6 +785,8 @@ func (r SupplierRoutes) RouteMap() map[string]string {
 		"supplier.payables_aging": r.PayablesAgingURL,
 
 		"supplier.payment_terms": r.PaymentTermsURL,
+
+		"supplier.expense_recognition_run": r.ExpenseRecognitionRunURL,
 	}
 }
 

@@ -474,6 +474,7 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 				listCandidates := uc.Revenue.ListRevenueRunCandidates
 				generateRun := uc.Revenue.GenerateRevenueRun
 				clientDeps.ListRevenueRunCandidates = func(fctx context.Context, scope clientdetail.RevenueRunScope) ([]clientdetail.RevenueRunCandidate, string, error) {
+					// Plan B Phase 5c — opt-in to advance Collection candidates by default.
 					resp, err := listCandidates(fctx, &revrunpb.ListRevenueRunCandidatesRequest{
 						Scope: &revrunpb.RevenueRunScope{
 							WorkspaceId:    proto.String(scope.WorkspaceID),
@@ -481,6 +482,7 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 							SubscriptionId: proto.String(scope.SubscriptionID),
 							AsOfDate:       proto.String(scope.AsOfDate),
 						},
+						IncludeAdvanceCollections: proto.Bool(true),
 					})
 					if err != nil || resp == nil {
 						return nil, "", err
@@ -489,22 +491,25 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 					for _, c := range resp.GetData() {
 						amtDisplay := fmt.Sprintf("%.2f", float64(c.GetAmount())/100)
 						out = append(out, clientdetail.RevenueRunCandidate{
-							SubscriptionID:    c.GetSubscriptionId(),
-							SubscriptionName:  c.GetSubscriptionName(),
-							ClientID:          c.GetClientId(),
-							ClientName:        c.GetClientName(),
-							PlanName:          c.GetPlanName(),
-							BillingCycleLabel: c.GetBillingCycleLabel(),
-							Currency:          c.GetCurrency(),
-							PeriodStart:       c.GetPeriodStart(),
-							PeriodEnd:         c.GetPeriodEnd(),
-							PeriodLabel:       c.GetPeriodLabel(),
-							PeriodMarker:      c.GetPeriodMarker(),
-							Amount:            c.GetAmount(),
-							AmountDisplay:     amtDisplay,
-							LineItemCount:     int(c.GetLineItemCount()),
-							Eligible:          c.GetEligible(),
-							BlockerReason:     c.GetBlockerReason(),
+							SubscriptionID:                 c.GetSubscriptionId(),
+							SubscriptionName:               c.GetSubscriptionName(),
+							ClientID:                       c.GetClientId(),
+							ClientName:                     c.GetClientName(),
+							PlanName:                       c.GetPlanName(),
+							BillingCycleLabel:              c.GetBillingCycleLabel(),
+							Currency:                       c.GetCurrency(),
+							PeriodStart:                    c.GetPeriodStart(),
+							PeriodEnd:                      c.GetPeriodEnd(),
+							PeriodLabel:                    c.GetPeriodLabel(),
+							PeriodMarker:                   c.GetPeriodMarker(),
+							Amount:                         c.GetAmount(),
+							AmountDisplay:                  amtDisplay,
+							LineItemCount:                  int(c.GetLineItemCount()),
+							Eligible:                       c.GetEligible(),
+							BlockerReason:                  c.GetBlockerReason(),
+							SourceKind:                     c.GetSourceKind().String(),
+							AdvanceCollectionID:            c.GetAdvanceCollectionId(),
+							SuppressingAdvanceCollectionID: c.GetSuppressingAdvanceCollectionId(),
 						})
 					}
 					return out, resp.GetNextCursor(), nil
@@ -515,12 +520,20 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 						FilterToken: proto.String(selections.FilterToken),
 					}
 					for _, s := range selections.ExplicitList {
-						protoSelections.ExplicitList = append(protoSelections.ExplicitList, &revrunpb.SelectedRevenueRunCandidate{
+						protoSel := &revrunpb.SelectedRevenueRunCandidate{
 							SubscriptionId: s.SubscriptionID,
 							PeriodStart:    s.PeriodStart,
 							PeriodEnd:      s.PeriodEnd,
 							PeriodMarker:   s.PeriodMarker,
-						})
+						}
+						// Plan B Phase 5c — dispatch on source_kind.
+						if s.SourceKind == "REVENUE_RUN_SOURCE_KIND_ADVANCE_COLLECTION" || s.SourceKind == "ADVANCE_COLLECTION" {
+							protoSel.SourceKind = revrunpb.RevenueRunSourceKind_REVENUE_RUN_SOURCE_KIND_ADVANCE_COLLECTION
+							if s.AdvanceCollectionID != "" {
+								protoSel.AdvanceCollectionId = proto.String(s.AdvanceCollectionID)
+							}
+						}
+						protoSelections.ExplicitList = append(protoSelections.ExplicitList, protoSel)
 					}
 					resp, err := generateRun(fctx, &revrunpb.GenerateRevenueRunRequest{
 						Scope: &revrunpb.RevenueRunScope{

@@ -58,7 +58,23 @@
 
 {{/* Supplier Statement Tab */}}
 {{define "supplier-tab-statement"}}
-<div class="tab-scroll tab-scroll--table">
+<div class="tab-scroll tab-scroll--table" data-testid="supplier-statement-tab">
+    {{/* Plan A Surface A — "Run Recognitions" PrimaryAction. Opens the
+         per-supplier expense-recognition-run drawer via HTMX into the sheet. */}}
+    {{if .ExpenseRecognitionRunURL}}
+    <div class="tab-header-actions">
+        <button type="button"
+                class="btn btn--primary"
+                data-testid="run-recognitions-button"
+                hx-get="{{.ExpenseRecognitionRunURL}}"
+                hx-target="#sheetContent"
+                hx-swap="innerHTML"
+                onclick="lf.Sheet.open()">
+            {{template "icon-zap"}}
+            Run Recognitions
+        </button>
+    </div>
+    {{end}}
     {{if .StatementSummary}}
     <div class="statement-summary-row" data-testid="statement-summary">
         <div class="statement-stat-card statement-stat-card--highlight" data-testid="stat-outstanding-balance">

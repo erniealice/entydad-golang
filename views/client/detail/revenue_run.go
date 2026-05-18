@@ -54,6 +54,17 @@ type RevenueRunCandidate struct {
 	LineItemCount     int
 	Eligible          bool
 	BlockerReason     string
+	// SourceKind discriminates "SUBSCRIPTION_CYCLE" vs "ADVANCE_COLLECTION"
+	// origin. Empty / "REVENUE_RUN_SOURCE_KIND_UNSPECIFIED" means subscription
+	// cycle (back-compat default). Plan B Phase 5b.
+	SourceKind string
+	// AdvanceCollectionID is set when SourceKind == ADVANCE_COLLECTION.
+	AdvanceCollectionID string
+	// SuppressingAdvanceCollectionID is set when SourceKind is subscription
+	// AND a TIME_BASED advance Collection overlaps this period for the same
+	// client. The drawer renders the row as a greyed info-only blocker with
+	// a "View advance" link.
+	SuppressingAdvanceCollectionID string
 }
 
 // SelectedRevenueRunCandidate is one confirmed selection.
@@ -62,6 +73,12 @@ type SelectedRevenueRunCandidate struct {
 	PeriodStart    string
 	PeriodEnd      string
 	PeriodMarker   string
+	// SourceKind discriminates dispatcher branch. Empty / "" defaults to
+	// SUBSCRIPTION_CYCLE for back-compat. "ADVANCE_COLLECTION" routes through
+	// Plan B's AmortizeAdvanceCollection.
+	SourceKind string
+	// AdvanceCollectionID is required when SourceKind == ADVANCE_COLLECTION.
+	AdvanceCollectionID string
 }
 
 // RevenueRunSelections carries either an explicit list or a filter token.
@@ -201,15 +218,25 @@ func submitRevenueRun(
 	var selections RevenueRunSelections
 	for _, raw := range rawSelections {
 		parts := strings.Split(raw, "|")
-		if len(parts) != 4 {
+		// Selection value formats (Plan B Phase 5b):
+		//   - SUBSCRIPTION_CYCLE: "{sub_id}|{start}|{end}|{marker}"  (4 parts)
+		//   - ADVANCE_COLLECTION: "{advance_id}|{start}|{end}|{marker}|ADVANCE_COLLECTION"
+		//                         (5 parts; subscription_id empty)
+		if len(parts) < 4 {
 			continue
 		}
-		selections.ExplicitList = append(selections.ExplicitList, SelectedRevenueRunCandidate{
-			SubscriptionID: parts[0],
-			PeriodStart:    parts[1],
-			PeriodEnd:      parts[2],
-			PeriodMarker:   parts[3],
-		})
+		sel := SelectedRevenueRunCandidate{
+			PeriodStart:  parts[1],
+			PeriodEnd:    parts[2],
+			PeriodMarker: parts[3],
+		}
+		if len(parts) >= 5 && parts[4] == "ADVANCE_COLLECTION" {
+			sel.SourceKind = "ADVANCE_COLLECTION"
+			sel.AdvanceCollectionID = parts[0]
+		} else {
+			sel.SubscriptionID = parts[0]
+		}
+		selections.ExplicitList = append(selections.ExplicitList, sel)
 	}
 	if len(selections.ExplicitList) == 0 {
 		return entydad.HTMXError(l.Errors.SelectOne)
@@ -279,6 +306,11 @@ func toastStateFromResult(r *RevenueRunResult) string {
 
 // buildRevenueRunDrawerData constructs the template-facing data from the raw
 // candidate slice.
+//
+// Plan B Phase 5b: candidates may be either subscription-cycle or
+// advance-Collection rows (discriminated by c.SourceKind). The builder emits
+// subscription cycles into per-subscription accordion groups and advance
+// tranches into a separate flat list.
 func buildRevenueRunDrawerData(
 	candidates []RevenueRunCandidate,
 	clientID, clientName, clientCurrency string,
@@ -290,8 +322,31 @@ func buildRevenueRunDrawerData(
 	// Group candidates by SubscriptionID, maintaining insertion order.
 	groupOrder := make([]string, 0)
 	groupMap := make(map[string]*detailform.RevenueRunGroup)
+	advanceRows := make([]detailform.RevenueRunAdvanceRow, 0)
 
 	for _, c := range candidates {
+		// Branch on source-kind. The string "ADVANCE_COLLECTION" matches both
+		// the proto enum name's tail and any abbreviated form the block shim
+		// might emit.
+		if c.SourceKind == "REVENUE_RUN_SOURCE_KIND_ADVANCE_COLLECTION" || c.SourceKind == "ADVANCE_COLLECTION" {
+			advID := c.AdvanceCollectionID
+			advanceRows = append(advanceRows, detailform.RevenueRunAdvanceRow{
+				AdvanceCollectionID: advID,
+				Currency:            c.Currency,
+				PeriodStart:         c.PeriodStart,
+				PeriodEnd:           c.PeriodEnd,
+				PeriodMarker:        c.PeriodMarker,
+				PeriodLabel:         c.PeriodLabel,
+				Amount:              c.Amount,
+				AmountDisplay:       c.AmountDisplay,
+				Eligible:            c.Eligible,
+				BlockerReason:       c.BlockerReason,
+				SelectionValue: fmt.Sprintf("%s|%s|%s|%s|ADVANCE_COLLECTION",
+					advID, c.PeriodStart, c.PeriodEnd, c.PeriodMarker),
+			})
+			continue
+		}
+
 		if _, exists := groupMap[c.SubscriptionID]; !exists {
 			groupOrder = append(groupOrder, c.SubscriptionID)
 			g := &detailform.RevenueRunGroup{
@@ -319,6 +374,7 @@ func buildRevenueRunDrawerData(
 			BlockerReason:  c.BlockerReason,
 			SelectionValue: fmt.Sprintf("%s|%s|%s|%s",
 				c.SubscriptionID, c.PeriodStart, c.PeriodEnd, c.PeriodMarker),
+			SuppressingAdvanceCollectionID: c.SuppressingAdvanceCollectionID,
 		}
 		g.Periods = append(g.Periods, period)
 
@@ -346,22 +402,31 @@ func buildRevenueRunDrawerData(
 		groups = append(groups, *g)
 	}
 
+	// Tally advance-row eligibility + currency totals alongside cycles.
+	for _, a := range advanceRows {
+		if a.Eligible {
+			eligibleCount++
+			totalsByCurrency[a.Currency] += a.Amount
+		}
+	}
+
 	subtitle := buildSubtitle(l.SubtitleTemplate, eligibleCount, len(groups))
 
 	return &detailform.RevenueRunDrawerData{
-		FormAction:         formAction,
-		FragmentURL:        fragmentURL,
-		ClientID:           clientID,
-		ClientName:         clientName,
-		AsOfDate:           asOfDate,
-		MaxAsOfDate:        maxAsOfDate,
-		Subtitle:           subtitle,
-		EligibleCount:      eligibleCount,
-		SubscriptionCount:  len(groups),
-		SubscriptionGroups: groups,
-		TotalsByCurrency:   totalsByCurrency,
-		Labels:             l,
-		CommonLabels:       commonLabels,
+		FormAction:            formAction,
+		FragmentURL:           fragmentURL,
+		ClientID:              clientID,
+		ClientName:            clientName,
+		AsOfDate:              asOfDate,
+		MaxAsOfDate:           maxAsOfDate,
+		Subtitle:              subtitle,
+		EligibleCount:         eligibleCount,
+		SubscriptionCount:     len(groups),
+		SubscriptionGroups:    groups,
+		AdvanceCollectionRows: advanceRows,
+		TotalsByCurrency:      totalsByCurrency,
+		Labels:                l,
+		CommonLabels:          commonLabels,
 	}
 }
 
