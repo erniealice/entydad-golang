@@ -31,6 +31,7 @@ import (
 	purchaseorderpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/expenditure/purchase_order"
 	revenuepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/revenue/revenue"
 	revrunpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/revenue/revenue_run"
+	stmtspb "github.com/erniealice/esqyma/pkg/schema/v1/service/reporting/statements"
 	priceplanpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/price_plan"
 	priceschedulepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/price_schedule"
 	subscriptionpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/subscription"
@@ -76,11 +77,48 @@ type UseCases struct {
 	PurchaseOrder     PurchaseOrderUseCases
 	TaxRegistration   TaxRegistrationUseCases
 
+	// Reports — service-driven report use case closures consumed by the
+	// client/supplier detail + list views. Wave B P1.E.4 (statements).
+	Reports ReportsUseCases
+
 	// Dashboard closures — view-layer typed; service-admin builds these
 	// by calling the espyna use cases and mapping their internal response
 	// types to entydad's view types.
 	GetLocationDashboardPageData func(ctx context.Context) (*locationdashboard.LocationDashboardData, error)
 	GetAdminDashboardPageData    func(ctx context.Context) (*admindashboard.AdminDashboardData, error)
+}
+
+// ReportsUseCases aggregates the service-driven report use case closures
+// the entydad views need. Wave B P1.E.4 — statements + balances migrated
+// out of `ctx.LedgerReportingSvc` / `entydad/block.LedgerReportingService`
+// (the duck interface returning maps) into the proto-shaped service layer.
+type ReportsUseCases struct {
+	Statements StatementsUseCases
+}
+
+// StatementsUseCases — service-driven counterparty statement + balance
+// closures consumed by client/supplier detail/list views. Migrated
+// 2026-05-21 (Wave B P1.E.4) out of `entydad/block.LedgerReportingService`.
+//
+// **Map shim:** the view layer historically accepted
+// `map[string]int64` (counterparty_id → centavo balance) for
+// GetClientBalances/GetSupplierBalances. The new service-driven use cases
+// return `[]*BalanceRow` (typed proto rows) per Q-SDM-MAP-SHAPES. The
+// `ListClient/SupplierBalancesAsMap` closures expose the legacy shape so
+// the view files keep their map-based table cell lookup unchanged; the
+// typed pivots are also surfaced for any future migration.
+type StatementsUseCases struct {
+	GetClientStatement   func(context.Context, *stmtspb.GetClientStatementRequest) (*stmtspb.GetClientStatementResponse, error)
+	GetSupplierStatement func(context.Context, *stmtspb.GetSupplierStatementRequest) (*stmtspb.GetSupplierStatementResponse, error)
+	ListClientBalances   func(context.Context, *stmtspb.ListClientBalancesRequest) (*stmtspb.ListClientBalancesResponse, error)
+	ListSupplierBalances func(context.Context, *stmtspb.ListSupplierBalancesRequest) (*stmtspb.ListSupplierBalancesResponse, error)
+	// Map-returning shims for backwards compatibility with the entydad
+	// client/supplier list views, which still consume the legacy
+	// `map[string]int64` shape directly into their per-row TableCell
+	// lookups. Service-admin's adapter wires these on top of
+	// ListClient/SupplierBalances by converting `[]*BalanceRow` to the map.
+	ListClientBalancesAsMap   func(context.Context) (map[string]int64, error)
+	ListSupplierBalancesAsMap func(context.Context) (map[string]int64, error)
 }
 
 // ClientUseCases — direct CRUD on the Client entity + nested ClientCategory ops.

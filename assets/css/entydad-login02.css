@@ -300,6 +300,104 @@
     color: var(--text-secondary);
 }
 
+/* Multi-Principal Chooser (auth/choose-principal) */
+.auth-principal-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    list-style: none;
+    padding: 0;
+    margin: var(--spacing-lg) 0 0;
+}
+
+.auth-principal-card {
+    list-style: none;
+}
+
+.auth-principal-form {
+    margin: 0;
+}
+
+.auth-principal-button {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    width: 100%;
+    padding: var(--spacing-md) var(--spacing-xl);
+    background: var(--bg-card, var(--bg-base));
+    color: var(--text-primary);
+    border: var(--border-width) solid var(--border);
+    border-radius: var(--radius-md, 0.5rem);
+    font-family: inherit;
+    font-size: var(--text-base);
+    text-align: left;
+    cursor: pointer;
+    transition: background var(--transition-base), border-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+.auth-principal-button:hover {
+    background: var(--bg-hover, var(--bg-card));
+    border-color: var(--accent-primary);
+    box-shadow: var(--shadow-sm);
+}
+
+.auth-principal-button:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+}
+
+.auth-principal-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: var(--icon-lg, 2.5rem);
+    height: var(--icon-lg, 2.5rem);
+    color: var(--accent-primary);
+}
+
+.auth-principal-icon svg {
+    width: var(--icon-md, 1.5rem);
+    height: var(--icon-md, 1.5rem);
+}
+
+.auth-principal-text {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2xs);
+    min-width: 0;
+    flex: 1;
+}
+
+.auth-principal-name {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+    line-height: 1.3;
+}
+
+.auth-principal-subtitle {
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-regular, 400);
+    color: var(--text-secondary);
+    line-height: 1.3;
+}
+
+.auth-empty-state {
+    margin: var(--spacing-lg) 0;
+    padding: var(--spacing-lg);
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: var(--text-md);
+    background: var(--bg-card, var(--bg-base));
+    border: var(--border-width) dashed var(--border);
+    border-radius: var(--radius-md, 0.5rem);
+}
+
+.auth-form-footer--spaced {
+    margin-top: var(--spacing-2xl);
+}
+
 /* Responsive */
 @media (max-width: 1023px) {
     .auth-form-section {

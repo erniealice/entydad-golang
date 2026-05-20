@@ -243,8 +243,34 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 		hashPassword, _ := ctx.HashPassword.(func(password string) (string, error))
 		getUserWorkspacesMap, _ := ctx.GetUserWorkspacesMap.(func(ctx context.Context) (map[string][]pyezatypes.ChipData, error))
 
-		// type-assert ledger reporting service (nil-safe)
-		ledgerReportingSvc, _ := ctx.LedgerReportingSvc.(LedgerReportingService)
+		// 20260521 Wave B P1.E.4 — statements/balances now flow through
+		// the typed `uc.Reports.Statements.*` closures (service-driven).
+		// The legacy `ctx.LedgerReportingSvc` assertion is removed; the
+		// duck interface is no longer asserted by entydad. See the
+		// statement* helper shims below.
+		statements := uc.Reports.Statements
+		var getClientStatement func(ctx context.Context, req *clientstmtpb.ClientStatementRequest) (*clientstmtpb.ClientStatementResponse, error)
+		if statements.GetClientStatement != nil {
+			getClientStatement = func(fctx context.Context, req *clientstmtpb.ClientStatementRequest) (*clientstmtpb.ClientStatementResponse, error) {
+				resp, err := statements.GetClientStatement(fctx, translateClientStatementReq(req))
+				if err != nil {
+					return nil, err
+				}
+				return translateClientStatementResp(resp), nil
+			}
+		}
+		var getSupplierStatement func(ctx context.Context, req *suppstmtpb.SupplierStatementRequest) (*suppstmtpb.SupplierStatementResponse, error)
+		if statements.GetSupplierStatement != nil {
+			getSupplierStatement = func(fctx context.Context, req *suppstmtpb.SupplierStatementRequest) (*suppstmtpb.SupplierStatementResponse, error) {
+				resp, err := statements.GetSupplierStatement(fctx, translateSupplierStatementReq(req))
+				if err != nil {
+					return nil, err
+				}
+				return translateSupplierStatementResp(resp), nil
+			}
+		}
+		getClientBalances := statements.ListClientBalancesAsMap
+		getSupplierBalances := statements.ListSupplierBalancesAsMap
 
 		// --- load labels from lyngua ---
 		labels := loadBlockLabels(translations, ctx.BusinessType)
@@ -304,13 +330,8 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 					}
 					return opts, nil
 				},
-				ListRevenues: db.ListSimple,
-				GetClientStatement: func(fctx context.Context, req *clientstmtpb.ClientStatementRequest) (*clientstmtpb.ClientStatementResponse, error) {
-					if ledgerReportingSvc == nil {
-						return nil, nil
-					}
-					return ledgerReportingSvc.GetClientStatement(fctx, req)
-				},
+				ListRevenues:       db.ListSimple,
+				GetClientStatement: getClientStatement,
 				SubscriptionAddURL:               routes.Subscription.AddURL,
 				SubscriptionDetailURL:            routes.Subscription.DetailURL,
 				SubscriptionUnderClientDetailURL: routes.Subscription.UnderClientDetailURL,
@@ -412,10 +433,8 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 					return data[0].GetFunctionalCurrency()
 				}
 			}
-			if ledgerReportingSvc != nil {
-				clientDeps.GetClientBalances = func(fctx context.Context) (map[string]int64, error) {
-					return ledgerReportingSvc.GetClientBalances(fctx)
-				}
+			if getClientBalances != nil {
+				clientDeps.GetClientBalances = getClientBalances
 			}
 			if uc.Subscription.CountActiveByClientIDs != nil {
 				countActive := uc.Subscription.CountActiveByClientIDs
@@ -976,13 +995,11 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 			if uc.PurchaseOrder.List != nil {
 				supplierDeps.ListPurchaseOrders = uc.PurchaseOrder.List
 			}
-			if ledgerReportingSvc != nil {
-				supplierDeps.GetSupplierStatement = func(fctx context.Context, req *suppstmtpb.SupplierStatementRequest) (*suppstmtpb.SupplierStatementResponse, error) {
-					return ledgerReportingSvc.GetSupplierStatement(fctx, req)
-				}
-				supplierDeps.GetSupplierBalances = func(fctx context.Context) (map[string]int64, error) {
-					return ledgerReportingSvc.GetSupplierBalances(fctx)
-				}
+			if getSupplierStatement != nil {
+				supplierDeps.GetSupplierStatement = getSupplierStatement
+			}
+			if getSupplierBalances != nil {
+				supplierDeps.GetSupplierBalances = getSupplierBalances
 			}
 			// Tag-related deps for supplier form multi-select
 			if uc.Category.List != nil {
