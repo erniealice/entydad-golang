@@ -1,4 +1,4 @@
-{{define "choose-principal"}}
+{{define "select-workspace-role"}}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,17 +9,30 @@
     <link rel="stylesheet" href="/assets/css/app/main.css?v={{.CacheVersion}}">
     <link rel="stylesheet" href="/assets/css/pyeza/alert.css?v={{.CacheVersion}}">
     <link rel="stylesheet" href="/assets/css/entydad/entydad-login02.css?v={{.CacheVersion}}">
+
+    <!-- Pre-warm the cache for app-shell's stylesheets so the moment the
+         user picks a principal and we navigate to /app/, the destination
+         renders fully styled with no flash of unstyled content. Mirrors
+         the <link rel="stylesheet"> set from apps/service-admin/templates/layout/app-shell.html. -->
+    <link rel="prefetch" as="style" href="/assets/css/app/layout.css?v={{.CacheVersion}}">
+    <link rel="prefetch" as="style" href="/assets/css/pyeza/sidebar.css?v={{.CacheVersion}}">
+    <link rel="prefetch" as="style" href="/assets/css/pyeza/typography.css?v={{.CacheVersion}}">
+    <link rel="prefetch" as="style" href="/assets/css/pyeza/index.css?v={{.CacheVersion}}">
+    <link rel="prefetch" as="style" href="/assets/css/pyeza/sheet.css?v={{.CacheVersion}}">
+    <link rel="prefetch" as="style" href="/assets/css/pyeza/detail-layout.css?v={{.CacheVersion}}">
+    <link rel="prefetch" as="style" href="/assets/css/pyeza/bottom-nav.css?v={{.CacheVersion}}">
+    <link rel="prefetch" as="style" href="/assets/css/app/account-modal.css?v={{.CacheVersion}}">
 </head>
 <body>
     <a href="#main-content" class="skip-link">Skip to main content</a>
-    <main id="main-content" data-testid="choose-principal-page">
-        {{template "choose-principal-content" .}}
+    <main id="main-content" data-testid="select-workspace-role-page">
+        {{template "select-workspace-role-content" .}}
     </main>
 </body>
 </html>
 {{end}}
 
-{{define "choose-principal-content"}}
+{{define "select-workspace-role-content"}}
 <div class="auth-page">
     <div class="auth-split">
         <!-- Right Side - Chooser Form (reuses login02 right column for visual parity) -->
@@ -37,20 +50,20 @@
                 </a>
                 {{end}}
 
-                <h1 class="auth-heading" data-testid="choose-principal-heading">{{.Labels.Heading}}</h1>
+                <h1 class="auth-heading" data-testid="select-workspace-role-heading">{{.Labels.Heading}}</h1>
                 <p class="auth-subheading">{{.Labels.Subheading}}</p>
 
                 {{if .Error}}
-                <div data-testid="choose-principal-error" class="auth-form-alert">
+                <div data-testid="select-workspace-role-error" class="auth-form-alert">
                     {{template "alert" (dict "Message" .Error
                                              "State"   "error"
                                              "Variant" "filled"
-                                             "ID"      "choose-principal-error-banner")}}
+                                             "ID"      "select-workspace-role-error-banner")}}
                 </div>
                 {{end}}
 
                 {{if .Cards}}
-                <ul class="auth-principal-list" role="list" data-testid="choose-principal-list">
+                <ul class="auth-principal-list" role="list" data-testid="select-workspace-role-list">
                     {{range $card := .Cards}}
                     <li class="auth-principal-card">
                         <form method="POST" action="{{$.SwitchPostURL}}" class="auth-principal-form">
@@ -60,9 +73,9 @@
                                 type="submit"
                                 class="auth-principal-button"
                                 {{if $card.HasMultipleOfKind}}
-                                data-testid="choose-principal-{{$card.Kind}}-{{$card.PrincipalID}}"
+                                data-testid="select-workspace-role-{{$card.Kind}}-{{$card.PrincipalID}}"
                                 {{else}}
-                                data-testid="choose-principal-{{$card.Kind}}"
+                                data-testid="select-workspace-role-{{$card.Kind}}"
                                 {{end}}
                                 data-principal-kind="{{$card.Kind}}"
                                 data-principal-id="{{$card.PrincipalID}}"
@@ -85,13 +98,13 @@
                     {{end}}
                 </ul>
                 {{else}}
-                <p class="auth-empty-state" data-testid="choose-principal-empty">
+                <p class="auth-empty-state" data-testid="select-workspace-role-empty">
                     {{.Labels.EmptyState}}
                 </p>
                 {{end}}
 
                 <div class="auth-form-footer auth-form-footer--spaced">
-                    <a href="{{.LogoutURL}}" class="auth-form-link" data-testid="choose-principal-signout">{{.Labels.SignOutLink}}</a>
+                    <a href="{{.LogoutURL}}" class="auth-form-link" data-testid="select-workspace-role-signout">{{.Labels.SignOutLink}}</a>
                 </div>
             </div>
         </div>

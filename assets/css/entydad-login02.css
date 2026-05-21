@@ -300,7 +300,7 @@
     color: var(--text-secondary);
 }
 
-/* Multi-Principal Chooser (auth/choose-principal) */
+/* Multi-Principal Chooser (auth/select-workspace-role) */
 .auth-principal-list {
     display: flex;
     flex-direction: column;

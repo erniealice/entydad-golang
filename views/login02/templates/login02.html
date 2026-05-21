@@ -12,6 +12,19 @@
     <link rel="stylesheet" href="/assets/css/pyeza/carousel.css?v={{.CacheVersion}}">
     <link rel="stylesheet" href="/assets/css/entydad/entydad-login02.css?v={{.CacheVersion}}">
     <script src="/assets/js/pyeza/form-password.js?v={{.CacheVersion}}" defer></script>
+
+    <!-- Pre-warm the cache for app-shell's stylesheets so the moment login
+         resolves (auto-route to single principal) and we land on /app/,
+         the destination renders fully styled with no flash. Mirrors the
+         <link rel="stylesheet"> set from apps/service-admin/templates/layout/app-shell.html. -->
+    <link rel="prefetch" as="style" href="/assets/css/app/layout.css?v={{.CacheVersion}}">
+    <link rel="prefetch" as="style" href="/assets/css/pyeza/sidebar.css?v={{.CacheVersion}}">
+    <link rel="prefetch" as="style" href="/assets/css/pyeza/typography.css?v={{.CacheVersion}}">
+    <link rel="prefetch" as="style" href="/assets/css/pyeza/index.css?v={{.CacheVersion}}">
+    <link rel="prefetch" as="style" href="/assets/css/pyeza/sheet.css?v={{.CacheVersion}}">
+    <link rel="prefetch" as="style" href="/assets/css/pyeza/detail-layout.css?v={{.CacheVersion}}">
+    <link rel="prefetch" as="style" href="/assets/css/pyeza/bottom-nav.css?v={{.CacheVersion}}">
+    <link rel="prefetch" as="style" href="/assets/css/app/account-modal.css?v={{.CacheVersion}}">
 </head>
 <body>
     <a href="#main-content" class="skip-link">Skip to main content</a>

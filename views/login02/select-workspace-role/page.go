@@ -1,4 +1,4 @@
-package choosePrincipal
+package selectWorkspaceRole
 
 import (
 	"context"
@@ -16,8 +16,8 @@ import (
 //
 // TestIDKind is the lowercase principal-type token (e.g. "operator_owner",
 // "client_delegate"); TestIDID is the row id (e.g. ws-user-abc-123). The
-// template derives `data-testid="choose-principal-{kind}"` and, when more
-// than one card shares the same kind, `choose-principal-{kind}-{id}`.
+// template derives `data-testid="select-workspace-role-{kind}"` and, when more
+// than one card shares the same kind, `select-workspace-role-{kind}-{id}`.
 type PrincipalCard struct {
 	Kind        string // lowercase token: operator_owner / operator_staff / client / client_delegate / supplier / supplier_delegate
 	PrincipalID string // row id of the underlying grant (workspace_user.id / client_portal_grant.id / etc.)
@@ -25,7 +25,7 @@ type PrincipalCard struct {
 	Subtitle    string // optional secondary line — e.g. workspace name for context
 	IconName    string // pyeza icon template name (e.g. "icon-shield-check" for owner)
 	// HasMultipleOfKind drives the testid suffix. When true, the template
-	// emits `data-testid="choose-principal-{kind}-{id}"` so Playwright can
+	// emits `data-testid="select-workspace-role-{kind}-{id}"` so Playwright can
 	// pick a specific card when several share the same kind (multi-target
 	// delegate, multi-client-grant user).
 	HasMultipleOfKind bool
@@ -37,7 +37,7 @@ type PrincipalCard struct {
 // is legal — the template renders an empty-state line.
 type CardsResolver func(ctx context.Context) []PrincipalCard
 
-// Deps holds view dependencies for the choose-principal page.
+// Deps holds view dependencies for the select-workspace-role page.
 //
 // ResolveCards is called once per request — the view reads the User from
 // context (via consumer.GetUserIDFromContext on the host side) and returns
@@ -54,9 +54,9 @@ type Deps struct {
 	ResolveCards  CardsResolver // required for production; nil falls back to ctx cards (test-only)
 }
 
-// Labels holds i18n strings for the choose-principal page.
-// JSON tags match the "choose_principal" subtree in common/auth.json so
-// lyngua.LoadPath("en", bt, "auth.json", "choose_principal", &labels)
+// Labels holds i18n strings for the select-workspace-role page.
+// JSON tags match the "select_workspace_role" subtree in common/auth.json so
+// lyngua.LoadPath("en", bt, "auth.json", "select_workspace_role", &labels)
 // populates every field directly.
 type Labels struct {
 	Page                struct {
@@ -81,12 +81,12 @@ func DefaultLabels() Labels {
 	l := Labels{
 		SignOutLink:          "Sign out",
 		SubmitLabel:         "Continue as",
-		EmptyState:          "You don't have any active profiles for this account.",
+		EmptyState:          "You don't have any active workspace roles for this account.",
 		ErrorSwitchPrincipal: "Could not switch principal. Please try again.",
 	}
-	l.Page.Title = "Choose a profile"
-	l.Page.Heading = "Choose a profile"
-	l.Page.Subheading = "You have access to more than one profile. Pick the one you want to use right now — you can switch later."
+	l.Page.Title = "Select workspace role"
+	l.Page.Heading = "Select workspace role"
+	l.Page.Subheading = "You have access to more than one workspace role. Pick the one you want to use right now — you can switch later."
 	// Populate flat accessors from nested Page struct.
 	l.Title = l.Page.Title
 	l.Heading = l.Page.Heading
@@ -95,7 +95,7 @@ func DefaultLabels() Labels {
 }
 
 // PageData is the template-facing data shape. ContentTemplate is fixed —
-// always "choose-principal-content".
+// always "select-workspace-role-content".
 type PageData struct {
 	types.PageData
 	ContentTemplate string
@@ -118,7 +118,7 @@ type ctxKey int
 const ctxKeyCards ctxKey = 0
 
 // WithCards returns a derived context carrying the given cards. Host code
-// (domain_auth.go) calls this from its GET /auth/choose-principal handler
+// (domain_auth.go) calls this from its GET /auth/select-workspace-role handler
 // after running principalLoader.Resolve.
 func WithCards(ctx context.Context, cards []PrincipalCard) context.Context {
 	return context.WithValue(ctx, ctxKeyCards, cards)
@@ -132,7 +132,7 @@ func getCards(ctx context.Context) []PrincipalCard {
 	return nil
 }
 
-// NewView creates the choose-principal page view (GET /auth/choose-principal).
+// NewView creates the select-workspace-role page view (GET /auth/select-workspace-role).
 //
 // The view reads cards from the request context via getCards — see the
 // WithCards helper above. This indirection lets the host wire principal
@@ -209,7 +209,7 @@ func NewView(deps *Deps) view.View {
 				CurrentPath:  viewCtx.CurrentPath,
 				CommonLabels: deps.CommonLabels,
 			},
-			ContentTemplate: "choose-principal-content",
+			ContentTemplate: "select-workspace-role-content",
 			Labels:          labels,
 			Login02:         deps.Login02,
 			LogoText:        deps.LogoText,
@@ -220,6 +220,6 @@ func NewView(deps *Deps) view.View {
 			Error:           errorMsg,
 		}
 
-		return view.OK("choose-principal", pageData)
+		return view.OK("select-workspace-role", pageData)
 	})
 }
