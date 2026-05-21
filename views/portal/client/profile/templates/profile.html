@@ -5,6 +5,34 @@
 {{define "portal-client-profile-content"}}
 <div class="portal-page" data-page-title="{{.Title}}">
     <h1 data-testid="portal-client-profile-heading" class="portal-page-title">{{.Labels.Page.Profile.Title}}</h1>
+    {{if .User.FirstName}}
+    <dl class="portal-profile-fields" data-testid="portal-client-profile-fields">
+        <div class="portal-profile-field">
+            <dt class="portal-profile-field-label">First name</dt>
+            <dd class="portal-profile-field-value" data-testid="portal-client-profile-first-name">{{.User.FirstName}}</dd>
+        </div>
+        {{if .User.LastName}}
+        <div class="portal-profile-field">
+            <dt class="portal-profile-field-label">Last name</dt>
+            <dd class="portal-profile-field-value" data-testid="portal-client-profile-last-name">{{.User.LastName}}</dd>
+        </div>
+        {{end}}
+        {{if .User.EmailAddress}}
+        <div class="portal-profile-field">
+            <dt class="portal-profile-field-label">Email</dt>
+            <dd class="portal-profile-field-value" data-testid="portal-client-profile-email">{{.User.EmailAddress}}</dd>
+        </div>
+        {{end}}
+        {{if .User.MobileNumber}}
+        <div class="portal-profile-field">
+            <dt class="portal-profile-field-label">Mobile</dt>
+            <dd class="portal-profile-field-value" data-testid="portal-client-profile-mobile">{{.User.MobileNumber}}</dd>
+        </div>
+        {{end}}
+    </dl>
+    <p class="portal-empty-hint">Editing your profile is coming soon.</p>
+    {{else}}
     <p class="portal-empty-hint">{{.Labels.Page.Profile.ComingSoon}}</p>
+    {{end}}
 </div>
 {{end}}

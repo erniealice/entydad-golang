@@ -21,4 +21,24 @@ type PageData struct {
 	PortalName string
 	// ProfileURL is the portal-relative profile link in the header.
 	ProfileURL string
+	// User holds the logged-in user's basics (name, email, mobile).
+	// Populated by portal pages that load via ReadUser from espyna
+	// (e.g. profile, account). Empty struct otherwise — templates
+	// guard with {{if .User.FirstName}}.
+	//
+	// Added 2026-05-22 as the first Pre-B wave per
+	// docs/plan/20260516-self-domain/ §P6 and
+	// docs/plan/20260521-workspace-keyed-routing/phases.md Pre-B.
+	User ProfileUser
+}
+
+// ProfileUser holds the User basics rendered by portal profile/account pages.
+// Mirror of userpb.User but flattened to template-friendly shape (the proto's
+// optional/pointer fields confuse Go templates, so we resolve them here).
+type ProfileUser struct {
+	ID           string
+	FirstName    string
+	LastName     string
+	EmailAddress string
+	MobileNumber string
 }
