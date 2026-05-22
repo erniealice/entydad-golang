@@ -3,14 +3,14 @@ package entydad
 // Default route constants for entydad views.
 // Consumer apps can use these or define their own.
 const (
-	ClientDashboardURL        = "/app/clients/dashboard"
-	ClientListURL             = "/app/clients/list/{status}"
+	ClientDashboardURL        = "/clients/dashboard"
+	ClientListURL             = "/clients/list/{status}"
 	ClientTableURL            = "/action/client/table/{status}"
 	ClientAddURL              = "/action/client/add"
 	ClientEditURL             = "/action/client/edit/{id}"
 	ClientDeleteURL           = "/action/client/delete"
 	ClientBulkDeleteURL       = "/action/client/bulk-delete"
-	ClientDetailURL           = "/app/clients/detail/{id}"
+	ClientDetailURL           = "/clients/detail/{id}"
 	ClientTabActionURL        = "/action/client/{id}/tab/{tab}"
 	ClientAttachmentUploadURL = "/action/client/{id}/attachments/upload"
 	ClientAttachmentDeleteURL = "/action/client/{id}/attachments/delete"
@@ -18,8 +18,8 @@ const (
 	ClientBulkSetStatusURL    = "/action/client/bulk-set-status"
 	ClientSearchURL           = "/action/client/search"
 
-	UserDashboardURL       = "/app/users/dashboard"
-	UserListURL            = "/app/users/list/{status}"
+	UserDashboardURL       = "/users/dashboard"
+	UserListURL            = "/users/list/{status}"
 	UserTableURL           = "/action/user/table/{status}"
 	UserAddURL             = "/action/user/add"
 	UserEditURL            = "/action/user/edit/{id}"
@@ -29,9 +29,9 @@ const (
 	UserBulkSetStatusURL   = "/action/user/bulk-set-status"
 	UserSearchTimezonesURL = "/action/user/search-timezones"
 
-	LocationDashboardURL        = "/app/locations/dashboard"
-	LocationDetailURL           = "/app/locations/detail/{id}"
-	LocationListURL             = "/app/locations/list/{status}"
+	LocationDashboardURL        = "/locations/dashboard"
+	LocationDetailURL           = "/locations/detail/{id}"
+	LocationListURL             = "/locations/list/{status}"
 	LocationTableURL            = "/action/location/table/{status}"
 	LocationAddURL              = "/action/location/add"
 	LocationEditURL             = "/action/location/edit/{id}"
@@ -44,10 +44,10 @@ const (
 	LocationAttachmentDeleteURL = "/action/location/{id}/attachments/delete"
 	LocationEditDetailURL       = "/action/location/edit-detail/{id}"
 
-	LocationAreaDashboardURL     = "/app/location-areas/dashboard"
-	LocationAreaListURL          = "/app/location-areas/list/{status}"
+	LocationAreaDashboardURL     = "/location-areas/dashboard"
+	LocationAreaListURL          = "/location-areas/list/{status}"
 	LocationAreaTableURL         = "/action/location-area/table/{status}"
-	LocationAreaDetailURL        = "/app/location-areas/detail/{id}"
+	LocationAreaDetailURL        = "/location-areas/detail/{id}"
 	LocationAreaAddURL           = "/action/location-area/add"
 	LocationAreaEditURL          = "/action/location-area/edit/{id}"
 	LocationAreaDeleteURL        = "/action/location-area/delete"
@@ -55,17 +55,17 @@ const (
 	LocationAreaSetStatusURL     = "/action/location-area/set-status"
 	LocationAreaBulkSetStatusURL = "/action/location-area/bulk-set-status"
 
-	UserDetailURL           = "/app/users/detail/{id}"
+	UserDetailURL           = "/users/detail/{id}"
 	UserTabActionURL        = "/action/user/{id}/tab/{tab}"
 	UserAttachmentUploadURL = "/action/user/{id}/attachments/upload"
 	UserAttachmentDeleteURL = "/action/user/{id}/attachments/delete"
 	UserResetPasswordURL    = "/action/user/reset-password/{id}"
 
-	RoleDetailURL           = "/app/roles/detail/{id}"
+	RoleDetailURL           = "/roles/detail/{id}"
 	RoleTabActionURL        = "/action/role/{id}/tab/{tab}"
 	RoleAttachmentUploadURL = "/action/role/{id}/attachments/upload"
 	RoleAttachmentDeleteURL = "/action/role/{id}/attachments/delete"
-	RoleListURL             = "/app/roles/list"
+	RoleListURL             = "/roles/list"
 	RoleTableURL            = "/action/role/table"
 	RoleAddURL              = "/action/role/add"
 	RoleEditURL             = "/action/role/edit/{id}"
@@ -74,7 +74,7 @@ const (
 	RoleSetStatusURL        = "/action/role/set-status"
 	RoleBulkSetStatusURL    = "/action/role/bulk-set-status"
 
-	PermissionListURL          = "/app/permissions/list/{status}"
+	PermissionListURL          = "/permissions/list/{status}"
 	PermissionTableURL         = "/action/permission/table/{status}"
 	PermissionAddURL           = "/action/permission/add"
 	PermissionEditURL          = "/action/permission/edit/{id}"
@@ -83,17 +83,17 @@ const (
 	PermissionSetStatusURL     = "/action/permission/set-status"
 	PermissionBulkSetStatusURL = "/action/permission/bulk-set-status"
 
-	RolePermissionsURL       = "/app/manage/roles/{id}/permissions"
+	RolePermissionsURL       = "/manage/roles/{id}/permissions"
 	RolePermissionsTableURL  = "/action/manage/roles/{id}/permissions/table"
 	RolePermissionsAssignURL = "/action/manage/roles/{id}/permissions/assign"
 	RolePermissionsRemoveURL = "/action/manage/roles/{id}/permissions/remove"
 
-	UserRolesURL       = "/app/manage/users/{id}/roles"
+	UserRolesURL       = "/manage/users/{id}/roles"
 	UserRolesTableURL  = "/action/manage/users/{id}/roles/table"
 	UserRolesAssignURL = "/action/manage/users/{id}/roles/assign"
 	UserRolesRemoveURL = "/action/manage/users/{id}/roles/remove"
 
-	RoleUsersURL       = "/app/roles/detail/{id}/users"
+	RoleUsersURL       = "/roles/detail/{id}/users"
 	RoleUsersTableURL  = "/action/role/detail/{id}/users/table"
 	RoleUsersAssignURL = "/action/role/detail/{id}/users/assign"
 	RoleUsersRemoveURL = "/action/role/detail/{id}/users/remove"
@@ -101,17 +101,17 @@ const (
 
 	// Migrated route constants: /detail/ pattern for user-roles and role-permissions
 	// Old /manage/ constants kept above for backward compatibility
-	UserDetailRolesURL       = "/app/users/detail/{id}/roles"
+	UserDetailRolesURL       = "/users/detail/{id}/roles"
 	UserDetailRolesTableURL  = "/action/user/detail/{id}/roles/table"
 	UserDetailRolesAssignURL = "/action/user/detail/{id}/roles/assign"
 	UserDetailRolesRemoveURL = "/action/user/detail/{id}/roles/remove"
 
-	RoleDetailPermissionsURL       = "/app/roles/detail/{id}/permissions"
+	RoleDetailPermissionsURL       = "/roles/detail/{id}/permissions"
 	RoleDetailPermissionsTableURL  = "/action/role/detail/{id}/permissions/table"
 	RoleDetailPermissionsAssignURL = "/action/role/detail/{id}/permissions/assign"
 	RoleDetailPermissionsRemoveURL = "/action/role/detail/{id}/permissions/remove"
 
-	WorkspaceListURL             = "/app/workspaces/list/{status}"
+	WorkspaceListURL             = "/workspaces/list/{status}"
 	WorkspaceTableURL            = "/action/workspace/table/{status}"
 	WorkspaceAddURL              = "/action/workspace/add"
 	WorkspaceEditURL             = "/action/workspace/edit/{id}"
@@ -120,13 +120,13 @@ const (
 	WorkspaceSetStatusURL        = "/action/workspace/set-status"
 	WorkspaceBulkSetStatusURL    = "/action/workspace/bulk-set-status"
 	WorkspaceSwitchURL           = "/action/admin/switch-workspace"
-	WorkspaceDetailURL           = "/app/workspaces/detail/{id}"
+	WorkspaceDetailURL           = "/workspaces/detail/{id}"
 	WorkspaceTabActionURL        = "/action/workspace/{id}/tab/{tab}"
 	WorkspaceAttachmentUploadURL = "/action/workspace/{id}/attachments/upload"
 	WorkspaceAttachmentDeleteURL = "/action/workspace/{id}/attachments/delete"
 
-	WorkspaceUserListURL             = "/app/workspace-users/list/{status}"
-	WorkspaceUserDetailURL           = "/app/workspace-users/detail/{id}"
+	WorkspaceUserListURL             = "/workspace-users/list/{status}"
+	WorkspaceUserDetailURL           = "/workspace-users/detail/{id}"
 	WorkspaceUserTabActionURL        = "/action/workspace_user/{id}/tab/{tab}"
 	WorkspaceUserAddURL              = "/action/workspace_user/add"
 	WorkspaceUserDeleteURL           = "/action/workspace_user/delete/{id}"
@@ -143,10 +143,10 @@ const (
 
 	// Admin app dashboard — composite app spanning permission/role/workspace/
 	// workspace_user/workspace_user_role. Lives under entydad/views/admin/dashboard.
-	AdminDashboardURL = "/app/admin/dashboard"
+	AdminDashboardURL = "/admin/dashboard"
 
 	// Client report routes
-	ReceivablesAgingURL = "/app/reports/receivables-aging"
+	ReceivablesAgingURL = "/reports/receivables-aging"
 
 	// Client statement export
 	ClientStatementExportURL = "/action/client/{id}/statement/export"
@@ -157,14 +157,14 @@ const (
 	ClientRevenueRunURL = "/action/client/revenue-run/{id}"
 
 	// Supplier routes
-	SupplierDashboardURL        = "/app/suppliers/dashboard"
-	SupplierListURL             = "/app/suppliers/list/{status}"
+	SupplierDashboardURL        = "/suppliers/dashboard"
+	SupplierListURL             = "/suppliers/list/{status}"
 	SupplierTableURL            = "/action/supplier/table/{status}"
 	SupplierAddURL              = "/action/supplier/add"
 	SupplierEditURL             = "/action/supplier/edit/{id}"
 	SupplierDeleteURL           = "/action/supplier/delete"
 	SupplierBulkDeleteURL       = "/action/supplier/bulk-delete"
-	SupplierDetailURL           = "/app/suppliers/detail/{id}"
+	SupplierDetailURL           = "/suppliers/detail/{id}"
 	SupplierTabActionURL        = "/action/supplier/{id}/tab/{tab}"
 	SupplierAttachmentUploadURL = "/action/supplier/{id}/attachments/upload"
 	SupplierAttachmentDeleteURL = "/action/supplier/{id}/attachments/delete"
@@ -179,10 +179,10 @@ const (
 	SupplierExpenseRecognitionRunURL = "/action/supplier/expense-recognition-run/{id}"
 
 	// Supplier report routes
-	PayablesAgingURL = "/app/suppliers/reports/payables-aging"
+	PayablesAgingURL = "/suppliers/reports/payables-aging"
 
 	// Client Tag (Category) routes
-	ClientTagListURL          = "/app/clients/settings/tags/list"
+	ClientTagListURL          = "/clients/settings/tags/list"
 	ClientTagTableURL         = "/action/client/tags/table"
 	ClientTagAddURL           = "/action/client/tags/add"
 	ClientTagEditURL          = "/action/client/tags/edit/{id}"
@@ -192,7 +192,7 @@ const (
 	ClientTagBulkSetStatusURL = "/action/client/tags/bulk-set-status"
 
 	// Supplier Tag (Category) routes
-	SupplierTagListURL          = "/app/suppliers/settings/tags/list"
+	SupplierTagListURL          = "/suppliers/settings/tags/list"
 	SupplierTagTableURL         = "/action/supplier/tags/table"
 	SupplierTagAddURL           = "/action/supplier/tags/add"
 	SupplierTagEditURL          = "/action/supplier/tags/edit/{id}"
@@ -202,7 +202,7 @@ const (
 	SupplierTagBulkSetStatusURL = "/action/supplier/tags/bulk-set-status"
 
 	// Payment Term routes — client context (shows client + both scopes)
-	PaymentTermListURL          = "/app/clients/settings/payment-terms/list"
+	PaymentTermListURL          = "/clients/settings/payment-terms/list"
 	PaymentTermTableURL         = "/action/client/settings/payment-terms/table"
 	PaymentTermAddURL           = "/action/client/settings/payment-terms/add"
 	PaymentTermEditURL          = "/action/client/settings/payment-terms/edit/{id}"
@@ -212,7 +212,7 @@ const (
 	PaymentTermBulkSetStatusURL = "/action/client/settings/payment-terms/bulk-set-status"
 
 	// Payment Term routes — supplier context (shows supplier + both scopes)
-	SupplierPaymentTermListURL          = "/app/suppliers/settings/payment-terms/list"
+	SupplierPaymentTermListURL          = "/suppliers/settings/payment-terms/list"
 	SupplierPaymentTermTableURL         = "/action/supplier/settings/payment-terms/table"
 	SupplierPaymentTermAddURL           = "/action/supplier/settings/payment-terms/add"
 	SupplierPaymentTermEditURL          = "/action/supplier/settings/payment-terms/edit/{id}"
@@ -243,12 +243,12 @@ const (
 
 	// TaxRegistration — polymorphic (client + workspace party types in v1)
 	// URL convention: party_type + party_id come from the parent detail page context.
-	ClientTaxRegistrationListURL   = "/app/clients/detail/{id}/tax-registrations"
+	ClientTaxRegistrationListURL   = "/clients/detail/{id}/tax-registrations"
 	ClientTaxRegistrationAddURL    = "/action/client/{id}/tax-registration/add"
 	ClientTaxRegistrationEditURL   = "/action/client/{id}/tax-registration/edit/{reg_id}"
 	ClientTaxRegistrationDeleteURL = "/action/client/{id}/tax-registration/delete"
 
-	WorkspaceTaxRegistrationListURL   = "/app/workspace/settings/tax-registrations"
+	WorkspaceTaxRegistrationListURL   = "/workspace/settings/tax-registrations"
 	WorkspaceTaxRegistrationAddURL    = "/action/workspace/tax-registration/add"
 	WorkspaceTaxRegistrationEditURL   = "/action/workspace/tax-registration/edit/{reg_id}"
 	WorkspaceTaxRegistrationDeleteURL = "/action/workspace/tax-registration/delete"
