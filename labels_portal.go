@@ -1,11 +1,13 @@
 package entydad
 
-// PortalLabels holds translations for the self-service portal surfaces.
-// Loaded from general/portal.json (with optional per-vertical overrides via the
-// standard lyngua cascade: common → general → businessType).
+// PortalLabels holds translations for the self-service member surfaces.
+// Loaded from general/member.json (renamed from portal.json 2026-05-22 per the
+// workspace-keyed-routing P9c vocabulary cleanup; the typed struct name keeps
+// "Portal" pending the P10 rename to MemberLabels). Per-vertical overrides
+// via the standard lyngua cascade: common → general → businessType.
 //
-// JSON field names mirror the key hierarchy in portal.json so the lyngua
-// LoadPath call ("portal.json", "portal", &labels) populates every field
+// JSON field names mirror the key hierarchy in member.json so the lyngua
+// LoadPath call ("member.json", "member", &labels) populates every field
 // without manual mapping.
 type PortalLabels struct {
 	Client           PortalClientLabels           `json:"client"`

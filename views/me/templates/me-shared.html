@@ -1,0 +1,68 @@
+{{/* /me/* personal-scope subviews share a generic "stub" template so the
+     v1 read-only pages render with consistent chrome (h2 heading +
+     subtitle + empty-state hint). Each subview's PageData supplies
+     HeaderTitle (page title), Subtitle (subheading), and EmptyMessage
+     (the placeholder copy).
+
+     Created 2026-05-22 in Phase P9b. */}}
+
+{{define "me-page"}}
+    {{template "app-shell" .}}
+{{end}}
+
+{{define "me-stub-content"}}
+{{template "header-oob" .}}
+<div class="me-page" data-me-page="{{.ActiveNav}}" data-testid="me-page-{{.ActiveNav}}">
+    <section class="me-page-section">
+        <div class="account-section-card">
+            <header class="account-section-card-header">
+                <h2 class="account-section-card-title">{{.HeaderTitle}}</h2>
+                {{if .Subtitle}}<p class="account-section-card-help">{{.Subtitle}}</p>{{end}}
+            </header>
+            <div class="account-section-card-body">
+                <p class="account-section-empty-hint" data-testid="me-empty-{{.ActiveNav}}">{{.EmptyMessage}}</p>
+            </div>
+        </div>
+    </section>
+</div>
+{{end}}
+
+{{define "me-recent-activity-content"}}
+{{template "header-oob" .}}
+<div class="me-page" data-me-page="recent-activity" data-testid="me-page-recent-activity">
+    <section class="me-page-section">
+        <div class="account-section-card">
+            <header class="account-section-card-header">
+                <h2 class="account-section-card-title">{{.HeaderTitle}}</h2>
+                {{if .Subtitle}}<p class="account-section-card-help">{{.Subtitle}}</p>{{end}}
+            </header>
+            <div class="account-section-card-body">
+                {{if .Switches}}
+                <table class="me-recent-activity-table" data-testid="me-recent-activity-table">
+                    <thead>
+                        <tr>
+                            <th>When</th>
+                            <th>Use case</th>
+                            <th>Request URL</th>
+                            <th>Referer</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .Switches}}
+                        <tr data-testid="me-recent-activity-row">
+                            <td>{{.OccurredAt}}</td>
+                            <td>{{.UseCase}}</td>
+                            <td>{{.RequestURL}}</td>
+                            <td>{{.Referer}}</td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+                {{else}}
+                <p class="account-section-empty-hint" data-testid="me-empty-recent-activity">{{.EmptyMessage}}</p>
+                {{end}}
+            </div>
+        </div>
+    </section>
+</div>
+{{end}}
