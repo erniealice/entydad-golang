@@ -114,6 +114,9 @@ type blockConfig struct {
 	supplier          bool
 	taxRegistration   bool
 	useCases          *UseCases
+	// homeURL is the page to redirect to after a successful workspace switch.
+	// Defaults to "/app/home" when empty.
+	homeURL string
 }
 
 // WithUseCases supplies the typed use-case closures to Block().
@@ -174,6 +177,10 @@ func WithSupplier() BlockOption { return func(c *blockConfig) { c.supplier = tru
 // WithTaxRegistration enables the TaxRegistration polymorphic list module in Block().
 // Registers both client-scoped and workspace-scoped views.
 func WithTaxRegistration() BlockOption { return func(c *blockConfig) { c.taxRegistration = true } }
+
+// WithHomeURL sets the URL the switch-workspace handler redirects to after a
+// successful workspace switch. Defaults to "/app/home" when not provided.
+func WithHomeURL(url string) BlockOption { return func(c *blockConfig) { c.homeURL = url } }
 
 // Block returns a pyeza.AppOption that registers entydad entity modules into the app.
 // When called with no options, all modules are registered (enableAll mode).
@@ -676,17 +683,18 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 
 		if cfg.enableAll || cfg.location {
 			locationDeps := &locationmod.ModuleDeps{
-				Routes:          routes.Location,
-				CommonLabels:    ctx.Common,
-				SharedLabels:    labels.Shared,
-				Labels:          labels.Location,
-				TableLabels:     ctx.Table,
-				GetListPageData: uc.Location.GetListPageData,
-				GetInUseIDs:     refChecker.GetLocationInUseIDs,
-				CreateLocation:  uc.Location.Create,
-				ReadLocation:    uc.Location.Read,
-				UpdateLocation:  uc.Location.Update,
-				DeleteLocation:  uc.Location.Delete,
+				Routes:             routes.Location,
+				LocationAreaRoutes: routes.LocationArea,
+				CommonLabels:       ctx.Common,
+				SharedLabels:       labels.Shared,
+				Labels:             labels.Location,
+				TableLabels:        ctx.Table,
+				GetListPageData:    uc.Location.GetListPageData,
+				GetInUseIDs:        refChecker.GetLocationInUseIDs,
+				CreateLocation:     uc.Location.Create,
+				ReadLocation:       uc.Location.Read,
+				UpdateLocation:     uc.Location.Update,
+				DeleteLocation:     uc.Location.Delete,
 				SetActive: func(fctx context.Context, id string, active bool) error {
 					_, err := db.Update(fctx, "location", id, map[string]any{"active": active})
 					return err
@@ -866,6 +874,7 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 			if uc.Workspace.Switch != nil {
 				handleFunc(ctx.Routes, "POST", routes.Workspace.SwitchURL, workspaceaction.NewSwitchWorkspaceHandler(&workspaceaction.SwitchWorkspaceDeps{
 					SwitchWorkspace: uc.Workspace.Switch,
+					HomeURL:         cfg.homeURL,
 				}))
 			}
 		}
@@ -936,10 +945,11 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 
 		if cfg.enableAll || cfg.supplier {
 			supplierDeps := &suppliermod.ModuleDeps{
-				Routes: routes.Supplier,
+				Routes:            routes.Supplier,
+				SupplierTagRoutes: routes.SupplierTag,
 				// User module owns the timezone search endpoint; the supplier
 				// representative form reuses the same JSON handler.
-				SearchTimezonesURL:   routes.User.SearchTimezonesURL,
+				SearchTimezonesURL: routes.User.SearchTimezonesURL,
 				CommonLabels:         ctx.Common,
 				SharedLabels:         labels.Shared,
 				Labels:               labels.Supplier,

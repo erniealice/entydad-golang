@@ -16,6 +16,9 @@ import (
 // ModuleDeps holds dependencies for the preference module.
 type ModuleDeps struct {
 	Messages map[string]string
+	// PageURL is the route path for the preferences page (e.g. "/app/preferences").
+	// Defaults to "/app/preferences" when empty for backward compatibility.
+	PageURL string
 }
 
 // Module wires the preference route.
@@ -28,9 +31,14 @@ func NewModule(deps *ModuleDeps) *Module {
 	return &Module{deps: deps}
 }
 
-// RegisterRoutes registers the GET handler for /app/preferences.
+// RegisterRoutes registers the GET handler for the preferences page.
 func (m *Module) RegisterRoutes(r view.RouteRegistrar) {
-	r.GET("/app/preferences", preferencedetail.NewView(&preferencedetail.ModuleDeps{
+	pageURL := m.deps.PageURL
+	if pageURL == "" {
+		pageURL = "/app/preferences"
+	}
+	r.GET(pageURL, preferencedetail.NewView(&preferencedetail.ModuleDeps{
 		Messages: m.deps.Messages,
+		PageURL:  pageURL,
 	}))
 }

@@ -54,7 +54,10 @@ type Deps struct {
 	DashboardLabels entydad.DashboardLabels
 	Dashboard       entydad.LocationDashboardLabels
 	Routes          entydad.LocationRoutes
-	CommonLabels    pyeza.CommonLabels
+	// LocationAreaRoutes provides deep-link URLs for the location-area domain
+	// (e.g. DashboardURL for the "New area" quick action).
+	LocationAreaRoutes entydad.LocationAreaRoutes
+	CommonLabels       pyeza.CommonLabels
 
 	// GetDashboardData is the workspace-scoped page-data fetch. The
 	// container constructs this by calling the
@@ -139,7 +142,7 @@ func NewView(deps *Deps) view.View {
 			Subtitle: l.LocationsByRegion,
 			QuickActions: []types.QuickAction{
 				{Icon: "icon-plus", Label: l.QuickNewLocation, Href: deps.Routes.AddURL, Variant: "primary", TestID: "location-action-new"},
-				{Icon: "icon-layers", Label: l.QuickNewArea, Href: "/app/location-areas/dashboard", TestID: "location-action-new-area"},
+				{Icon: "icon-layers", Label: l.QuickNewArea, Href: deps.LocationAreaRoutes.DashboardURL, TestID: "location-action-new-area"},
 			},
 			Stats: stats,
 			Widgets: []types.DashboardWidget{

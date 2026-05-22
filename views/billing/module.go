@@ -13,6 +13,9 @@ import (
 // ModuleDeps holds dependencies for the billing module.
 type ModuleDeps struct {
 	Messages map[string]string
+	// PageURL is the route path for the billing page (e.g. "/app/billing").
+	// Defaults to "/app/billing" when empty for backward compatibility.
+	PageURL string
 }
 
 // Module wires the billing route.
@@ -25,9 +28,14 @@ func NewModule(deps *ModuleDeps) *Module {
 	return &Module{deps: deps}
 }
 
-// RegisterRoutes registers the GET handler for /app/billing.
+// RegisterRoutes registers the GET handler for the billing page.
 func (m *Module) RegisterRoutes(r view.RouteRegistrar) {
-	r.GET("/app/billing", billingdetail.NewView(&billingdetail.ModuleDeps{
+	pageURL := m.deps.PageURL
+	if pageURL == "" {
+		pageURL = "/app/billing"
+	}
+	r.GET(pageURL, billingdetail.NewView(&billingdetail.ModuleDeps{
 		Messages: m.deps.Messages,
+		PageURL:  pageURL,
 	}))
 }

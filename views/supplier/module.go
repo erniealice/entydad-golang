@@ -70,6 +70,10 @@ type ModuleDeps struct {
 	// Outstanding balances for supplier list
 	GetSupplierBalances func(ctx context.Context) (map[string]int64, error)
 
+	// SupplierTagRoutes provides deep-link URLs for supplier tag settings
+	// (passed through to the dashboard view for quick-action links).
+	SupplierTagRoutes entydad.SupplierTagRoutes
+
 	// Tag-related deps for multi-select tags on the supplier form
 	ListCategories         func(ctx context.Context, req *categorypb.ListCategoriesRequest) (*categorypb.ListCategoriesResponse, error)
 	ListSupplierCategories func(ctx context.Context, req *suppliercategorypb.ListSupplierCategoriesRequest) (*suppliercategorypb.ListSupplierCategoriesResponse, error)
@@ -146,10 +150,11 @@ func NewModule(deps *ModuleDeps) *Module {
 	return &Module{
 		routes: deps.Routes,
 		Dashboard: supplierdashboard.NewView(&supplierdashboard.Deps{
-			DashboardLabels: deps.DashboardTitleLabels,
-			Dashboard:       deps.DashboardLabels,
-			Routes:          deps.Routes,
-			CommonLabels:    deps.CommonLabels,
+			DashboardLabels:   deps.DashboardTitleLabels,
+			Dashboard:         deps.DashboardLabels,
+			Routes:            deps.Routes,
+			SupplierTagRoutes: deps.SupplierTagRoutes,
+			CommonLabels:      deps.CommonLabels,
 		}),
 		List:             supplierlist.NewView(listDeps),
 		Table:            supplierlist.NewTableView(listDeps),

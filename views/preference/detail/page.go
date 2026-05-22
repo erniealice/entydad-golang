@@ -11,6 +11,9 @@ import (
 // ModuleDeps holds dependencies needed to build the preference detail view.
 type ModuleDeps struct {
 	Messages map[string]string
+	// PageURL is the base URL for the preferences page used to build tab hrefs.
+	// Defaults to "/app/preferences" when empty for backward compatibility.
+	PageURL string
 }
 
 // PageData carries the rendering context for the preference page.
@@ -32,7 +35,7 @@ func NewView(deps *ModuleDeps) view.View {
 		if viewCtx.Request != nil {
 			activeTab = viewCtx.Request.URL.Query().Get("tab")
 		}
-		tabs := buildTabs(deps.Messages)
+		tabs := buildTabs(deps.Messages, deps.PageURL)
 		if activeTab == "" || !validTab(tabs, activeTab) {
 			activeTab = "appearance"
 		}
@@ -58,11 +61,14 @@ func NewView(deps *ModuleDeps) view.View {
 	})
 }
 
-func buildTabs(messages map[string]string) []pyeza.TabItem {
+func buildTabs(messages map[string]string, pageURL string) []pyeza.TabItem {
+	if pageURL == "" {
+		pageURL = "/app/preferences"
+	}
 	return []pyeza.TabItem{
-		{Key: "appearance", Label: lookup(messages, "memberPages.preferences.tab.appearance", "Appearance"), Href: "/app/preferences?tab=appearance"},
-		{Key: "notifications", Label: lookup(messages, "memberPages.preferences.tab.notifications", "Notifications"), Href: "/app/preferences?tab=notifications"},
-		{Key: "language-region", Label: lookup(messages, "memberPages.preferences.tab.languageRegion", "Language & region"), Href: "/app/preferences?tab=language-region"},
+		{Key: "appearance", Label: lookup(messages, "memberPages.preferences.tab.appearance", "Appearance"), Href: pageURL + "?tab=appearance"},
+		{Key: "notifications", Label: lookup(messages, "memberPages.preferences.tab.notifications", "Notifications"), Href: pageURL + "?tab=notifications"},
+		{Key: "language-region", Label: lookup(messages, "memberPages.preferences.tab.languageRegion", "Language & region"), Href: pageURL + "?tab=language-region"},
 	}
 }
 

@@ -12,6 +12,9 @@ import (
 type ModuleDeps struct {
 	Messages          map[string]string
 	ChangePasswordURL string
+	// PageURL is the base URL for the account page used to build tab hrefs.
+	// Defaults to "/app/account" when empty for backward compatibility.
+	PageURL string
 }
 
 // PageData carries the rendering context for the account page.
@@ -34,7 +37,7 @@ func NewView(deps *ModuleDeps) view.View {
 		if viewCtx.Request != nil {
 			activeTab = viewCtx.Request.URL.Query().Get("tab")
 		}
-		tabs := buildTabs(deps.Messages)
+		tabs := buildTabs(deps.Messages, deps.PageURL)
 		if activeTab == "" || !validTab(tabs, activeTab) {
 			activeTab = "email"
 		}
@@ -61,11 +64,14 @@ func NewView(deps *ModuleDeps) view.View {
 	})
 }
 
-func buildTabs(messages map[string]string) []pyeza.TabItem {
+func buildTabs(messages map[string]string, pageURL string) []pyeza.TabItem {
+	if pageURL == "" {
+		pageURL = "/app/account"
+	}
 	return []pyeza.TabItem{
-		{Key: "email", Label: lookup(messages, "memberPages.account.tab.email", "Sign-in email"), Href: "/app/account?tab=email"},
-		{Key: "password", Label: lookup(messages, "memberPages.account.tab.password", "Password"), Href: "/app/account?tab=password"},
-		{Key: "sessions", Label: lookup(messages, "memberPages.account.tab.sessions", "Sessions"), Href: "/app/account?tab=sessions"},
+		{Key: "email", Label: lookup(messages, "memberPages.account.tab.email", "Sign-in email"), Href: pageURL + "?tab=email"},
+		{Key: "password", Label: lookup(messages, "memberPages.account.tab.password", "Password"), Href: pageURL + "?tab=password"},
+		{Key: "sessions", Label: lookup(messages, "memberPages.account.tab.sessions", "Sessions"), Href: pageURL + "?tab=sessions"},
 	}
 }
 

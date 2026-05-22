@@ -13,6 +13,9 @@ import (
 // ModuleDeps holds dependencies for the profile module.
 type ModuleDeps struct {
 	Messages map[string]string
+	// PageURL is the route path for the profile page (e.g. "/app/profile").
+	// Defaults to "/app/profile" when empty for backward compatibility.
+	PageURL string
 }
 
 // Module wires the profile route.
@@ -25,9 +28,13 @@ func NewModule(deps *ModuleDeps) *Module {
 	return &Module{deps: deps}
 }
 
-// RegisterRoutes registers the GET handler for /app/profile.
+// RegisterRoutes registers the GET handler for the profile page.
 func (m *Module) RegisterRoutes(r view.RouteRegistrar) {
-	r.GET("/app/profile", profiledetail.NewView(&profiledetail.ModuleDeps{
+	pageURL := m.deps.PageURL
+	if pageURL == "" {
+		pageURL = "/app/profile"
+	}
+	r.GET(pageURL, profiledetail.NewView(&profiledetail.ModuleDeps{
 		Messages: m.deps.Messages,
 	}))
 }

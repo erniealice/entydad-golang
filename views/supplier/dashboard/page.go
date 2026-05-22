@@ -15,7 +15,9 @@ type Deps struct {
 	DashboardLabels entydad.DashboardLabels
 	Dashboard       entydad.SupplierDashboardLabels
 	Routes          entydad.SupplierRoutes
-	CommonLabels    pyeza.CommonLabels
+	// SupplierTagRoutes provides deep-link URLs for supplier tag/category settings.
+	SupplierTagRoutes entydad.SupplierTagRoutes
+	CommonLabels      pyeza.CommonLabels
 }
 
 // PageData holds the data for the supplier dashboard page.
@@ -48,8 +50,8 @@ func NewView(deps *Deps) view.View {
 			QuickActions: []types.QuickAction{
 				{Icon: "icon-truck", Label: l.QuickNew, Href: deps.Routes.AddURL, Variant: "primary", TestID: "supplier-action-new"},
 				{Icon: "icon-list", Label: l.QuickViewAll, Href: deps.Routes.ListURL, TestID: "supplier-action-list"},
-				{Icon: "icon-tag", Label: l.QuickTags, Href: "/app/suppliers/settings/tags/list", TestID: "supplier-action-tags"},
-				{Icon: "icon-folder", Label: l.QuickCategories, Href: "/app/suppliers/settings/tags/list", TestID: "supplier-action-categories"},
+				{Icon: "icon-tag", Label: l.QuickTags, Href: deps.SupplierTagRoutes.ListURL, TestID: "supplier-action-tags"},
+				{Icon: "icon-folder", Label: l.QuickCategories, Href: deps.SupplierTagRoutes.ListURL, TestID: "supplier-action-categories"},
 			},
 			Stats: []types.StatCardData{
 				{Icon: "icon-truck", Value: "156", Label: l.TotalSuppliers, Trend: "+8%", TrendUp: true, Color: "terracotta", TestID: "supplier-stat-total"},

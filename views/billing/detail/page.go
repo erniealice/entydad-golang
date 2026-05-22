@@ -11,6 +11,9 @@ import (
 // ModuleDeps holds dependencies needed to build the billing detail view.
 type ModuleDeps struct {
 	Messages map[string]string
+	// PageURL is the base URL for the billing page used to build tab hrefs.
+	// Defaults to "/app/billing" when empty for backward compatibility.
+	PageURL string
 }
 
 // PageData carries the rendering context for the billing page.
@@ -32,7 +35,7 @@ func NewView(deps *ModuleDeps) view.View {
 		if viewCtx.Request != nil {
 			activeTab = viewCtx.Request.URL.Query().Get("tab")
 		}
-		tabs := buildTabs(deps.Messages)
+		tabs := buildTabs(deps.Messages, deps.PageURL)
 		if activeTab == "" || !validTab(tabs, activeTab) {
 			activeTab = "subscription"
 		}
@@ -58,11 +61,14 @@ func NewView(deps *ModuleDeps) view.View {
 	})
 }
 
-func buildTabs(messages map[string]string) []pyeza.TabItem {
+func buildTabs(messages map[string]string, pageURL string) []pyeza.TabItem {
+	if pageURL == "" {
+		pageURL = "/app/billing"
+	}
 	return []pyeza.TabItem{
-		{Key: "subscription", Label: lookup(messages, "memberPages.billing.tab.subscription", "Subscription"), Href: "/app/billing?tab=subscription"},
-		{Key: "payment-method", Label: lookup(messages, "memberPages.billing.tab.paymentMethod", "Payment method"), Href: "/app/billing?tab=payment-method"},
-		{Key: "invoices", Label: lookup(messages, "memberPages.billing.tab.invoices", "Invoices"), Href: "/app/billing?tab=invoices"},
+		{Key: "subscription", Label: lookup(messages, "memberPages.billing.tab.subscription", "Subscription"), Href: pageURL + "?tab=subscription"},
+		{Key: "payment-method", Label: lookup(messages, "memberPages.billing.tab.paymentMethod", "Payment method"), Href: pageURL + "?tab=payment-method"},
+		{Key: "invoices", Label: lookup(messages, "memberPages.billing.tab.invoices", "Invoices"), Href: pageURL + "?tab=invoices"},
 	}
 }
 

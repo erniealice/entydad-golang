@@ -36,6 +36,10 @@ type ModuleDeps struct {
 	// ListLocationAreas is optional — if provided, the area dropdown appears in the form.
 	ListLocationAreas func(ctx context.Context) ([]locationaction.LocationAreaOption, error)
 
+	// LocationAreaRoutes provides deep-link URLs for the location-area domain
+	// (passed through to the dashboard view for quick-action links).
+	LocationAreaRoutes entydad.LocationAreaRoutes
+
 	// GetLocationDashboardPageData is the workspace-scoped page-data fetch
 	// for the dashboard view. The container builds this by calling the
 	// GetLocationDashboardPageDataUseCase. nil-safe: when missing, the
@@ -114,11 +118,12 @@ func NewModule(deps *ModuleDeps) *Module {
 	return &Module{
 		routes: deps.Routes,
 		Dashboard: locationdashboard.NewView(&locationdashboard.Deps{
-			DashboardLabels:  deps.DashboardTitleLabels,
-			Dashboard:        deps.Labels.Dashboard,
-			Routes:           deps.Routes,
-			CommonLabels:     deps.CommonLabels,
-			GetDashboardData: deps.GetLocationDashboardPageData,
+			DashboardLabels:    deps.DashboardTitleLabels,
+			Dashboard:          deps.Labels.Dashboard,
+			Routes:             deps.Routes,
+			LocationAreaRoutes: deps.LocationAreaRoutes,
+			CommonLabels:       deps.CommonLabels,
+			GetDashboardData:   deps.GetLocationDashboardPageData,
 		}),
 		List:             locationlist.NewView(listDeps),
 		Table:            locationlist.NewTableView(listDeps),

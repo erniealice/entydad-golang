@@ -14,6 +14,9 @@ import (
 type ModuleDeps struct {
 	Messages          map[string]string
 	ChangePasswordURL string
+	// PageURL is the route path for the account page (e.g. "/app/account").
+	// Defaults to "/app/account" when empty for backward compatibility.
+	PageURL string
 }
 
 // Module wires the account route.
@@ -26,10 +29,15 @@ func NewModule(deps *ModuleDeps) *Module {
 	return &Module{deps: deps}
 }
 
-// RegisterRoutes registers the GET handler for /app/account.
+// RegisterRoutes registers the GET handler for the account page.
 func (m *Module) RegisterRoutes(r view.RouteRegistrar) {
-	r.GET("/app/account", accountdetail.NewView(&accountdetail.ModuleDeps{
+	pageURL := m.deps.PageURL
+	if pageURL == "" {
+		pageURL = "/app/account"
+	}
+	r.GET(pageURL, accountdetail.NewView(&accountdetail.ModuleDeps{
 		Messages:          m.deps.Messages,
 		ChangePasswordURL: m.deps.ChangePasswordURL,
+		PageURL:           pageURL,
 	}))
 }

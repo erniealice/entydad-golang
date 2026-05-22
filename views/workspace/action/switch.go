@@ -11,6 +11,9 @@ import (
 // SwitchWorkspaceDeps holds dependencies for the switch workspace handler.
 type SwitchWorkspaceDeps struct {
 	SwitchWorkspace func(ctx context.Context, req *workspacepb.SwitchWorkspaceRequest) (*workspacepb.SwitchWorkspaceResponse, error)
+	// HomeURL is the page to redirect to after a successful workspace switch.
+	// Defaults to "/app/home" when empty for backward compatibility.
+	HomeURL string
 }
 
 // NewSwitchWorkspaceHandler creates an http.HandlerFunc that switches the
@@ -56,7 +59,11 @@ func NewSwitchWorkspaceHandler(deps *SwitchWorkspaceDeps) http.HandlerFunc {
 		}
 
 		// HTMX redirect to home (full page reload to pick up new workspace context)
-		w.Header().Set("HX-Redirect", "/app/home")
+		homeURL := deps.HomeURL
+		if homeURL == "" {
+			homeURL = "/app/home"
+		}
+		w.Header().Set("HX-Redirect", homeURL)
 		w.WriteHeader(http.StatusOK)
 	}
 }
