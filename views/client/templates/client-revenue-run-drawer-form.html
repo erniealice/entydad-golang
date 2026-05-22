@@ -269,7 +269,7 @@ the as_of_date changes.
                                 {{if .SuppressingAdvanceCollectionID}}
                                 <a
                                     class="revenue-run-period-link"
-                                    href="/app/cash/collections/detail/{{.SuppressingAdvanceCollectionID}}"
+                                    href='{{routeWith "collection.detail" "id" .SuppressingAdvanceCollectionID}}'
                                     data-testid="revenue-run-period-view-advance"
                                 >View advance</a>
                                 {{end}}
