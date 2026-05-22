@@ -114,9 +114,14 @@ type blockConfig struct {
 	supplier          bool
 	taxRegistration   bool
 	useCases          *UseCases
-	// homeURL is the page to redirect to after a successful workspace switch.
-	// Defaults to "/app/home" when empty.
+	// homeURL is the static fallback URL to redirect to after a successful
+	// workspace switch. Defaults to "/home" (post-P12 of workspace-keyed-routing
+	// plan; "/app/home" is gone) when empty.
 	homeURL string
+	// homeURLForWorkspaceID resolves the post-switch redirect URL given the
+	// newly-active workspace_id. When non-nil, it takes precedence over
+	// homeURL so callers can land on /w/{slug}/home per Q-WS-1 → A.
+	homeURLForWorkspaceID func(ctx context.Context, workspaceID string) string
 }
 
 // WithUseCases supplies the typed use-case closures to Block().
@@ -181,6 +186,14 @@ func WithTaxRegistration() BlockOption { return func(c *blockConfig) { c.taxRegi
 // WithHomeURL sets the URL the switch-workspace handler redirects to after a
 // successful workspace switch. Defaults to "/app/home" when not provided.
 func WithHomeURL(url string) BlockOption { return func(c *blockConfig) { c.homeURL = url } }
+
+// WithHomeURLForWorkspaceID supplies a resolver that returns /w/{slug}/home (or
+// the appropriate workspace-keyed URL) given the workspace_id being switched to.
+// Used by service-admin to land users on the URL-canonical workspace home after
+// the workspace switcher fires. Per Q-WS-1 → A of docs/plan/20260521-workspace-keyed-routing.
+func WithHomeURLForWorkspaceID(fn func(ctx context.Context, workspaceID string) string) BlockOption {
+	return func(c *blockConfig) { c.homeURLForWorkspaceID = fn }
+}
 
 // Block returns a pyeza.AppOption that registers entydad entity modules into the app.
 // When called with no options, all modules are registered (enableAll mode).
@@ -873,8 +886,9 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 			// Switch workspace (raw POST — uses session cookie, issues HX-Redirect)
 			if uc.Workspace.Switch != nil {
 				handleFunc(ctx.Routes, "POST", routes.Workspace.SwitchURL, workspaceaction.NewSwitchWorkspaceHandler(&workspaceaction.SwitchWorkspaceDeps{
-					SwitchWorkspace: uc.Workspace.Switch,
-					HomeURL:         cfg.homeURL,
+					SwitchWorkspace:       uc.Workspace.Switch,
+					HomeURLForWorkspaceID: cfg.homeURLForWorkspaceID,
+					HomeURL:               cfg.homeURL,
 				}))
 			}
 		}

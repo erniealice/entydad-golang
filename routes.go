@@ -239,7 +239,13 @@ const (
 
 	// DefaultAppRedirectURL is the default post-login redirect path.
 	// Consumer apps should set Deps.RedirectURL to override this.
-	DefaultAppRedirectURL = "/app/"
+	//
+	// Post-P12 (2026-05-22) of docs/plan/20260521-workspace-keyed-routing:
+	// /app/* is gone. Post-login redirects should use
+	// composition.homeURLForWorkspaceID() to land on /w/{slug}/home; this
+	// constant is the workspace-less fallback (/me/inbox) for callers that
+	// can't resolve a workspace slug at redirect time (password reset, etc.).
+	DefaultAppRedirectURL = "/me/inbox"
 
 	// TaxRegistration — polymorphic (client + workspace party types in v1)
 	// URL convention: party_type + party_id come from the parent detail page context.

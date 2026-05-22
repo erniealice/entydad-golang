@@ -11,8 +11,15 @@ import (
 // SwitchWorkspaceDeps holds dependencies for the switch workspace handler.
 type SwitchWorkspaceDeps struct {
 	SwitchWorkspace func(ctx context.Context, req *workspacepb.SwitchWorkspaceRequest) (*workspacepb.SwitchWorkspaceResponse, error)
-	// HomeURL is the page to redirect to after a successful workspace switch.
-	// Defaults to "/app/home" when empty for backward compatibility.
+	// HomeURLForWorkspaceID resolves the post-switch redirect URL given the
+	// newly-active workspace_id. Optional — when nil the handler falls back
+	// to HomeURL (or "/home" if both unset). Per Q-WS-1 the redirect should
+	// land on /w/{slug}/home so the URL reflects the active workspace.
+	HomeURLForWorkspaceID func(ctx context.Context, workspaceID string) string
+	// HomeURL is the static fallback when HomeURLForWorkspaceID is nil.
+	// Defaults to "/home" (post-P12 of workspace-keyed-routing plan;
+	// "/app/home" is gone). The bare /home handler reads workspace from the
+	// (post-switch) session.
 	HomeURL string
 }
 
@@ -58,10 +65,19 @@ func NewSwitchWorkspaceHandler(deps *SwitchWorkspaceDeps) http.HandlerFunc {
 			return
 		}
 
-		// HTMX redirect to home (full page reload to pick up new workspace context)
-		homeURL := deps.HomeURL
+		// HTMX redirect to home (full page reload to pick up new workspace context).
+		// Prefer /w/{slug}/home via HomeURLForWorkspaceID so the URL reflects the
+		// new workspace (Q-WS-1 → A / Q-WS-13). Fall back to bare /home which
+		// reads workspace from the just-switched session.
+		var homeURL string
+		if deps.HomeURLForWorkspaceID != nil {
+			homeURL = deps.HomeURLForWorkspaceID(r.Context(), workspaceID)
+		}
 		if homeURL == "" {
-			homeURL = "/app/home"
+			homeURL = deps.HomeURL
+		}
+		if homeURL == "" {
+			homeURL = "/home"
 		}
 		w.Header().Set("HX-Redirect", homeURL)
 		w.WriteHeader(http.StatusOK)

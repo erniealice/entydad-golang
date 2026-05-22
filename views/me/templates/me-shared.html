@@ -11,7 +11,11 @@
 {{end}}
 
 {{define "me-stub-content"}}
-{{template "header-oob" .}}
+{{/* No header-oob on full page loads — app-shell already renders the page
+     header at line 28 ({{template "header" .}}). Including header-oob here
+     duplicated the global header on full loads. HTMX-boosted navigation
+     between /me/* pages will need a conditional header-oob (gated on
+     .IsHTMX) when per-page header variants land. */}}
 <div class="me-page" data-me-page="{{.ActiveNav}}" data-testid="me-page-{{.ActiveNav}}">
     <section class="me-page-section">
         <div class="account-section-card">
@@ -28,7 +32,7 @@
 {{end}}
 
 {{define "me-recent-activity-content"}}
-{{template "header-oob" .}}
+{{/* Same as me-stub-content — no header-oob on full page loads (duplicates app-shell's header). */}}
 <div class="me-page" data-me-page="recent-activity" data-testid="me-page-recent-activity">
     <section class="me-page-section">
         <div class="account-section-card">
