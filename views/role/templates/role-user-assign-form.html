@@ -4,6 +4,7 @@ Data: .RoleID, .FormAction, .Labels, .UserOptions, .CommonLabels
 */}}
 {{define "role-user-assign-form"}}
 <form hx-post="{{.FormAction}}" hx-swap="none" hx-on::after-request="lf.Sheet.handleResponse(event)">
+    {{actionForm .FormAction .WorkspaceID}}
 
     <div class="sheet-body">
         <div class="form-row single">

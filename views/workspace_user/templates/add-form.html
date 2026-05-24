@@ -8,6 +8,7 @@
       hx-post="{{.FormAction}}"
       hx-target="#sheetContent"
       hx-swap="innerHTML">
+    {{actionForm .FormAction .WorkspaceID}}
 
     <input type="hidden" name="workspace_id" value="{{.WorkspaceID}}">
 

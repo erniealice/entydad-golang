@@ -66,6 +66,7 @@ type Labels struct {
 // Data is the template data for the payment term drawer form.
 type Data struct {
 	FormAction         string
+	WorkspaceID         string // injected by C1: populated by ViewAdapter.injectWorkspaceID for action_workspace_guard
 	IsEdit             bool
 	ID                 string
 	Name               string

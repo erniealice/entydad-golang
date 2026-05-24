@@ -40,6 +40,7 @@
           hx-post="{{.EditURL}}"
           hx-swap="none"
           hx-on::after-request="lf.handleInfoUpdate(event)">
+        {{actionForm .EditURL .WorkspaceID}}
 
         <div class="form-row">
             {{template "form-group" (dict
@@ -154,6 +155,7 @@ lf.handleInfoUpdate = function(evt) {
           hx-post="{{.ResetPasswordURL}}"
           hx-swap="none"
           hx-on::after-request="lf.handlePasswordReset(event)">
+        {{actionForm .ResetPasswordURL .WorkspaceID}}
         <div id="password-result" class="form-result form-result--hidden" aria-live="polite" aria-atomic="true" data-success-message="{{.Labels.Detail.PasswordUpdated}}" data-error-message="{{.Labels.Detail.PasswordFailed}}"></div>
         <div class="form-row single password-form-row">
             <div class="form-group">

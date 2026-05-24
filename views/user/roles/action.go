@@ -25,6 +25,7 @@ type AssignFormLabels struct {
 // AssignFormData is the template data for the assign role drawer form.
 type AssignFormData struct {
 	FormAction   string
+	WorkspaceID   string // injected by C1: populated by ViewAdapter.injectWorkspaceID for action_workspace_guard
 	UserID       string
 	Labels       AssignFormLabels
 	RoleOptions  []types.SelectOption

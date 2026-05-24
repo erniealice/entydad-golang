@@ -8,6 +8,7 @@ Data: AssignFormData (defined in action/action.go)
       hx-swap="none"
       hx-on::after-request="lf.Sheet.handleResponse(event)"
       data-testid="wur-drawer">
+    {{actionForm .FormAction .WorkspaceID}}
 
     {{/* Hidden field — workspace_user_id is contextual; not editable. */}}
     <input type="hidden" name="workspace_user_id" value="{{.WorkspaceUserID}}">
@@ -86,6 +87,7 @@ Data: AssignFormData (defined in action/action.go)
 <div class="sheet-footer">
     <button type="button" class="btn btn-outline" onclick="lf.Sheet.close()">Cancel</button>
     <form hx-post="{{.DeleteURL}}" hx-swap="none" hx-on::after-request="lf.Sheet.handleResponse(event)" style="display:inline">
+        {{actionForm .DeleteURL .WorkspaceID}}
         <input type="hidden" name="id" value="{{.ID}}">
         <button type="submit" class="btn btn-danger">Remove</button>
     </form>

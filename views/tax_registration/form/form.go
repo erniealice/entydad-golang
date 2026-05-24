@@ -42,6 +42,7 @@ type KindOption struct {
 // Data is the template data for the tax registration drawer form.
 type Data struct {
 	FormAction string
+	WorkspaceID string // injected by C1: populated by ViewAdapter.injectWorkspaceID for action_workspace_guard
 	IsEdit     bool
 	ID         string
 	// PartyType is "client" or "workspace" — drives the filtered Kind dropdown.

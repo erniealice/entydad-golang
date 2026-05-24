@@ -32,7 +32,7 @@
                 <p class="account-section-card-help">{{.T "memberPages.account.password.help"}}</p>
             </header>
             <div class="account-section-actions">
-                <a href="{{.ChangePasswordURL}}" class="account-section-action" data-testid="account-change-password-link">
+                <a href="{{.ChangePasswordURL}}" class="account-section-action" data-testid="account-change-password-link" hx-boost="false">
                     {{.T "memberPages.account.password.changeLink"}}
                     <span class="account-section-action-icon" aria-hidden="true">{{template "icon-arrow-right"}}</span>
                 </a>

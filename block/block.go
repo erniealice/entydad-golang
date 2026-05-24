@@ -122,6 +122,13 @@ type blockConfig struct {
 	// newly-active workspace_id. When non-nil, it takes precedence over
 	// homeURL so callers can land on /w/{slug}/home per Q-WS-1 → A.
 	homeURLForWorkspaceID func(ctx context.Context, workspaceID string) string
+	// secureSwitch (A1 fix WKR-P0-1, 2026-05-22): when set, the
+	// switch-workspace handler routes through the host app's secure
+	// rotation primitive instead of the legacy in-place use case. See
+	// workspaceaction.SwitchWorkspaceDeps.SecureSwitch.
+	secureSwitch             workspaceaction.SecureSwitchFn
+	secureSwitchResolveUser  func(r *http.Request) string
+	secureSwitchSetCookie    func(w http.ResponseWriter, token string)
 }
 
 // WithUseCases supplies the typed use-case closures to Block().
@@ -193,6 +200,32 @@ func WithHomeURL(url string) BlockOption { return func(c *blockConfig) { c.homeU
 // the workspace switcher fires. Per Q-WS-1 → A of docs/plan/20260521-workspace-keyed-routing.
 func WithHomeURLForWorkspaceID(fn func(ctx context.Context, workspaceID string) string) BlockOption {
 	return func(c *blockConfig) { c.homeURLForWorkspaceID = fn }
+}
+
+// WithSecureSwitch wires the rotation-aware workspace switch primitive into
+// the /action/admin/switch-workspace handler. Service-admin passes its
+// executePrincipalSwitch closure here so the sidebar workspace-switcher
+// rotates the session token, locks the binding inside tx, and writes an
+// audit row — matching the workspace-boundary rotation invariant
+// (Q-WS-13). When unset, the handler falls back to the legacy in-place
+// SwitchWorkspace use case (no rotation, no audit) for backward
+// compatibility with hosts that haven't migrated. A1 fix WKR-P0-1
+// (2026-05-22).
+//
+// All three parameters are required when SecureSwitch is to be active:
+//   - switchFn       — the rotation primitive
+//   - resolveUserID  — extract user_id from the request (post-session-mw)
+//   - setSessionCookie — set the post-rotation session cookie
+func WithSecureSwitch(
+	switchFn workspaceaction.SecureSwitchFn,
+	resolveUserID func(r *http.Request) string,
+	setSessionCookie func(w http.ResponseWriter, token string),
+) BlockOption {
+	return func(c *blockConfig) {
+		c.secureSwitch = switchFn
+		c.secureSwitchResolveUser = resolveUserID
+		c.secureSwitchSetCookie = setSessionCookie
+	}
 }
 
 // Block returns a pyeza.AppOption that registers entydad entity modules into the app.
@@ -884,8 +917,40 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 			workspacemod.NewModule(wsMod).RegisterRoutes(ctx.Routes)
 
 			// Switch workspace (raw POST — uses session cookie, issues HX-Redirect)
-			if uc.Workspace.Switch != nil {
+			// Registers when EITHER the legacy SwitchWorkspace use case is wired
+			// OR the host app has provided a SecureSwitch override (A1 fix
+			// WKR-P0-1: service-admin wires SecureSwitch so the sidebar
+			// workspace-switcher rotates + audits via executePrincipalSwitch).
+			//
+			// Two wire-up paths supported:
+			//   1. BlockOption: WithSecureSwitch(fn, resolveUserID, setCookie)
+			//      — explicit, used when host can construct closures before
+			//      Block() is applied.
+			//   2. AppContext fields: ctx.SecureWorkspaceSwitch + the two
+			//      sibling fields — used when the host has the appBuilder
+			//      ready inside buildAppContext() but constructs the entydad
+			//      AppOption from a different call site. This lets
+			//      service-admin populate them inside buildAppContext()
+			//      without restructuring entydadBlock().
+			secureSwitch := cfg.secureSwitch
+			secureSwitchResolveUser := cfg.secureSwitchResolveUser
+			secureSwitchSetCookie := cfg.secureSwitchSetCookie
+			if secureSwitch == nil {
+				if v, ok := ctx.SecureWorkspaceSwitch.(workspaceaction.SecureSwitchFn); ok {
+					secureSwitch = v
+				}
+				if v, ok := ctx.SecureWorkspaceSwitchResolveUserID.(func(r *http.Request) string); ok {
+					secureSwitchResolveUser = v
+				}
+				if v, ok := ctx.SecureWorkspaceSwitchSetSessionCookie.(func(w http.ResponseWriter, token string)); ok {
+					secureSwitchSetCookie = v
+				}
+			}
+			if uc.Workspace.Switch != nil || secureSwitch != nil {
 				handleFunc(ctx.Routes, "POST", routes.Workspace.SwitchURL, workspaceaction.NewSwitchWorkspaceHandler(&workspaceaction.SwitchWorkspaceDeps{
+					SecureSwitch:          secureSwitch,
+					ResolveUserID:         secureSwitchResolveUser,
+					SetSessionCookie:      secureSwitchSetCookie,
 					SwitchWorkspace:       uc.Workspace.Switch,
 					HomeURLForWorkspaceID: cfg.homeURLForWorkspaceID,
 					HomeURL:               cfg.homeURL,

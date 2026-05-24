@@ -5,6 +5,7 @@ Data: .Name, .Address, .Description, .Timezone, .Active, .ID, .FormAction, .IsEd
 */}}
 {{define "location-drawer-form"}}
 <form hx-post="{{.FormAction}}" hx-swap="none" hx-on::after-request="lf.Sheet.handleResponse(event)">
+    {{actionForm .FormAction .WorkspaceID}}
     {{if .ID}}<input type="hidden" name="id" value="{{.ID}}">{{end}}
 
     <div class="sheet-body">

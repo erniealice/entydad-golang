@@ -16,6 +16,7 @@ Data:
 */}}
 {{define "tax-registration-revoke-confirm"}}
 <form hx-post="{{.RevokeURL}}" hx-swap="none" hx-on::after-request="lf.Sheet.handleResponse(event)">
+    {{actionForm .RevokeURL .WorkspaceID}}
     {{if .ID}}<input type="hidden" name="id" value="{{.ID}}">{{end}}
 
     <div class="sheet-body">

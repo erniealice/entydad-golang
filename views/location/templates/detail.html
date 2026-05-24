@@ -40,6 +40,7 @@
           hx-post="{{.EditDetailURL}}"
           hx-swap="none"
           hx-on::after-request="lf.handleInfoUpdate(event)">
+        {{actionForm .EditDetailURL .WorkspaceID}}
 
         <div class="form-row single">
             {{template "form-group" (dict

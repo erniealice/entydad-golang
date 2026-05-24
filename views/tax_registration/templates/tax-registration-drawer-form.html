@@ -22,6 +22,7 @@ Data:
       hx-swap="none"
       hx-on::after-request="lf.Sheet.handleResponse(event)"
       data-testid="tax-registration-drawer-form">
+    {{actionForm .FormAction .WorkspaceID}}
     {{if .IsEdit}}<input type="hidden" name="id" value="{{.ID}}">{{end}}
     <input type="hidden" name="party_type" value="{{.PartyType}}">
     <input type="hidden" name="party_id" value="{{.PartyID}}">

@@ -5,6 +5,7 @@ Data: .FirstName, .LastName, .Email, .Mobile, .Timezone, .Active, .ID, .FormActi
 */}}
 {{define "user-drawer-form"}}
 <form hx-post="{{.FormAction}}" hx-swap="none" hx-on::after-request="lf.Sheet.handleResponse(event)">
+    {{actionForm .FormAction .WorkspaceID}}
     {{if .ID}}<input type="hidden" name="id" value="{{.ID}}">{{end}}
 
     <div class="sheet-body">

@@ -16,6 +16,7 @@ Labels: all text via .Labels.* — no English literals.
     hx-on::after-request="lf.Sheet.handleResponse(event)"
     data-testid="revenue-run-form"
 >
+    {{actionForm .FormAction .WorkspaceID}}
     <input type="hidden" name="client_id" value="{{.ClientID}}">
     <input type="hidden" name="as_of_date" value="{{.AsOfDate}}">
 
