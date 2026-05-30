@@ -35,11 +35,11 @@
 <div class="tab-scroll">
     <h2 class="visually-hidden">{{.Labels.Detail.BasicInfo.Title}}</h2>
     <h4 class="detail-section-title">{{.Labels.Detail.BasicInfo.Title}}</h4>
-    <div id="info-result" class="form-result" hidden aria-live="polite" aria-atomic="true" data-success-message="{{.Labels.Detail.UpdateSuccess}}" data-error-message="{{.Labels.Detail.UpdateError}}"></div>
-    <form id="info-edit-form"
+    <div id="location-info-result" class="form-result" hidden aria-live="polite" aria-atomic="true" data-success-message="{{.Labels.Detail.UpdateSuccess}}" data-error-message="{{.Labels.Detail.UpdateError}}"></div>
+    <form id="location-info-edit-form"
           hx-post="{{.EditDetailURL}}"
           hx-swap="none"
-          hx-on::after-request="lf.handleInfoUpdate(event)">
+          hx-on::after-request="lf.ui.handleFormResult(event, {resultId: 'location-info-result', successSource: 'dataset', successFallback: 'Location updated successfully', errorFallback: 'Failed to update location', hideMode: 'style'})">
         {{actionForm .EditDetailURL .WorkspaceID}}
 
         <div class="form-row single">
@@ -89,25 +89,7 @@
             </button>
         </div>
     </form>
-</div>
-<script>
-window.lf = window.lf || {};
-lf.handleInfoUpdate = function(evt) {
-    var el = document.getElementById('info-result');
-    if (!el) return;
-    el.style.display = 'block';
-    if (evt.detail.successful) {
-        el.className = 'form-result form-result--success';
-        el.textContent = el.dataset.successMessage || 'Location updated successfully';
-    } else {
-        var msg = evt.detail.xhr.getResponseHeader('HX-Error-Message') || el.dataset.errorMessage || 'Failed to update location';
-        el.className = 'form-result form-result--error';
-        el.textContent = msg;
-    }
-    setTimeout(function() { el.style.display = 'none'; }, 5000);
-};
-</script>
-{{end}}
+</div>{{end}}
 
 {{/* =============================================
      TAB PARTIAL: Users (coming soon)
