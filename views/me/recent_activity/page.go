@@ -15,7 +15,7 @@ import (
 	"context"
 
 	me "github.com/erniealice/entydad-golang/views/me"
-	espynaconsumer "github.com/erniealice/espyna-golang/consumer"
+	appcontext "github.com/erniealice/espyna-golang/appcontext"
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
 )
@@ -51,7 +51,7 @@ func NewView(deps *ModuleDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		var switches []SwitchEntry
 		if deps != nil && deps.ListRecentSwitches != nil {
-			if userID, err := espynaconsumer.RequireUserIDFromContext(ctx); err == nil {
+			if userID, err := appcontext.RequireUserIDFromContext(ctx); err == nil {
 				if rows, err := deps.ListRecentSwitches(ctx, userID, 50); err == nil {
 					switches = rows
 				}
