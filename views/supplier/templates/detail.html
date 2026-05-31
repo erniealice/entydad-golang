@@ -69,7 +69,7 @@
                 hx-get="{{.ExpenseRecognitionRunURL}}"
                 hx-target="#sheetContent"
                 hx-swap="innerHTML"
-                onclick="lf.ui.Sheet.open()">
+                data-sheet-open>
             {{template "icon-zap"}}
             Run Recognitions
         </button>

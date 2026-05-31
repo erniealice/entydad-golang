@@ -59,7 +59,7 @@ Data: AssignFormData (defined in action/action.go)
     <div class="sheet-footer">
         <button type="button"
                 class="btn btn-outline"
-                onclick="lf.ui.Sheet.close()">
+                data-sheet-close>
             {{if .CommonLabels}}{{with index (printf "%v" .CommonLabels) "Actions"}}{{end}}{{end}}Cancel
         </button>
         <button type="submit"
@@ -85,7 +85,7 @@ Data: AssignFormData (defined in action/action.go)
     <p>Are you sure you want to remove this role assignment?</p>
 </div>
 <div class="sheet-footer">
-    <button type="button" class="btn btn-outline" onclick="lf.ui.Sheet.close()">Cancel</button>
+    <button type="button" class="btn btn-outline" data-sheet-close>Cancel</button>
     <form hx-post="{{.DeleteURL}}" hx-swap="none" hx-on::after-request="lf.ui.Sheet.handleResponse(event)" style="display:inline">
         {{actionForm .DeleteURL .WorkspaceID}}
         <input type="hidden" name="id" value="{{.ID}}">
