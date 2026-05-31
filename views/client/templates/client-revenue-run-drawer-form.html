@@ -13,7 +13,7 @@ Labels: all text via .Labels.* — no English literals.
 <form
     hx-post="{{.FormAction}}"
     hx-swap="none"
-    hx-on::after-request="lf.Sheet.handleResponse(event)"
+    hx-on::after-request="lf.ui.Sheet.handleResponse(event)"
     data-testid="revenue-run-form"
 >
     {{actionForm .FormAction .WorkspaceID}}
@@ -64,7 +64,7 @@ Labels: all text via .Labels.* — no English literals.
         <button
             type="button"
             class="btn btn-secondary"
-            onclick="lf.Sheet.close()"
+            onclick="lf.ui.Sheet.close()"
             data-testid="revenue-run-cancel-btn"
         >
             {{.Labels.CancelButton}}

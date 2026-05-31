@@ -15,7 +15,7 @@ Data:
   .CommonLabels
 */}}
 {{define "tax-registration-revoke-confirm"}}
-<form hx-post="{{.RevokeURL}}" hx-swap="none" hx-on::after-request="lf.Sheet.handleResponse(event)">
+<form hx-post="{{.RevokeURL}}" hx-swap="none" hx-on::after-request="lf.ui.Sheet.handleResponse(event)">
     {{actionForm .RevokeURL .WorkspaceID}}
     {{if .ID}}<input type="hidden" name="id" value="{{.ID}}">{{end}}
 

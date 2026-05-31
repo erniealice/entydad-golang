@@ -81,7 +81,9 @@
             });
         }
         window.lf = window.lf || {};
-        window.lf.updatePasswordStrength = updatePasswordStrength;
+        window.lf.entydad = window.lf.entydad || {};
+        window.lf.entydad.signup = window.lf.entydad.signup || {};
+        window.lf.entydad.signup.updatePasswordStrength = updatePasswordStrength;
     })();
     </script>
     </main>
@@ -200,7 +202,7 @@
                             placeholder="{{.Labels.PasswordPlaceholder}}"
                             required
                             autocomplete="new-password"
-                            oninput="lf.updatePasswordStrength(this.value)"
+                            oninput="lf.entydad.signup.updatePasswordStrength(this.value)"
                         >
                         <!-- Password strength indicator -->
                         <div class="password-strength" id="passwordStrength" aria-label="{{.Labels.PasswordStrength}}">

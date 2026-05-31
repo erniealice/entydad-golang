@@ -122,7 +122,7 @@
             hx-get="{{.EditURL}}?mode=info"
             hx-target="#sheetContent"
             hx-swap="innerHTML"
-            onclick="lf.Sheet.open()">
+            onclick="lf.ui.Sheet.open()">
         <span class="icon icon-edit"></span> {{.CommonLabels.Buttons.Edit}}
     </button>
     {{else}}
@@ -166,7 +166,7 @@
             hx-get="{{.EditURL}}?mode=representative"
             hx-target="#sheetContent"
             hx-swap="innerHTML"
-            onclick="lf.Sheet.open()">
+            onclick="lf.ui.Sheet.open()">
         <span class="icon icon-edit"></span> {{.CommonLabels.Buttons.Edit}}
     </button>
     {{else}}

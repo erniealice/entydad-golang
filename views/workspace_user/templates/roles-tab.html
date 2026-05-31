@@ -9,7 +9,7 @@
                 hx-get="{{.WorkspaceUserRoleAddURL}}"
                 hx-target="#sheetContent"
                 hx-swap="innerHTML"
-                onclick="lf.Sheet.open()">
+                onclick="lf.ui.Sheet.open()">
             <span class="icon icon-plus"></span>
             {{if .Labels.Detail.Roles.AssignButton}}{{.Labels.Detail.Roles.AssignButton}}{{else}}Assign role{{end}}
         </button>

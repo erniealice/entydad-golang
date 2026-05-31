@@ -6,7 +6,7 @@ Data: AssignFormData (defined in action/action.go)
 {{define "wur-assign-form"}}
 <form hx-post="{{.FormAction}}"
       hx-swap="none"
-      hx-on::after-request="lf.Sheet.handleResponse(event)"
+      hx-on::after-request="lf.ui.Sheet.handleResponse(event)"
       data-testid="wur-drawer">
     {{actionForm .FormAction .WorkspaceID}}
 
@@ -59,7 +59,7 @@ Data: AssignFormData (defined in action/action.go)
     <div class="sheet-footer">
         <button type="button"
                 class="btn btn-outline"
-                onclick="lf.Sheet.close()">
+                onclick="lf.ui.Sheet.close()">
             {{if .CommonLabels}}{{with index (printf "%v" .CommonLabels) "Actions"}}{{end}}{{end}}Cancel
         </button>
         <button type="submit"
@@ -85,8 +85,8 @@ Data: AssignFormData (defined in action/action.go)
     <p>Are you sure you want to remove this role assignment?</p>
 </div>
 <div class="sheet-footer">
-    <button type="button" class="btn btn-outline" onclick="lf.Sheet.close()">Cancel</button>
-    <form hx-post="{{.DeleteURL}}" hx-swap="none" hx-on::after-request="lf.Sheet.handleResponse(event)" style="display:inline">
+    <button type="button" class="btn btn-outline" onclick="lf.ui.Sheet.close()">Cancel</button>
+    <form hx-post="{{.DeleteURL}}" hx-swap="none" hx-on::after-request="lf.ui.Sheet.handleResponse(event)" style="display:inline">
         {{actionForm .DeleteURL .WorkspaceID}}
         <input type="hidden" name="id" value="{{.ID}}">
         <button type="submit" class="btn btn-danger">Remove</button>

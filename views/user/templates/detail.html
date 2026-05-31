@@ -138,7 +138,7 @@
     <form id="reset-password-form"
           hx-post="{{.ResetPasswordURL}}"
           hx-swap="none"
-          hx-on::after-request="lf.handlePasswordReset(event)">
+          hx-on::after-request="lf.entydad.user.handlePasswordReset(event)">
         {{actionForm .ResetPasswordURL .WorkspaceID}}
         <div id="password-result" class="form-result form-result--hidden" aria-live="polite" aria-atomic="true" data-success-message="{{.Labels.Detail.PasswordUpdated}}" data-error-message="{{.Labels.Detail.PasswordFailed}}"></div>
         <div class="form-row single password-form-row">
@@ -233,7 +233,10 @@
     }
 })();
 
-lf.handlePasswordReset = function(evt) {
+window.lf = window.lf || {};
+window.lf.entydad = window.lf.entydad || {};
+window.lf.entydad.user = window.lf.entydad.user || {};
+lf.entydad.user.handlePasswordReset = function(evt) {
     var el = document.getElementById('password-result');
     if (!el) return;
     if (evt.detail.successful) {
