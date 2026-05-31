@@ -15,6 +15,7 @@ type RevenueRunDrawerData struct {
 	// FormAction is the POST URL (same URL as the GET — single endpoint).
 	FormAction string
 	WorkspaceID string // injected by C1: populated by ViewAdapter.injectWorkspaceID for action_workspace_guard
+	Nonce       string // injected by C1: populated by ViewAdapter.injectPageData via reflection
 	// FragmentURL is the GET URL used by the HTMX inner-swap partial when the
 	// as_of_date changes. Typically equals FormAction + query params.
 	FragmentURL string

@@ -31,6 +31,7 @@ type Labels struct {
 type Data struct {
 	FormAction         string
 	WorkspaceID         string // injected by C1: populated by ViewAdapter.injectWorkspaceID for action_workspace_guard
+	Nonce              string // injected by C1: populated by ViewAdapter.injectPageData via reflection
 	IsEdit             bool
 	ID                 string
 	FirstName          string

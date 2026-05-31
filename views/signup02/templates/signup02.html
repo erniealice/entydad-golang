@@ -17,7 +17,7 @@
     {{template "signup02-content" .}}
 
     <!-- Carousel JavaScript -->
-    <script>
+    <script nonce="{{.Nonce}}">
         (function() {
             const carousel = document.getElementById('authCarousel');
             if (!carousel) return;
@@ -60,7 +60,7 @@
     </script>
 
     <!-- Password strength JavaScript -->
-    <script>
+    <script nonce="{{.Nonce}}">
     (function() {
         function updatePasswordStrength(value) {
             var bars = document.querySelectorAll('.password-strength-bar');
@@ -84,6 +84,16 @@
         window.lf.entydad = window.lf.entydad || {};
         window.lf.entydad.signup = window.lf.entydad.signup || {};
         window.lf.entydad.signup.updatePasswordStrength = updatePasswordStrength;
+
+        // Delegated binding (replaces the former inline oninput=). This signup
+        // page is a standalone document that does NOT load pyeza's lf.on helper,
+        // so we delegate directly: one document-level 'input' listener matched
+        // via closest() on the data hook — the same mechanism lf.on() implements.
+        // CSP-safe (this script is nonced); behaviour-preserving.
+        document.addEventListener('input', function (e) {
+            var input = e.target.closest('[data-lf-password-strength]');
+            if (input) { updatePasswordStrength(input.value); }
+        });
     })();
     </script>
     </main>
@@ -202,7 +212,7 @@
                             placeholder="{{.Labels.PasswordPlaceholder}}"
                             required
                             autocomplete="new-password"
-                            oninput="lf.entydad.signup.updatePasswordStrength(this.value)"
+                            data-lf-password-strength
                         >
                         <!-- Password strength indicator -->
                         <div class="password-strength" id="passwordStrength" aria-label="{{.Labels.PasswordStrength}}">

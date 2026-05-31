@@ -158,7 +158,7 @@ Data: .Name, .Code, .Type, .NetDays, .ProximateDay, .DiscountDays,
     {{template "sheet-form-footer" (dict "CommonLabels" .CommonLabels "ShowCancel" true "IsEdit" .IsEdit)}}
 </form>
 
-<script>
+<script nonce="{{.Nonce}}">
 (function() {
     var form = document.currentScript.previousElementSibling;
     while (form && form.tagName !== 'FORM') { form = form.previousElementSibling; }

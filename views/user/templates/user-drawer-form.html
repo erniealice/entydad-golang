@@ -111,7 +111,7 @@ Data: .FirstName, .LastName, .Email, .Mobile, .Timezone, .Active, .ID, .FormActi
 
     {{template "sheet-form-footer" (dict "CommonLabels" .CommonLabels "ShowCancel" true "IsEdit" .IsEdit)}}
 </form>
-<script>
+<script nonce="{{.Nonce}}">
 (function() {
     // Password toggle visibility
     var toggleBtn = document.querySelector('.password-toggle-btn');
