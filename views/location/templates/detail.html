@@ -39,7 +39,12 @@
     <form id="location-info-edit-form"
           hx-post="{{.EditDetailURL}}"
           hx-swap="none"
-          hx-on::after-request="lf.ui.handleFormResult(event, {resultId: 'location-info-result', successSource: 'dataset', successFallback: 'Location updated successfully', errorFallback: 'Failed to update location', hideMode: 'style'})">
+          data-hx-on="form-result"
+          data-result-id="location-info-result"
+          data-success-source="dataset"
+          data-success-fallback="Location updated successfully"
+          data-error-fallback="Failed to update location"
+          data-hide-mode="style">
         {{actionForm .EditDetailURL .WorkspaceID}}
 
         <div class="form-row single">

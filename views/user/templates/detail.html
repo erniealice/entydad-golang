@@ -39,7 +39,12 @@
     <form id="user-info-edit-form"
           hx-post="{{.EditURL}}"
           hx-swap="none"
-          hx-on::after-request="lf.ui.handleFormResult(event, {resultId: 'user-info-result', successSource: 'dataset', successFallback: 'User updated successfully', errorFallback: 'Failed to update user', hideMode: 'classList'})">
+          data-hx-on="form-result"
+          data-result-id="user-info-result"
+          data-success-source="dataset"
+          data-success-fallback="User updated successfully"
+          data-error-fallback="Failed to update user"
+          data-hide-mode="classList">
         {{actionForm .EditURL .WorkspaceID}}
 
         <div class="form-row">
@@ -138,7 +143,7 @@
     <form id="reset-password-form"
           hx-post="{{.ResetPasswordURL}}"
           hx-swap="none"
-          hx-on::after-request="lf.entydad.user.handlePasswordReset(event)">
+          data-hx-on="password-reset">
         {{actionForm .ResetPasswordURL .WorkspaceID}}
         <div id="password-result" class="form-result form-result--hidden" aria-live="polite" aria-atomic="true" data-success-message="{{.Labels.Detail.PasswordUpdated}}" data-error-message="{{.Labels.Detail.PasswordFailed}}"></div>
         <div class="form-row single password-form-row">
@@ -250,5 +255,10 @@ lf.entydad.user.handlePasswordReset = function(evt) {
     }
     setTimeout(function() { el.classList.add('form-result--hidden'); }, 5000);
 };
+if (lf.hxOn) {
+    lf.hxOn('htmx:afterRequest', '[data-hx-on="password-reset"]', function(e) {
+        lf.entydad.user.handlePasswordReset(e);
+    });
+}
 </script>
 {{end}}

@@ -6,7 +6,7 @@ Data: AssignFormData (defined in action/action.go)
 {{define "wur-assign-form"}}
 <form hx-post="{{.FormAction}}"
       hx-swap="none"
-      hx-on::after-request="lf.ui.Sheet.handleResponse(event)"
+      data-hx-on="sheet-response"
       data-testid="wur-drawer">
     {{actionForm .FormAction .WorkspaceID}}
 
@@ -86,7 +86,7 @@ Data: AssignFormData (defined in action/action.go)
 </div>
 <div class="sheet-footer">
     <button type="button" class="btn btn-outline" data-sheet-close>Cancel</button>
-    <form hx-post="{{.DeleteURL}}" hx-swap="none" hx-on::after-request="lf.ui.Sheet.handleResponse(event)" style="display:inline">
+    <form hx-post="{{.DeleteURL}}" hx-swap="none" data-hx-on="sheet-response" style="display:inline">
         {{actionForm .DeleteURL .WorkspaceID}}
         <input type="hidden" name="id" value="{{.ID}}">
         <button type="submit" class="btn btn-danger">Remove</button>
