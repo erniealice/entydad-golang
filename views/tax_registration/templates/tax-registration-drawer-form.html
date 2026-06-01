@@ -30,15 +30,15 @@ Data:
     <div class="sheet-body">
         {{/* ── Kind dropdown — filtered by party type via FindByPartyType ── */}}
         <div class="form-row single">
-            <div class="form-group" data-testid="tax-registration-kind">
-                <label class="form-label">{{.Labels.KindID}}</label>
-                <select name="tax_registration_kind_id" class="form-control" required>
-                    <option value="">— select —</option>
-                    {{range .KindOptions}}
-                    <option value="{{.Value}}"{{if .Selected}} selected{{end}}>{{.Label}}</option>
-                    {{end}}
-                </select>
-            </div>
+            {{template "form-group" (dict
+                "Type" "select"
+                "Name" "tax_registration_kind_id"
+                "Label" .Labels.KindID
+                "Placeholder" "— select —"
+                "Options" .KindOptions
+                "Required" true
+                "TestId" "tax-registration-kind"
+            )}}
         </div>
 
         {{/* ── Registration number ── */}}
