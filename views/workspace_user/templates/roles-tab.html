@@ -4,7 +4,7 @@
     <div class="tab-actions-row">
         {{/* "Assign role" button — Phase 3 owns the add handler; this URL is pre-wired. */}}
         {{if .WorkspaceUserRoleAddURL}}
-        <button class="btn btn-sm btn-primary"
+        <button type="button" class="btn btn-sm btn-primary"
                 data-testid="workspace-user-role-add-btn"
                 hx-get="{{.WorkspaceUserRoleAddURL}}"
                 hx-target="#sheetContent"

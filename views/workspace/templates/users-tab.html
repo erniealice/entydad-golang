@@ -3,7 +3,7 @@
 <div class="tab-scroll tab-scroll--table" data-testid="workspace-tab-users">
     <div class="tab-actions-row">
         {{if .WorkspaceUserAddURL}}
-        <button class="btn btn-sm btn-primary"
+        <button type="button" class="btn btn-sm btn-primary"
                 data-testid="workspace-user-add-btn"
                 hx-get="{{.WorkspaceUserAddURL}}"
                 hx-target="#sheetContent"

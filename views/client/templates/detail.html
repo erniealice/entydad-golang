@@ -117,7 +117,7 @@
 {{/* --- Edit Button (outside .tab-scroll so it's never clipped) --- */}}
 <div class="detail-tab-actions detail-tab-actions--bottom">
     {{if .CanUpdate}}
-    <button class="btn btn-sm btn-outline"
+    <button type="button" class="btn btn-sm btn-outline"
             data-testid="tab-info-edit-btn"
             hx-get="{{.EditURL}}?mode=info"
             hx-target="#sheetContent"
@@ -126,7 +126,7 @@
         <span class="icon icon-edit"></span> {{.CommonLabels.Buttons.Edit}}
     </button>
     {{else}}
-    <button class="btn btn-sm btn-outline"
+    <button type="button" class="btn btn-sm btn-outline"
             data-testid="tab-info-edit-btn"
             disabled
             aria-disabled="true"
@@ -161,7 +161,7 @@
 {{/* --- Edit Button (outside .tab-scroll so it's never clipped) --- */}}
 <div class="detail-tab-actions detail-tab-actions--bottom">
     {{if .CanUpdate}}
-    <button class="btn btn-sm btn-outline"
+    <button type="button" class="btn btn-sm btn-outline"
             data-testid="tab-representative-edit-btn"
             hx-get="{{.EditURL}}?mode=representative"
             hx-target="#sheetContent"
@@ -170,7 +170,7 @@
         <span class="icon icon-edit"></span> {{.CommonLabels.Buttons.Edit}}
     </button>
     {{else}}
-    <button class="btn btn-sm btn-outline"
+    <button type="button" class="btn btn-sm btn-outline"
             data-testid="tab-representative-edit-btn"
             disabled
             aria-disabled="true"
