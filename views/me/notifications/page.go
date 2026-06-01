@@ -27,21 +27,22 @@ type PageData struct {
 // NewView constructs the /me/notifications view.
 func NewView(deps *ModuleDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		title := me.Msg(deps.Messages, "me.notifications.title", "Notifications")
 		pd := &PageData{
 			PageData: me.PageData{
 				PageData: types.PageData{
 					CacheVersion:    viewCtx.CacheVersion,
-					Title:           "Notifications",
+					Title:           title,
 					CurrentPath:     viewCtx.CurrentPath,
 					ActiveNav:       "notifications",
 					ContentTemplate: "me-stub-content",
-					HeaderTitle:     "Notifications",
+					HeaderTitle:     title,
 					HeaderIcon:      "icon-bell",
 					Messages:        deps.Messages,
 				},
 			},
-			Subtitle:     "All notifications across your workspaces.",
-			EmptyMessage: "No notifications yet.",
+			Subtitle:     me.Msg(deps.Messages, "me.notifications.subtitle", "All notifications across your workspaces."),
+			EmptyMessage: me.Msg(deps.Messages, "me.notifications.empty", "No notifications yet."),
 		}
 		return view.OK("me-page", pd)
 	})

@@ -19,8 +19,8 @@
     {{template "table-card" .RolesTable}}
     {{else}}
     <div class="coming-soon-panel">
-        <div class="coming-soon-title">No roles assigned</div>
-        <p class="coming-soon-text">No roles have been assigned to this workspace user yet.</p>
+        <div class="coming-soon-title">{{if .Labels.Detail.Roles.EmptyTitle}}{{.Labels.Detail.Roles.EmptyTitle}}{{else}}No roles assigned{{end}}</div>
+        <p class="coming-soon-text">{{if .Labels.Detail.Roles.EmptyMessage}}{{.Labels.Detail.Roles.EmptyMessage}}{{else}}No roles have been assigned to this workspace user yet.{{end}}</p>
     </div>
     {{end}}
 </div>

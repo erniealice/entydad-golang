@@ -23,3 +23,18 @@ import (
 type PageData struct {
 	types.PageData
 }
+
+// Msg resolves a flat lyngua message key from the loaded Messages map, falling
+// back to the supplied English literal when the key is absent or empty. The
+// /me/* stub pages carry hardcoded copy that lyngua now backs via
+// translations/en/general/me.json (W4.5 label remediation). Keeping the
+// English fallback means the pages still render correctly if the message map
+// is unwired (e.g. in tests) or a business-type override omits a key.
+func Msg(messages map[string]string, key, fallback string) string {
+	if messages != nil {
+		if v, ok := messages[key]; ok && v != "" {
+			return v
+		}
+	}
+	return fallback
+}

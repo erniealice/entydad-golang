@@ -7,7 +7,7 @@
 {{define "workspace-detail-content"}}
 <div class="page-content detail-layout" data-page-title="{{.Title}}">
     {{/* --- Tabs --- */}}
-    <div class="tabs" data-testid="workspace-tabs" id="workspace-detail-tabs" role="tablist" aria-label="Workspace tabs">
+    <div class="tabs" data-testid="workspace-tabs" id="workspace-detail-tabs" role="tablist" aria-label="{{if .Labels.Page.Heading}}{{.Labels.Page.Heading}}{{else}}Workspace tabs{{end}}">
         {{range .TabItems}}
         <button type="button"
                 class="tab{{if eq .Key $.ActiveTab}} active{{end}}"
@@ -46,34 +46,34 @@
 {{/* Info Tab */}}
 {{define "workspace-tab-info"}}
 <div class="tab-scroll">
-    <h2 class="visually-hidden">Info</h2>
-    <h4 class="detail-section-title">Details</h4>
+    <h2 class="visually-hidden">{{if .Labels.Detail.Tabs.Info}}{{.Labels.Detail.Tabs.Info}}{{else}}Info{{end}}</h2>
+    <h4 class="detail-section-title">{{if .Labels.Detail.Info.SectionTitle}}{{.Labels.Detail.Info.SectionTitle}}{{else}}Details{{end}}</h4>
     <div class="detail-info-grid">
         <div class="detail-info-item">
-            <span class="detail-info-label">{{.Labels.Form.Name}}</span>
+            <span class="detail-info-label">{{if .Labels.Form.Name}}{{.Labels.Form.Name}}{{else}}Name{{end}}</span>
             <span class="detail-info-value">{{if .WorkspaceName}}{{.WorkspaceName}}{{else}}&mdash;{{end}}</span>
         </div>
         <div class="detail-info-item">
-            <span class="detail-info-label">{{.Labels.Form.Description}}</span>
+            <span class="detail-info-label">{{if .Labels.Form.Description}}{{.Labels.Form.Description}}{{else}}Description{{end}}</span>
             <span class="detail-info-value">{{if .Description}}{{.Description}}{{else}}&mdash;{{end}}</span>
         </div>
         {{if .Currency}}
         <div class="detail-info-item">
-            <span class="detail-info-label">Currency</span>
+            <span class="detail-info-label">{{if .Labels.Detail.Info.Currency}}{{.Labels.Detail.Info.Currency}}{{else}}Currency{{end}}</span>
             <span class="detail-info-value">{{.Currency}}</span>
         </div>
         {{end}}
         {{if .Region}}
         <div class="detail-info-item">
-            <span class="detail-info-label">Region</span>
+            <span class="detail-info-label">{{if .Labels.Detail.Info.Region}}{{.Labels.Detail.Info.Region}}{{else}}Region{{end}}</span>
             <span class="detail-info-value">{{.Region}}</span>
         </div>
         {{end}}
         <div class="detail-info-item">
-            <span class="detail-info-label">{{.Labels.Columns.Status}}</span>
+            <span class="detail-info-label">{{if .Labels.Columns.Status}}{{.Labels.Columns.Status}}{{else}}Status{{end}}</span>
             <span>
                 <span class="badge badge--{{.StatusVariant}}">
-                    {{if .Active}}active{{else}}inactive{{end}}
+                    {{if .Active}}{{if .CommonLabels.Status.Active}}{{.CommonLabels.Status.Active}}{{else}}Active{{end}}{{else}}{{if .CommonLabels.Status.Inactive}}{{.CommonLabels.Status.Inactive}}{{else}}Inactive{{end}}{{end}}
                 </span>
             </span>
         </div>
@@ -100,13 +100,13 @@
          hx-swap="innerHTML"
          data-testid="workspace-tax-registrations-embed">
         <div class="coming-soon-panel">
-            <div class="coming-soon-title">Loading tax registrations…</div>
+            <div class="coming-soon-title">{{if .Labels.Detail.TaxReg.Loading}}{{.Labels.Detail.TaxReg.Loading}}{{else}}Loading tax registrations…{{end}}</div>
         </div>
     </div>
     {{else}}
     <div class="coming-soon-panel">
-        <div class="coming-soon-title">Tax Registrations</div>
-        <p class="coming-soon-text">Tax registration routes are not configured for this deployment.</p>
+        <div class="coming-soon-title">{{if .Labels.Detail.TaxReg.Title}}{{.Labels.Detail.TaxReg.Title}}{{else}}Tax Registrations{{end}}</div>
+        <p class="coming-soon-text">{{if .Labels.Detail.TaxReg.NotConfigured}}{{.Labels.Detail.TaxReg.NotConfigured}}{{else}}Tax registration routes are not configured for this deployment.{{end}}</p>
     </div>
     {{end}}
 </div>

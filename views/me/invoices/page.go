@@ -29,21 +29,22 @@ type PageData struct {
 // NewView constructs the /me/invoices view.
 func NewView(deps *ModuleDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		title := me.Msg(deps.Messages, "me.invoices.title", "My Invoices")
 		pd := &PageData{
 			PageData: me.PageData{
 				PageData: types.PageData{
 					CacheVersion:    viewCtx.CacheVersion,
-					Title:           "My Invoices",
+					Title:           title,
 					CurrentPath:     viewCtx.CurrentPath,
 					ActiveNav:       "invoices",
 					ContentTemplate: "me-stub-content",
-					HeaderTitle:     "My Invoices",
+					HeaderTitle:     title,
 					HeaderIcon:      "icon-file-text",
 					Messages:        deps.Messages,
 				},
 			},
-			Subtitle:     "Invoices across all workspaces where you are a client, supplier, or operator.",
-			EmptyMessage: "Cross-workspace invoice aggregation coming soon.",
+			Subtitle:     me.Msg(deps.Messages, "me.invoices.subtitle", "Invoices across all workspaces where you are a client, supplier, or operator."),
+			EmptyMessage: me.Msg(deps.Messages, "me.invoices.empty", "Cross-workspace invoice aggregation coming soon."),
 		}
 		return view.OK("me-page", pd)
 	})

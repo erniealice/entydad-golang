@@ -1,32 +1,32 @@
 {{/* Info Tab — read-only user/workspace fields for a workspace_user */}}
 {{define "workspace-user-tab-info"}}
 <div class="tab-scroll" data-testid="workspace-user-tab-info">
-    <h2 class="visually-hidden">Info</h2>
-    <h4 class="detail-section-title">User Details</h4>
+    <h2 class="visually-hidden">{{if .Labels.Detail.Tabs.Info}}{{.Labels.Detail.Tabs.Info}}{{else}}Info{{end}}</h2>
+    <h4 class="detail-section-title">{{if .Labels.Detail.Info.SectionTitle}}{{.Labels.Detail.Info.SectionTitle}}{{else}}User Details{{end}}</h4>
     <div class="detail-info-grid">
         <div class="detail-info-item">
-            <span class="detail-info-label">Name</span>
+            <span class="detail-info-label">{{if .Labels.Detail.Info.Name}}{{.Labels.Detail.Info.Name}}{{else}}Name{{end}}</span>
             <span class="detail-info-value">{{if .UserName}}{{.UserName}}{{else}}&mdash;{{end}}</span>
         </div>
         <div class="detail-info-item">
-            <span class="detail-info-label">Email</span>
+            <span class="detail-info-label">{{if .Labels.Detail.Info.Email}}{{.Labels.Detail.Info.Email}}{{else}}Email{{end}}</span>
             <span class="detail-info-value">{{if .Email}}{{.Email}}{{else}}&mdash;{{end}}</span>
         </div>
         <div class="detail-info-item">
-            <span class="detail-info-label">Workspace</span>
+            <span class="detail-info-label">{{if .Labels.Detail.Info.Workspace}}{{.Labels.Detail.Info.Workspace}}{{else}}Workspace{{end}}</span>
             <span class="detail-info-value">{{if .WorkspaceName}}{{.WorkspaceName}}{{else}}&mdash;{{end}}</span>
         </div>
         {{if .DateJoined}}
         <div class="detail-info-item">
-            <span class="detail-info-label">Date Joined</span>
+            <span class="detail-info-label">{{if .Labels.Detail.Info.DateJoined}}{{.Labels.Detail.Info.DateJoined}}{{else}}Date Joined{{end}}</span>
             <span class="detail-info-value">{{.DateJoined}}</span>
         </div>
         {{end}}
         <div class="detail-info-item">
-            <span class="detail-info-label">Status</span>
+            <span class="detail-info-label">{{if .Labels.Detail.Info.Status}}{{.Labels.Detail.Info.Status}}{{else}}Status{{end}}</span>
             <span>
                 <span class="badge badge--{{.StatusVariant}}">
-                    {{if .Active}}active{{else}}inactive{{end}}
+                    {{if .Active}}{{if .CommonLabels.Status.Active}}{{.CommonLabels.Status.Active}}{{else}}Active{{end}}{{else}}{{if .CommonLabels.Status.Inactive}}{{.CommonLabels.Status.Inactive}}{{else}}Inactive{{end}}{{end}}
                 </span>
             </span>
         </div>

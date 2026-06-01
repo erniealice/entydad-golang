@@ -18,8 +18,8 @@
     {{template "table-card" .UsersTable}}
     {{else}}
     <div class="coming-soon-panel">
-        <div class="coming-soon-title">No users</div>
-        <p class="coming-soon-text">No users have been added to this workspace yet.</p>
+        <div class="coming-soon-title">{{if .Labels.Detail.Users.EmptyTitle}}{{.Labels.Detail.Users.EmptyTitle}}{{else}}No users{{end}}</div>
+        <p class="coming-soon-text">{{if .Labels.Detail.Users.EmptyMessage}}{{.Labels.Detail.Users.EmptyMessage}}{{else}}No users have been added to this workspace yet.{{end}}</p>
     </div>
     {{end}}
 </div>

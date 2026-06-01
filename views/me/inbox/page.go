@@ -29,21 +29,22 @@ type PageData struct {
 // NewView constructs the /me/inbox view.
 func NewView(deps *ModuleDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		title := me.Msg(deps.Messages, "me.inbox.title", "Inbox")
 		pd := &PageData{
 			PageData: me.PageData{
 				PageData: types.PageData{
 					CacheVersion:    viewCtx.CacheVersion,
-					Title:           "Inbox",
+					Title:           title,
 					CurrentPath:     viewCtx.CurrentPath,
 					ActiveNav:       "inbox",
 					ContentTemplate: "me-stub-content",
-					HeaderTitle:     "Inbox",
+					HeaderTitle:     title,
 					HeaderIcon:      "icon-inbox",
 					Messages:        deps.Messages,
 				},
 			},
-			Subtitle:     "Notifications aggregated across your workspaces.",
-			EmptyMessage: "Cross-workspace notifications coming soon — your inbox is currently empty.",
+			Subtitle:     me.Msg(deps.Messages, "me.inbox.subtitle", "Notifications aggregated across your workspaces."),
+			EmptyMessage: me.Msg(deps.Messages, "me.inbox.empty", "Cross-workspace notifications coming soon — your inbox is currently empty."),
 		}
 		return view.OK("me-page", pd)
 	})

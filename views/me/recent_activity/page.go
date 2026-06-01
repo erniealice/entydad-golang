@@ -58,21 +58,22 @@ func NewView(deps *ModuleDeps) view.View {
 			}
 		}
 
+		title := me.Msg(deps.Messages, "me.recentActivity.title", "Recent Activity")
 		pd := &PageData{
 			PageData: me.PageData{
 				PageData: types.PageData{
 					CacheVersion:    viewCtx.CacheVersion,
-					Title:           "Recent Activity",
+					Title:           title,
 					CurrentPath:     viewCtx.CurrentPath,
 					ActiveNav:       "recent-activity",
 					ContentTemplate: "me-recent-activity-content",
-					HeaderTitle:     "Recent Activity",
+					HeaderTitle:     title,
 					HeaderIcon:      "icon-clock",
 					Messages:        deps.Messages,
 				},
 			},
-			Subtitle:     "Your recent workspace switches across all sessions.",
-			EmptyMessage: "No recent workspace switches.",
+			Subtitle:     me.Msg(deps.Messages, "me.recentActivity.subtitle", "Your recent workspace switches across all sessions."),
+			EmptyMessage: me.Msg(deps.Messages, "me.recentActivity.empty", "No recent workspace switches."),
 			Switches:     switches,
 		}
 		return view.OK("me-page", pd)

@@ -1004,6 +1004,30 @@ type WorkspaceLabels struct {
 type WorkspaceDetailLabels struct {
 	Tabs  WorkspaceDetailTabLabels  `json:"tabs"`
 	Users WorkspaceDetailUserLabels `json:"users"`
+	// Info holds the Info-tab section title + non-Form/Column field labels.
+	// Name/Description/Status reuse Form.* and Columns.Status; Info supplies
+	// the section heading + the Currency/Region fields not present elsewhere.
+	Info WorkspaceDetailInfoLabels `json:"info"`
+	// TaxReg holds the Tax Registrations tab panel copy (W4.5 label
+	// remediation — previously hardcoded in detail.html).
+	TaxReg WorkspaceDetailTaxRegLabels `json:"taxReg"`
+}
+
+// WorkspaceDetailTaxRegLabels holds the Tax Registrations tab panel copy
+// (W4.5 label remediation).
+type WorkspaceDetailTaxRegLabels struct {
+	Loading       string `json:"loading"`
+	Title         string `json:"title"`
+	NotConfigured string `json:"notConfigured"`
+}
+
+// WorkspaceDetailInfoLabels holds the Info-tab labels on the workspace detail
+// page (W4.5 label remediation). SectionTitle is the "Details" heading;
+// Currency/Region are the optional workspace fields shown on the Info tab.
+type WorkspaceDetailInfoLabels struct {
+	SectionTitle string `json:"sectionTitle"`
+	Currency     string `json:"currency"`
+	Region       string `json:"region"`
 }
 
 // WorkspaceDetailTabLabels holds the tab display names for the workspace detail page.
@@ -1018,6 +1042,10 @@ type WorkspaceDetailTabLabels struct {
 // WorkspaceDetailUserLabels holds i18n strings for the Users tab on the workspace detail page.
 type WorkspaceDetailUserLabels struct {
 	AddButton string `json:"addButton"`
+	// Empty-state copy shown when the workspace has no user assignments yet
+	// (W4.5 label remediation — previously hardcoded in users-tab.html).
+	EmptyTitle   string `json:"emptyTitle"`
+	EmptyMessage string `json:"emptyMessage"`
 }
 
 type WorkspacePageLabels struct {
@@ -1097,6 +1125,20 @@ type WorkspaceUserDetailLabels struct {
 	BackToWorkspace string                         `json:"backToWorkspace"`
 	Tabs            WorkspaceUserDetailTabLabels   `json:"tabs"`
 	Roles           WorkspaceUserDetailRolesLabels `json:"roles"`
+	// Info holds the Info-tab section title + field labels (W4.5 label
+	// remediation — previously hardcoded in info-tab.html).
+	Info WorkspaceUserDetailInfoLabels `json:"info"`
+}
+
+// WorkspaceUserDetailInfoLabels holds the Info-tab labels on the
+// workspace_user detail page (W4.5 label remediation).
+type WorkspaceUserDetailInfoLabels struct {
+	SectionTitle string `json:"sectionTitle"`
+	Name         string `json:"name"`
+	Email        string `json:"email"`
+	Workspace    string `json:"workspace"`
+	DateJoined   string `json:"dateJoined"`
+	Status       string `json:"status"`
 }
 
 type WorkspaceUserDetailTabLabels struct {
@@ -1107,6 +1149,10 @@ type WorkspaceUserDetailTabLabels struct {
 
 type WorkspaceUserDetailRolesLabels struct {
 	AssignButton string `json:"assignButton"`
+	// Empty-state copy shown when no roles are assigned yet (W4.5 label
+	// remediation — previously hardcoded in roles-tab.html).
+	EmptyTitle   string `json:"emptyTitle"`
+	EmptyMessage string `json:"emptyMessage"`
 }
 
 type WorkspaceUserFormLabels struct {
