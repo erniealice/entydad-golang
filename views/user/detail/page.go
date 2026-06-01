@@ -251,7 +251,12 @@ func buildTabItems(id string, labels entydad.UserLabels, roleCount int, routes e
 		{Key: "roles", Label: labels.Detail.Tabs.Roles, Href: base + "?tab=roles", HxGet: action + "roles", Icon: "icon-shield", Count: roleCount, Disabled: false},
 		{Key: "security", Label: labels.Detail.Tabs.Security, Href: base + "?tab=security", HxGet: action + "security", Icon: "icon-shield-check", Count: 0, Disabled: false},
 		{Key: "attachments", Label: labels.Detail.AttachmentsTab, Href: base + "?tab=attachments", HxGet: action + "attachments", Icon: "icon-paperclip", Count: 0, Disabled: false},
-		{Key: "audit-history", Label: "History", Href: base + "?tab=audit-history", HxGet: action + "audit-history", Icon: "icon-clock"},
+		{Key: "audit-history", Label: func() string {
+			if labels.Detail.AuditHistoryTab != "" {
+				return labels.Detail.AuditHistoryTab
+			}
+			return "History"
+		}(), Href: base + "?tab=audit-history", HxGet: action + "audit-history", Icon: "icon-clock"},
 	}
 }
 

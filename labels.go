@@ -431,6 +431,8 @@ type UserDetailLabels struct {
 	PasswordFailed           string `json:"passwordFailed"`
 	// Tab label for attachments (shared across all detail pages)
 	AttachmentsTab string `json:"attachmentsTab"`
+	// Tab label for audit history
+	AuditHistoryTab string `json:"auditHistoryTab"`
 }
 
 // UserDetailSecurityLabels holds labels for the security tab.
@@ -560,6 +562,8 @@ type LocationDetailLabels struct {
 	UpdateError   string `json:"updateError"`
 	// Tab label for attachments
 	AttachmentsTab string `json:"attachmentsTab"`
+	// Tab label for audit history
+	AuditHistoryTab string `json:"auditHistoryTab"`
 }
 
 type LocationDetailBasicInfoLabels struct {
@@ -773,6 +777,8 @@ type RoleDetailLabels struct {
 	NoUsersDesc           string `json:"noUsersDesc"`
 	// Tab label for attachments
 	AttachmentsTab string `json:"attachmentsTab"`
+	// Tab label for audit history
+	AuditHistoryTab string `json:"auditHistoryTab"`
 }
 
 type RoleDetailTabLabels struct {
@@ -1537,6 +1543,8 @@ type SupplierDetailLabels struct {
 	AddressInfo   SupplierDetailSectionLabels `json:"addressInfo"`
 	// Tab label for attachments
 	AttachmentsTab string `json:"attachmentsTab"`
+	// Tab label for audit history
+	AuditHistoryTab string `json:"auditHistoryTab"`
 	// Tab label for statement
 	StatementTab string `json:"statementTab"`
 	// Inline labels

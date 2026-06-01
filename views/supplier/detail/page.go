@@ -481,7 +481,12 @@ func buildTabItems(id string, deps *DetailViewDeps) []pyeza.TabItem {
 		{Key: "purchase-orders", Label: deps.Labels.Detail.PurchaseOrders.Title, Href: base + "?tab=purchase-orders", HxGet: action + "purchase-orders", Icon: "icon-shopping-cart"},
 		{Key: "statement", Label: deps.Labels.Detail.StatementTab, Href: base + "?tab=statement", HxGet: action + "statement", Icon: "icon-file-text"},
 		{Key: "attachments", Label: deps.Labels.Detail.AttachmentsTab, Href: base + "?tab=attachments", HxGet: action + "attachments", Icon: "icon-paperclip"},
-		{Key: "audit-history", Label: "History", Href: base + "?tab=audit-history", HxGet: action + "audit-history", Icon: "icon-clock"},
+		{Key: "audit-history", Label: func() string {
+			if deps.Labels.Detail.AuditHistoryTab != "" {
+				return deps.Labels.Detail.AuditHistoryTab
+			}
+			return "History"
+		}(), Href: base + "?tab=audit-history", HxGet: action + "audit-history", Icon: "icon-clock"},
 	}
 }
 

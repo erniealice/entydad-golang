@@ -214,6 +214,11 @@ func buildTabItems(id string, labels entydad.LocationLabels, routes entydad.Loca
 		{Key: "pricelists", Label: labels.Detail.Tabs.PriceLists, Href: base + "?tab=pricelists", HxGet: action + "pricelists", Icon: "icon-tag", Count: 0, Disabled: false},
 		{Key: "audit", Label: labels.Detail.Tabs.AuditTrail, Href: base + "?tab=audit", HxGet: action + "audit", Icon: "icon-clock", Count: 0, Disabled: false},
 		{Key: "attachments", Label: labels.Detail.AttachmentsTab, Href: base + "?tab=attachments", HxGet: action + "attachments", Icon: "icon-paperclip", Count: 0, Disabled: false},
-		{Key: "audit-history", Label: "History", Href: base + "?tab=audit-history", HxGet: action + "audit-history", Icon: "icon-clock"},
+		{Key: "audit-history", Label: func() string {
+			if labels.Detail.AuditHistoryTab != "" {
+				return labels.Detail.AuditHistoryTab
+			}
+			return "History"
+		}(), Href: base + "?tab=audit-history", HxGet: action + "audit-history", Icon: "icon-clock"},
 	}
 }
