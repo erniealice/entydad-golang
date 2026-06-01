@@ -1,11 +1,7 @@
-/* entydad - client detail page layout and styling */
-
-.detail-info-value {
-    font-size: var(--text-base);
-    font-weight: var(--font-weight-medium);
-    color: var(--text-primary);
-    font-family: var(--font-body);
-}
+/* entydad - client detail page layout and styling
+ * Shared .detail-* classes (incl. .detail-info-value) are loaded from pyeza
+ * detail-layout.css (app-shell <head>) — do NOT redefine here.
+ */
 
 .detail-section-title--spaced {
     margin-top: var(--spacing-2xl);
