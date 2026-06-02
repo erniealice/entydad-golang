@@ -225,22 +225,21 @@ func NewSearchRolesAction(deps *Deps) http.HandlerFunc {
 		ctx := r.Context()
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("workspace_user_role", "create") {
-			w.WriteHeader(http.StatusForbidden)
-			writeSearchJSON(w, []searchOption{})
+			writeSearchJSON(w, http.StatusForbidden, []searchOption{})
 			return
 		}
 		query := strings.ToLower(strings.TrimSpace(r.URL.Query().Get("q")))
 		workspaceID := r.URL.Query().Get("workspace_id")
 
 		if deps.ListRoles == nil {
-			writeSearchJSON(w, []searchOption{})
+			writeSearchJSON(w, http.StatusOK, []searchOption{})
 			return
 		}
 
 		resp, err := deps.ListRoles(ctx, &rolepb.ListRolesRequest{})
 		if err != nil {
 			log.Printf("workspace_user_role search-roles: failed to list roles: %v", err)
-			writeSearchJSON(w, []searchOption{})
+			writeSearchJSON(w, http.StatusOK, []searchOption{})
 			return
 		}
 
@@ -270,13 +269,20 @@ func NewSearchRolesAction(deps *Deps) http.HandlerFunc {
 		if results == nil {
 			results = []searchOption{}
 		}
-		writeSearchJSON(w, results)
+		writeSearchJSON(w, http.StatusOK, results)
 	}
 }
 
-// writeSearchJSON marshals data as JSON and writes it to the response writer.
-func writeSearchJSON(w http.ResponseWriter, data any) {
-	w.Header().Set("Content-Type", "application/json")
+// writeSearchJSON marshals data as JSON and writes it to the response writer
+// with the given status code. Content-Type is set BEFORE WriteHeader so the
+// header is honored even on non-200 branches (e.g. the 403 deny path). Setting
+// it after WriteHeader is a silent no-op once the response is committed, which
+// under X-Content-Type-Options: nosniff ships a JSON body with no/auto-sniffed
+// Content-Type. See docs/plan/20260531-csp-and-auth-cycle-remediation
+// (Phase 2b / content-type-nosniff-audit.md bug #2).
+func writeSearchJSON(w http.ResponseWriter, status int, data any) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(status)
 	if err := json.NewEncoder(w).Encode(data); err != nil {
 		log.Printf("workspace_user_role search: failed to encode JSON response: %v", err)
 	}
