@@ -1,0 +1,73 @@
+/* entydad — conversation inbox + portal split-panel LAYOUT
+ *
+ * STRUCTURAL / LAYOUT ONLY (CSS-provenance split, OWNER DIRECTIVE #4):
+ *   - grid / flex structure, scroll regions, spacing, sizing.
+ *   - var(--token) references ONLY — NO color, shadow, or size literals.
+ * Individual-component VISUALS (.msg bubble/composer/row colors + borders)
+ * live in the pyeza component file packages/pyeza-golang/web/styles/components/conversation.css.
+ */
+
+/* --- Staff inbox: filter-chip row above the table --- */
+.msg-inbox-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-lg);
+}
+
+/* --- Client portal: split-panel grid (left list + right thread) --- */
+.msg-layout {
+    display: grid;
+    grid-template-columns: var(--msg-list-width) 1fr;
+    height: calc(100vh - var(--header-height));
+    overflow: hidden;
+}
+
+/* Left panel — thread list */
+.msg-list {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-right: var(--border-width) solid var(--border-light);
+}
+
+.msg-list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-bottom: var(--border-width) solid var(--border-light);
+    flex-shrink: 0;
+}
+
+.msg-list-body {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.msg-thread-empty {
+    padding: var(--spacing-lg) var(--spacing-md);
+}
+
+/* Right panel — thread view (header + bubbles + composer) */
+.msg-thread-view {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Mobile: collapse to a single column; toggle which panel shows. */
+@media (max-width: 768px) {
+    .msg-layout {
+        grid-template-columns: 1fr;
+    }
+    .msg-layout .msg-thread-view {
+        display: none;
+    }
+    .msg-layout.msg-layout--thread-open .msg-list {
+        display: none;
+    }
+    .msg-layout.msg-layout--thread-open .msg-thread-view {
+        display: flex;
+    }
+}

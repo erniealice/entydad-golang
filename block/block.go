@@ -28,6 +28,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+
+	appcontext "github.com/erniealice/espyna-golang/appcontext"
 
 	"github.com/erniealice/entydad-golang"
 	adminmod "github.com/erniealice/entydad-golang/views/admin"
@@ -35,6 +38,7 @@ import (
 	clientmod "github.com/erniealice/entydad-golang/views/client"
 	clientdetail "github.com/erniealice/entydad-golang/views/client/detail"
 	clienttagmod "github.com/erniealice/entydad-golang/views/clienttag"
+	conversationmod "github.com/erniealice/entydad-golang/views/conversation"
 	locationmod "github.com/erniealice/entydad-golang/views/location"
 	locationaction "github.com/erniealice/entydad-golang/views/location/action"
 	locationareamod "github.com/erniealice/entydad-golang/views/location_area"
@@ -113,6 +117,7 @@ type blockConfig struct {
 	workspaceUserRole bool
 	supplier          bool
 	taxRegistration   bool
+	conversation      bool
 	useCases          *UseCases
 	// homeURL is the static fallback URL to redirect to after a successful
 	// workspace switch. Defaults to "/home" (post-P12 of workspace-keyed-routing
@@ -190,6 +195,10 @@ func WithSupplier() BlockOption { return func(c *blockConfig) { c.supplier = tru
 // Registers both client-scoped and workspace-scoped views.
 func WithTaxRegistration() BlockOption { return func(c *blockConfig) { c.taxRegistration = true } }
 
+// WithConversation enables the Conversation secure-messaging module in Block()
+// (staff inbox + thread detail + composer; client portal is built but gated).
+func WithConversation() BlockOption { return func(c *blockConfig) { c.conversation = true } }
+
 // WithHomeURL sets the URL the switch-workspace handler redirects to after a
 // successful workspace switch. Defaults to "/app/home" when not provided.
 func WithHomeURL(url string) BlockOption { return func(c *blockConfig) { c.homeURL = url } }
@@ -254,7 +263,7 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 	moduleSelected := cfg.admin || cfg.client || cfg.clientTag || cfg.supplierTag ||
 		cfg.paymentTerm || cfg.user || cfg.role || cfg.location || cfg.locationArea ||
 		cfg.permission || cfg.workspace || cfg.workspaceUser || cfg.workspaceUserRole ||
-		cfg.supplier || cfg.taxRegistration
+		cfg.supplier || cfg.taxRegistration || cfg.conversation
 	cfg.enableAll = !moduleSelected
 
 	return func(ctx *pyeza.AppContext) error {
@@ -1260,6 +1269,95 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 				taxRegDeps.ListTaxRegistrations = uc.TaxRegistration.List
 			}
 			taxregistrationmod.NewModule(taxRegDeps).RegisterRoutes(ctx.Routes)
+		}
+
+		// =====================================================================
+		// Conversation module (entydad — secure messaging / ticketing, Plan-4)
+		// =====================================================================
+
+		if cfg.enableAll || cfg.conversation {
+			convDeps := &conversationmod.ModuleDeps{
+				Routes:                routes.Conversation,
+				CommonLabels:          ctx.Common,
+				TableLabels:           ctx.Table,
+				Labels:                labels.Conversation,
+				PostLabels:            labels.ConversationPost,
+				ListConversations:     uc.Conversation.List,
+				ReadConversation:      uc.Conversation.Read,
+				CreateConversation:    uc.Conversation.Create,
+				AssignConversation:    uc.Conversation.Assign,
+				SetConversationStatus: uc.Conversation.SetStatus,
+				ListConversationPosts: uc.Conversation.Post.List,
+				SendConversationPost:  uc.Conversation.Post.Send,
+				MarkConversationRead:  uc.Conversation.Receipt.MarkRead,
+				NewClientToken:        newAttachmentID,
+				// Staff new-conversation drawer reuses existing autocomplete
+				// endpoints: client search (client module) + workspace-user
+				// search (role module) for the assignee picker.
+				ClientSearchURL:   routes.Client.SearchURL,
+				AssigneeSearchURL: routes.Role.UsersSearchURL,
+				// Client-portal row-scope: read the session's acting-as-client
+				// id from context. The host's view_adapter populates it per
+				// request via consumer.WithActingAsClientID (sourced from the
+				// session binding / derived from client_portal_grant for a
+				// direct client). appcontext is the dependency-free leaf so the
+				// block never imports consumer. Fail-closed: "" => portal denies.
+				ActingAsClientID: appcontext.GetActingAsClientIDFromContext,
+			}
+			// ClientNameByID — best-effort display-name resolver for the inbox
+			// Client column. Backed by a single ListSimple("client") scan.
+			if crudDB, ok := db.(CRUDSource); ok {
+				convDeps.ClientNameByID = func(fctx context.Context, ids []string) map[string]string {
+					out := map[string]string{}
+					if len(ids) == 0 {
+						return out
+					}
+					want := make(map[string]struct{}, len(ids))
+					for _, id := range ids {
+						want[id] = struct{}{}
+					}
+					rows, err := crudDB.ListSimple(fctx, "client")
+					if err != nil {
+						return out
+					}
+					for _, row := range rows {
+						id, _ := row["id"].(string)
+						if _, ok := want[id]; !ok {
+							continue
+						}
+						if name, _ := row["name"].(string); name != "" {
+							out[id] = name
+						}
+					}
+					return out
+				}
+			}
+			convMod := conversationmod.NewModule(convDeps)
+			convMod.RegisterRoutes(ctx.Routes)
+
+			// Client-portal routes are GATED on AUTHZ_ENFORCE=true. The second
+			// precondition — the inherited 20260601 Phase-4 acting_as_client_id
+			// wiring for direct PRINCIPAL_TYPE_CLIENT principals — is now MET:
+			// the host's view_adapter calls consumer.WithActingAsClientID per
+			// request (sourced from the session binding and, for a direct
+			// client, derived read-only from client_portal_grant in
+			// composition.lookupSessionPrincipalFull); convDeps.ActingAsClientID
+			// reads it back via appcontext. The portal handlers ALSO fail-closed
+			// on an empty acting_as_client_id, so this stays defence-in-depth.
+			const portalPhase4Ready = true
+			authzEnforce := os.Getenv("AUTHZ_ENFORCE") == "true" ||
+				os.Getenv("AUTHZ_ENFORCE") == "1" ||
+				os.Getenv("AUTHZ_ENFORCE") == "yes"
+			if authzEnforce && portalPhase4Ready && convMod.PortalReady() {
+				convMod.RegisterPortalRoutes(ctx.Routes)
+			} else if authzEnforce {
+				// Register a 503 stub so the URL exists for discovery tests but
+				// never serves client data until Phase-4 lands.
+				handleFunc(ctx.Routes, "GET", routes.Conversation.PortalListURL,
+					func(w http.ResponseWriter, r *http.Request) {
+						http.Error(w, "Client portal messaging not yet available", http.StatusServiceUnavailable)
+					})
+			}
 		}
 
 		log.Println("  ✓ Entity domain initialized (entydad.Block)")

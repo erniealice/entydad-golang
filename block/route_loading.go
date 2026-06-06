@@ -48,6 +48,8 @@ type blockLabels struct {
 	Supplier          entydad.SupplierLabels
 	SupplierDashboard entydad.SupplierDashboardLabels
 	TaxRegistration   entydad.TaxRegistrationLabels
+	Conversation      entydad.ConversationLabels
+	ConversationPost  entydad.ConversationPostLabels
 }
 
 // blockRoutes holds the subset of entydad route structs needed by Block().
@@ -70,6 +72,7 @@ type blockRoutes struct {
 	WorkspaceUserRole   entydad.WorkspaceUserRoleRoutes
 	Supplier            entydad.SupplierRoutes
 	TaxRegistration     entydad.TaxRegistrationRoutes
+	Conversation        entydad.ConversationRoutes
 }
 
 // loadBlockLabels loads all entydad typed label structs from lyngua.
@@ -128,6 +131,13 @@ func loadBlockLabels(t *lynguaV1.TranslationProvider, businessType string) block
 
 	l.TaxRegistration = entydad.DefaultTaxRegistrationLabels()
 	_ = t.LoadPathIfExists("en", businessType, "tax_registration.json", "", &l.TaxRegistration)
+
+	// Conversation (secure messaging — Plan-4). Optional on non-messaging
+	// business types — LoadPathIfExists (no boot warning when absent).
+	l.Conversation = entydad.DefaultConversationLabels()
+	_ = t.LoadPathIfExists("en", businessType, "conversation.json", "conversation", &l.Conversation)
+	l.ConversationPost = entydad.DefaultConversationPostLabels()
+	_ = t.LoadPathIfExists("en", businessType, "conversation_post.json", "conversationPost", &l.ConversationPost)
 
 	return l
 }
@@ -190,6 +200,9 @@ func loadBlockRoutes(t *lynguaV1.TranslationProvider, businessType string) block
 
 	r.TaxRegistration = entydad.DefaultTaxRegistrationRoutes()
 	_ = t.LoadPathIfExists("en", businessType, "route.json", "tax_registration", &r.TaxRegistration)
+
+	r.Conversation = entydad.DefaultConversationRoutes()
+	_ = t.LoadPathIfExists("en", businessType, "route.json", "conversation", &r.Conversation)
 
 	return r
 }

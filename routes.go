@@ -258,4 +258,20 @@ const (
 	WorkspaceTaxRegistrationAddURL    = "/action/workspace/tax-registration/add"
 	WorkspaceTaxRegistrationEditURL   = "/action/workspace/tax-registration/edit/{reg_id}"
 	WorkspaceTaxRegistrationDeleteURL = "/action/workspace/tax-registration/delete"
+
+	// Conversation — secure messaging / ticketing (Plan-4, 2026-06-03).
+	// Staff surface: /app/conversations/* (pages) + /action/conversation* (HTMX).
+	// Client portal surface: /portal/conversations — gated behind AUTHZ_ENFORCE
+	// + the inherited 20260601 Phase-4 acting_as_client_id prerequisite (see block.go).
+	ConversationListURL        = "/app/conversations/list/{status}"
+	ConversationTableURL       = "/action/conversation/table/{status}"
+	ConversationDetailURL      = "/app/conversations/detail/{id}"
+	ConversationAddURL         = "/action/conversation/add"
+	ConversationAssignURL      = "/action/conversation/assign"
+	ConversationSetStatusURL   = "/action/conversation/set-status"
+	ConversationPostsURL       = "/action/conversation/posts"
+	ConversationSendURL        = "/action/conversation_post/send"
+	ConversationMarkReadURL    = "/action/conversation/mark-read"
+	ConversationPortalListURL  = "/portal/conversations"
+	ConversationPortalPostsURL = "/action/conversation/portal-posts"
 )

@@ -16,6 +16,9 @@ import (
 	"fmt"
 
 	commonpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
+	conversationpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/communication/conversation"
+	conversationpostpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/communication/conversation_post"
+	conversationreadreceiptpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/communication/conversation_read_receipt"
 	clientpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client"
 	clientcatpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client_category"
 	locationpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/location"
@@ -76,6 +79,7 @@ type UseCases struct {
 	PricePlan         PricePlanUseCases
 	PurchaseOrder     PurchaseOrderUseCases
 	TaxRegistration   TaxRegistrationUseCases
+	Conversation      ConversationUseCases
 
 	// Reports — service-driven report use case closures consumed by the
 	// client/supplier detail + list views. Wave B P1.E.4 (statements).
@@ -261,6 +265,38 @@ type TaxRegistrationUseCases struct {
 	List func(context.Context, *taxregistrationpb.ListTaxRegistrationsRequest) (*taxregistrationpb.ListTaxRegistrationsResponse, error)
 }
 
+// ConversationUseCases — secure-messaging surface (Plan-4, 2026-06-03).
+//
+// Closure signatures use the REAL espyna use-case request/response types:
+// AssignConversation + SetConversationStatus consume UpdateConversationRequest
+// (no distinct Assign/SetStatus proto message exists — the espyna use cases
+// dispatch on the mutated field); SendConversationPost consumes
+// CreateConversationPostRequest; MarkConversationRead consumes
+// CreateConversationReadReceiptRequest.
+//
+// Client-portal scoping (acting_as_client_id) is applied inside the espyna use
+// cases; the view/block layer never reads it directly.
+type ConversationUseCases struct {
+	List      func(context.Context, *conversationpb.ListConversationsRequest) (*conversationpb.ListConversationsResponse, error)
+	Read      func(context.Context, *conversationpb.ReadConversationRequest) (*conversationpb.ReadConversationResponse, error)
+	Create    func(context.Context, *conversationpb.CreateConversationRequest) (*conversationpb.CreateConversationResponse, error)
+	Assign    func(context.Context, *conversationpb.UpdateConversationRequest) (*conversationpb.UpdateConversationResponse, error)
+	SetStatus func(context.Context, *conversationpb.UpdateConversationRequest) (*conversationpb.UpdateConversationResponse, error)
+	Post      ConversationPostUseCases
+	Receipt   ConversationReadReceiptUseCases
+}
+
+// ConversationPostUseCases — post list + composer send.
+type ConversationPostUseCases struct {
+	List func(context.Context, *conversationpostpb.ListConversationPostsRequest) (*conversationpostpb.ListConversationPostsResponse, error)
+	Send func(context.Context, *conversationpostpb.CreateConversationPostRequest) (*conversationpostpb.CreateConversationPostResponse, error)
+}
+
+// ConversationReadReceiptUseCases — read-receipt high-water-mark upsert.
+type ConversationReadReceiptUseCases struct {
+	MarkRead func(context.Context, *conversationreadreceiptpb.CreateConversationReadReceiptRequest) (*conversationreadreceiptpb.CreateConversationReadReceiptResponse, error)
+}
+
 // RequireFor returns an error listing every needed-but-nil field for cfg's
 // enabled modules. Called at Block() entry; missing field → startup error.
 //
@@ -326,6 +362,16 @@ func (u *UseCases) RequireFor(cfg *blockConfig) error {
 		check(u.Workspace.Read != nil, "UseCases.Workspace.Read")
 		check(u.Workspace.Update != nil, "UseCases.Workspace.Update")
 		check(u.Workspace.Delete != nil, "UseCases.Workspace.Delete")
+	}
+
+	if cfg.enableAll || cfg.conversation {
+		check(u.Conversation.List != nil, "UseCases.Conversation.List")
+		check(u.Conversation.Read != nil, "UseCases.Conversation.Read")
+		check(u.Conversation.Create != nil, "UseCases.Conversation.Create")
+		check(u.Conversation.Post.List != nil, "UseCases.Conversation.Post.List")
+		check(u.Conversation.Post.Send != nil, "UseCases.Conversation.Post.Send")
+		// Assign, SetStatus, MarkRead are optional (nil-safe: the assign /
+		// set-status drawers refuse cleanly and mark-read becomes a no-op).
 	}
 
 	if len(missing) > 0 {

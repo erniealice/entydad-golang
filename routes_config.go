@@ -1099,3 +1099,65 @@ func (r TaxRegistrationRoutes) RouteMap() map[string]string {
 		"tax_registration.workspace.delete": r.WorkspaceDeleteURL,
 	}
 }
+
+// ---------------------------------------------------------------------------
+// ConversationRoutes
+// ---------------------------------------------------------------------------
+
+// ConversationRoutes holds all URL constants for the conversation domain view
+// module (secure messaging / ticketing, Plan-4 2026-06-03).
+//
+// Staff routes follow the standard /app/ (pages) + /action/ (HTMX) split.
+// Portal routes are client-facing and only registered behind the AUTHZ_ENFORCE
+// gate + the inherited 20260601 Phase-4 acting_as_client_id prerequisite.
+type ConversationRoutes struct {
+	// Staff surface
+	ListURL      string `json:"list_url"`       // /app/conversations/list/{status}
+	TableURL     string `json:"table_url"`      // /action/conversation/table/{status}
+	DetailURL    string `json:"detail_url"`     // /app/conversations/detail/{id}
+	AddURL       string `json:"add_url"`        // /action/conversation/add
+	AssignURL    string `json:"assign_url"`     // /action/conversation/assign
+	SetStatusURL string `json:"set_status_url"` // /action/conversation/set-status
+	PostsURL     string `json:"posts_url"`      // /action/conversation/posts
+	SendURL      string `json:"send_url"`       // /action/conversation_post/send
+	MarkReadURL  string `json:"mark_read_url"`  // /action/conversation/mark-read
+
+	// Client portal surface (gated)
+	PortalListURL  string `json:"portal_list_url"`  // /portal/conversations
+	PortalPostsURL string `json:"portal_posts_url"` // /action/conversation/portal-posts
+}
+
+// DefaultConversationRoutes returns ConversationRoutes populated from the
+// package-level route constants.
+func DefaultConversationRoutes() ConversationRoutes {
+	return ConversationRoutes{
+		ListURL:        ConversationListURL,
+		TableURL:       ConversationTableURL,
+		DetailURL:      ConversationDetailURL,
+		AddURL:         ConversationAddURL,
+		AssignURL:      ConversationAssignURL,
+		SetStatusURL:   ConversationSetStatusURL,
+		PostsURL:       ConversationPostsURL,
+		SendURL:        ConversationSendURL,
+		MarkReadURL:    ConversationMarkReadURL,
+		PortalListURL:  ConversationPortalListURL,
+		PortalPostsURL: ConversationPortalPostsURL,
+	}
+}
+
+// RouteMap returns a map of dot-notation keys to route paths.
+func (r ConversationRoutes) RouteMap() map[string]string {
+	return map[string]string{
+		"conversation.list":         r.ListURL,
+		"conversation.table":        r.TableURL,
+		"conversation.detail":       r.DetailURL,
+		"conversation.add":          r.AddURL,
+		"conversation.assign":       r.AssignURL,
+		"conversation.set_status":   r.SetStatusURL,
+		"conversation.posts":        r.PostsURL,
+		"conversation.send":         r.SendURL,
+		"conversation.mark_read":    r.MarkReadURL,
+		"conversation.portal_list":  r.PortalListURL,
+		"conversation.portal_posts": r.PortalPostsURL,
+	}
+}
