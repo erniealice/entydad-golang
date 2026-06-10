@@ -153,7 +153,7 @@ func buildTableConfig(ctx context.Context, deps *Deps) (*types.TableConfig, erro
 	rows := buildTableRows(filteredTerms, l, deps.SharedLabels, deps.Routes, inUseIDs, perms)
 	types.ApplyColumnStyles(columns, rows)
 
-	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
+	bulkCfg := pyeza.MapBulkConfig(deps.CommonLabels)
 	bulkCfg.Actions = buildBulkActions(deps.Labels, deps.SharedLabels, deps.CommonLabels, deps.Routes, perms)
 
 	refreshURL := deps.RefreshURL

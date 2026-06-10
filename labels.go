@@ -2,9 +2,6 @@ package entydad
 
 import (
 	"strings"
-
-	pyeza "github.com/erniealice/pyeza-golang"
-	"github.com/erniealice/pyeza-golang/types"
 )
 
 // ---------------------------------------------------------------------------
@@ -43,13 +40,13 @@ type ClientButtonLabels struct {
 }
 
 type ClientColumnLabels struct {
-	ClientName        string `json:"clientName"`
-	Representative    string `json:"representative"`
-	Status            string `json:"status"`
-	Category          string `json:"category"`
+	ClientName          string `json:"clientName"`
+	Representative      string `json:"representative"`
+	Status              string `json:"status"`
+	Category            string `json:"category"`
 	ActiveSubscriptions string `json:"activeSubscriptions"`
-	PaymentTerm       string `json:"paymentTerm"`
-	DateCreated       string `json:"dateCreated"`
+	PaymentTerm         string `json:"paymentTerm"`
+	DateCreated         string `json:"dateCreated"`
 }
 
 type ClientEmptyLabels struct {
@@ -266,29 +263,29 @@ type ClientOutstandingTableEmptyLabels struct {
 // ClientRevenueRunLabels holds labels for the per-client Run Invoices
 // drawer surfaced from the Statement-tab outstanding table.
 type ClientRevenueRunLabels struct {
-	Title                 string                      `json:"title"`
-	SubtitleTemplate      string                      `json:"subtitleTemplate"`
-	AsOfDateLabel         string                      `json:"asOfDateLabel"`
-	AsOfDateHint          string                      `json:"asOfDateHint"`
-	BillThroughTodayLabel string                      `json:"billThroughTodayLabel"`
-	ColumnSubscription    string                      `json:"columnSubscription"`
-	ColumnPeriod          string                      `json:"columnPeriod"`
-	ColumnAmount          string                      `json:"columnAmount"`
-	ColumnLines           string                      `json:"columnLines"`
-	GroupTotalLabel       string                      `json:"groupTotalLabel"`
-	GroupNoPending        string                      `json:"groupNoPending"`
-	GroupCurrencyMismatch string                      `json:"groupCurrencyMismatch"`
-	ColumnSelectAriaLabel string                      `json:"columnSelectAriaLabel"`
-	EmptyTitle            string                      `json:"emptyTitle"`
-	EmptyMessage          string                      `json:"emptyMessage"`
+	Title                   string                      `json:"title"`
+	SubtitleTemplate        string                      `json:"subtitleTemplate"`
+	AsOfDateLabel           string                      `json:"asOfDateLabel"`
+	AsOfDateHint            string                      `json:"asOfDateHint"`
+	BillThroughTodayLabel   string                      `json:"billThroughTodayLabel"`
+	ColumnSubscription      string                      `json:"columnSubscription"`
+	ColumnPeriod            string                      `json:"columnPeriod"`
+	ColumnAmount            string                      `json:"columnAmount"`
+	ColumnLines             string                      `json:"columnLines"`
+	GroupTotalLabel         string                      `json:"groupTotalLabel"`
+	GroupNoPending          string                      `json:"groupNoPending"`
+	GroupCurrencyMismatch   string                      `json:"groupCurrencyMismatch"`
+	ColumnSelectAriaLabel   string                      `json:"columnSelectAriaLabel"`
+	EmptyTitle              string                      `json:"emptyTitle"`
+	EmptyMessage            string                      `json:"emptyMessage"`
 	IntroMessage            string                      `json:"introMessage"`
 	GenerateButton          string                      `json:"generateButton"`
 	GenerateButtonCountOne  string                      `json:"generateButtonCountOne"`
 	GenerateButtonCountMany string                      `json:"generateButtonCountMany"`
 	CancelButton            string                      `json:"cancelButton"`
-	ToastSuccess          string                      `json:"toastSuccess"`
-	ViewRunLink           string                      `json:"viewRunLink"`
-	Errors                ClientRevenueRunErrorLabels `json:"errors"`
+	ToastSuccess            string                      `json:"toastSuccess"`
+	ViewRunLink             string                      `json:"viewRunLink"`
+	Errors                  ClientRevenueRunErrorLabels `json:"errors"`
 }
 
 // ClientRevenueRunErrorLabels — error copy surfaced in the drawer.
@@ -1990,93 +1987,6 @@ type RoleBadge struct {
 }
 
 // ---------------------------------------------------------------------------
-// Mapping helpers
-// ---------------------------------------------------------------------------
-
-// MapTableLabels maps common labels into the flat types.TableLabels structure.
-func MapTableLabels(common pyeza.CommonLabels) types.TableLabels {
-	return types.TableLabels{
-		Search:                   common.Table.Search,
-		SearchPlaceholder:        common.Table.SearchPlaceholder,
-		Filters:                  common.Table.Filters,
-		FilterConditions:         common.Table.FilterConditions,
-		ClearAll:                 common.Table.ClearAll,
-		AddCondition:             common.Table.AddCondition,
-		Clear:                    common.Table.Clear,
-		ApplyFilters:             common.Table.ApplyFilters,
-		Sort:                     common.Table.Sort,
-		Columns:                  common.Table.Columns,
-		Export:                   common.Table.Export,
-		DensityLabel:             common.Table.Density.Title,
-		DensityDense:             common.Table.Density.Dense,
-		DensityDefault:           common.Table.Density.Default,
-		DensityComfortable:       common.Table.Density.Comfortable,
-		DensityCompact:           common.Table.Density.Compact,
-		EntriesPerPage:           common.Table.EntriesLabel,
-		Show:                     common.Table.Show,
-		Entries:                  common.Table.Entries,
-		Showing:                  common.Table.Showing,
-		To:                       common.Table.To,
-		Of:                       common.Table.Of,
-		EntriesLabel:             common.Table.EntriesLabel,
-		SelectAll:                common.Table.SelectAll,
-		BulkSelectAllPage:        common.Table.BulkSelectAllPage,
-		BulkSelectAllAcrossPages: common.Table.BulkSelectAllAcrossPages,
-		BulkClearSelection:       common.Table.BulkClearSelection,
-		ColumnSortLockedHint:     common.Table.ColumnSortLockedHint,
-		SortAscText:              common.Table.SortAscText,
-		SortDescText:             common.Table.SortDescText,
-		SortAscNumber:            common.Table.SortAscNumber,
-		SortDescNumber:           common.Table.SortDescNumber,
-		SortAscDate:              common.Table.SortAscDate,
-		SortDescDate:             common.Table.SortDescDate,
-		SortAscEnum:              common.Table.SortAscEnum,
-		SortDescEnum:             common.Table.SortDescEnum,
-		FilterOpContains:         common.Table.FilterOpContains,
-		FilterOpEquals:           common.Table.FilterOpEquals,
-		FilterOpStartsWith:       common.Table.FilterOpStartsWith,
-		FilterOpEndsWith:         common.Table.FilterOpEndsWith,
-		FilterOpNotEquals:        common.Table.FilterOpNotEquals,
-		FilterOpBetween:          common.Table.FilterOpBetween,
-		FilterOpEq:               common.Table.FilterOpEq,
-		FilterOpNeq:              common.Table.FilterOpNeq,
-		FilterOpGt:               common.Table.FilterOpGt,
-		FilterOpGte:              common.Table.FilterOpGte,
-		FilterOpLt:               common.Table.FilterOpLt,
-		FilterOpLte:              common.Table.FilterOpLte,
-		FilterOpOn:               common.Table.FilterOpOn,
-		FilterOpBefore:           common.Table.FilterOpBefore,
-		FilterOpAfter:            common.Table.FilterOpAfter,
-		FilterOpIn:               common.Table.FilterOpIn,
-		FilterOpNotIn:            common.Table.FilterOpNotIn,
-		FilterPresetToday:        common.Table.FilterPresetToday,
-		FilterPreset7d:           common.Table.FilterPreset7d,
-		FilterPreset30d:          common.Table.FilterPreset30d,
-		FilterPresetMonth:        common.Table.FilterPresetMonth,
-		FilterPresetCustom:       common.Table.FilterPresetCustom,
-		FilterAny:                common.Table.FilterAny,
-		FilterYes:                common.Table.FilterYes,
-		FilterNo:                 common.Table.FilterNo,
-		FilterSearchPlaceholder:  common.Table.FilterSearchPlaceholder,
-		FilterMinPlaceholder:     common.Table.FilterMinPlaceholder,
-		FilterMaxPlaceholder:     common.Table.FilterMaxPlaceholder,
-		Actions:                  common.Table.Actions,
-		Prev:                     common.Pagination.Prev,
-		Next:                     common.Pagination.Next,
-	}
-}
-
-// MapBulkConfig returns a BulkActionsConfig with labels from common bulk labels.
-func MapBulkConfig(common pyeza.CommonLabels) types.BulkActionsConfig {
-	return types.BulkActionsConfig{
-		Enabled:        true,
-		SelectAllLabel: common.Bulk.SelectAll,
-		SelectedLabel:  common.Bulk.Selected,
-		CancelLabel:    common.Bulk.ClearSelection,
-	}
-}
-
-// ---------------------------------------------------------------------------
 // TaxRegistrationLabels
 // Lyngua root key: "taxRegistration"
 // ---------------------------------------------------------------------------
@@ -2257,15 +2167,15 @@ type ConversationInboxLabels struct {
 
 // ConversationThreadLabels — thread-detail header + meta.
 type ConversationThreadLabels struct {
-	BackToInbox  string `json:"backToInbox"`
-	Assignee     string `json:"assignee"`
-	Unassigned   string `json:"unassigned"`
-	Client       string `json:"client"`
-	Created      string `json:"created"`
-	LastActivity string `json:"lastActivity"`
-	ViewRequest  string `json:"viewRequest"`
-	Subtitle     string `json:"subtitle"`
-	EmptyTitle   string `json:"emptyTitle"`
+	BackToInbox   string `json:"backToInbox"`
+	Assignee      string `json:"assignee"`
+	Unassigned    string `json:"unassigned"`
+	Client        string `json:"client"`
+	Created       string `json:"created"`
+	LastActivity  string `json:"lastActivity"`
+	ViewRequest   string `json:"viewRequest"`
+	Subtitle      string `json:"subtitle"`
+	EmptyTitle    string `json:"emptyTitle"`
 	EmptySubtitle string `json:"emptySubtitle"`
 }
 
@@ -2292,19 +2202,19 @@ type ConversationActionLabels struct {
 
 // ConversationFormLabels — new-conversation / assign / status drawer fields.
 type ConversationFormLabels struct {
-	SectionTitle        string `json:"sectionTitle"`
-	SubjectLabel        string `json:"subjectLabel"`
-	SubjectPlaceholder  string `json:"subjectPlaceholder"`
-	ClientLabel         string `json:"clientLabel"`
-	ClientPlaceholder   string `json:"clientPlaceholder"`
-	AssigneeLabel       string `json:"assigneeLabel"`
-	AssigneePlaceholder string `json:"assigneePlaceholder"`
-	LinkLabel           string `json:"linkLabel"`
-	LinkPlaceholder     string `json:"linkPlaceholder"`
-	MessageLabel        string `json:"messageLabel"`
-	MessagePlaceholder  string `json:"messagePlaceholder"`
-	CurrentStatusLabel  string `json:"currentStatusLabel"`
-	NewStatusLabel      string `json:"newStatusLabel"`
+	SectionTitle         string `json:"sectionTitle"`
+	SubjectLabel         string `json:"subjectLabel"`
+	SubjectPlaceholder   string `json:"subjectPlaceholder"`
+	ClientLabel          string `json:"clientLabel"`
+	ClientPlaceholder    string `json:"clientPlaceholder"`
+	AssigneeLabel        string `json:"assigneeLabel"`
+	AssigneePlaceholder  string `json:"assigneePlaceholder"`
+	LinkLabel            string `json:"linkLabel"`
+	LinkPlaceholder      string `json:"linkPlaceholder"`
+	MessageLabel         string `json:"messageLabel"`
+	MessagePlaceholder   string `json:"messagePlaceholder"`
+	CurrentStatusLabel   string `json:"currentStatusLabel"`
+	NewStatusLabel       string `json:"newStatusLabel"`
 	CurrentAssigneeLabel string `json:"currentAssigneeLabel"`
 }
 
@@ -2343,10 +2253,10 @@ type ConversationErrorLabels struct {
 // ConversationPostLabels is the label struct for the post composer + bubbles.
 // Loaded from conversation_post.json (root key "conversationPost").
 type ConversationPostLabels struct {
-	Composer ConversationComposerLabels `json:"composer"`
-	Bubble   ConversationBubbleLabels   `json:"bubble"`
-	Subtitle string                     `json:"subtitle"`
-	Empty    string                     `json:"empty"`
+	Composer ConversationComposerLabels  `json:"composer"`
+	Bubble   ConversationBubbleLabels    `json:"bubble"`
+	Subtitle string                      `json:"subtitle"`
+	Empty    string                      `json:"empty"`
 	Errors   ConversationPostErrorLabels `json:"errors"`
 }
 
@@ -2359,16 +2269,16 @@ type ConversationComposerLabels struct {
 
 // ConversationBubbleLabels — sender role labels.
 type ConversationBubbleLabels struct {
-	You   string `json:"you"`
-	Staff string `json:"staff"`
+	You    string `json:"you"`
+	Staff  string `json:"staff"`
 	Client string `json:"client"`
 }
 
 // ConversationPostErrorLabels — post-specific errors.
 type ConversationPostErrorLabels struct {
-	EmptyBody     string `json:"emptyBody"`
-	MissingToken  string `json:"missingToken"`
-	SendFailed    string `json:"sendFailed"`
+	EmptyBody    string `json:"emptyBody"`
+	MissingToken string `json:"missingToken"`
+	SendFailed   string `json:"sendFailed"`
 }
 
 // DefaultConversationLabels returns English defaults for the conversation

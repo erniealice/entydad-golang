@@ -82,7 +82,7 @@ func NewView(deps *Deps) view.View {
 		rows := buildTableRows(cats, customerCounts, deps.Routes, inUseIDs, l, deps.SharedLabels)
 		types.ApplyColumnStyles(columns, rows)
 
-		bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
+		bulkCfg := pyeza.MapBulkConfig(deps.CommonLabels)
 		bulkCfg.Actions = buildBulkActions(l, deps.SharedLabels, deps.CommonLabels, deps.Routes)
 
 		tableConfig := &types.TableConfig{
@@ -171,7 +171,7 @@ func NewTableView(deps *Deps) view.View {
 		rows := buildTableRows(cats, customerCounts, deps.Routes, inUseIDs, l, deps.SharedLabels)
 		types.ApplyColumnStyles(columns, rows)
 
-		bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
+		bulkCfg := pyeza.MapBulkConfig(deps.CommonLabels)
 		bulkCfg.Actions = buildBulkActions(l, deps.SharedLabels, deps.CommonLabels, deps.Routes)
 
 		tableConfig := &types.TableConfig{

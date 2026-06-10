@@ -32,10 +32,10 @@ type ListViewDeps struct {
 	// subscriptions for that client. Fetched once per page render so the per-row
 	// cell lookup is O(1). Empty map when nil — the cell falls back to "0".
 	GetActiveSubscriptionCounts func(ctx context.Context) (map[string]int32, error)
-	Labels                    entydad.ClientLabels
-	SharedLabels              entydad.SharedLabels
-	CommonLabels              pyeza.CommonLabels
-	TableLabels               types.TableLabels
+	Labels                      entydad.ClientLabels
+	SharedLabels                entydad.SharedLabels
+	CommonLabels                pyeza.CommonLabels
+	TableLabels                 types.TableLabels
 }
 
 // PageData holds the data for the client list page.
@@ -192,7 +192,7 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, columns []types.T
 	rows := buildTableRows(resp.GetClientList(), status, l, deps.SharedLabels, deps.CommonLabels, deps.Routes, inUseIDs, clientBalances, subscriptionCounts, perms)
 	types.ApplyColumnStyles(columns, rows)
 
-	bulkCfg := entydad.MapBulkConfig(deps.CommonLabels)
+	bulkCfg := pyeza.MapBulkConfig(deps.CommonLabels)
 	bulkCfg.Actions = buildBulkActions(l, deps.SharedLabels, deps.CommonLabels, status, deps.Routes, perms)
 
 	refreshURL := route.ResolveURL(deps.Routes.TableURL, "status", status)
