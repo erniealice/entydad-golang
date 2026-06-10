@@ -45,7 +45,7 @@ type TagFormLabels struct {
 // FormData is the template data for the tag drawer form.
 type FormData struct {
 	FormAction   string
-	WorkspaceID   string // injected by C1: populated by ViewAdapter.injectWorkspaceID for action_workspace_guard
+	WorkspaceID  string // injected by C1: populated by ViewAdapter.injectWorkspaceID for action_workspace_guard
 	IsEdit       bool
 	ID           string
 	Name         string
@@ -123,7 +123,7 @@ func NewAddAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("supplier", "update") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		if viewCtx.Request.Method == http.MethodGet {
 			return view.OK("supplier-tag-drawer-form", &FormData{
@@ -135,7 +135,7 @@ func NewAddAction(deps *Deps) view.View {
 		}
 
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return entydad.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
 		}
 
 		r := viewCtx.Request
@@ -143,7 +143,7 @@ func NewAddAction(deps *Deps) view.View {
 		active := r.FormValue("active") == "true"
 
 		if isDuplicateTagName(ctx, deps.ListCategories, name, "") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.tagNameExists"))
+			return view.HTMXError(viewCtx.T("shared.errors.tagNameExists"))
 		}
 
 		_, err := deps.CreateCategory(ctx, &categorypb.CreateCategoryRequest{
@@ -157,10 +157,10 @@ func NewAddAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to create supplier tag: %v", err)
-			return entydad.HTMXError(err.Error())
+			return view.HTMXError(err.Error())
 		}
 
-		return entydad.HTMXSuccess("supplier-tags-table")
+		return view.HTMXSuccess("supplier-tags-table")
 	})
 }
 
@@ -169,7 +169,7 @@ func NewEditAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("supplier", "update") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		id := viewCtx.Request.PathValue("id")
 
@@ -179,12 +179,12 @@ func NewEditAction(deps *Deps) view.View {
 			})
 			if err != nil {
 				log.Printf("Failed to read supplier tag %s: %v", id, err)
-				return entydad.HTMXError(viewCtx.T("shared.errors.notFound"))
+				return view.HTMXError(viewCtx.T("shared.errors.notFound"))
 			}
 
 			data := resp.GetData()
 			if len(data) == 0 {
-				return entydad.HTMXError(viewCtx.T("shared.errors.notFound"))
+				return view.HTMXError(viewCtx.T("shared.errors.notFound"))
 			}
 			cat := data[0]
 
@@ -202,7 +202,7 @@ func NewEditAction(deps *Deps) view.View {
 		}
 
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return entydad.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
 		}
 
 		r := viewCtx.Request
@@ -210,7 +210,7 @@ func NewEditAction(deps *Deps) view.View {
 		active := r.FormValue("active") == "true"
 
 		if isDuplicateTagName(ctx, deps.ListCategories, name, id) {
-			return entydad.HTMXError(viewCtx.T("shared.errors.tagNameExists"))
+			return view.HTMXError(viewCtx.T("shared.errors.tagNameExists"))
 		}
 
 		_, err := deps.UpdateCategory(ctx, &categorypb.UpdateCategoryRequest{
@@ -225,10 +225,10 @@ func NewEditAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to update supplier tag %s: %v", id, err)
-			return entydad.HTMXError(err.Error())
+			return view.HTMXError(err.Error())
 		}
 
-		return entydad.HTMXSuccess("supplier-tags-table")
+		return view.HTMXSuccess("supplier-tags-table")
 	})
 }
 
@@ -237,7 +237,7 @@ func NewDeleteAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("supplier", "update") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		id := viewCtx.Request.URL.Query().Get("id")
 		if id == "" {
@@ -245,7 +245,7 @@ func NewDeleteAction(deps *Deps) view.View {
 			id = viewCtx.Request.FormValue("id")
 		}
 		if id == "" {
-			return entydad.HTMXError(viewCtx.T("shared.errors.idRequired"))
+			return view.HTMXError(viewCtx.T("shared.errors.idRequired"))
 		}
 
 		_, err := deps.DeleteCategory(ctx, &categorypb.DeleteCategoryRequest{
@@ -253,10 +253,10 @@ func NewDeleteAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to delete supplier tag %s: %v", id, err)
-			return entydad.HTMXError(err.Error())
+			return view.HTMXError(err.Error())
 		}
 
-		return entydad.HTMXSuccess("supplier-tags-table")
+		return view.HTMXSuccess("supplier-tags-table")
 	})
 }
 
@@ -265,13 +265,13 @@ func NewBulkDeleteAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("supplier", "update") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		_ = viewCtx.Request.ParseMultipartForm(32 << 20)
 
 		ids := viewCtx.Request.Form["id"]
 		if len(ids) == 0 {
-			return entydad.HTMXError(viewCtx.T("shared.errors.noIdsProvided"))
+			return view.HTMXError(viewCtx.T("shared.errors.noIdsProvided"))
 		}
 
 		for _, id := range ids {
@@ -283,7 +283,7 @@ func NewBulkDeleteAction(deps *Deps) view.View {
 			}
 		}
 
-		return entydad.HTMXSuccess("supplier-tags-table")
+		return view.HTMXSuccess("supplier-tags-table")
 	})
 }
 
@@ -292,7 +292,7 @@ func NewSetStatusAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("supplier", "update") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		id := viewCtx.Request.URL.Query().Get("id")
 		targetStatus := viewCtx.Request.URL.Query().Get("status")
@@ -303,18 +303,18 @@ func NewSetStatusAction(deps *Deps) view.View {
 			targetStatus = viewCtx.Request.FormValue("status")
 		}
 		if id == "" {
-			return entydad.HTMXError(viewCtx.T("shared.errors.idRequired"))
+			return view.HTMXError(viewCtx.T("shared.errors.idRequired"))
 		}
 		if targetStatus != "active" && targetStatus != "inactive" {
-			return entydad.HTMXError(viewCtx.T("shared.errors.invalidStatus"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalidStatus"))
 		}
 
 		if err := deps.SetCategoryActive(ctx, id, targetStatus == "active"); err != nil {
 			log.Printf("Failed to update supplier tag status %s: %v", id, err)
-			return entydad.HTMXError(err.Error())
+			return view.HTMXError(err.Error())
 		}
 
-		return entydad.HTMXSuccess("supplier-tags-table")
+		return view.HTMXSuccess("supplier-tags-table")
 	})
 }
 
@@ -323,7 +323,7 @@ func NewBulkSetStatusAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("supplier", "update") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		_ = viewCtx.Request.ParseMultipartForm(32 << 20)
 
@@ -331,10 +331,10 @@ func NewBulkSetStatusAction(deps *Deps) view.View {
 		targetStatus := viewCtx.Request.FormValue("target_status")
 
 		if len(ids) == 0 {
-			return entydad.HTMXError(viewCtx.T("shared.errors.noIdsProvided"))
+			return view.HTMXError(viewCtx.T("shared.errors.noIdsProvided"))
 		}
 		if targetStatus != "active" && targetStatus != "inactive" {
-			return entydad.HTMXError(viewCtx.T("shared.errors.invalidTargetStatus"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalidTargetStatus"))
 		}
 
 		active := targetStatus == "active"
@@ -344,6 +344,6 @@ func NewBulkSetStatusAction(deps *Deps) view.View {
 			}
 		}
 
-		return entydad.HTMXSuccess("supplier-tags-table")
+		return view.HTMXSuccess("supplier-tags-table")
 	})
 }

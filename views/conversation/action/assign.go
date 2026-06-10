@@ -5,12 +5,11 @@ import (
 	"log"
 	"net/http"
 
-	conversationpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/communication/conversation"
 	appcontext "github.com/erniealice/espyna-golang/appcontext"
+	conversationpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/communication/conversation"
 	"github.com/erniealice/pyeza-golang/view"
 	"google.golang.org/protobuf/proto"
 
-	entydad "github.com/erniealice/entydad-golang"
 	convform "github.com/erniealice/entydad-golang/views/conversation/form"
 )
 
@@ -22,15 +21,15 @@ func NewAssignAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("conversation", "update") {
-			return entydad.HTMXError(deps.Labels.Errors.PermissionDenied)
+			return view.HTMXError(deps.Labels.Errors.PermissionDenied)
 		}
 		if deps.AssignConversation == nil {
-			return entydad.HTMXError(deps.Labels.Errors.SaveFailed)
+			return view.HTMXError(deps.Labels.Errors.SaveFailed)
 		}
 
 		id := paramID(viewCtx.Request)
 		if id == "" {
-			return entydad.HTMXError(deps.Labels.Errors.IDRequired)
+			return view.HTMXError(deps.Labels.Errors.IDRequired)
 		}
 
 		if viewCtx.Request.Method == http.MethodGet {
@@ -60,11 +59,11 @@ func NewAssignAction(deps *Deps) view.View {
 		}
 
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return entydad.HTMXError(deps.Labels.Errors.InvalidForm)
+			return view.HTMXError(deps.Labels.Errors.InvalidForm)
 		}
 		assignee := viewCtx.Request.FormValue("assigned_to_user_id")
 		if assignee == "" {
-			return entydad.HTMXError(deps.Labels.Errors.SaveFailed)
+			return view.HTMXError(deps.Labels.Errors.SaveFailed)
 		}
 
 		_, err := deps.AssignConversation(ctx, &conversationpb.UpdateConversationRequest{
@@ -75,9 +74,9 @@ func NewAssignAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("conversation assign: %s failed: %v", id, err)
-			return entydad.HTMXError(err.Error())
+			return view.HTMXError(err.Error())
 		}
-		return entydad.HTMXSuccess("conversations-table")
+		return view.HTMXSuccess("conversations-table")
 	})
 }
 

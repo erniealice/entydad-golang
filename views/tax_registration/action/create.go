@@ -72,7 +72,7 @@ func NewCreateAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("tax_registration", "create") {
-			return entydad.HTMXError("You do not have permission to create tax registrations")
+			return view.HTMXError("You do not have permission to create tax registrations")
 		}
 
 		labels := form.BuildLabels(deps.Labels)
@@ -98,12 +98,12 @@ func NewCreateAction(deps *Deps) view.View {
 
 		// POST — create
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return entydad.HTMXError("Invalid form data")
+			return view.HTMXError("Invalid form data")
 		}
 		r := viewCtx.Request
 		kindID := r.FormValue("tax_registration_kind_id")
 		if kindID == "" {
-			return entydad.HTMXError("Tax registration kind is required")
+			return view.HTMXError("Tax registration kind is required")
 		}
 		partyType = r.FormValue("party_type")
 		partyID = r.FormValue("party_id")
@@ -123,16 +123,16 @@ func NewCreateAction(deps *Deps) view.View {
 			EffectiveFrom:         r.FormValue("effective_from"),
 		}
 		if deps.CreateTaxRegistration == nil {
-			return entydad.HTMXError("Create use case not available")
+			return view.HTMXError("Create use case not available")
 		}
 		if _, err := deps.CreateTaxRegistration(ctx, &taxregistrationpb.CreateTaxRegistrationRequest{
 			Data: record,
 		}); err != nil {
 			log.Printf("CreateTaxRegistration error: %v", err)
-			return entydad.HTMXError(err.Error())
+			return view.HTMXError(err.Error())
 		}
 
 		// Reload the list view that embedded us
-		return entydad.HTMXSuccess("tax-registrations-table")
+		return view.HTMXSuccess("tax-registrations-table")
 	})
 }

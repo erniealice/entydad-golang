@@ -105,7 +105,7 @@ func NewAddAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("payment_term", "create") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 
 		if viewCtx.Request.Method == http.MethodGet {
@@ -132,7 +132,7 @@ func NewAddAction(deps *Deps) view.View {
 
 		// POST — create payment term
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return entydad.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
 		}
 
 		r := viewCtx.Request
@@ -144,7 +144,7 @@ func NewAddAction(deps *Deps) view.View {
 		termType := r.FormValue("type")
 		netDays, proximateDay, validErr := validateAndNilOutTypeFields(termType, r, viewCtx.T)
 		if validErr != "" {
-			return entydad.HTMXError(validErr)
+			return view.HTMXError(validErr)
 		}
 
 		_, err := deps.CreatePaymentTerm(ctx, &paymenttermpb.CreatePaymentTermRequest{
@@ -165,10 +165,10 @@ func NewAddAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to create payment term: %v", err)
-			return entydad.HTMXError(err.Error())
+			return view.HTMXError(err.Error())
 		}
 
-		return entydad.HTMXSuccess("payment-terms-table")
+		return view.HTMXSuccess("payment-terms-table")
 	})
 }
 
@@ -177,7 +177,7 @@ func NewEditAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("payment_term", "update") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 
 		id := viewCtx.Request.PathValue("id")
@@ -188,12 +188,12 @@ func NewEditAction(deps *Deps) view.View {
 			})
 			if err != nil {
 				log.Printf("Failed to read payment term %s: %v", id, err)
-				return entydad.HTMXError(viewCtx.T("shared.errors.notFound"))
+				return view.HTMXError(viewCtx.T("shared.errors.notFound"))
 			}
 
 			data := resp.GetData()
 			if len(data) == 0 {
-				return entydad.HTMXError(viewCtx.T("shared.errors.notFound"))
+				return view.HTMXError(viewCtx.T("shared.errors.notFound"))
 			}
 			pt := data[0]
 
@@ -244,7 +244,7 @@ func NewEditAction(deps *Deps) view.View {
 
 		// POST — update payment term
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return entydad.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
 		}
 
 		r := viewCtx.Request
@@ -256,7 +256,7 @@ func NewEditAction(deps *Deps) view.View {
 		termType := r.FormValue("type")
 		netDays, proximateDay, validErr := validateAndNilOutTypeFields(termType, r, viewCtx.T)
 		if validErr != "" {
-			return entydad.HTMXError(validErr)
+			return view.HTMXError(validErr)
 		}
 
 		_, err := deps.UpdatePaymentTerm(ctx, &paymenttermpb.UpdatePaymentTermRequest{
@@ -278,10 +278,10 @@ func NewEditAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to update payment term %s: %v", id, err)
-			return entydad.HTMXError(err.Error())
+			return view.HTMXError(err.Error())
 		}
 
-		return entydad.HTMXSuccess("payment-terms-table")
+		return view.HTMXSuccess("payment-terms-table")
 	})
 }
 
@@ -290,7 +290,7 @@ func NewDeleteAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("payment_term", "delete") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 
 		id := viewCtx.Request.URL.Query().Get("id")
@@ -299,7 +299,7 @@ func NewDeleteAction(deps *Deps) view.View {
 			id = viewCtx.Request.FormValue("id")
 		}
 		if id == "" {
-			return entydad.HTMXError(viewCtx.T("shared.errors.idRequired"))
+			return view.HTMXError(viewCtx.T("shared.errors.idRequired"))
 		}
 
 		_, err := deps.DeletePaymentTerm(ctx, &paymenttermpb.DeletePaymentTermRequest{
@@ -307,10 +307,10 @@ func NewDeleteAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to delete payment term %s: %v", id, err)
-			return entydad.HTMXError(err.Error())
+			return view.HTMXError(err.Error())
 		}
 
-		return entydad.HTMXSuccess("payment-terms-table")
+		return view.HTMXSuccess("payment-terms-table")
 	})
 }
 
@@ -319,14 +319,14 @@ func NewBulkDeleteAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("payment_term", "delete") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 
 		_ = viewCtx.Request.ParseMultipartForm(32 << 20)
 
 		ids := viewCtx.Request.Form["id"]
 		if len(ids) == 0 {
-			return entydad.HTMXError(viewCtx.T("shared.errors.noIdsProvided"))
+			return view.HTMXError(viewCtx.T("shared.errors.noIdsProvided"))
 		}
 
 		for _, id := range ids {
@@ -338,7 +338,7 @@ func NewBulkDeleteAction(deps *Deps) view.View {
 			}
 		}
 
-		return entydad.HTMXSuccess("payment-terms-table")
+		return view.HTMXSuccess("payment-terms-table")
 	})
 }
 
@@ -347,7 +347,7 @@ func NewSetStatusAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("payment_term", "update") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 
 		id := viewCtx.Request.URL.Query().Get("id")
@@ -359,18 +359,18 @@ func NewSetStatusAction(deps *Deps) view.View {
 			targetStatus = viewCtx.Request.FormValue("status")
 		}
 		if id == "" {
-			return entydad.HTMXError(viewCtx.T("shared.errors.idRequired"))
+			return view.HTMXError(viewCtx.T("shared.errors.idRequired"))
 		}
 		if targetStatus != "active" && targetStatus != "inactive" {
-			return entydad.HTMXError(viewCtx.T("shared.errors.invalidStatus"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalidStatus"))
 		}
 
 		if err := deps.SetPaymentTermActive(ctx, id, targetStatus == "active"); err != nil {
 			log.Printf("Failed to update payment term status %s: %v", id, err)
-			return entydad.HTMXError(err.Error())
+			return view.HTMXError(err.Error())
 		}
 
-		return entydad.HTMXSuccess("payment-terms-table")
+		return view.HTMXSuccess("payment-terms-table")
 	})
 }
 
@@ -379,7 +379,7 @@ func NewBulkSetStatusAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("payment_term", "update") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 
 		_ = viewCtx.Request.ParseMultipartForm(32 << 20)
@@ -388,10 +388,10 @@ func NewBulkSetStatusAction(deps *Deps) view.View {
 		targetStatus := viewCtx.Request.FormValue("target_status")
 
 		if len(ids) == 0 {
-			return entydad.HTMXError(viewCtx.T("shared.errors.noIdsProvided"))
+			return view.HTMXError(viewCtx.T("shared.errors.noIdsProvided"))
 		}
 		if targetStatus != "active" && targetStatus != "inactive" {
-			return entydad.HTMXError(viewCtx.T("shared.errors.invalidTargetStatus"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalidTargetStatus"))
 		}
 
 		active := targetStatus == "active"
@@ -401,6 +401,6 @@ func NewBulkSetStatusAction(deps *Deps) view.View {
 			}
 		}
 
-		return entydad.HTMXSuccess("payment-terms-table")
+		return view.HTMXSuccess("payment-terms-table")
 	})
 }

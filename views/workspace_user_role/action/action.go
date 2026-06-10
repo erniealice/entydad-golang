@@ -58,7 +58,7 @@ func NewAddAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("workspace_user_role", "create") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 
 		if viewCtx.Request.Method == http.MethodGet {
@@ -95,7 +95,7 @@ func NewAddAction(deps *Deps) view.View {
 
 		// POST — create workspace_user_role
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return entydad.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
 		}
 
 		r := viewCtx.Request
@@ -103,11 +103,11 @@ func NewAddAction(deps *Deps) view.View {
 		roleID := r.FormValue("role_id")
 
 		if workspaceUserID == "" || roleID == "" {
-			return entydad.HTMXError("workspace_user_id and role_id are required")
+			return view.HTMXError("workspace_user_id and role_id are required")
 		}
 
 		if deps.CreateWorkspaceUserRole == nil {
-			return entydad.HTMXError("CreateWorkspaceUserRole not wired")
+			return view.HTMXError("CreateWorkspaceUserRole not wired")
 		}
 
 		_, err := deps.CreateWorkspaceUserRole(ctx, &workspaceuserrolepb.CreateWorkspaceUserRoleRequest{
@@ -119,10 +119,10 @@ func NewAddAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to create workspace_user_role: %v", err)
-			return entydad.HTMXError(err.Error())
+			return view.HTMXError(err.Error())
 		}
 
-		return entydad.HTMXSuccess("workspace-user-roles-table")
+		return view.HTMXSuccess("workspace-user-roles-table")
 	})
 }
 
@@ -133,7 +133,7 @@ func NewDeleteAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("workspace_user_role", "delete") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 
 		id := viewCtx.Request.PathValue("id")
@@ -141,7 +141,7 @@ func NewDeleteAction(deps *Deps) view.View {
 			id = viewCtx.Request.URL.Query().Get("id")
 		}
 		if id == "" {
-			return entydad.HTMXError("id is required")
+			return view.HTMXError("id is required")
 		}
 
 		if viewCtx.Request.Method == http.MethodGet {
@@ -154,7 +154,7 @@ func NewDeleteAction(deps *Deps) view.View {
 
 		// POST — soft-delete
 		if deps.DeleteWorkspaceUserRole == nil {
-			return entydad.HTMXError("DeleteWorkspaceUserRole not wired")
+			return view.HTMXError("DeleteWorkspaceUserRole not wired")
 		}
 
 		_, err := deps.DeleteWorkspaceUserRole(ctx, &workspaceuserrolepb.DeleteWorkspaceUserRoleRequest{
@@ -162,10 +162,10 @@ func NewDeleteAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to delete workspace_user_role %s: %v", id, err)
-			return entydad.HTMXError(err.Error())
+			return view.HTMXError(err.Error())
 		}
 
-		return entydad.HTMXSuccess("workspace-user-roles-table")
+		return view.HTMXSuccess("workspace-user-roles-table")
 	})
 }
 
@@ -177,7 +177,7 @@ func NewPermissionsAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("workspace_user_role", "create") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		roleID := viewCtx.Request.URL.Query().Get("role_id")
 

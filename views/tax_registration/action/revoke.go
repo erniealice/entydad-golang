@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	entydad "github.com/erniealice/entydad-golang"
 	"github.com/erniealice/pyeza-golang/view"
 )
 
@@ -18,12 +17,12 @@ func NewRevokeAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("tax_registration", "delete") {
-			return entydad.HTMXError("You do not have permission to revoke tax registrations")
+			return view.HTMXError("You do not have permission to revoke tax registrations")
 		}
 
 		// POST only — the GET is the revoke confirm form (pre-rendered by the list view action)
 		if viewCtx.Request.Method != http.MethodPost {
-			return entydad.HTMXError("Method not allowed")
+			return view.HTMXError("Method not allowed")
 		}
 
 		if deps.RevokeTaxRegistration == nil {
@@ -32,7 +31,7 @@ func NewRevokeAction(deps *Deps) view.View {
 		}
 
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return entydad.HTMXError("Invalid form data")
+			return view.HTMXError("Invalid form data")
 		}
 		r := viewCtx.Request
 		id := r.FormValue("id")
@@ -40,13 +39,13 @@ func NewRevokeAction(deps *Deps) view.View {
 		reason := r.FormValue("reason")
 
 		if id == "" {
-			return entydad.HTMXError("Registration ID is required")
+			return view.HTMXError("Registration ID is required")
 		}
 
 		if err := deps.RevokeTaxRegistration(ctx, id, effectiveTo, reason); err != nil {
-			return entydad.HTMXError(err.Error())
+			return view.HTMXError(err.Error())
 		}
 
-		return entydad.HTMXSuccess("tax-registrations-table")
+		return view.HTMXSuccess("tax-registrations-table")
 	})
 }

@@ -13,9 +13,9 @@ import (
 	"context"
 	"log"
 
+	appcontext "github.com/erniealice/espyna-golang/appcontext"
 	conversationpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/communication/conversation"
 	conversationpostpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/communication/conversation_post"
-	appcontext "github.com/erniealice/espyna-golang/appcontext"
 	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
@@ -144,7 +144,7 @@ func NewPostsView(deps *Deps) view.View {
 		}
 		conversationID := viewCtx.Request.URL.Query().Get("id")
 		if conversationID == "" {
-			return entydad.HTMXError(deps.Labels.Errors.IDRequired)
+			return view.HTMXError(deps.Labels.Errors.IDRequired)
 		}
 		bubbles := deps.loadBubbles(ctx, conversationID)
 		return view.OK("conversation-posts-partial", convshared.PostsPartialData{

@@ -38,7 +38,7 @@ func NewAddAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("location_area", "create") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		if viewCtx.Request.Method == http.MethodGet {
 			return view.OK("location-area-drawer-form", &form.Data{
@@ -51,7 +51,7 @@ func NewAddAction(deps *Deps) view.View {
 
 		// POST -- create location area
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return entydad.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
 		}
 
 		r := viewCtx.Request
@@ -62,10 +62,10 @@ func NewAddAction(deps *Deps) view.View {
 		_, err := deps.CreateLocationArea(ctx, name, description, active)
 		if err != nil {
 			log.Printf("Failed to create location area: %v", err)
-			return entydad.HTMXError(err.Error())
+			return view.HTMXError(err.Error())
 		}
 
-		return entydad.HTMXSuccess("location-areas-table")
+		return view.HTMXSuccess("location-areas-table")
 	})
 }
 
@@ -74,7 +74,7 @@ func NewEditAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("location_area", "update") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		id := viewCtx.Request.PathValue("id")
 
@@ -82,7 +82,7 @@ func NewEditAction(deps *Deps) view.View {
 			rec, err := deps.ReadLocationArea(ctx, id)
 			if err != nil {
 				log.Printf("Failed to read location area %s: %v", id, err)
-				return entydad.HTMXError(viewCtx.T("shared.errors.notFound"))
+				return view.HTMXError(viewCtx.T("shared.errors.notFound"))
 			}
 
 			return view.OK("location-area-drawer-form", &form.Data{
@@ -99,7 +99,7 @@ func NewEditAction(deps *Deps) view.View {
 
 		// POST -- update location area
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return entydad.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
 		}
 
 		r := viewCtx.Request
@@ -107,10 +107,10 @@ func NewEditAction(deps *Deps) view.View {
 		err := deps.UpdateLocationArea(ctx, id, r.FormValue("name"), r.FormValue("description"), active)
 		if err != nil {
 			log.Printf("Failed to update location area %s: %v", id, err)
-			return entydad.HTMXError(err.Error())
+			return view.HTMXError(err.Error())
 		}
 
-		return entydad.HTMXSuccess("location-areas-table")
+		return view.HTMXSuccess("location-areas-table")
 	})
 }
 
@@ -119,7 +119,7 @@ func NewDeleteAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("location_area", "delete") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		id := viewCtx.Request.URL.Query().Get("id")
 		if id == "" {
@@ -127,7 +127,7 @@ func NewDeleteAction(deps *Deps) view.View {
 			id = viewCtx.Request.FormValue("id")
 		}
 		if id == "" {
-			return entydad.HTMXError(viewCtx.T("shared.errors.idRequired"))
+			return view.HTMXError(viewCtx.T("shared.errors.idRequired"))
 		}
 
 		// Server-side re-check: ensure location area is not in use
@@ -135,19 +135,19 @@ func NewDeleteAction(deps *Deps) view.View {
 			inUse, err := deps.GetInUseIDs(ctx, []string{id})
 			if err != nil {
 				log.Printf("Failed to check location area in-use status: %v", err)
-				return entydad.HTMXError(viewCtx.T("shared.errors.verifyFailed"))
+				return view.HTMXError(viewCtx.T("shared.errors.verifyFailed"))
 			}
 			if inUse[id] {
-				return entydad.HTMXError(viewCtx.T("shared.errors.cannotDeleteInUse"))
+				return view.HTMXError(viewCtx.T("shared.errors.cannotDeleteInUse"))
 			}
 		}
 
 		if err := deps.DeleteLocationArea(ctx, id); err != nil {
 			log.Printf("Failed to delete location area %s: %v", id, err)
-			return entydad.HTMXError(err.Error())
+			return view.HTMXError(err.Error())
 		}
 
-		return entydad.HTMXSuccess("location-areas-table")
+		return view.HTMXSuccess("location-areas-table")
 	})
 }
 
@@ -156,13 +156,13 @@ func NewBulkDeleteAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("location_area", "delete") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		_ = viewCtx.Request.ParseMultipartForm(32 << 20)
 
 		ids := viewCtx.Request.Form["id"]
 		if len(ids) == 0 {
-			return entydad.HTMXError(viewCtx.T("shared.errors.noIdsProvided"))
+			return view.HTMXError(viewCtx.T("shared.errors.noIdsProvided"))
 		}
 
 		// Server-side re-check: ensure none of the location areas are in use
@@ -170,11 +170,11 @@ func NewBulkDeleteAction(deps *Deps) view.View {
 			inUse, err := deps.GetInUseIDs(ctx, ids)
 			if err != nil {
 				log.Printf("Failed to check location areas in-use status: %v", err)
-				return entydad.HTMXError(viewCtx.T("shared.errors.verifyFailed"))
+				return view.HTMXError(viewCtx.T("shared.errors.verifyFailed"))
 			}
 			for _, id := range ids {
 				if inUse[id] {
-					return entydad.HTMXError(viewCtx.T("shared.errors.cannotDeleteInUse"))
+					return view.HTMXError(viewCtx.T("shared.errors.cannotDeleteInUse"))
 				}
 			}
 		}
@@ -185,7 +185,7 @@ func NewBulkDeleteAction(deps *Deps) view.View {
 			}
 		}
 
-		return entydad.HTMXSuccess("location-areas-table")
+		return view.HTMXSuccess("location-areas-table")
 	})
 }
 
@@ -194,7 +194,7 @@ func NewSetStatusAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("location_area", "update") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		id := viewCtx.Request.URL.Query().Get("id")
 		targetStatus := viewCtx.Request.URL.Query().Get("status")
@@ -205,18 +205,18 @@ func NewSetStatusAction(deps *Deps) view.View {
 			targetStatus = viewCtx.Request.FormValue("status")
 		}
 		if id == "" {
-			return entydad.HTMXError(viewCtx.T("shared.errors.idRequired"))
+			return view.HTMXError(viewCtx.T("shared.errors.idRequired"))
 		}
 		if targetStatus != "active" && targetStatus != "inactive" {
-			return entydad.HTMXError(viewCtx.T("shared.errors.invalidStatus"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalidStatus"))
 		}
 
 		if err := deps.SetLocationAreaActive(ctx, id, targetStatus == "active"); err != nil {
 			log.Printf("Failed to update location area status %s: %v", id, err)
-			return entydad.HTMXError(err.Error())
+			return view.HTMXError(err.Error())
 		}
 
-		return entydad.HTMXSuccess("location-areas-table")
+		return view.HTMXSuccess("location-areas-table")
 	})
 }
 
@@ -225,7 +225,7 @@ func NewBulkSetStatusAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("location_area", "update") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		_ = viewCtx.Request.ParseMultipartForm(32 << 20)
 
@@ -233,10 +233,10 @@ func NewBulkSetStatusAction(deps *Deps) view.View {
 		targetStatus := viewCtx.Request.FormValue("target_status")
 
 		if len(ids) == 0 {
-			return entydad.HTMXError(viewCtx.T("shared.errors.noIdsProvided"))
+			return view.HTMXError(viewCtx.T("shared.errors.noIdsProvided"))
 		}
 		if targetStatus != "active" && targetStatus != "inactive" {
-			return entydad.HTMXError(viewCtx.T("shared.errors.invalidTargetStatus"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalidTargetStatus"))
 		}
 
 		active := targetStatus == "active"
@@ -247,6 +247,6 @@ func NewBulkSetStatusAction(deps *Deps) view.View {
 			}
 		}
 
-		return entydad.HTMXSuccess("location-areas-table")
+		return view.HTMXSuccess("location-areas-table")
 	})
 }

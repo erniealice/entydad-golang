@@ -112,16 +112,16 @@ func NewRevenueRunAction(deps *DetailViewDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("revenue", "create") || !perms.Can("subscription", "read") {
-			return entydad.HTMXError(deps.Labels.Detail.RevenueRun.Errors.PermissionDenied)
+			return view.HTMXError(deps.Labels.Detail.RevenueRun.Errors.PermissionDenied)
 		}
 
 		id := viewCtx.Request.PathValue("id")
 		if id == "" {
-			return entydad.HTMXError(deps.Labels.Detail.RevenueRun.Errors.IDRequired)
+			return view.HTMXError(deps.Labels.Detail.RevenueRun.Errors.IDRequired)
 		}
 
 		if deps.ListRevenueRunCandidates == nil || deps.GenerateRevenueRun == nil {
-			return entydad.HTMXError(deps.Labels.Detail.RevenueRun.Errors.UseCaseUnavailable)
+			return view.HTMXError(deps.Labels.Detail.RevenueRun.Errors.UseCaseUnavailable)
 		}
 
 		switch viewCtx.Request.Method {
@@ -130,7 +130,7 @@ func NewRevenueRunAction(deps *DetailViewDeps) view.View {
 		case http.MethodPost:
 			return submitRevenueRun(ctx, viewCtx, deps, id)
 		default:
-			return entydad.HTMXError(deps.Labels.Detail.RevenueRun.Errors.InvalidFormData)
+			return view.HTMXError(deps.Labels.Detail.RevenueRun.Errors.InvalidFormData)
 		}
 	})
 }
@@ -162,7 +162,7 @@ func renderRevenueRunDrawer(
 	candidates, _, err := deps.ListRevenueRunCandidates(ctx, scope)
 	if err != nil {
 		log.Printf("NewRevenueRunAction GET: failed to list candidates for client %s: %v", clientID, err)
-		return entydad.HTMXError(l.Errors.UseCaseUnavailable)
+		return view.HTMXError(l.Errors.UseCaseUnavailable)
 	}
 
 	// Client name is passed by the opener via query param when available.
@@ -200,7 +200,7 @@ func submitRevenueRun(
 	l := deps.Labels.Detail.RevenueRun
 
 	if err := viewCtx.Request.ParseForm(); err != nil {
-		return entydad.HTMXError(l.Errors.InvalidFormData)
+		return view.HTMXError(l.Errors.InvalidFormData)
 	}
 
 	asOfDate := viewCtx.Request.FormValue("as_of_date")
@@ -212,7 +212,7 @@ func submitRevenueRun(
 	// Parse "selection" form values: each is "{sub_id}|{start}|{end}|{marker}"
 	rawSelections := viewCtx.Request.Form["selection"]
 	if len(rawSelections) == 0 {
-		return entydad.HTMXError(l.Errors.SelectOne)
+		return view.HTMXError(l.Errors.SelectOne)
 	}
 
 	var selections RevenueRunSelections
@@ -239,7 +239,7 @@ func submitRevenueRun(
 		selections.ExplicitList = append(selections.ExplicitList, sel)
 	}
 	if len(selections.ExplicitList) == 0 {
-		return entydad.HTMXError(l.Errors.SelectOne)
+		return view.HTMXError(l.Errors.SelectOne)
 	}
 
 	scope := RevenueRunScope{
@@ -251,10 +251,10 @@ func submitRevenueRun(
 	result, err := deps.GenerateRevenueRun(ctx, scope, selections)
 	if err != nil {
 		log.Printf("NewRevenueRunAction POST: GenerateRevenueRun failed for client %s: %v", clientID, err)
-		return entydad.HTMXError(l.Errors.UseCaseUnavailable)
+		return view.HTMXError(l.Errors.UseCaseUnavailable)
 	}
 	if result == nil {
-		return entydad.HTMXError(l.Errors.UseCaseUnavailable)
+		return view.HTMXError(l.Errors.UseCaseUnavailable)
 	}
 
 	// Resolve the lyngua-translated toast text. The template uses Go-template

@@ -25,7 +25,7 @@ type AssignFormLabels struct {
 // AssignFormData is the template data for the assign role drawer form.
 type AssignFormData struct {
 	FormAction   string
-	WorkspaceID   string // injected by C1: populated by ViewAdapter.injectWorkspaceID for action_workspace_guard
+	WorkspaceID  string // injected by C1: populated by ViewAdapter.injectWorkspaceID for action_workspace_guard
 	UserID       string
 	Labels       AssignFormLabels
 	RoleOptions  []types.SelectOption
@@ -50,11 +50,11 @@ func NewAssignAction(deps *ActionDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("user", "update") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		userID := viewCtx.Request.PathValue("id")
 		if userID == "" {
-			return entydad.HTMXError(viewCtx.T("shared.errors.idRequired"))
+			return view.HTMXError(viewCtx.T("shared.errors.idRequired"))
 		}
 
 		if viewCtx.Request.Method == http.MethodGet {
@@ -62,7 +62,7 @@ func NewAssignAction(deps *ActionDeps) view.View {
 			roleResp, err := deps.ListRoles(ctx, &rolepb.ListRolesRequest{})
 			if err != nil {
 				log.Printf("Failed to list roles: %v", err)
-				return entydad.HTMXError(err.Error())
+				return view.HTMXError(err.Error())
 			}
 
 			// Find workspace_user to get already-assigned roles
@@ -106,19 +106,19 @@ func NewAssignAction(deps *ActionDeps) view.View {
 
 		// POST -- assign role to user
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return entydad.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
 		}
 
 		roleID := viewCtx.Request.FormValue("role_id")
 		if roleID == "" {
-			return entydad.HTMXError(viewCtx.T("shared.errors.roleRequired"))
+			return view.HTMXError(viewCtx.T("shared.errors.roleRequired"))
 		}
 
 		// Find workspace_user for this user
 		wu, err := findWorkspaceUserForAction(ctx, deps, userID)
 		if err != nil {
 			log.Printf("Failed to find workspace user for user %s: %v", userID, err)
-			return entydad.HTMXError(err.Error())
+			return view.HTMXError(err.Error())
 		}
 
 		_, err = deps.CreateWorkspaceUserRole(ctx, &workspaceuserrolepb.CreateWorkspaceUserRoleRequest{
@@ -130,10 +130,10 @@ func NewAssignAction(deps *ActionDeps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to assign role to user %s: %v", userID, err)
-			return entydad.HTMXError(err.Error())
+			return view.HTMXError(err.Error())
 		}
 
-		return entydad.HTMXSuccess("user-roles-table")
+		return view.HTMXSuccess("user-roles-table")
 	})
 }
 
@@ -142,11 +142,11 @@ func NewRemoveAction(deps *ActionDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("user", "update") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		userID := viewCtx.Request.PathValue("id")
 		if userID == "" {
-			return entydad.HTMXError(viewCtx.T("shared.errors.idRequired"))
+			return view.HTMXError(viewCtx.T("shared.errors.idRequired"))
 		}
 
 		wurID := viewCtx.Request.URL.Query().Get("id")
@@ -155,7 +155,7 @@ func NewRemoveAction(deps *ActionDeps) view.View {
 			wurID = viewCtx.Request.FormValue("id")
 		}
 		if wurID == "" {
-			return entydad.HTMXError(viewCtx.T("shared.errors.idRequired"))
+			return view.HTMXError(viewCtx.T("shared.errors.idRequired"))
 		}
 
 		_, err := deps.DeleteWorkspaceUserRole(ctx, &workspaceuserrolepb.DeleteWorkspaceUserRoleRequest{
@@ -163,10 +163,10 @@ func NewRemoveAction(deps *ActionDeps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to remove role %s from user %s: %v", wurID, userID, err)
-			return entydad.HTMXError(err.Error())
+			return view.HTMXError(err.Error())
 		}
 
-		return entydad.HTMXSuccess("user-roles-table")
+		return view.HTMXSuccess("user-roles-table")
 	})
 }
 

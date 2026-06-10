@@ -24,7 +24,7 @@ type AssignFormLabels struct {
 // AssignFormData is the template data for the assign permission drawer form.
 type AssignFormData struct {
 	FormAction        string
-	WorkspaceID        string // injected by C1: populated by ViewAdapter.injectWorkspaceID for action_workspace_guard
+	WorkspaceID       string // injected by C1: populated by ViewAdapter.injectWorkspaceID for action_workspace_guard
 	RoleID            string
 	Labels            AssignFormLabels
 	PermissionOptions []types.SelectOption
@@ -46,11 +46,11 @@ func NewAssignAction(deps *ActionDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("role", "update") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		roleID := viewCtx.Request.PathValue("id")
 		if roleID == "" {
-			return entydad.HTMXError(viewCtx.T("shared.errors.idRequired"))
+			return view.HTMXError(viewCtx.T("shared.errors.idRequired"))
 		}
 
 		if viewCtx.Request.Method == http.MethodGet {
@@ -58,7 +58,7 @@ func NewAssignAction(deps *ActionDeps) view.View {
 			permResp, err := deps.ListPermissions(ctx, &permissionpb.ListPermissionsRequest{})
 			if err != nil {
 				log.Printf("Failed to list permissions: %v", err)
-				return entydad.HTMXError(err.Error())
+				return view.HTMXError(err.Error())
 			}
 
 			// Load role with existing permissions to filter out already-assigned
@@ -67,7 +67,7 @@ func NewAssignAction(deps *ActionDeps) view.View {
 			})
 			if err != nil {
 				log.Printf("Failed to load role: %v", err)
-				return entydad.HTMXError(err.Error())
+				return view.HTMXError(err.Error())
 			}
 
 			// Build set of already-assigned permission IDs
@@ -107,12 +107,12 @@ func NewAssignAction(deps *ActionDeps) view.View {
 
 		// POST -- assign permission to role
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return entydad.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
 		}
 
 		permissionID := viewCtx.Request.FormValue("permission_id")
 		if permissionID == "" {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionRequired"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionRequired"))
 		}
 
 		_, err := deps.CreateRolePermission(ctx, &rolepermissionpb.CreateRolePermissionRequest{
@@ -124,10 +124,10 @@ func NewAssignAction(deps *ActionDeps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to assign permission to role %s: %v", roleID, err)
-			return entydad.HTMXError(err.Error())
+			return view.HTMXError(err.Error())
 		}
 
-		return entydad.HTMXSuccess("role-permissions-table")
+		return view.HTMXSuccess("role-permissions-table")
 	})
 }
 
@@ -136,11 +136,11 @@ func NewRemoveAction(deps *ActionDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("role", "update") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		roleID := viewCtx.Request.PathValue("id")
 		if roleID == "" {
-			return entydad.HTMXError(viewCtx.T("shared.errors.idRequired"))
+			return view.HTMXError(viewCtx.T("shared.errors.idRequired"))
 		}
 
 		rpID := viewCtx.Request.URL.Query().Get("id")
@@ -149,7 +149,7 @@ func NewRemoveAction(deps *ActionDeps) view.View {
 			rpID = viewCtx.Request.FormValue("id")
 		}
 		if rpID == "" {
-			return entydad.HTMXError(viewCtx.T("shared.errors.idRequired"))
+			return view.HTMXError(viewCtx.T("shared.errors.idRequired"))
 		}
 
 		_, err := deps.DeleteRolePermission(ctx, &rolepermissionpb.DeleteRolePermissionRequest{
@@ -157,9 +157,9 @@ func NewRemoveAction(deps *ActionDeps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to remove permission %s from role %s: %v", rpID, roleID, err)
-			return entydad.HTMXError(err.Error())
+			return view.HTMXError(err.Error())
 		}
 
-		return entydad.HTMXSuccess("role-permissions-table")
+		return view.HTMXSuccess("role-permissions-table")
 	})
 }

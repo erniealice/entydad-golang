@@ -29,7 +29,7 @@ func NewAddAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("role", "create") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		if viewCtx.Request.Method == http.MethodGet {
 			return view.OK("role-drawer-form", &form.Data{
@@ -42,7 +42,7 @@ func NewAddAction(deps *Deps) view.View {
 
 		// POST -- create role
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return entydad.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
 		}
 
 		r := viewCtx.Request
@@ -58,10 +58,10 @@ func NewAddAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to create role: %v", err)
-			return entydad.HTMXError(err.Error())
+			return view.HTMXError(err.Error())
 		}
 
-		return entydad.HTMXSuccess("roles-table")
+		return view.HTMXSuccess("roles-table")
 	})
 }
 
@@ -70,7 +70,7 @@ func NewEditAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("role", "update") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		id := viewCtx.Request.PathValue("id")
 
@@ -80,7 +80,7 @@ func NewEditAction(deps *Deps) view.View {
 			})
 			if err != nil {
 				log.Printf("Failed to read role %s: %v", id, err)
-				return entydad.HTMXError(viewCtx.T("shared.errors.notFound"))
+				return view.HTMXError(viewCtx.T("shared.errors.notFound"))
 			}
 
 			role := resp.GetData()[0]
@@ -100,7 +100,7 @@ func NewEditAction(deps *Deps) view.View {
 
 		// POST -- update role
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return entydad.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
 		}
 
 		r := viewCtx.Request
@@ -117,10 +117,10 @@ func NewEditAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to update role %s: %v", id, err)
-			return entydad.HTMXError(err.Error())
+			return view.HTMXError(err.Error())
 		}
 
-		return entydad.HTMXSuccess("roles-table")
+		return view.HTMXSuccess("roles-table")
 	})
 }
 
@@ -130,7 +130,7 @@ func NewDeleteAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("role", "delete") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		id := viewCtx.Request.URL.Query().Get("id")
 		if id == "" {
@@ -138,7 +138,7 @@ func NewDeleteAction(deps *Deps) view.View {
 			id = viewCtx.Request.FormValue("id")
 		}
 		if id == "" {
-			return entydad.HTMXError(viewCtx.T("shared.errors.idRequired"))
+			return view.HTMXError(viewCtx.T("shared.errors.idRequired"))
 		}
 
 		_, err := deps.DeleteRole(ctx, &rolepb.DeleteRoleRequest{
@@ -146,10 +146,10 @@ func NewDeleteAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to delete role %s: %v", id, err)
-			return entydad.HTMXError(err.Error())
+			return view.HTMXError(err.Error())
 		}
 
-		return entydad.HTMXSuccess("roles-table")
+		return view.HTMXSuccess("roles-table")
 	})
 }
 
@@ -159,13 +159,13 @@ func NewBulkDeleteAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("role", "delete") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		_ = viewCtx.Request.ParseMultipartForm(32 << 20)
 
 		ids := viewCtx.Request.Form["id"]
 		if len(ids) == 0 {
-			return entydad.HTMXError(viewCtx.T("shared.errors.noIdsProvided"))
+			return view.HTMXError(viewCtx.T("shared.errors.noIdsProvided"))
 		}
 
 		for _, id := range ids {
@@ -177,7 +177,7 @@ func NewBulkDeleteAction(deps *Deps) view.View {
 			}
 		}
 
-		return entydad.HTMXSuccess("roles-table")
+		return view.HTMXSuccess("roles-table")
 	})
 }
 
@@ -191,7 +191,7 @@ func NewSetStatusAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("role", "update") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		id := viewCtx.Request.URL.Query().Get("id")
 		targetStatus := viewCtx.Request.URL.Query().Get("status")
@@ -202,18 +202,18 @@ func NewSetStatusAction(deps *Deps) view.View {
 			targetStatus = viewCtx.Request.FormValue("status")
 		}
 		if id == "" {
-			return entydad.HTMXError(viewCtx.T("shared.errors.idRequired"))
+			return view.HTMXError(viewCtx.T("shared.errors.idRequired"))
 		}
 		if targetStatus != "active" && targetStatus != "inactive" {
-			return entydad.HTMXError(viewCtx.T("shared.errors.invalidStatus"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalidStatus"))
 		}
 
 		if err := deps.SetRoleActive(ctx, id, targetStatus == "active"); err != nil {
 			log.Printf("Failed to update role status %s: %v", id, err)
-			return entydad.HTMXError(err.Error())
+			return view.HTMXError(err.Error())
 		}
 
-		return entydad.HTMXSuccess("roles-table")
+		return view.HTMXSuccess("roles-table")
 	})
 }
 
@@ -223,7 +223,7 @@ func NewBulkSetStatusAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("role", "update") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		_ = viewCtx.Request.ParseMultipartForm(32 << 20)
 
@@ -231,10 +231,10 @@ func NewBulkSetStatusAction(deps *Deps) view.View {
 		targetStatus := viewCtx.Request.FormValue("target_status")
 
 		if len(ids) == 0 {
-			return entydad.HTMXError(viewCtx.T("shared.errors.noIdsProvided"))
+			return view.HTMXError(viewCtx.T("shared.errors.noIdsProvided"))
 		}
 		if targetStatus != "active" && targetStatus != "inactive" {
-			return entydad.HTMXError(viewCtx.T("shared.errors.invalidTargetStatus"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalidTargetStatus"))
 		}
 
 		active := targetStatus == "active"
@@ -245,6 +245,6 @@ func NewBulkSetStatusAction(deps *Deps) view.View {
 			}
 		}
 
-		return entydad.HTMXSuccess("roles-table")
+		return view.HTMXSuccess("roles-table")
 	})
 }

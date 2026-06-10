@@ -6,13 +6,12 @@ import (
 	"net/http"
 	"strconv"
 
-	conversationpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/communication/conversation"
 	appcontext "github.com/erniealice/espyna-golang/appcontext"
+	conversationpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/communication/conversation"
 	"github.com/erniealice/pyeza-golang/view"
 
-	entydad "github.com/erniealice/entydad-golang"
-	convshared "github.com/erniealice/entydad-golang/views/conversation/model"
 	convform "github.com/erniealice/entydad-golang/views/conversation/form"
+	convshared "github.com/erniealice/entydad-golang/views/conversation/model"
 )
 
 // NewSetStatusAction returns the status-transition drawer handler (staff only).
@@ -23,15 +22,15 @@ func NewSetStatusAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("conversation", "update") {
-			return entydad.HTMXError(deps.Labels.Errors.PermissionDenied)
+			return view.HTMXError(deps.Labels.Errors.PermissionDenied)
 		}
 		if deps.SetConversationStatus == nil {
-			return entydad.HTMXError(deps.Labels.Errors.SaveFailed)
+			return view.HTMXError(deps.Labels.Errors.SaveFailed)
 		}
 
 		id := paramID(viewCtx.Request)
 		if id == "" {
-			return entydad.HTMXError(deps.Labels.Errors.IDRequired)
+			return view.HTMXError(deps.Labels.Errors.IDRequired)
 		}
 
 		if viewCtx.Request.Method == http.MethodGet {
@@ -68,12 +67,12 @@ func NewSetStatusAction(deps *Deps) view.View {
 		}
 
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return entydad.HTMXError(deps.Labels.Errors.InvalidForm)
+			return view.HTMXError(deps.Labels.Errors.InvalidForm)
 		}
 		statusRaw := viewCtx.Request.FormValue("status")
 		statusInt, err := strconv.Atoi(statusRaw)
 		if err != nil || statusInt == 0 {
-			return entydad.HTMXError(deps.Labels.Errors.InvalidTransition)
+			return view.HTMXError(deps.Labels.Errors.InvalidTransition)
 		}
 		target := conversationpb.ConversationStatus(statusInt)
 
@@ -85,8 +84,8 @@ func NewSetStatusAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("conversation set-status: %s -> %v failed: %v", id, target, err)
-			return entydad.HTMXError(err.Error())
+			return view.HTMXError(err.Error())
 		}
-		return entydad.HTMXSuccess("conversations-table")
+		return view.HTMXSuccess("conversations-table")
 	})
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	entydad "github.com/erniealice/entydad-golang"
 	"github.com/erniealice/entydad-golang/views/tax_registration/form"
 	"github.com/erniealice/pyeza-golang/view"
 )
@@ -22,7 +21,7 @@ func NewSupersedeAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("tax_registration", "update") {
-			return entydad.HTMXError("You do not have permission to supersede tax registrations")
+			return view.HTMXError("You do not have permission to supersede tax registrations")
 		}
 
 		labels := form.BuildLabels(deps.Labels)
@@ -56,7 +55,7 @@ func NewSupersedeAction(deps *Deps) view.View {
 		}
 
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return entydad.HTMXError("Invalid form data")
+			return view.HTMXError("Invalid form data")
 		}
 		r := viewCtx.Request
 		partyType = r.FormValue("party_type")
@@ -66,16 +65,16 @@ func NewSupersedeAction(deps *Deps) view.View {
 		regNum := r.FormValue("registration_number")
 
 		if effectiveFrom == "" || kindID == "" {
-			return entydad.HTMXError("Kind and effective date are required")
+			return view.HTMXError("Kind and effective date are required")
 		}
 
 		// TODO: convert to proto once SupersedeTaxRegistration request type is defined
 		_ = effectiveFrom
 		_ = regNum
 		if err := deps.SupersedeTaxRegistration(ctx, partyType, partyID, supersededID, nil); err != nil {
-			return entydad.HTMXError(err.Error())
+			return view.HTMXError(err.Error())
 		}
 
-		return entydad.HTMXSuccess("tax-registrations-table")
+		return view.HTMXSuccess("tax-registrations-table")
 	})
 }

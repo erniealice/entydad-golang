@@ -8,8 +8,6 @@ import (
 	conversationreadreceiptpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/communication/conversation_read_receipt"
 	"github.com/erniealice/pyeza-golang/view"
 	"google.golang.org/protobuf/proto"
-
-	entydad "github.com/erniealice/entydad-golang"
 )
 
 // NewSendAction returns the composer POST handler. It sends a post via
@@ -20,30 +18,30 @@ func NewSendAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("conversation_post", "create") {
-			return entydad.HTMXError(deps.Labels.Errors.PermissionDenied)
+			return view.HTMXError(deps.Labels.Errors.PermissionDenied)
 		}
 		if deps.SendConversationPost == nil {
-			return entydad.HTMXError(deps.PostLabels.Errors.SendFailed)
+			return view.HTMXError(deps.PostLabels.Errors.SendFailed)
 		}
 
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return entydad.HTMXError(deps.Labels.Errors.InvalidForm)
+			return view.HTMXError(deps.Labels.Errors.InvalidForm)
 		}
 		r := viewCtx.Request
 
 		conversationID := r.FormValue("conversation_id")
 		if conversationID == "" {
-			return entydad.HTMXError(deps.Labels.Errors.IDRequired)
+			return view.HTMXError(deps.Labels.Errors.IDRequired)
 		}
 		body := r.FormValue("body")
 		if body == "" {
-			return entydad.HTMXError(deps.PostLabels.Errors.EmptyBody)
+			return view.HTMXError(deps.PostLabels.Errors.EmptyBody)
 		}
 		// client_token is REQUIRED (Q-MSG-7 / codex H3). Reject empty here so
 		// the user sees a clean message instead of the raw use-case error.
 		clientToken := r.FormValue("client_token")
 		if clientToken == "" {
-			return entydad.HTMXError(deps.PostLabels.Errors.MissingToken)
+			return view.HTMXError(deps.PostLabels.Errors.MissingToken)
 		}
 
 		_, err := deps.SendConversationPost(ctx, &conversationpostpb.CreateConversationPostRequest{
@@ -55,10 +53,10 @@ func NewSendAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("conversation send: %s failed: %v", conversationID, err)
-			return entydad.HTMXError(err.Error())
+			return view.HTMXError(err.Error())
 		}
 
-		return entydad.HTMXSuccess("conversation-post-list")
+		return view.HTMXSuccess("conversation-post-list")
 	})
 }
 

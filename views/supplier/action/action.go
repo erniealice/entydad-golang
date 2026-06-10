@@ -219,7 +219,7 @@ func NewAddAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("supplier", "create") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		if viewCtx.Request.Method == http.MethodGet {
 			tagOptions, _ := loadTagData(ctx, deps, "")
@@ -243,7 +243,7 @@ func NewAddAction(deps *Deps) view.View {
 
 		// POST -- create supplier
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return entydad.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
 		}
 
 		r := viewCtx.Request
@@ -282,14 +282,14 @@ func NewAddAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to create supplier: %v", err)
-			return entydad.HTMXError(err.Error())
+			return view.HTMXError(err.Error())
 		}
 
 		if resp != nil && len(resp.GetData()) > 0 {
 			syncTags(ctx, deps, resp.GetData()[0].GetId(), parseTagIDs(r.FormValue("tags")))
 		}
 
-		return entydad.HTMXSuccess("suppliers-table")
+		return view.HTMXSuccess("suppliers-table")
 	})
 }
 
@@ -308,7 +308,7 @@ func NewEditAction(deps *Deps) view.View {
 			requiredAction = "create"
 		}
 		if !perms.Can("supplier", requiredAction) {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 
 		if viewCtx.Request.Method == http.MethodGet {
@@ -317,7 +317,7 @@ func NewEditAction(deps *Deps) view.View {
 			})
 			if err != nil {
 				log.Printf("Failed to read supplier %s: %v", id, err)
-				return entydad.HTMXError(viewCtx.T("shared.errors.notFound"))
+				return view.HTMXError(viewCtx.T("shared.errors.notFound"))
 			}
 
 			s := resp.GetData()[0]
@@ -411,7 +411,7 @@ func NewEditAction(deps *Deps) view.View {
 
 		// POST -- update supplier
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return entydad.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
 		}
 
 		r := viewCtx.Request
@@ -450,12 +450,12 @@ func NewEditAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to update supplier %s: %v", id, err)
-			return entydad.HTMXError(err.Error())
+			return view.HTMXError(err.Error())
 		}
 
 		syncTags(ctx, deps, id, parseTagIDs(r.FormValue("tags")))
 
-		return entydad.HTMXSuccess("suppliers-table")
+		return view.HTMXSuccess("suppliers-table")
 	})
 }
 
@@ -464,7 +464,7 @@ func NewDeleteAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("supplier", "delete") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		id := viewCtx.Request.URL.Query().Get("id")
 		if id == "" {
@@ -472,7 +472,7 @@ func NewDeleteAction(deps *Deps) view.View {
 			id = viewCtx.Request.FormValue("id")
 		}
 		if id == "" {
-			return entydad.HTMXError(viewCtx.T("shared.errors.idRequired"))
+			return view.HTMXError(viewCtx.T("shared.errors.idRequired"))
 		}
 
 		_, err := deps.DeleteSupplier(ctx, &supplierpb.DeleteSupplierRequest{
@@ -480,10 +480,10 @@ func NewDeleteAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to delete supplier %s: %v", id, err)
-			return entydad.HTMXError(err.Error())
+			return view.HTMXError(err.Error())
 		}
 
-		return entydad.HTMXSuccess("suppliers-table")
+		return view.HTMXSuccess("suppliers-table")
 	})
 }
 
@@ -492,13 +492,13 @@ func NewBulkDeleteAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("supplier", "delete") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		_ = viewCtx.Request.ParseMultipartForm(32 << 20)
 
 		ids := viewCtx.Request.Form["id"]
 		if len(ids) == 0 {
-			return entydad.HTMXError(viewCtx.T("shared.errors.noIdsProvided"))
+			return view.HTMXError(viewCtx.T("shared.errors.noIdsProvided"))
 		}
 
 		for _, id := range ids {
@@ -510,7 +510,7 @@ func NewBulkDeleteAction(deps *Deps) view.View {
 			}
 		}
 
-		return entydad.HTMXSuccess("suppliers-table")
+		return view.HTMXSuccess("suppliers-table")
 	})
 }
 
@@ -520,7 +520,7 @@ func NewSetStatusAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("supplier", "update") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		id := viewCtx.Request.URL.Query().Get("id")
 		targetStatus := viewCtx.Request.URL.Query().Get("status")
@@ -531,20 +531,20 @@ func NewSetStatusAction(deps *Deps) view.View {
 			targetStatus = viewCtx.Request.FormValue("status")
 		}
 		if id == "" {
-			return entydad.HTMXError(viewCtx.T("shared.errors.idRequired"))
+			return view.HTMXError(viewCtx.T("shared.errors.idRequired"))
 		}
 		if targetStatus != "active" && targetStatus != "blocked" && targetStatus != "on_hold" {
-			return entydad.HTMXError(viewCtx.T("shared.errors.invalidStatus"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalidStatus"))
 		}
 
 		if deps.SetSupplierStatus != nil {
 			if err := deps.SetSupplierStatus(ctx, id, targetStatus); err != nil {
 				log.Printf("Failed to update supplier status %s: %v", id, err)
-				return entydad.HTMXError(err.Error())
+				return view.HTMXError(err.Error())
 			}
 		}
 
-		return entydad.HTMXSuccess("suppliers-table")
+		return view.HTMXSuccess("suppliers-table")
 	})
 }
 
@@ -553,7 +553,7 @@ func NewBulkSetStatusAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("supplier", "update") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 		_ = viewCtx.Request.ParseMultipartForm(32 << 20)
 
@@ -561,10 +561,10 @@ func NewBulkSetStatusAction(deps *Deps) view.View {
 		targetStatus := viewCtx.Request.FormValue("target_status")
 
 		if len(ids) == 0 {
-			return entydad.HTMXError(viewCtx.T("shared.errors.noIdsProvided"))
+			return view.HTMXError(viewCtx.T("shared.errors.noIdsProvided"))
 		}
 		if targetStatus != "active" && targetStatus != "blocked" && targetStatus != "on_hold" {
-			return entydad.HTMXError(viewCtx.T("shared.errors.invalidTargetStatus"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalidTargetStatus"))
 		}
 
 		if deps.SetSupplierStatus != nil {
@@ -575,6 +575,6 @@ func NewBulkSetStatusAction(deps *Deps) view.View {
 			}
 		}
 
-		return entydad.HTMXSuccess("suppliers-table")
+		return view.HTMXSuccess("suppliers-table")
 	})
 }

@@ -42,7 +42,7 @@ func NewAddAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("workspace_user", "create") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 
 		if viewCtx.Request.Method == http.MethodGet {
@@ -58,7 +58,7 @@ func NewAddAction(deps *Deps) view.View {
 
 		// POST — create workspace_user
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return entydad.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
 		}
 
 		r := viewCtx.Request
@@ -66,7 +66,7 @@ func NewAddAction(deps *Deps) view.View {
 		userID := r.FormValue("user_id")
 
 		if workspaceID == "" || userID == "" {
-			return entydad.HTMXError("workspace_id and user_id are required")
+			return view.HTMXError("workspace_id and user_id are required")
 		}
 
 		_, err := deps.CreateWorkspaceUser(ctx, &workspaceuserpb.CreateWorkspaceUserRequest{
@@ -78,10 +78,10 @@ func NewAddAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to create workspace_user: %v", err)
-			return entydad.HTMXError(err.Error())
+			return view.HTMXError(err.Error())
 		}
 
-		return entydad.HTMXSuccess("workspace-users-table")
+		return view.HTMXSuccess("workspace-users-table")
 	})
 }
 
@@ -90,7 +90,7 @@ func NewDeleteAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("workspace_user", "delete") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 
 		id := viewCtx.Request.PathValue("id")
@@ -98,7 +98,7 @@ func NewDeleteAction(deps *Deps) view.View {
 			id = viewCtx.Request.URL.Query().Get("id")
 		}
 		if id == "" {
-			return entydad.HTMXError("id is required")
+			return view.HTMXError("id is required")
 		}
 
 		_, err := deps.DeleteWorkspaceUser(ctx, &workspaceuserpb.DeleteWorkspaceUserRequest{
@@ -106,10 +106,10 @@ func NewDeleteAction(deps *Deps) view.View {
 		})
 		if err != nil {
 			log.Printf("Failed to delete workspace_user %s: %v", id, err)
-			return entydad.HTMXError(err.Error())
+			return view.HTMXError(err.Error())
 		}
 
-		return entydad.HTMXSuccess("workspace-users-table")
+		return view.HTMXSuccess("workspace-users-table")
 	})
 }
 
@@ -118,7 +118,7 @@ func NewSetStatusAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("workspace_user", "update") {
-			return entydad.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
 		}
 
 		id := viewCtx.Request.PathValue("id")
@@ -127,16 +127,16 @@ func NewSetStatusAction(deps *Deps) view.View {
 		}
 
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return entydad.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
 		}
 		active := viewCtx.Request.FormValue("active") == "true"
 
 		if err := deps.SetWorkspaceUserActive(ctx, id, active); err != nil {
 			log.Printf("Failed to set workspace_user active %s: %v", id, err)
-			return entydad.HTMXError(err.Error())
+			return view.HTMXError(err.Error())
 		}
 
-		return entydad.HTMXSuccess("workspace-users-table")
+		return view.HTMXSuccess("workspace-users-table")
 	})
 }
 
