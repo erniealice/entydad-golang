@@ -1,0 +1,349 @@
+package action
+
+import (
+	"context"
+	"log"
+	"net/http"
+	"regexp"
+	"strings"
+
+	pyeza "github.com/erniealice/pyeza-golang"
+	"github.com/erniealice/pyeza-golang/route"
+	"github.com/erniealice/pyeza-golang/view"
+
+	entityclienttag "github.com/erniealice/entydad-golang/domain/entity/party/client_tag"
+
+	categorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
+)
+
+// slugify converts a name into a lowercase, hyphenated code suitable for the
+// Category.Code field (e.g. "VIP Customer" -> "vip-customer").
+var nonAlphaNum = regexp.MustCompile(`[^a-z0-9]+`)
+
+func slugify(name string) string {
+	s := strings.ToLower(strings.TrimSpace(name))
+	s = nonAlphaNum.ReplaceAllString(s, "-")
+	return strings.Trim(s, "-")
+}
+
+// TagFormLabels holds i18n labels for the client tag drawer form.
+type TagFormLabels struct {
+	TagName                string
+	Code                   string
+	CodeAutoPlaceholder    string
+	Description            string
+	DescriptionPlaceholder string
+	Active                 string
+
+	// Field-level info text surfaced via an info button beside each label.
+	TagNameInfo     string
+	CodeInfo        string
+	DescriptionInfo string
+	ActiveInfo      string
+}
+
+// FormData is the template data for the tag drawer form.
+type FormData struct {
+	FormAction   string
+	WorkspaceID  string // injected by C1: populated by ViewAdapter.injectWorkspaceID for action_workspace_guard
+	IsEdit       bool
+	ID           string
+	Name         string
+	Code         string
+	Description  string
+	Active       bool
+	Labels       TagFormLabels
+	CommonLabels any
+}
+
+// tagFormLabels builds i18n labels for the tag drawer form using dot-notation keys.
+func tagFormLabels(t func(string) string) TagFormLabels {
+	return TagFormLabels{
+		TagName:                t("client.tagForm.tagName"),
+		Code:                   t("client.tagForm.code"),
+		CodeAutoPlaceholder:    t("client.tagForm.codeAutoPlaceholder"),
+		Description:            t("client.tagForm.description"),
+		DescriptionPlaceholder: t("client.tagForm.descriptionPlaceholder"),
+		Active:                 t("client.tagForm.active"),
+		TagNameInfo:            t("client.tagForm.tagNameInfo"),
+		CodeInfo:               t("client.tagForm.codeInfo"),
+		DescriptionInfo:        t("client.tagForm.descriptionInfo"),
+		ActiveInfo:             t("client.tagForm.activeInfo"),
+	}
+}
+
+// resolveCode returns the explicit code if provided, otherwise slugifies the name.
+func resolveCode(code, name string) string {
+	code = strings.TrimSpace(code)
+	if code != "" {
+		return slugify(code)
+	}
+	return slugify(name)
+}
+
+// Deps holds dependencies for client tag action handlers.
+type Deps struct {
+	Routes            entityclienttag.Routes
+	CommonLabels      pyeza.CommonLabels
+	ListCategories    func(ctx context.Context, req *categorypb.ListCategoriesRequest) (*categorypb.ListCategoriesResponse, error)
+	CreateCategory    func(ctx context.Context, req *categorypb.CreateCategoryRequest) (*categorypb.CreateCategoryResponse, error)
+	ReadCategory      func(ctx context.Context, req *categorypb.ReadCategoryRequest) (*categorypb.ReadCategoryResponse, error)
+	UpdateCategory    func(ctx context.Context, req *categorypb.UpdateCategoryRequest) (*categorypb.UpdateCategoryResponse, error)
+	DeleteCategory    func(ctx context.Context, req *categorypb.DeleteCategoryRequest) (*categorypb.DeleteCategoryResponse, error)
+	SetCategoryActive func(ctx context.Context, id string, active bool) error
+}
+
+// isDuplicateTagName checks if a tag name already exists among client-module categories,
+// optionally excluding a specific category ID (for edit operations).
+func isDuplicateTagName(ctx context.Context, listFn func(context.Context, *categorypb.ListCategoriesRequest) (*categorypb.ListCategoriesResponse, error), name string, excludeID string) bool {
+	if listFn == nil {
+		return false
+	}
+	resp, err := listFn(ctx, &categorypb.ListCategoriesRequest{})
+	if err != nil {
+		log.Printf("Failed to list categories for duplicate check: %v", err)
+		return false
+	}
+	for _, cat := range resp.GetData() {
+		if cat.GetModule() != "client" {
+			continue
+		}
+		if excludeID != "" && cat.GetId() == excludeID {
+			continue
+		}
+		if strings.EqualFold(cat.GetName(), name) {
+			return true
+		}
+	}
+	return false
+}
+
+// NewAddAction creates the tag add action (GET = form, POST = create).
+func NewAddAction(deps *Deps) view.View {
+	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("client", "update") {
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+		}
+		if viewCtx.Request.Method == http.MethodGet {
+			return view.OK("client-tag-drawer-form", &FormData{
+				FormAction:   deps.Routes.AddURL,
+				Active:       true,
+				Labels:       tagFormLabels(viewCtx.T),
+				CommonLabels: deps.CommonLabels,
+			})
+		}
+
+		if err := viewCtx.Request.ParseForm(); err != nil {
+			return view.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
+		}
+
+		r := viewCtx.Request
+		name := r.FormValue("name")
+		active := r.FormValue("active") == "true"
+
+		if isDuplicateTagName(ctx, deps.ListCategories, name, "") {
+			return view.HTMXError(viewCtx.T("shared.errors.tagNameExists"))
+		}
+
+		_, err := deps.CreateCategory(ctx, &categorypb.CreateCategoryRequest{
+			Data: &categorypb.Category{
+				Name:        name,
+				Code:        resolveCode(r.FormValue("code"), name),
+				Description: r.FormValue("description"),
+				Module:      "client",
+				Active:      active,
+			},
+		})
+		if err != nil {
+			log.Printf("Failed to create client tag: %v", err)
+			return view.HTMXError(err.Error())
+		}
+
+		return view.HTMXSuccess("client-tags-table")
+	})
+}
+
+// NewEditAction creates the tag edit action (GET = form, POST = update).
+func NewEditAction(deps *Deps) view.View {
+	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("client", "update") {
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+		}
+		id := viewCtx.Request.PathValue("id")
+
+		if viewCtx.Request.Method == http.MethodGet {
+			resp, err := deps.ReadCategory(ctx, &categorypb.ReadCategoryRequest{
+				Data: &categorypb.Category{Id: id},
+			})
+			if err != nil {
+				log.Printf("Failed to read client tag %s: %v", id, err)
+				return view.HTMXError(viewCtx.T("shared.errors.notFound"))
+			}
+
+			data := resp.GetData()
+			if len(data) == 0 {
+				return view.HTMXError(viewCtx.T("shared.errors.notFound"))
+			}
+			cat := data[0]
+
+			return view.OK("client-tag-drawer-form", &FormData{
+				FormAction:   route.ResolveURL(deps.Routes.EditURL, "id", id),
+				IsEdit:       true,
+				ID:           id,
+				Name:         cat.GetName(),
+				Code:         cat.GetCode(),
+				Description:  cat.GetDescription(),
+				Active:       cat.GetActive(),
+				Labels:       tagFormLabels(viewCtx.T),
+				CommonLabels: deps.CommonLabels,
+			})
+		}
+
+		if err := viewCtx.Request.ParseForm(); err != nil {
+			return view.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
+		}
+
+		r := viewCtx.Request
+		name := r.FormValue("name")
+		active := r.FormValue("active") == "true"
+
+		if isDuplicateTagName(ctx, deps.ListCategories, name, id) {
+			return view.HTMXError(viewCtx.T("shared.errors.tagNameExists"))
+		}
+
+		_, err := deps.UpdateCategory(ctx, &categorypb.UpdateCategoryRequest{
+			Data: &categorypb.Category{
+				Id:          id,
+				Name:        name,
+				Code:        resolveCode(r.FormValue("code"), name),
+				Description: r.FormValue("description"),
+				Module:      "client",
+				Active:      active,
+			},
+		})
+		if err != nil {
+			log.Printf("Failed to update client tag %s: %v", id, err)
+			return view.HTMXError(err.Error())
+		}
+
+		return view.HTMXSuccess("client-tags-table")
+	})
+}
+
+// NewDeleteAction creates the tag delete action (POST only).
+func NewDeleteAction(deps *Deps) view.View {
+	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("client", "update") {
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+		}
+		id := viewCtx.Request.URL.Query().Get("id")
+		if id == "" {
+			_ = viewCtx.Request.ParseForm()
+			id = viewCtx.Request.FormValue("id")
+		}
+		if id == "" {
+			return view.HTMXError(viewCtx.T("shared.errors.idRequired"))
+		}
+
+		_, err := deps.DeleteCategory(ctx, &categorypb.DeleteCategoryRequest{
+			Data: &categorypb.Category{Id: id},
+		})
+		if err != nil {
+			log.Printf("Failed to delete client tag %s: %v", id, err)
+			return view.HTMXError(err.Error())
+		}
+
+		return view.HTMXSuccess("client-tags-table")
+	})
+}
+
+// NewBulkDeleteAction creates the tag bulk delete action (POST only).
+func NewBulkDeleteAction(deps *Deps) view.View {
+	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("client", "update") {
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+		}
+		_ = viewCtx.Request.ParseMultipartForm(32 << 20)
+
+		ids := viewCtx.Request.Form["id"]
+		if len(ids) == 0 {
+			return view.HTMXError(viewCtx.T("shared.errors.noIdsProvided"))
+		}
+
+		for _, id := range ids {
+			_, err := deps.DeleteCategory(ctx, &categorypb.DeleteCategoryRequest{
+				Data: &categorypb.Category{Id: id},
+			})
+			if err != nil {
+				log.Printf("Failed to delete client tag %s: %v", id, err)
+			}
+		}
+
+		return view.HTMXSuccess("client-tags-table")
+	})
+}
+
+// NewSetStatusAction creates the client tag activate/deactivate action (POST only).
+func NewSetStatusAction(deps *Deps) view.View {
+	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("client", "update") {
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+		}
+		id := viewCtx.Request.URL.Query().Get("id")
+		targetStatus := viewCtx.Request.URL.Query().Get("status")
+
+		if id == "" {
+			_ = viewCtx.Request.ParseForm()
+			id = viewCtx.Request.FormValue("id")
+			targetStatus = viewCtx.Request.FormValue("status")
+		}
+		if id == "" {
+			return view.HTMXError(viewCtx.T("shared.errors.idRequired"))
+		}
+		if targetStatus != "active" && targetStatus != "inactive" {
+			return view.HTMXError(viewCtx.T("shared.errors.invalidStatus"))
+		}
+
+		if err := deps.SetCategoryActive(ctx, id, targetStatus == "active"); err != nil {
+			log.Printf("Failed to update client tag status %s: %v", id, err)
+			return view.HTMXError(err.Error())
+		}
+
+		return view.HTMXSuccess("client-tags-table")
+	})
+}
+
+// NewBulkSetStatusAction creates the client tag bulk activate/deactivate action (POST only).
+func NewBulkSetStatusAction(deps *Deps) view.View {
+	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
+		perms := view.GetUserPermissions(ctx)
+		if !perms.Can("client", "update") {
+			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+		}
+		_ = viewCtx.Request.ParseMultipartForm(32 << 20)
+
+		ids := viewCtx.Request.Form["id"]
+		targetStatus := viewCtx.Request.FormValue("target_status")
+
+		if len(ids) == 0 {
+			return view.HTMXError(viewCtx.T("shared.errors.noIdsProvided"))
+		}
+		if targetStatus != "active" && targetStatus != "inactive" {
+			return view.HTMXError(viewCtx.T("shared.errors.invalidTargetStatus"))
+		}
+
+		active := targetStatus == "active"
+		for _, id := range ids {
+			if err := deps.SetCategoryActive(ctx, id, active); err != nil {
+				log.Printf("Failed to update client tag status %s: %v", id, err)
+			}
+		}
+
+		return view.HTMXSuccess("client-tags-table")
+	})
+}

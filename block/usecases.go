@@ -34,15 +34,15 @@ import (
 	purchaseorderpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/expenditure/purchase_order"
 	revenuepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/revenue/revenue"
 	revrunpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/revenue/revenue_run"
-	stmtspb "github.com/erniealice/esqyma/pkg/schema/v1/service/reporting/statements"
 	priceplanpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/price_plan"
 	priceschedulepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/price_schedule"
 	subscriptionpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/subscription"
 	taxregistrationpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/tax/tax_registration"
 	collectionpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/collection"
+	stmtspb "github.com/erniealice/esqyma/pkg/schema/v1/service/reporting/statements"
 
-	admindashboard "github.com/erniealice/entydad-golang/views/admin/dashboard"
-	locationdashboard "github.com/erniealice/entydad-golang/views/location/dashboard"
+	locationdashboard "github.com/erniealice/entydad-golang/domain/entity/location/location/dashboard"
+	admindashboard "github.com/erniealice/entydad-golang/service/dashboard/views/admin/dashboard"
 )
 
 // UseCases declares everything entydad's Block() needs from outside.

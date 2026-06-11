@@ -20,33 +20,36 @@ import (
 
 	centymo "github.com/erniealice/centymo-golang"
 	"github.com/erniealice/entydad-golang"
+	entity "github.com/erniealice/entydad-golang/domain/entity"
 	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
 )
 
 // blockLabels holds the subset of entydad label structs needed by Block().
+// Migrated entity labels resolve through the entity facade (entity.*);
+// shared/auth/admin/tax/conversation leftovers stay on the root package (entydad.*).
 type blockLabels struct {
 	Shared            entydad.SharedLabels
 	Dashboard         entydad.DashboardLabels
 	Admin             entydad.AdminDashboardLabels
-	Client            entydad.ClientLabels
-	ClientDashboard   entydad.ClientDashboardLabels
-	ClientTag         entydad.ClientTagLabels
-	SupplierTag       entydad.SupplierTagLabels
-	PaymentTerm       entydad.PaymentTermLabels
-	User              entydad.UserLabels
-	UserDashboard     entydad.UserDashboardLabels
-	UserRole          entydad.UserRoleLabels
-	RoleUser          entydad.RoleUserLabels
-	Role              entydad.RoleLabels
-	RolePermission    entydad.RolePermissionLabels
-	Location          entydad.LocationLabels
-	LocationArea      entydad.LocationAreaLabels
-	Permission        entydad.PermissionLabels
-	Workspace         entydad.WorkspaceLabels
-	WorkspaceUser     entydad.WorkspaceUserLabels
-	WorkspaceUserRole entydad.WorkspaceUserRoleLabels
-	Supplier          entydad.SupplierLabels
-	SupplierDashboard entydad.SupplierDashboardLabels
+	Client            entity.ClientLabels
+	ClientDashboard   entity.ClientDashboardLabels
+	ClientTag         entity.ClientTagLabels
+	SupplierTag       entity.SupplierTagLabels
+	PaymentTerm       entity.PaymentTermLabels
+	User              entity.UserLabels
+	UserDashboard     entity.UserDashboardLabels
+	UserRole          entity.UserRoleLabels
+	RoleUser          entity.RoleUserLabels
+	Role              entity.RoleLabels
+	RolePermission    entity.RolePermissionLabels
+	Location          entity.LocationLabels
+	LocationArea      entity.LocationAreaLabels
+	Permission        entity.PermissionLabels
+	Workspace         entity.WorkspaceLabels
+	WorkspaceUser     entity.WorkspaceUserLabels
+	WorkspaceUserRole entity.WorkspaceUserRoleLabels
+	Supplier          entity.SupplierLabels
+	SupplierDashboard entity.SupplierDashboardLabels
 	TaxRegistration   entydad.TaxRegistrationLabels
 	Conversation      entydad.ConversationLabels
 	ConversationPost  entydad.ConversationPostLabels
@@ -55,22 +58,22 @@ type blockLabels struct {
 // blockRoutes holds the subset of entydad route structs needed by Block().
 type blockRoutes struct {
 	Admin               entydad.AdminDashboardRoutes
-	Client              entydad.ClientRoutes
-	ClientTag           entydad.ClientTagRoutes
-	SupplierTag         entydad.SupplierTagRoutes
-	PaymentTerm         entydad.PaymentTermRoutes
-	SupplierPaymentTerm entydad.SupplierPaymentTermRoutes
+	Client              entity.ClientRoutes
+	ClientTag           entity.ClientTagRoutes
+	SupplierTag         entity.SupplierTagRoutes
+	PaymentTerm         entity.PaymentTermRoutes
+	SupplierPaymentTerm entity.SupplierPaymentTermRoutes
 	Subscription        centymo.SubscriptionRoutes
 	PriceSchedule       centymo.PriceScheduleRoutes
-	User                entydad.UserRoutes
-	Role                entydad.RoleRoutes
-	Location            entydad.LocationRoutes
-	LocationArea        entydad.LocationAreaRoutes
-	Permission          entydad.PermissionRoutes
-	Workspace           entydad.WorkspaceRoutes
-	WorkspaceUser       entydad.WorkspaceUserRoutes
-	WorkspaceUserRole   entydad.WorkspaceUserRoleRoutes
-	Supplier            entydad.SupplierRoutes
+	User                entity.UserRoutes
+	Role                entity.RoleRoutes
+	Location            entity.LocationRoutes
+	LocationArea        entity.LocationAreaRoutes
+	Permission          entity.PermissionRoutes
+	Workspace           entity.WorkspaceRoutes
+	WorkspaceUser       entity.WorkspaceUserRoutes
+	WorkspaceUserRole   entity.WorkspaceUserRoleRoutes
+	Supplier            entity.SupplierRoutes
 	TaxRegistration     entydad.TaxRegistrationRoutes
 	Conversation        entydad.ConversationRoutes
 }
@@ -102,7 +105,7 @@ func loadBlockLabels(t *lynguaV1.TranslationProvider, businessType string) block
 	if err := t.LoadPath("en", businessType, "location.json", "", &l.Location); err != nil {
 		log.Printf("entydad.Block: warning: failed to load location labels: %v", err)
 	}
-	l.LocationArea = entydad.DefaultLocationAreaLabels()
+	l.LocationArea = entity.DefaultLocationAreaLabels()
 	_ = t.LoadPathIfExists("en", businessType, "location_area.json", "", &l.LocationArea)
 	if err := t.LoadPath("en", businessType, "permission.json", "", &l.Permission); err != nil {
 		log.Printf("entydad.Block: warning: failed to load permission labels: %v", err)
@@ -150,19 +153,19 @@ func loadBlockRoutes(t *lynguaV1.TranslationProvider, businessType string) block
 	r.Admin = entydad.DefaultAdminDashboardRoutes()
 	_ = t.LoadPathIfExists("en", businessType, "route.json", "admin", &r.Admin)
 
-	r.Client = entydad.DefaultClientRoutes()
+	r.Client = entity.DefaultClientRoutes()
 	_ = t.LoadPathIfExists("en", businessType, "route.json", "client", &r.Client)
 
-	r.ClientTag = entydad.DefaultClientTagRoutes()
+	r.ClientTag = entity.DefaultClientTagRoutes()
 	_ = t.LoadPathIfExists("en", businessType, "route.json", "client_tag", &r.ClientTag)
 
-	r.SupplierTag = entydad.DefaultSupplierTagRoutes()
+	r.SupplierTag = entity.DefaultSupplierTagRoutes()
 	_ = t.LoadPathIfExists("en", businessType, "route.json", "supplier_tag", &r.SupplierTag)
 
-	r.PaymentTerm = entydad.DefaultPaymentTermRoutes()
+	r.PaymentTerm = entity.DefaultPaymentTermRoutes()
 	_ = t.LoadPathIfExists("en", businessType, "route.json", "payment_term", &r.PaymentTerm)
 
-	r.SupplierPaymentTerm = entydad.DefaultSupplierPaymentTermRoutes()
+	r.SupplierPaymentTerm = entity.DefaultSupplierPaymentTermRoutes()
 	_ = t.LoadPathIfExists("en", businessType, "route.json", "supplier_payment_term", &r.SupplierPaymentTerm)
 
 	r.Subscription = centymo.DefaultSubscriptionRoutes()
@@ -171,31 +174,31 @@ func loadBlockRoutes(t *lynguaV1.TranslationProvider, businessType string) block
 	r.PriceSchedule = centymo.DefaultPriceScheduleRoutes()
 	_ = t.LoadPathIfExists("en", businessType, "route.json", "price_schedule", &r.PriceSchedule)
 
-	r.User = entydad.DefaultUserRoutes()
+	r.User = entity.DefaultUserRoutes()
 	_ = t.LoadPathIfExists("en", businessType, "route.json", "user", &r.User)
 
-	r.Role = entydad.DefaultRoleRoutes()
+	r.Role = entity.DefaultRoleRoutes()
 	_ = t.LoadPathIfExists("en", businessType, "route.json", "role", &r.Role)
 
-	r.Location = entydad.DefaultLocationRoutes()
+	r.Location = entity.DefaultLocationRoutes()
 	_ = t.LoadPathIfExists("en", businessType, "route.json", "location", &r.Location)
 
-	r.LocationArea = entydad.DefaultLocationAreaRoutes()
+	r.LocationArea = entity.DefaultLocationAreaRoutes()
 	_ = t.LoadPathIfExists("en", businessType, "route.json", "location_area", &r.LocationArea)
 
-	r.Permission = entydad.DefaultPermissionRoutes()
+	r.Permission = entity.DefaultPermissionRoutes()
 	_ = t.LoadPathIfExists("en", businessType, "route.json", "permission", &r.Permission)
 
-	r.Workspace = entydad.DefaultWorkspaceRoutes()
+	r.Workspace = entity.DefaultWorkspaceRoutes()
 	_ = t.LoadPathIfExists("en", businessType, "route.json", "workspace", &r.Workspace)
 
-	r.WorkspaceUser = entydad.DefaultWorkspaceUserRoutes()
+	r.WorkspaceUser = entity.DefaultWorkspaceUserRoutes()
 	_ = t.LoadPathIfExists("en", businessType, "route.json", "workspace_user", &r.WorkspaceUser)
 
-	r.WorkspaceUserRole = entydad.DefaultWorkspaceUserRoleRoutes()
+	r.WorkspaceUserRole = entity.DefaultWorkspaceUserRoleRoutes()
 	_ = t.LoadPathIfExists("en", businessType, "route.json", "workspace_user_role", &r.WorkspaceUserRole)
 
-	r.Supplier = entydad.DefaultSupplierRoutes()
+	r.Supplier = entity.DefaultSupplierRoutes()
 	_ = t.LoadPathIfExists("en", businessType, "route.json", "supplier", &r.Supplier)
 
 	r.TaxRegistration = entydad.DefaultTaxRegistrationRoutes()
