@@ -241,7 +241,9 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 		if cfg.useCases == nil {
 			return fmt.Errorf("entydad.Block: WithUseCases(...) is required")
 		}
-		if err := cfg.useCases.RequireFor(cfg); err != nil {
+		// FAIL-CLOSED completeness gate (mirrors AUTHZ_ENFORCE boot-guard):
+		// dev/test PANIC, prod log-FATAL + return so boot halts.
+		if err := cfg.useCases.MustValidate(cfg); err != nil {
 			return err
 		}
 		uc := cfg.useCases // local alias for brevity
