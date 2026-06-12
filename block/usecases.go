@@ -25,6 +25,7 @@ import (
 	clientpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client"
 	clientcatpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client_category"
 	locationpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/location"
+	locationareapb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/location_area"
 	permissionpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/permission"
 	rolepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/role"
 	rolepermissionpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/role_permission"
@@ -70,6 +71,7 @@ type UseCases struct {
 	RolePermission    RolePermissionUseCases
 	Permission        PermissionUseCases
 	Location          LocationUseCases
+	LocationArea      LocationAreaUseCases
 	Workspace         WorkspaceUseCases
 	WorkspaceUser     WorkspaceUserUseCases
 	WorkspaceUserRole WorkspaceUserRoleUseCases
@@ -184,6 +186,21 @@ type LocationUseCases struct {
 	Read            func(context.Context, *locationpb.ReadLocationRequest) (*locationpb.ReadLocationResponse, error)
 	Update          func(context.Context, *locationpb.UpdateLocationRequest) (*locationpb.UpdateLocationResponse, error)
 	Delete          func(context.Context, *locationpb.DeleteLocationRequest) (*locationpb.DeleteLocationResponse, error)
+}
+
+// LocationAreaUseCases — typed proto closures for the location_area entity.
+// Replaces the former duck path (block-local CRUDSource.ListSimple/Create/
+// Read/Update/Delete against the "location_area" collection string) with the
+// proto-shaped espyna use cases. Wired by service-admin's adapter from
+// uc.Entity.LocationArea.* (mirrors the Location group). Closures are
+// nil-safe at the call site (commerce.go) so a partially-wired or mock build
+// renders empty rather than panicking.
+type LocationAreaUseCases struct {
+	List   func(context.Context, *locationareapb.ListLocationAreasRequest) (*locationareapb.ListLocationAreasResponse, error)
+	Create func(context.Context, *locationareapb.CreateLocationAreaRequest) (*locationareapb.CreateLocationAreaResponse, error)
+	Read   func(context.Context, *locationareapb.ReadLocationAreaRequest) (*locationareapb.ReadLocationAreaResponse, error)
+	Update func(context.Context, *locationareapb.UpdateLocationAreaRequest) (*locationareapb.UpdateLocationAreaResponse, error)
+	Delete func(context.Context, *locationareapb.DeleteLocationAreaRequest) (*locationareapb.DeleteLocationAreaResponse, error)
 }
 
 type WorkspaceUseCases struct {

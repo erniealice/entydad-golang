@@ -24,6 +24,7 @@ import (
 	"github.com/erniealice/espyna-golang/registry"
 	entityid "github.com/erniealice/espyna-golang/registry/entityid"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
+	locationareapb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/location_area"
 	paymenttermpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/payment_term"
 	pyeza "github.com/erniealice/pyeza-golang"
 )
@@ -82,24 +83,24 @@ func wireCommerceModule(ctx *pyeza.AppContext, w commerceWiring) error {
 			DeleteAttachment: deleteAttachment,
 			NewID:            newAttachmentID,
 		}
-		if crudDB, hasCRUD := db.(CRUDSource); hasCRUD {
+		if uc.LocationArea.List != nil {
+			listLocationAreas := uc.LocationArea.List
 			locationDeps.ListLocationAreas = func(fctx context.Context) ([]locationaction.LocationAreaOption, error) {
-				rows, err := crudDB.ListSimple(fctx, "location_area")
+				resp, err := listLocationAreas(fctx, &locationareapb.ListLocationAreasRequest{})
 				if err != nil {
 					return nil, err
 				}
+				rows := resp.GetData()
 				opts := make([]locationaction.LocationAreaOption, 0, len(rows))
 				for _, row := range rows {
-					active, _ := row["active"].(bool)
-					if !active {
+					if !row.GetActive() {
 						continue
 					}
-					id, _ := row["id"].(string)
-					name, _ := row["name"].(string)
+					id := row.GetId()
 					if id == "" {
 						continue
 					}
-					opts = append(opts, locationaction.LocationAreaOption{ID: id, Name: name})
+					opts = append(opts, locationaction.LocationAreaOption{ID: id, Name: row.GetName()})
 				}
 				return opts, nil
 			}
@@ -111,9 +112,9 @@ func wireCommerceModule(ctx *pyeza.AppContext, w commerceWiring) error {
 	}
 
 	if cfg.enableAll || cfg.locationArea {
-		crudDB, hasCRUD := db.(CRUDSource)
-		if !hasCRUD {
-			log.Println("entydad.Block: warning: DB does not implement CRUDSource — skipping location_area module")
+		la := uc.LocationArea
+		if la.List == nil || la.Create == nil || la.Read == nil || la.Update == nil || la.Delete == nil {
+			log.Println("entydad.Block: warning: LocationArea use cases not wired — skipping location_area module")
 		} else {
 			location.NewLocationAreaModule(&location.LocationAreaModuleDeps{
 				Routes:       routes.LocationArea,
@@ -122,13 +123,14 @@ func wireCommerceModule(ctx *pyeza.AppContext, w commerceWiring) error {
 				Labels:       labels.LocationArea,
 				TableLabels:  ctx.Table,
 				GetListPageData: func(fctx context.Context, status string, search string, page, pageSize int) (*locationarealist.LocationAreaListResult, error) {
-					rows, err := crudDB.ListSimple(fctx, "location_area")
+					resp, err := la.List(fctx, &locationareapb.ListLocationAreasRequest{})
 					if err != nil {
 						return nil, err
 					}
+					rows := resp.GetData()
 					items := make([]*locationarealist.LocationAreaItem, 0, len(rows))
 					for _, row := range rows {
-						active, _ := row["active"].(bool)
+						active := row.GetActive()
 						recordStatus := "active"
 						if !active {
 							recordStatus = "inactive"
@@ -136,61 +138,93 @@ func wireCommerceModule(ctx *pyeza.AppContext, w commerceWiring) error {
 						if recordStatus != status {
 							continue
 						}
-						id, _ := row["id"].(string)
-						name, _ := row["name"].(string)
-						description, _ := row["description"].(string)
-						dateCreated, _ := row["date_created"].(string)
 						items = append(items, &locationarealist.LocationAreaItem{
-							ID:          id,
-							Name:        name,
-							Description: description,
+							ID:          row.GetId(),
+							Name:        row.GetName(),
+							Description: row.GetDescription(),
 							Active:      active,
-							DateCreated: dateCreated,
+							DateCreated: row.GetDateCreatedString(),
 						})
 					}
 					return &locationarealist.LocationAreaListResult{Items: items, TotalItems: len(items)}, nil
 				},
 				GetInUseIDs: refChecker.GetLocationAreaInUseIDs,
 				CreateLocationArea: func(fctx context.Context, name, description string, active bool) (string, error) {
-					row, err := crudDB.Create(fctx, "location_area", map[string]any{
-						"name":        name,
-						"description": description,
-						"active":      active,
+					resp, err := la.Create(fctx, &locationareapb.CreateLocationAreaRequest{
+						Data: &locationareapb.LocationArea{
+							Name:        name,
+							Description: description,
+							Active:      active,
+						},
 					})
 					if err != nil {
 						return "", err
 					}
-					id, _ := row["id"].(string)
-					return id, nil
+					if data := resp.GetData(); len(data) > 0 {
+						return data[0].GetId(), nil
+					}
+					return "", nil
 				},
 				ReadLocationArea: func(fctx context.Context, id string) (*locationareaaction.LocationAreaRecord, error) {
-					row, err := crudDB.Read(fctx, "location_area", id)
+					resp, err := la.Read(fctx, &locationareapb.ReadLocationAreaRequest{
+						Data: &locationareapb.LocationArea{Id: id},
+					})
 					if err != nil {
 						return nil, err
 					}
-					name, _ := row["name"].(string)
-					description, _ := row["description"].(string)
-					active, _ := row["active"].(bool)
+					data := resp.GetData()
+					if len(data) == 0 {
+						return nil, nil
+					}
+					row := data[0]
 					return &locationareaaction.LocationAreaRecord{
-						ID:          id,
-						Name:        name,
-						Description: description,
-						Active:      active,
+						ID:          row.GetId(),
+						Name:        row.GetName(),
+						Description: row.GetDescription(),
+						Active:      row.GetActive(),
 					}, nil
 				},
 				UpdateLocationArea: func(fctx context.Context, id, name, description string, active bool) error {
-					_, err := crudDB.Update(fctx, "location_area", id, map[string]any{
-						"name":        name,
-						"description": description,
-						"active":      active,
+					_, err := la.Update(fctx, &locationareapb.UpdateLocationAreaRequest{
+						Data: &locationareapb.LocationArea{
+							Id:          id,
+							Name:        name,
+							Description: description,
+							Active:      active,
+						},
 					})
 					return err
 				},
 				DeleteLocationArea: func(fctx context.Context, id string) error {
-					return crudDB.Delete(fctx, "location_area", id)
+					_, err := la.Delete(fctx, &locationareapb.DeleteLocationAreaRequest{
+						Data: &locationareapb.LocationArea{Id: id},
+					})
+					return err
 				},
 				SetLocationAreaActive: func(fctx context.Context, id string, active bool) error {
-					_, err := crudDB.Update(fctx, "location_area", id, map[string]any{"active": active})
+					// Read-modify-write: the typed UpdateLocationArea use case
+					// validates Name is required, so flipping `active` must
+					// preserve the existing name/description (the former duck
+					// path issued a partial column update on {active} alone).
+					readResp, err := la.Read(fctx, &locationareapb.ReadLocationAreaRequest{
+						Data: &locationareapb.LocationArea{Id: id},
+					})
+					if err != nil {
+						return err
+					}
+					name, description := "", ""
+					if data := readResp.GetData(); len(data) > 0 {
+						name = data[0].GetName()
+						description = data[0].GetDescription()
+					}
+					_, err = la.Update(fctx, &locationareapb.UpdateLocationAreaRequest{
+						Data: &locationareapb.LocationArea{
+							Id:          id,
+							Name:        name,
+							Description: description,
+							Active:      active,
+						},
+					})
 					return err
 				},
 			}).RegisterRoutes(ctx.Routes)
