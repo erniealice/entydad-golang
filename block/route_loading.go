@@ -21,6 +21,8 @@ import (
 	centymo "github.com/erniealice/centymo-golang"
 	"github.com/erniealice/entydad-golang"
 	entity "github.com/erniealice/entydad-golang/domain/entity"
+	tax "github.com/erniealice/entydad-golang/domain/tax"
+	convmodel "github.com/erniealice/hybra-golang/views/conversation/model"
 	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
 )
 
@@ -50,9 +52,9 @@ type blockLabels struct {
 	WorkspaceUserRole entity.WorkspaceUserRoleLabels
 	Supplier          entity.SupplierLabels
 	SupplierDashboard entity.SupplierDashboardLabels
-	TaxRegistration   entydad.TaxRegistrationLabels
-	Conversation      entydad.ConversationLabels
-	ConversationPost  entydad.ConversationPostLabels
+	TaxRegistration   tax.TaxRegistrationLabels
+	Conversation      convmodel.ConversationLabels
+	ConversationPost  convmodel.ConversationPostLabels
 }
 
 // blockRoutes holds the subset of entydad route structs needed by Block().
@@ -74,8 +76,8 @@ type blockRoutes struct {
 	WorkspaceUser       entity.WorkspaceUserRoutes
 	WorkspaceUserRole   entity.WorkspaceUserRoleRoutes
 	Supplier            entity.SupplierRoutes
-	TaxRegistration     entydad.TaxRegistrationRoutes
-	Conversation        entydad.ConversationRoutes
+	TaxRegistration     tax.TaxRegistrationRoutes
+	Conversation        convmodel.ConversationRoutes
 }
 
 // loadBlockLabels loads all entydad typed label structs from lyngua.
@@ -132,14 +134,14 @@ func loadBlockLabels(t *lynguaV1.TranslationProvider, businessType string) block
 		log.Printf("entydad.Block: warning: failed to load shared labels: %v", err)
 	}
 
-	l.TaxRegistration = entydad.DefaultTaxRegistrationLabels()
+	l.TaxRegistration = tax.DefaultTaxRegistrationLabels()
 	_ = t.LoadPathIfExists("en", businessType, "tax_registration.json", "", &l.TaxRegistration)
 
 	// Conversation (secure messaging — Plan-4). Optional on non-messaging
 	// business types — LoadPathIfExists (no boot warning when absent).
-	l.Conversation = entydad.DefaultConversationLabels()
+	l.Conversation = convmodel.DefaultConversationLabels()
 	_ = t.LoadPathIfExists("en", businessType, "conversation.json", "conversation", &l.Conversation)
-	l.ConversationPost = entydad.DefaultConversationPostLabels()
+	l.ConversationPost = convmodel.DefaultConversationPostLabels()
 	_ = t.LoadPathIfExists("en", businessType, "conversation_post.json", "conversationPost", &l.ConversationPost)
 
 	return l
@@ -201,10 +203,10 @@ func loadBlockRoutes(t *lynguaV1.TranslationProvider, businessType string) block
 	r.Supplier = entity.DefaultSupplierRoutes()
 	_ = t.LoadPathIfExists("en", businessType, "route.json", "supplier", &r.Supplier)
 
-	r.TaxRegistration = entydad.DefaultTaxRegistrationRoutes()
+	r.TaxRegistration = tax.DefaultTaxRegistrationRoutes()
 	_ = t.LoadPathIfExists("en", businessType, "route.json", "tax_registration", &r.TaxRegistration)
 
-	r.Conversation = entydad.DefaultConversationRoutes()
+	r.Conversation = convmodel.DefaultConversationRoutes()
 	_ = t.LoadPathIfExists("en", businessType, "route.json", "conversation", &r.Conversation)
 
 	return r

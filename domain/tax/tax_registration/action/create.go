@@ -8,8 +8,8 @@ import (
 	"log"
 	"net/http"
 
-	entydad "github.com/erniealice/entydad-golang"
-	"github.com/erniealice/entydad-golang/views/tax_registration/form"
+	taxregistration "github.com/erniealice/entydad-golang/domain/tax/tax_registration"
+	"github.com/erniealice/entydad-golang/domain/tax/tax_registration/form"
 	taxregistrationpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/tax/tax_registration"
 	taxregistrationkindpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/tax/tax_registration_kind"
 	"github.com/erniealice/pyeza-golang/view"
@@ -17,8 +17,8 @@ import (
 
 // Deps holds the use-case callbacks required by the create/supersede/revoke handlers.
 type Deps struct {
-	Routes       entydad.TaxRegistrationRoutes
-	Labels       entydad.TaxRegistrationLabels
+	Routes       taxregistration.Routes
+	Labels       taxregistration.Labels
 	CommonLabels any
 
 	// CreateTaxRegistration is the espyna use case for creating a new registration.

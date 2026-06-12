@@ -4,7 +4,7 @@
 package form
 
 import (
-	entydad "github.com/erniealice/entydad-golang"
+	taxregistration "github.com/erniealice/entydad-golang/domain/tax/tax_registration"
 	pyeza "github.com/erniealice/pyeza-golang"
 )
 
@@ -19,8 +19,8 @@ type Labels struct {
 	Status             string
 }
 
-// BuildLabels converts TaxRegistrationLabels.Fields to the flat Labels struct.
-func BuildLabels(l entydad.TaxRegistrationLabels) Labels {
+// BuildLabels converts tax_registration.Labels.Fields to the flat Labels struct.
+func BuildLabels(l taxregistration.Labels) Labels {
 	return Labels{
 		DrawerTitleAdd:     l.Page.AddDrawerTitle,
 		DrawerTitleEdit:    l.Page.EditDrawerTitle,
@@ -44,10 +44,10 @@ type KindOption struct {
 
 // Data is the template data for the tax registration drawer form.
 type Data struct {
-	FormAction string
+	FormAction  string
 	WorkspaceID string // injected by C1: populated by ViewAdapter.injectWorkspaceID for action_workspace_guard
-	IsEdit     bool
-	ID         string
+	IsEdit      bool
+	ID          string
 	// PartyType is "client" or "workspace" — drives the filtered Kind dropdown.
 	PartyType string
 	PartyID   string

@@ -1,25 +1,40 @@
-// Package tax_registration provides polymorphic views for the TaxRegistration entity.
-// v1 surfaces client + workspace party types.
-package tax_registration
+// tax_registration_module.go — hoisted view-module assembler for the
+// TaxRegistration entity (package tax, the domain root).
+//
+// Relocated 2026-06-12 from views/tax_registration/module.go (fork E4 / thread
+// TX). Pure structural move — the view wiring is byte-identical. The assembler
+// is HOISTED to package tax (the domain root, Option-B module-hoist standard:
+// domain/<d>/<e>_module.go is package <d>) so the entity leaf package
+// (tax_registration) holds only its contract (labels.go/routes.go) + embed +
+// leaf view sub-packages, with no import edge back up to the assembler.
+//
+// Entity-local rename from the former root-resident module:
+//
+//	ModuleDeps  -> TaxRegistrationModuleDeps
+//	Module      -> TaxRegistrationModule
+//	NewModule   -> NewTaxRegistrationModule
+//
+// and entydad.TaxRegistration{Routes,Labels} -> tax_registration.{Routes,Labels}.
+package tax
 
 import (
 	"context"
 
+	taxregistration "github.com/erniealice/entydad-golang/domain/tax/tax_registration"
+	"github.com/erniealice/entydad-golang/domain/tax/tax_registration/action"
+	listview "github.com/erniealice/entydad-golang/domain/tax/tax_registration/list"
 	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
 
-	entydad "github.com/erniealice/entydad-golang"
-	"github.com/erniealice/entydad-golang/views/tax_registration/action"
-	listview "github.com/erniealice/entydad-golang/views/tax_registration/list"
 	taxregistrationpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/tax/tax_registration"
 	taxregistrationkindpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/tax/tax_registration_kind"
 )
 
-// ModuleDeps holds all dependencies for the tax_registration module.
-type ModuleDeps struct {
-	Routes       entydad.TaxRegistrationRoutes
-	Labels       entydad.TaxRegistrationLabels
+// TaxRegistrationModuleDeps holds all dependencies for the tax_registration module.
+type TaxRegistrationModuleDeps struct {
+	Routes       taxregistration.Routes
+	Labels       taxregistration.Labels
 	CommonLabels pyeza.CommonLabels
 	TableLabels  types.TableLabels
 
@@ -43,8 +58,8 @@ type ModuleDeps struct {
 	RevokeTaxRegistration func(ctx context.Context, id, effectiveTo, reason string) error
 }
 
-// Module holds all constructed tax_registration views.
-type Module struct {
+// TaxRegistrationModule holds all constructed tax_registration views.
+type TaxRegistrationModule struct {
 	// ClientList is the tax registrations tab view for a client detail page.
 	ClientList view.View
 	// WorkspaceList is the tax registrations tab view for the workspace settings page.
@@ -55,14 +70,14 @@ type Module struct {
 	Supersede view.View
 	// Revoke handles POST for revoking a registration.
 	Revoke view.View
-	routes entydad.TaxRegistrationRoutes
+	routes taxregistration.Routes
 }
 
-// NewModule creates a tax_registration module with List + CRUD views wired for both
+// NewTaxRegistrationModule creates a tax_registration module with List + CRUD views wired for both
 // client and workspace party contexts.
-func NewModule(deps *ModuleDeps) *Module {
+func NewTaxRegistrationModule(deps *TaxRegistrationModuleDeps) *TaxRegistrationModule {
 	if deps == nil {
-		deps = &ModuleDeps{}
+		deps = &TaxRegistrationModuleDeps{}
 	}
 
 	clientListDeps := &listview.Deps{
@@ -93,7 +108,7 @@ func NewModule(deps *ModuleDeps) *Module {
 		RevokeTaxRegistration:              deps.RevokeTaxRegistration,
 	}
 
-	return &Module{
+	return &TaxRegistrationModule{
 		ClientList:    listview.NewView(clientListDeps),
 		WorkspaceList: listview.NewView(workspaceListDeps),
 		Create:        action.NewCreateAction(actionDeps),
@@ -104,7 +119,7 @@ func NewModule(deps *ModuleDeps) *Module {
 }
 
 // RegisterRoutes registers all tax_registration routes with the given route registrar.
-func (m *Module) RegisterRoutes(r view.RouteRegistrar) {
+func (m *TaxRegistrationModule) RegisterRoutes(r view.RouteRegistrar) {
 	// Client-scoped list
 	if m.ClientList != nil && m.routes.ClientListURL != "" {
 		r.GET(m.routes.ClientListURL, m.ClientList)

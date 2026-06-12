@@ -5,8 +5,10 @@ package entydad
 // The migrated entity URL constants (Client/User/Location/Role/Permission/
 // Workspace/Supplier/Tag/PaymentTerm) now live in their domain/entity/**
 // <entity>/routes.go files; the entity facade re-exports the prefixed names.
-// What remains here is the admin dashboard, cross-entity report links, auth
-// service surface, and the still-root-resident tax/conversation routes.
+// What remains here is the admin dashboard, cross-entity report links, and the
+// auth service surface. (Tax routes relocated to domain/tax/tax_registration —
+// thread TX; conversation routes relocated to hybra views/conversation/model —
+// thread TC; both 2026-06-12.)
 const (
 	// Admin app dashboard — composite app spanning permission/role/workspace/
 	// workspace_user/workspace_user_role. Lives under service/dashboard/views/admin.
@@ -43,32 +45,10 @@ const (
 	// constant is the workspace-less fallback (/me/inbox) for callers that
 	// can't resolve a workspace slug at redirect time (password reset, etc.).
 	DefaultAppRedirectURL = "/me/inbox"
-
-	// TaxRegistration — polymorphic (client + workspace party types in v1)
-	// URL convention: party_type + party_id come from the parent detail page context.
-	ClientTaxRegistrationListURL   = "/clients/detail/{id}/tax-registrations"
-	ClientTaxRegistrationAddURL    = "/action/client/{id}/tax-registration/add"
-	ClientTaxRegistrationEditURL   = "/action/client/{id}/tax-registration/edit/{reg_id}"
-	ClientTaxRegistrationDeleteURL = "/action/client/{id}/tax-registration/delete"
-
-	WorkspaceTaxRegistrationListURL   = "/workspace/settings/tax-registrations"
-	WorkspaceTaxRegistrationAddURL    = "/action/workspace/tax-registration/add"
-	WorkspaceTaxRegistrationEditURL   = "/action/workspace/tax-registration/edit/{reg_id}"
-	WorkspaceTaxRegistrationDeleteURL = "/action/workspace/tax-registration/delete"
-
-	// Conversation — secure messaging / ticketing (Plan-4, 2026-06-03).
-	// Staff surface: /app/conversations/* (pages) + /action/conversation* (HTMX).
-	// Client portal surface: /portal/conversations — gated behind AUTHZ_ENFORCE
-	// + the inherited 20260601 Phase-4 acting_as_client_id prerequisite (see block.go).
-	ConversationListURL        = "/app/conversations/list/{status}"
-	ConversationTableURL       = "/action/conversation/table/{status}"
-	ConversationDetailURL      = "/app/conversations/detail/{id}"
-	ConversationAddURL         = "/action/conversation/add"
-	ConversationAssignURL      = "/action/conversation/assign"
-	ConversationSetStatusURL   = "/action/conversation/set-status"
-	ConversationPostsURL       = "/action/conversation/posts"
-	ConversationSendURL        = "/action/conversation_post/send"
-	ConversationMarkReadURL    = "/action/conversation/mark-read"
-	ConversationPortalListURL  = "/portal/conversations"
-	ConversationPortalPostsURL = "/action/conversation/portal-posts"
 )
+
+// TaxRegistration route constants relocated to domain/tax/tax_registration
+// (routes.go) — entity-local under the tax domain (fork E4 / thread TX,
+// 2026-06-12). Conversation route constants relocated to hybra
+// views/conversation/model (contract.go) — cross-cutting communication surface
+// (view-package-placement.md OCID / thread TC, 2026-06-12).

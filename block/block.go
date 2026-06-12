@@ -35,14 +35,14 @@ import (
 	roleusers "github.com/erniealice/entydad-golang/domain/entity/identity/role/users"
 	userdashboard "github.com/erniealice/entydad-golang/domain/entity/identity/user/dashboard"
 	workspaceaction "github.com/erniealice/entydad-golang/domain/entity/identity/workspace/action"
+	tax "github.com/erniealice/entydad-golang/domain/tax"
 	adminmod "github.com/erniealice/entydad-golang/service/dashboard/views/admin"
 	admindashboardroutes "github.com/erniealice/entydad-golang/service/dashboard/views/admin/dashboard"
-	conversationmod "github.com/erniealice/entydad-golang/views/conversation"
-	taxregistrationmod "github.com/erniealice/entydad-golang/views/tax_registration"
 	"github.com/erniealice/espyna-golang/reference"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
 	clientstmtpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/ledger/reporting/client_statement"
 	suppstmtpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/reporting/supplier_statement"
+	conversationmod "github.com/erniealice/hybra-golang/views/conversation"
 	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
 	pyeza "github.com/erniealice/pyeza-golang"
 	pyezatypes "github.com/erniealice/pyeza-golang/types"
@@ -401,7 +401,7 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 		// =====================================================================
 
 		if cfg.enableAll || cfg.taxRegistration {
-			taxRegDeps := &taxregistrationmod.ModuleDeps{
+			taxRegDeps := &tax.TaxRegistrationModuleDeps{
 				Routes:       routes.TaxRegistration,
 				Labels:       labels.TaxRegistration,
 				CommonLabels: ctx.Common,
@@ -410,7 +410,7 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 			if uc.TaxRegistration.List != nil {
 				taxRegDeps.ListTaxRegistrations = uc.TaxRegistration.List
 			}
-			taxregistrationmod.NewModule(taxRegDeps).RegisterRoutes(ctx.Routes)
+			tax.NewTaxRegistrationModule(taxRegDeps).RegisterRoutes(ctx.Routes)
 		}
 
 		// =====================================================================

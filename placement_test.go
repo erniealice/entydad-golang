@@ -93,11 +93,11 @@ var legacyAllow = map[string]string{
 	"datasource.go":    "DataSource interface stub at root — EXPIRES 2026-07-15 (capstone: fold into block/ or a service/ surface)",
 	"labels.go":        "auth/login/signup/reset/change-password label types — EXPIRES 2026-07-15 (capstone: relocate under service/auth)",
 	"routes.go":        "root route constants for the auth/dashboard surface — EXPIRES 2026-07-15 (capstone: relocate under service/auth + service/dashboard)",
-	"routes_config.go": "Login/Auth/AdminDashboard/TaxRegistration/Conversation route structs — EXPIRES 2026-07-15 (capstone: relocate under service/ + the tax/communication domains)",
-	// ── R2 root residual: the views/ collapse left conversation + tax_registration
-	// view packages at the root rather than under their owning domain (communication
-	// / tax) or a service/ surface.
-	"views": "un-relocated conversation + tax_registration view packages — EXPIRES 2026-07-15 (capstone: fold into domain/communication, domain/tax, or a service/ surface)",
+	"routes_config.go": "Login/Auth/AdminDashboard route structs — EXPIRES 2026-07-15 (capstone: relocate under service/)",
+	// (views/ removed 2026-06-12: conversation → hybra views/conversation [thread
+	// TC]; tax_registration → domain/tax/tax_registration [thread TX / fork E4].
+	// The former "views" legacyAllow key is therefore gone — those two surfaces no
+	// longer sit at the entydad root.)
 	// ── R2′ GENUINE entity debt (post-subcontext-recursion): client_tag /
 	// supplier_tag are entydad-local tag entities under the `party` sub-context that
 	// have NO 1:1 esqyma proto entity (esqyma's only *_tag entity is event/event_tag).

@@ -6,12 +6,11 @@ import (
 	"context"
 	"log"
 
+	taxregistration "github.com/erniealice/entydad-golang/domain/tax/tax_registration"
 	taxregistrationpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/tax/tax_registration"
 	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
-
-	entydad "github.com/erniealice/entydad-golang"
 )
 
 // ---------------------------------------------------------------------------
@@ -25,8 +24,8 @@ type Deps struct {
 	PartyType string
 	PartyID   string
 
-	Routes       entydad.TaxRegistrationRoutes
-	Labels       entydad.TaxRegistrationLabels
+	Routes       taxregistration.Routes
+	Labels       taxregistration.Labels
 	CommonLabels pyeza.CommonLabels
 	TableLabels  types.TableLabels
 
@@ -39,7 +38,7 @@ type PageData struct {
 	types.PageData
 	ContentTemplate string
 	Table           *types.TableConfig
-	Labels          entydad.TaxRegistrationLabels
+	Labels          taxregistration.Labels
 }
 
 // TaxRegistrationRow is the view-model for a single tax registration row.
@@ -212,7 +211,7 @@ func buildTableConfig(deps *Deps, rows []TaxRegistrationRow, partyID string, per
 // Helpers
 // ---------------------------------------------------------------------------
 
-func headingForPartyType(l entydad.TaxRegistrationLabels, partyType string) string {
+func headingForPartyType(l taxregistration.Labels, partyType string) string {
 	switch partyType {
 	case "client":
 		return l.Page.HeadingClient

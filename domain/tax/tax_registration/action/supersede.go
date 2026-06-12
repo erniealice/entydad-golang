@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/erniealice/entydad-golang/views/tax_registration/form"
+	"github.com/erniealice/entydad-golang/domain/tax/tax_registration/form"
 	"github.com/erniealice/pyeza-golang/view"
 )
 
