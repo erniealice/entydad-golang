@@ -86,11 +86,12 @@ var crossCutting = false // entydad is a domain package (entity domain + tax/com
 var legacyAllow = map[string]string{
 	// ── R1 root residuals: live service-surface code still carrying `package
 	// entydad` at the module root (auth/login/dashboard labels+routes, the
-	// AssetsFS embed, the DataSource interface). Re-home under service/ (auth/
-	// dashboard surfaces) and pyeza (asset hosting); delete the stubs once
-	// service-admin's imports repoint at the relocated surfaces.
+	// AssetsFS embed). Re-home under service/ (auth/dashboard surfaces) and
+	// pyeza (asset hosting); delete the stubs once service-admin's imports
+	// repoint at the relocated surfaces. (The DataSource interface duck that
+	// also sat here was DELETED 2026-06-12 — narrow typed UseCases.SetActive/
+	// SetStatus primitives replaced it; its legacyAllow entry is gone.)
 	"assets.go":        "embed FS for the auth/dashboard service surface — EXPIRES 2026-07-15 (capstone: move asset hosting to pyeza / drop stub)",
-	"datasource.go":    "DataSource interface stub at root — EXPIRES 2026-07-15 (capstone: fold into block/ or a service/ surface)",
 	"labels.go":        "auth/login/signup/reset/change-password label types — EXPIRES 2026-07-15 (capstone: relocate under service/auth)",
 	"routes.go":        "root route constants for the auth/dashboard surface — EXPIRES 2026-07-15 (capstone: relocate under service/auth + service/dashboard)",
 	"routes_config.go": "Login/Auth/AdminDashboard route structs — EXPIRES 2026-07-15 (capstone: relocate under service/)",

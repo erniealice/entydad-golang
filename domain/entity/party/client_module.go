@@ -61,8 +61,6 @@ type ClientModuleDeps struct {
 	ListClientCategories func(ctx context.Context, req *clientcategorypb.ListClientCategoriesRequest) (*clientcategorypb.ListClientCategoriesResponse, error)
 	CreateClientCategory func(ctx context.Context, req *clientcategorypb.CreateClientCategoryRequest) (*clientcategorypb.CreateClientCategoryResponse, error)
 	DeleteClientCategory func(ctx context.Context, req *clientcategorypb.DeleteClientCategoryRequest) (*clientcategorypb.DeleteClientCategoryResponse, error)
-	// Revenue listing (for detail view)
-	ListRevenues func(ctx context.Context, collection string) ([]map[string]any, error)
 	// Client statement (for detail view)
 	GetClientStatement func(ctx context.Context, req *clientstmtpb.ClientStatementRequest) (*clientstmtpb.ClientStatementResponse, error)
 	// Subscription listing (for detail view)
@@ -174,7 +172,6 @@ func NewClientModule(deps *ClientModuleDeps) *ClientModule {
 		ReadClient:                       deps.ReadClient,
 		ListCategories:                   deps.ListCategories,
 		ListClientCategories:             deps.ListClientCategories,
-		ListRevenues:                     deps.ListRevenues,
 		GetClientStatement:               deps.GetClientStatement,
 		ListSubscriptions:                deps.ListSubscriptions,
 		GetSubscriptionListPageData:      deps.GetSubscriptionListPageData,

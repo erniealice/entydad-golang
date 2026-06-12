@@ -6,8 +6,11 @@
 // the root package for route/label types).
 //
 // Companion files in this directory:
-//   - helpers.go       — DB interface types (UpdateableSource, CRUDSource,
-//     categoryListPageDataGetter) and getDefaultWorkspaceID.
+//   - helpers.go       — the categoryListPageDataGetter local interface and
+//     getDefaultWorkspaceID. (The former DataSource/UpdateableSource/CRUDSource
+//     ducks were deleted 2026-06-12; active/status writes now go through the
+//     narrow typed UseCases.SetActive/SetStatus primitives bound by
+//     service-admin.)
 //   - route_loading.go — blockLabels / blockRoutes types and their lyngua loaders
 //     (loadBlockLabels, loadBlockRoutes).
 //   - wiring.go        — dashboard reflective wiring helpers (wireLocationDashboard,
@@ -40,6 +43,7 @@ import (
 	admindashboardroutes "github.com/erniealice/entydad-golang/service/dashboard/views/admin/dashboard"
 	"github.com/erniealice/espyna-golang/reference"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
+	clientpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client"
 	clientstmtpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/ledger/reporting/client_statement"
 	suppstmtpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/reporting/supplier_statement"
 	conversationmod "github.com/erniealice/hybra-golang/views/conversation"
@@ -211,7 +215,6 @@ func WithSecureSwitch(
 // When called with specific WithXxx() options, only those modules are registered.
 //
 // Expected ctx fields (type-asserted from any):
-//   - ctx.DB           → UpdateableSource (entydad.DataSource + Update method)
 //   - ctx.RefChecker   → reference.Checker
 //   - ctx.Translations → *lynguaV1.TranslationProvider
 //   - ctx.UploadFile, ctx.ListAttachments, ctx.CreateAttachment,
@@ -247,11 +250,6 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 			return err
 		}
 		uc := cfg.useCases // local alias for brevity
-
-		db, ok := ctx.DB.(UpdateableSource)
-		if !ok {
-			return fmt.Errorf("entydad.Block: DB must implement block.UpdateableSource (DataSource + Update)")
-		}
 
 		refChecker, ok := ctx.RefChecker.(reference.Checker)
 		if !ok {
@@ -318,7 +316,6 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 		wirePartyModule(ctx, partyWiring{
 			cfg:                  cfg,
 			uc:                   uc,
-			db:                   db,
 			labels:               labels,
 			routes:               routes,
 			refChecker:           refChecker,
@@ -338,7 +335,6 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 		if err := wireCommerceModule(ctx, commerceWiring{
 			cfg:              cfg,
 			uc:               uc,
-			db:               db,
 			labels:           labels,
 			routes:           routes,
 			refChecker:       refChecker,
@@ -357,7 +353,6 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 		wireIdentityModule(ctx, identityWiring{
 			cfg:                  cfg,
 			uc:                   uc,
-			db:                   db,
 			labels:               labels,
 			routes:               routes,
 			refChecker:           refChecker,
@@ -447,8 +442,11 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 				ActingAsClientID: appcontext.GetActingAsClientIDFromContext,
 			}
 			// ClientNameByID — best-effort display-name resolver for the inbox
-			// Client column. Backed by a single ListSimple("client") scan.
-			if crudDB, ok := db.(CRUDSource); ok {
+			// Client column. Backed by a single typed ListClients scan
+			// (uc.Client.List), replacing the deleted duck's
+			// ListSimple("client"). Wired only when the typed list is bound;
+			// nil-safe — the inbox Client column falls back to ids otherwise.
+			if listClients := uc.Client.List; listClients != nil {
 				convDeps.ClientNameByID = func(fctx context.Context, ids []string) map[string]string {
 					out := map[string]string{}
 					if len(ids) == 0 {
@@ -458,16 +456,19 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 					for _, id := range ids {
 						want[id] = struct{}{}
 					}
-					rows, err := crudDB.ListSimple(fctx, "client")
-					if err != nil {
+					resp, err := listClients(fctx, &clientpb.ListClientsRequest{})
+					if err != nil || resp == nil {
 						return out
 					}
-					for _, row := range rows {
-						id, _ := row["id"].(string)
+					for _, c := range resp.GetData() {
+						if c == nil {
+							continue
+						}
+						id := c.GetId()
 						if _, ok := want[id]; !ok {
 							continue
 						}
-						if name, _ := row["name"].(string); name != "" {
+						if name := c.GetName(); name != "" {
 							out[id] = name
 						}
 					}

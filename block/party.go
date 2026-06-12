@@ -22,6 +22,7 @@ import (
 	entityid "github.com/erniealice/espyna-golang/registry/entityid"
 	categorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
+	paymenttermpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/payment_term"
 	workspacepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace"
 	clientstmtpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/ledger/reporting/client_statement"
 	revenuepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/revenue/revenue"
@@ -42,7 +43,6 @@ import (
 type partyWiring struct {
 	cfg        *blockConfig
 	uc         *UseCases
-	db         UpdateableSource
 	labels     blockLabels
 	routes     blockRoutes
 	refChecker reference.Checker
@@ -62,7 +62,6 @@ type partyWiring struct {
 func wirePartyModule(ctx *pyeza.AppContext, w partyWiring) {
 	cfg := w.cfg
 	uc := w.uc
-	db := w.db
 	labels := w.labels
 	routes := w.routes
 	refChecker := w.refChecker
@@ -94,39 +93,31 @@ func wirePartyModule(ctx *pyeza.AppContext, w partyWiring) {
 			ReadClient:           uc.Client.Read,
 			UpdateClient:         uc.Client.Update,
 			DeleteClient:         uc.Client.Delete,
-			SetStatus: func(fctx context.Context, id string, status string) error {
-				// Keep the legacy `active` boolean in sync with the lifecycle
-				// status so consumers that still filter on c.active see
-				// consistent values: only "inactive" flips active=false.
-				active := status != "inactive"
-				_, err := db.Update(fctx, "client", id, map[string]any{
-					"status": status,
-					"active": active,
-				})
-				return err
-			},
+			// Keep the legacy `active` boolean in sync with the lifecycle
+			// status so consumers that still filter on c.active see consistent
+			// values: only "inactive" flips active=false. The derivation stays
+			// at this call site; setStatusClosure passes both status + active to
+			// the narrow typed UseCases.SetStatus primitive.
+			SetStatus: setStatusClosure(uc, "client", func(status string) bool {
+				return status != "inactive"
+			}),
 			ListPaymentTerms: func(fctx context.Context) ([]*party.ClientPaymentTermOption, error) {
-				rows, err := db.ListSimple(fctx, "payment_term")
-				if err != nil {
-					return nil, err
-				}
+				rows := listPaymentTermRows(fctx, uc)
 				opts := make([]*party.ClientPaymentTermOption, 0, len(rows))
 				for _, row := range rows {
-					id, _ := row["id"].(string)
-					name, _ := row["name"].(string)
-					scope, _ := row["entity_scope"].(string)
+					id := row.GetId()
 					if id == "" {
 						continue
 					}
 					// Client context: show terms scoped to "client" or "both"
+					scope := row.GetEntityScope()
 					if scope != "client" && scope != "both" {
 						continue
 					}
-					opts = append(opts, &party.ClientPaymentTermOption{Id: id, Name: name})
+					opts = append(opts, &party.ClientPaymentTermOption{Id: id, Name: row.GetName()})
 				}
 				return opts, nil
 			},
-			ListRevenues:                     db.ListSimple,
 			GetClientStatement:               getClientStatement,
 			SubscriptionAddURL:               routes.Subscription.AddURL,
 			SubscriptionDetailURL:            routes.Subscription.DetailURL,
@@ -407,35 +398,29 @@ func wirePartyModule(ctx *pyeza.AppContext, w partyWiring) {
 			DashboardTitleLabels: labels.Dashboard,
 			TableLabels:          ctx.Table,
 			GetInUseIDs:          refChecker.GetSupplierInUseIDs,
-			SetStatus: func(fctx context.Context, id string, status string) error {
-				// `active` is the soft-delete flag; status transitions
-				// (active/blocked/on_hold) must NOT flip it, otherwise
-				// deactivated suppliers look identical to deleted ones.
-				// Only DeleteSupplier should set active=false.
-				_, err := db.Update(fctx, "supplier", id, map[string]any{
-					"active": true,
-					"status": status,
-				})
-				return err
-			},
+			// `active` is the soft-delete flag; status transitions
+			// (active/blocked/on_hold) must NOT flip it, otherwise deactivated
+			// suppliers look identical to deleted ones. Only DeleteSupplier
+			// should set active=false — so this site forces active=true
+			// regardless of status. The derivation stays here; setStatusClosure
+			// passes both to the narrow typed UseCases.SetStatus primitive.
+			SetStatus: setStatusClosure(uc, "supplier", func(string) bool {
+				return true
+			}),
 			ListPaymentTerms: func(fctx context.Context) ([]*party.SupplierPaymentTermOption, error) {
-				rows, err := db.ListSimple(fctx, "payment_term")
-				if err != nil {
-					return nil, err
-				}
+				rows := listPaymentTermRows(fctx, uc)
 				opts := make([]*party.SupplierPaymentTermOption, 0, len(rows))
 				for _, row := range rows {
-					id, _ := row["id"].(string)
-					name, _ := row["name"].(string)
-					scope, _ := row["entity_scope"].(string)
+					id := row.GetId()
 					if id == "" {
 						continue
 					}
 					// Supplier context: show terms scoped to "supplier" or "both"
+					scope := row.GetEntityScope()
 					if scope != "supplier" && scope != "both" {
 						continue
 					}
-					opts = append(opts, &party.SupplierPaymentTermOption{Id: id, Name: name})
+					opts = append(opts, &party.SupplierPaymentTermOption{Id: id, Name: row.GetName()})
 				}
 				return opts, nil
 			},
@@ -475,16 +460,13 @@ func wirePartyModule(ctx *pyeza.AppContext, w partyWiring) {
 
 	if cfg.enableAll || cfg.clientTag {
 		clienttagDeps := &party.ClientTagModuleDeps{
-			Routes:       routes.ClientTag,
-			Labels:       labels.ClientTag,
-			SharedLabels: labels.Shared,
-			CommonLabels: ctx.Common,
-			TableLabels:  ctx.Table,
-			GetInUseIDs:  refChecker.GetCategoryInUseIDs,
-			SetCategoryActive: func(fctx context.Context, id string, active bool) error {
-				_, err := db.Update(fctx, "category", id, map[string]any{"active": active})
-				return err
-			},
+			Routes:            routes.ClientTag,
+			Labels:            labels.ClientTag,
+			SharedLabels:      labels.Shared,
+			CommonLabels:      ctx.Common,
+			TableLabels:       ctx.Table,
+			GetInUseIDs:       refChecker.GetCategoryInUseIDs,
+			SetCategoryActive: setActiveClosure(uc, "category"),
 		}
 		if uc.Category.List != nil {
 			clienttagDeps.ListCategories = uc.Category.List
@@ -509,16 +491,13 @@ func wirePartyModule(ctx *pyeza.AppContext, w partyWiring) {
 
 	if cfg.enableAll || cfg.supplierTag {
 		suppliertagDeps := &party.SupplierTagModuleDeps{
-			Routes:       routes.SupplierTag,
-			Labels:       labels.SupplierTag,
-			SharedLabels: labels.Shared,
-			CommonLabels: ctx.Common,
-			TableLabels:  ctx.Table,
-			GetInUseIDs:  refChecker.GetCategoryInUseIDs,
-			SetCategoryActive: func(fctx context.Context, id string, active bool) error {
-				_, err := db.Update(fctx, "category", id, map[string]any{"active": active})
-				return err
-			},
+			Routes:            routes.SupplierTag,
+			Labels:            labels.SupplierTag,
+			SharedLabels:      labels.Shared,
+			CommonLabels:      ctx.Common,
+			TableLabels:       ctx.Table,
+			GetInUseIDs:       refChecker.GetCategoryInUseIDs,
+			SetCategoryActive: setActiveClosure(uc, "category"),
 		}
 		if uc.Category.List != nil {
 			suppliertagDeps.ListCategories = uc.Category.List
@@ -540,4 +519,27 @@ func wirePartyModule(ctx *pyeza.AppContext, w partyWiring) {
 		}
 		party.NewSupplierTagModule(suppliertagDeps).RegisterRoutes(ctx.Routes)
 	}
+}
+
+// listPaymentTermRows returns the raw payment_term proto rows via the typed
+// UseCases.PaymentTerm.ListPaymentTerms closure (service-admin-bound), replacing
+// the deleted duck's db.ListSimple("payment_term") scan that the client/supplier
+// payment-terms dropdowns shared. The block scopes/filters by entity_scope at the
+// call site, so an unfiltered list is returned here. Nil-safe: when the closure
+// is unbound (or returns an error) an empty slice is returned so the dropdown
+// renders empty rather than failing the page.
+// 20260612-datasource-typed-path (entydad duck delete).
+func listPaymentTermRows(ctx context.Context, uc *UseCases) []*paymenttermpb.PaymentTerm {
+	if uc == nil || uc.PaymentTerm.ListPaymentTerms == nil {
+		return nil
+	}
+	resp, err := uc.PaymentTerm.ListPaymentTerms(ctx, &paymenttermpb.ListPaymentTermsRequest{})
+	if err != nil {
+		log.Printf("entydad.Block: ListPaymentTerms failed — payment-term dropdown rendered empty: %v", err)
+		return nil
+	}
+	if resp == nil {
+		return nil
+	}
+	return resp.GetData()
 }

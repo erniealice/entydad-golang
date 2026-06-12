@@ -34,7 +34,6 @@ import (
 type commerceWiring struct {
 	cfg        *blockConfig
 	uc         *UseCases
-	db         UpdateableSource
 	labels     blockLabels
 	routes     blockRoutes
 	refChecker reference.Checker
@@ -49,7 +48,6 @@ type commerceWiring struct {
 func wireCommerceModule(ctx *pyeza.AppContext, w commerceWiring) error {
 	cfg := w.cfg
 	uc := w.uc
-	db := w.db
 	labels := w.labels
 	routes := w.routes
 	refChecker := w.refChecker
@@ -73,15 +71,12 @@ func wireCommerceModule(ctx *pyeza.AppContext, w commerceWiring) error {
 			ReadLocation:       uc.Location.Read,
 			UpdateLocation:     uc.Location.Update,
 			DeleteLocation:     uc.Location.Delete,
-			SetActive: func(fctx context.Context, id string, active bool) error {
-				_, err := db.Update(fctx, "location", id, map[string]any{"active": active})
-				return err
-			},
-			UploadFile:       uploadFile,
-			ListAttachments:  listAttachments,
-			CreateAttachment: createAttachment,
-			DeleteAttachment: deleteAttachment,
-			NewID:            newAttachmentID,
+			SetActive:          setActiveClosure(uc, "location"),
+			UploadFile:         uploadFile,
+			ListAttachments:    listAttachments,
+			CreateAttachment:   createAttachment,
+			DeleteAttachment:   deleteAttachment,
+			NewID:              newAttachmentID,
 		}
 		if uc.LocationArea.List != nil {
 			listLocationAreas := uc.LocationArea.List
@@ -243,10 +238,7 @@ func wireCommerceModule(ctx *pyeza.AppContext, w commerceWiring) error {
 			if !ok {
 				return fmt.Errorf("entydad.Block: payment_term repository does not implement PaymentTermDomainServiceServer")
 			}
-			setPaymentTermActive := func(fctx context.Context, id string, active bool) error {
-				_, err := db.Update(fctx, "payment_term", id, map[string]any{"active": active})
-				return err
-			}
+			setPaymentTermActive := setActiveClosure(uc, "payment_term")
 			// Client-context payment term list: shows terms with entity_scope IN ('client', 'both')
 			commerce.NewPaymentTermModule(&commerce.PaymentTermModuleDeps{
 				Routes:               routes.PaymentTerm,

@@ -26,6 +26,7 @@ import (
 	clientcatpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client_category"
 	locationpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/location"
 	locationareapb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/location_area"
+	paymenttermpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/payment_term"
 	permissionpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/permission"
 	rolepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/role"
 	rolepermissionpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/role_permission"
@@ -64,6 +65,28 @@ type UseCases struct {
 	// Used by the dashboard wiring helpers in wiring.go.
 	GetWorkspaceIDFromCtx func(ctx context.Context) string
 
+	// SetActive sets ONLY the `active` boolean column on the named collection.
+	// It is a deliberate, auditable, capability-narrow replacement for the
+	// deleted DataSource/UpdateableSource duck's generic Update — needed because
+	// proto3 omits false bools, so the typed proto Update cannot clear `active`.
+	// The collection argument is the table name (e.g. "location", "user",
+	// "role", "permission", "workspace", "workspace_user", "payment_term",
+	// "category"). Bound by service-admin; nil-safe — when unbound the per-entity
+	// activate/deactivate toggles log + no-op (the row's active flag is left
+	// unchanged rather than panicking).
+	// 20260612-datasource-typed-path (entydad duck delete).
+	SetActive func(ctx context.Context, collection string, id string, active bool) error
+
+	// SetStatus sets the `status` text column AND the `active` boolean together
+	// on the named collection. The status→active derivation is NOT done here —
+	// each call site computes `active` per its own rule (the client derives
+	// active from status; the supplier forces active=true) and passes both. This
+	// is the narrow typed replacement for the deleted duck's
+	// Update(collection, id, {"status": …, "active": …}). Bound by service-admin;
+	// nil-safe — when unbound the status drawers log + no-op.
+	// 20260612-datasource-typed-path (entydad duck delete).
+	SetStatus func(ctx context.Context, collection string, id string, status string, active bool) error
+
 	// Domain CRUD + use-case groups (singular field, XxxUseCases type)
 	Client            ClientUseCases
 	User              UserUseCases
@@ -72,6 +95,7 @@ type UseCases struct {
 	Permission        PermissionUseCases
 	Location          LocationUseCases
 	LocationArea      LocationAreaUseCases
+	PaymentTerm       PaymentTermUseCases
 	Workspace         WorkspaceUseCases
 	WorkspaceUser     WorkspaceUserUseCases
 	WorkspaceUserRole WorkspaceUserRoleUseCases
@@ -138,7 +162,14 @@ type ClientUseCases struct {
 	Read            func(context.Context, *clientpb.ReadClientRequest) (*clientpb.ReadClientResponse, error)
 	Update          func(context.Context, *clientpb.UpdateClientRequest) (*clientpb.UpdateClientResponse, error)
 	Delete          func(context.Context, *clientpb.DeleteClientRequest) (*clientpb.DeleteClientResponse, error)
-	Category        ClientCategoryUseCases
+	// List is the typed replacement for the deleted duck's
+	// ListSimple("client") scan used by the conversation inbox's
+	// ClientNameByID display-name resolver (block.go). Bound by service-admin
+	// from the espyna ListClients use case; nil-safe — when unbound the inbox
+	// Client column simply shows ids.
+	// 20260612-datasource-typed-path (entydad duck delete).
+	List     func(context.Context, *clientpb.ListClientsRequest) (*clientpb.ListClientsResponse, error)
+	Category ClientCategoryUseCases
 }
 
 type ClientCategoryUseCases struct {
@@ -201,6 +232,58 @@ type LocationAreaUseCases struct {
 	Read   func(context.Context, *locationareapb.ReadLocationAreaRequest) (*locationareapb.ReadLocationAreaResponse, error)
 	Update func(context.Context, *locationareapb.UpdateLocationAreaRequest) (*locationareapb.UpdateLocationAreaResponse, error)
 	Delete func(context.Context, *locationareapb.DeleteLocationAreaRequest) (*locationareapb.DeleteLocationAreaResponse, error)
+}
+
+// PaymentTermUseCases groups the typed payment_term reads the client + supplier
+// payment-terms dropdowns need. Replaces the duck-typed
+// DataSource.ListSimple("payment_term") path the party module used to call. The
+// block scopes/filters the returned rows itself (by entity_scope), so a single
+// unfiltered ListPaymentTerms closure serves both the client- and
+// supplier-context callers. Nil-safe — the dropdowns render empty (no
+// payment-term options) when unwired.
+// 20260612-datasource-typed-path (entydad duck delete).
+type PaymentTermUseCases struct {
+	ListPaymentTerms func(context.Context, *paymenttermpb.ListPaymentTermsRequest) (*paymenttermpb.ListPaymentTermsResponse, error)
+}
+
+// setActiveClosure adapts the capability-narrow UseCases.SetActive into the
+// per-entity `func(ctx, id, active) error` shape the view-layer action Deps
+// expect (Location/User/Role/Permission/Workspace/WorkspaceUser SetActive,
+// ClientTag/SupplierTag SetCategoryActive, payment_term SetPaymentTermActive),
+// binding the collection name. Nil-safe: when SetActive is unbound (service-admin
+// wires it) the returned closure logs and no-ops rather than panicking — the
+// activate/deactivate toggle silently leaves the row unchanged, matching the
+// fail-soft contract every other unwired typed closure in this package uses.
+// 20260612-datasource-typed-path — replaces the deleted DataSource/
+// UpdateableSource duck's Update(collection, id, {"active": active}) call at each
+// toggle site.
+func setActiveClosure(useCases *UseCases, collection string) func(context.Context, string, bool) error {
+	return func(ctx context.Context, id string, active bool) error {
+		if useCases == nil || useCases.SetActive == nil {
+			log.Printf("entydad.Block: SetActive(%q) is not wired — active toggle no-op for id %s (bind UseCases.SetActive in service-admin)", collection, id)
+			return nil
+		}
+		return useCases.SetActive(ctx, collection, id, active)
+	}
+}
+
+// setStatusClosure adapts the capability-narrow UseCases.SetStatus into the
+// per-entity `func(ctx, id, status) error` shape the client/supplier action Deps
+// expect, binding the collection name AND the call site's exact active-derivation
+// rule (deriveActive). The status→active sync stays at the call site: the client
+// passes status != "inactive"; the supplier forces true. setStatusClosure then
+// computes active from status and hands BOTH to the narrow primitive. Nil-safe:
+// when SetStatus is unbound the returned closure logs and no-ops.
+// 20260612-datasource-typed-path — replaces the deleted duck's
+// Update(collection, id, {"status": status, "active": active}) call.
+func setStatusClosure(useCases *UseCases, collection string, deriveActive func(status string) bool) func(context.Context, string, string) error {
+	return func(ctx context.Context, id string, status string) error {
+		if useCases == nil || useCases.SetStatus == nil {
+			log.Printf("entydad.Block: SetStatus(%q) is not wired — status set no-op for id %s (bind UseCases.SetStatus in service-admin)", collection, id)
+			return nil
+		}
+		return useCases.SetStatus(ctx, collection, id, status, deriveActive(status))
+	}
 }
 
 type WorkspaceUseCases struct {

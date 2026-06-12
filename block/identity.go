@@ -32,7 +32,6 @@ import (
 type identityWiring struct {
 	cfg        *blockConfig
 	uc         *UseCases
-	db         UpdateableSource
 	labels     blockLabels
 	routes     blockRoutes
 	refChecker reference.Checker
@@ -52,7 +51,6 @@ type identityWiring struct {
 func wireIdentityModule(ctx *pyeza.AppContext, w identityWiring) {
 	cfg := w.cfg
 	uc := w.uc
-	db := w.db
 	labels := w.labels
 	routes := w.routes
 	refChecker := w.refChecker
@@ -68,24 +66,21 @@ func wireIdentityModule(ctx *pyeza.AppContext, w identityWiring) {
 
 	if cfg.enableAll || cfg.user {
 		identity.NewUserModule(&identity.UserModuleDeps{
-			Routes:               routes.User,
-			CommonLabels:         ctx.Common,
-			SharedLabels:         labels.Shared,
-			Labels:               labels.User,
-			DashboardLabels:      labels.UserDashboard,
-			DashboardTitleLabels: labels.Dashboard,
-			UserRoleLabels:       labels.UserRole,
-			TableLabels:          ctx.Table,
-			GetListPageData:      uc.User.GetListPageData,
-			GetUserWorkspacesMap: getUserWorkspacesMap,
-			CreateUser:           uc.User.Create,
-			ReadUser:             uc.User.Read,
-			UpdateUser:           uc.User.Update,
-			DeleteUser:           uc.User.Delete,
-			SetActive: func(fctx context.Context, id string, active bool) error {
-				_, err := db.Update(fctx, "user", id, map[string]any{"active": active})
-				return err
-			},
+			Routes:                       routes.User,
+			CommonLabels:                 ctx.Common,
+			SharedLabels:                 labels.Shared,
+			Labels:                       labels.User,
+			DashboardLabels:              labels.UserDashboard,
+			DashboardTitleLabels:         labels.Dashboard,
+			UserRoleLabels:               labels.UserRole,
+			TableLabels:                  ctx.Table,
+			GetListPageData:              uc.User.GetListPageData,
+			GetUserWorkspacesMap:         getUserWorkspacesMap,
+			CreateUser:                   uc.User.Create,
+			ReadUser:                     uc.User.Read,
+			UpdateUser:                   uc.User.Update,
+			DeleteUser:                   uc.User.Delete,
+			SetActive:                    setActiveClosure(uc, "user"),
 			CreateWorkspaceUser:          uc.WorkspaceUser.Create,
 			ListWorkspaceUsers:           uc.WorkspaceUser.List,
 			GetWorkspaceUserItemPageData: uc.WorkspaceUser.GetItemPageData,
@@ -105,23 +100,20 @@ func wireIdentityModule(ctx *pyeza.AppContext, w identityWiring) {
 
 	if cfg.enableAll || cfg.role {
 		identity.NewRoleModule(&identity.RoleModuleDeps{
-			Routes:               routes.Role,
-			CommonLabels:         ctx.Common,
-			SharedLabels:         labels.Shared,
-			Labels:               labels.Role,
-			RolePermissionLabels: labels.RolePermission,
-			RoleUserLabels:       labels.RoleUser,
-			TableLabels:          ctx.Table,
-			GetListPageData:      uc.Role.GetListPageData,
-			GetInUseIDs:          refChecker.GetRoleInUseIDs,
-			CreateRole:           uc.Role.Create,
-			ReadRole:             uc.Role.Read,
-			UpdateRole:           uc.Role.Update,
-			DeleteRole:           uc.Role.Delete,
-			SetActive: func(fctx context.Context, id string, active bool) error {
-				_, err := db.Update(fctx, "role", id, map[string]any{"active": active})
-				return err
-			},
+			Routes:                  routes.Role,
+			CommonLabels:            ctx.Common,
+			SharedLabels:            labels.Shared,
+			Labels:                  labels.Role,
+			RolePermissionLabels:    labels.RolePermission,
+			RoleUserLabels:          labels.RoleUser,
+			TableLabels:             ctx.Table,
+			GetListPageData:         uc.Role.GetListPageData,
+			GetInUseIDs:             refChecker.GetRoleInUseIDs,
+			CreateRole:              uc.Role.Create,
+			ReadRole:                uc.Role.Read,
+			UpdateRole:              uc.Role.Update,
+			DeleteRole:              uc.Role.Delete,
+			SetActive:               setActiveClosure(uc, "role"),
 			GetItemPageData:         uc.Role.GetItemPageData,
 			CreateRolePermission:    uc.RolePermission.Create,
 			DeleteRolePermission:    uc.RolePermission.Delete,
@@ -155,10 +147,7 @@ func wireIdentityModule(ctx *pyeza.AppContext, w identityWiring) {
 			ReadPermission:   uc.Permission.Read,
 			UpdatePermission: uc.Permission.Update,
 			DeletePermission: uc.Permission.Delete,
-			SetActive: func(fctx context.Context, id string, active bool) error {
-				_, err := db.Update(fctx, "permission", id, map[string]any{"active": active})
-				return err
-			},
+			SetActive:        setActiveClosure(uc, "permission"),
 		}).RegisterRoutes(ctx.Routes)
 	}
 
@@ -174,10 +163,7 @@ func wireIdentityModule(ctx *pyeza.AppContext, w identityWiring) {
 			ReadWorkspace:   uc.Workspace.Read,
 			UpdateWorkspace: uc.Workspace.Update,
 			DeleteWorkspace: uc.Workspace.Delete,
-			SetActive: func(fctx context.Context, id string, active bool) error {
-				_, err := db.Update(fctx, "workspace", id, map[string]any{"active": active})
-				return err
-			},
+			SetActive:       setActiveClosure(uc, "workspace"),
 			// Phase 2 TODO closeout: wire the workspace_user detail + add URLs
 			// now that Phase 2 has registered those route constants.
 			WorkspaceUserDetailURL: entity.WorkspaceUserDetailURL,
@@ -250,10 +236,7 @@ func wireIdentityModule(ctx *pyeza.AppContext, w identityWiring) {
 				GetWorkspaceUserItemPageData: uc.WorkspaceUser.GetItemPageData,
 				CreateWorkspaceUser:          uc.WorkspaceUser.Create,
 				DeleteWorkspaceUser:          uc.WorkspaceUser.Delete,
-				SetWorkspaceUserActive: func(fctx context.Context, id string, active bool) error {
-					_, err := db.Update(fctx, "workspace_user", id, map[string]any{"active": active})
-					return err
-				},
+				SetWorkspaceUserActive:       setActiveClosure(uc, "workspace_user"),
 				// Phase 3 closeout: wire WorkspaceUserRole routes now that Phase 3 has registered them.
 				WorkspaceUserRoleAddURL:    entity.WorkspaceUserRoleAddURL,
 				WorkspaceUserRoleDeleteURL: entity.WorkspaceUserRoleDeleteURL,
