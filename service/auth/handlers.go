@@ -156,10 +156,19 @@ func (m *AuthModule) handleLogin() http.HandlerFunc {
 			}
 			if result.NewToken != "" {
 				sessionMw.SetSessionCookie(w, result.NewToken)
-				// C2: fresh CSRF cookie with (session, workspace) claim.
-				m.deps.CSRFIssuer(w, m.deps.CSRFSecret,
-					result.NewToken, principals[0].WorkspaceID)
 			}
+			// C2: always refresh the CSRF cookie after a successful
+			// principal switch — even when NewToken is empty (in-place
+			// session update, same workspace). The initial login CSRF
+			// cookie carries workspaceID="" which becomes stale once the
+			// session is stamped with a workspace. Use the effective
+			// session token (new if rotated, original if in-place).
+			effectiveToken := result.NewToken
+			if effectiveToken == "" {
+				effectiveToken = token
+			}
+			m.deps.CSRFIssuer(w, m.deps.CSRFSecret,
+				effectiveToken, principals[0].WorkspaceID)
 			http.Redirect(w, r, m.homeURLForWorkspaceID(r.Context(), principals[0].WorkspaceID), http.StatusSeeOther)
 			return
 
@@ -214,10 +223,14 @@ func (m *AuthModule) handleLogin() http.HandlerFunc {
 				}
 				if result.NewToken != "" {
 					sessionMw.SetSessionCookie(w, result.NewToken)
-					// C2: fresh CSRF cookie with (session, workspace) claim.
-					m.deps.CSRFIssuer(w, m.deps.CSRFSecret,
-						result.NewToken, principals[0].WorkspaceID)
 				}
+				// C2: always refresh CSRF cookie (see case-1 comment).
+				effectiveToken := result.NewToken
+				if effectiveToken == "" {
+					effectiveToken = token
+				}
+				m.deps.CSRFIssuer(w, m.deps.CSRFSecret,
+					effectiveToken, principals[0].WorkspaceID)
 				http.Redirect(w, r, m.homeURLForWorkspaceID(r.Context(), principals[0].WorkspaceID), http.StatusSeeOther)
 				return
 			}
@@ -607,11 +620,19 @@ func (m *AuthModule) handleSwitchPrincipal() http.HandlerFunc {
 		}
 		if result.NewToken != "" {
 			sessionMw.SetSessionCookie(w, result.NewToken)
-			// C2: fresh CSRF cookie with (session, workspace) claim after
-			// explicit principal switch (workspace rotation occurred).
-			m.deps.CSRFIssuer(w, m.deps.CSRFSecret,
-				result.NewToken, target.WorkspaceID)
 		}
+		// C2: always refresh CSRF cookie after principal switch — even
+		// when NewToken is empty (in-place, same workspace). An in-place
+		// switch may change principal_type / acting_as without changing
+		// the session token, but the CSRF workspace claim must still
+		// reflect the current workspace. Use original cookie token when
+		// no rotation occurred.
+		effectiveToken := result.NewToken
+		if effectiveToken == "" {
+			effectiveToken = currentToken
+		}
+		m.deps.CSRFIssuer(w, m.deps.CSRFSecret,
+			effectiveToken, target.WorkspaceID)
 		http.Redirect(w, r, m.homeURLForWorkspaceID(r.Context(), target.WorkspaceID), http.StatusSeeOther)
 	}
 }
