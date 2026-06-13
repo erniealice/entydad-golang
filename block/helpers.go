@@ -1,8 +1,6 @@
-// Package block — interface contracts and workspace helpers shared across domain wirings.
+// Package block — workspace helpers and statement translators shared across domain wirings.
 //
 // This file holds:
-//   - categoryListPageDataGetter: a local interface used by Block() to call the
-//     postgres category repo via type assertion without importing the adapter.
 //   - getDefaultWorkspaceID: small, stateless workspace helper.
 //   - Statement request/response translation helpers — bridge the new
 //     service.reporting.v1 proto package (used by the typed
@@ -15,14 +13,17 @@
 // 2026-06-12; active/status writes + payment_term/client reads now flow through
 // the narrow typed UseCases primitives/closures bound by service-admin.)
 //
+// (The former categoryListPageDataGetter local interface was deleted
+// 2026-06-14 as part of the E6 provider hardcode fix — category list page
+// data is now wired through the typed UseCases.Category.GetListPageData
+// closure bound by service-admin.)
+//
 // Rule of thumb: 1 caller → live with the caller; 2+ callers → live here.
 package block
 
 import (
-	"context"
 	"os"
 
-	categorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
 	clientstmtpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/ledger/reporting/client_statement"
 	suppstmtpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/reporting/supplier_statement"
 	stmtspb "github.com/erniealice/esqyma/pkg/schema/v1/service/reporting/statements"
@@ -146,13 +147,6 @@ func translateSupplierStatementResp(resp *stmtspb.GetSupplierStatementResponse) 
 	out.Pagination = resp.GetPagination()
 	out.Error = resp.GetError()
 	return out
-}
-
-// categoryListPageDataGetter is a local interface satisfied by the PostgresCategoryRepository
-// concrete type, allowing GetCategoryListPageData to be called via type assertion without
-// importing the espyna postgres adapter package.
-type categoryListPageDataGetter interface {
-	GetCategoryListPageData(ctx context.Context) ([]*categorypb.Category, error)
 }
 
 // getDefaultWorkspaceID returns the default workspace ID from the environment,

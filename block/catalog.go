@@ -42,12 +42,9 @@ import (
 	"github.com/erniealice/entydad-golang/service/auth"
 	tax "github.com/erniealice/entydad-golang/domain/tax"
 	taxregistration "github.com/erniealice/entydad-golang/domain/tax/tax_registration"
-	"github.com/erniealice/espyna-golang/registry"
-	entityid "github.com/erniealice/espyna-golang/registry/entityid"
 	categorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
 	clientstmtpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/ledger/reporting/client_statement"
 	locationareapb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/location_area"
-	paymenttermpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/payment_term"
 	priceplanpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/price_plan"
 	priceschedulepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/price_schedule"
 	revenuepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/revenue/revenue"
@@ -479,13 +476,8 @@ func ClientTagUnit(uc *UseCases, infra *Infra) compose.Unit {
 			deps.UpdateCategory = uc.Category.Update
 			deps.DeleteCategory = uc.Category.Delete
 		}
-		if infra.SqlDB != nil {
-			repoAny, err := registry.CreateRepository("postgresql", entityid.Category, infra.SqlDB, "category")
-			if err == nil {
-				if pgd, ok := repoAny.(categoryListPageDataGetter); ok {
-					deps.GetCategoryListPageData = pgd.GetCategoryListPageData
-				}
-			}
+		if uc.Category.GetListPageData != nil {
+			deps.GetCategoryListPageData = uc.Category.GetListPageData
 		}
 		if uc.Client.Category.List != nil {
 			deps.ListClientCategories = uc.Client.Category.List
@@ -518,13 +510,8 @@ func SupplierTagUnit(uc *UseCases, infra *Infra) compose.Unit {
 			deps.UpdateCategory = uc.Category.Update
 			deps.DeleteCategory = uc.Category.Delete
 		}
-		if infra.SqlDB != nil {
-			repoAny, err := registry.CreateRepository("postgresql", entityid.Category, infra.SqlDB, "category")
-			if err == nil {
-				if pgd, ok := repoAny.(categoryListPageDataGetter); ok {
-					deps.GetCategoryListPageData = pgd.GetCategoryListPageData
-				}
-			}
+		if uc.Category.GetListPageData != nil {
+			deps.GetCategoryListPageData = uc.Category.GetListPageData
 		}
 		if uc.Supplier.Category.List != nil {
 			deps.ListSupplierCategories = uc.Supplier.Category.List
@@ -951,17 +938,9 @@ func PaymentTermUnit(uc *UseCases, infra *Infra) compose.Unit {
 		r := u.Routes.(*entitypaymentterm.Routes)
 		l := u.Labels.(*entitypaymentterm.Labels)
 
-		if infra.SqlDB == nil {
-			log.Println("entydad catalog: warning: SqlDB is nil — skipping payment_term module")
+		if uc.PaymentTerm.GetListPageData == nil {
+			log.Println("entydad catalog: warning: PaymentTerm use cases not wired — skipping payment_term module")
 			return nil
-		}
-		repoAny, err := registry.CreateRepository("postgresql", entityid.PaymentTerm, infra.SqlDB, entityid.PaymentTerm)
-		if err != nil {
-			return fmt.Errorf("entydad catalog: failed to create payment_term repository: %w", err)
-		}
-		ptRepo, ok := repoAny.(paymenttermpb.PaymentTermDomainServiceServer)
-		if !ok {
-			return fmt.Errorf("entydad catalog: payment_term repository does not implement PaymentTermDomainServiceServer")
 		}
 		setPaymentTermActive := setActiveClosure(uc, "payment_term")
 		sharedDeps := &commerce.PaymentTermModuleDeps{
@@ -969,12 +948,12 @@ func PaymentTermUnit(uc *UseCases, infra *Infra) compose.Unit {
 			SharedLabels:         infra.SharedLabels,
 			Labels:               *l,
 			TableLabels:          mc.Table,
-			GetListPageData:      ptRepo.GetPaymentTermListPageData,
+			GetListPageData:      uc.PaymentTerm.GetListPageData,
 			GetInUseIDs:          infra.RefChecker.GetPaymentTermInUseIDs,
-			CreatePaymentTerm:    ptRepo.CreatePaymentTerm,
-			ReadPaymentTerm:      ptRepo.ReadPaymentTerm,
-			UpdatePaymentTerm:    ptRepo.UpdatePaymentTerm,
-			DeletePaymentTerm:    ptRepo.DeletePaymentTerm,
+			CreatePaymentTerm:    uc.PaymentTerm.CreatePaymentTerm,
+			ReadPaymentTerm:      uc.PaymentTerm.ReadPaymentTerm,
+			UpdatePaymentTerm:    uc.PaymentTerm.UpdatePaymentTerm,
+			DeletePaymentTerm:    uc.PaymentTerm.DeletePaymentTerm,
 			SetPaymentTermActive: setPaymentTermActive,
 		}
 		// Client-context payment term list (entity_scope IN ('client', 'both')).

@@ -18,8 +18,6 @@ import (
 	party "github.com/erniealice/entydad-golang/domain/entity/party"
 	clientdetail "github.com/erniealice/entydad-golang/domain/entity/party/client/detail"
 	"github.com/erniealice/espyna-golang/reference"
-	"github.com/erniealice/espyna-golang/registry"
-	entityid "github.com/erniealice/espyna-golang/registry/entityid"
 	categorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
 	paymenttermpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/payment_term"
@@ -475,13 +473,8 @@ func wirePartyModule(ctx *pyeza.AppContext, w partyWiring) {
 			clienttagDeps.UpdateCategory = uc.Category.Update
 			clienttagDeps.DeleteCategory = uc.Category.Delete
 		}
-		if ctx.SqlDB != nil {
-			repoAny, err := registry.CreateRepository("postgresql", entityid.Category, ctx.SqlDB, "category")
-			if err == nil {
-				if pgd, ok := repoAny.(categoryListPageDataGetter); ok {
-					clienttagDeps.GetCategoryListPageData = pgd.GetCategoryListPageData
-				}
-			}
+		if uc.Category.GetListPageData != nil {
+			clienttagDeps.GetCategoryListPageData = uc.Category.GetListPageData
 		}
 		if uc.Client.Category.List != nil {
 			clienttagDeps.ListClientCategories = uc.Client.Category.List
@@ -506,13 +499,8 @@ func wirePartyModule(ctx *pyeza.AppContext, w partyWiring) {
 			suppliertagDeps.UpdateCategory = uc.Category.Update
 			suppliertagDeps.DeleteCategory = uc.Category.Delete
 		}
-		if ctx.SqlDB != nil {
-			repoAny, err := registry.CreateRepository("postgresql", entityid.Category, ctx.SqlDB, "category")
-			if err == nil {
-				if pgd, ok := repoAny.(categoryListPageDataGetter); ok {
-					suppliertagDeps.GetCategoryListPageData = pgd.GetCategoryListPageData
-				}
-			}
+		if uc.Category.GetListPageData != nil {
+			suppliertagDeps.GetCategoryListPageData = uc.Category.GetListPageData
 		}
 		if uc.Supplier.Category.List != nil {
 			suppliertagDeps.ListSupplierCategories = uc.Supplier.Category.List

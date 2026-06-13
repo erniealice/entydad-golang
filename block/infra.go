@@ -2,7 +2,6 @@ package block
 
 import (
 	"context"
-	"database/sql"
 	"net/http"
 
 	entydad "github.com/erniealice/entydad-golang"
@@ -21,17 +20,16 @@ import (
 )
 
 // Infra carries the subset of AppContext that view modules need beyond the
-// typed UseCases: attachment ops, reference checker, raw DB for registry-
-// backed repos (payment_term, category), identity helpers, cross-centymo
-// route structs, and the optional secure-workspace-switch closures. Built
-// once by service-admin and passed into each catalog binder.
+// typed UseCases: attachment ops, reference checker, identity helpers,
+// cross-centymo route structs, and the optional secure-workspace-switch
+// closures. Built once by service-admin and passed into each catalog binder.
 //
 // Companion: block/catalog.go — the binder functions that consume Infra.
 //
 // What lives here vs UseCases:
 //   - UseCases: proto-shaped business use-case closures (all nil-safe).
 //   - Infra: infrastructure dependencies that are NOT proto use cases —
-//     DB access, attachment ops, ref-checker, host-provided helper closures,
+//     attachment ops, ref-checker, host-provided helper closures,
 //     cross-domain label sets not owned by a single entity descriptor.
 type Infra struct {
 	// Attachment operations — passed verbatim to entity module Deps.
@@ -43,12 +41,6 @@ type Infra struct {
 
 	// RefChecker provides in-use-ID gating for deletable entities.
 	RefChecker reference.Checker
-
-	// SqlDB is the raw SQL connection used by registry.CreateRepository for
-	// the payment_term and category (client_tag / supplier_tag) repos. Nil
-	// means those modules are skipped at mount time (non-fatal, with a log
-	// warning).
-	SqlDB *sql.DB
 
 	// Identity helpers — passed into the user / role module Deps.
 	// All are nil-safe: the relevant UI sections degrade gracefully when unset.

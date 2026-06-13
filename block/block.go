@@ -6,11 +6,11 @@
 // the root package for route/label types).
 //
 // Companion files in this directory:
-//   - helpers.go       — the categoryListPageDataGetter local interface and
-//     getDefaultWorkspaceID. (The former DataSource/UpdateableSource/CRUDSource
-//     ducks were deleted 2026-06-12; active/status writes now go through the
-//     narrow typed UseCases.SetActive/SetStatus primitives bound by
-//     service-admin.)
+//   - helpers.go       — getDefaultWorkspaceID and statement translation
+//     helpers. (The former categoryListPageDataGetter interface was deleted
+//     2026-06-14 — E6 provider hardcode fix. The former DataSource/
+//     UpdateableSource/CRUDSource ducks were deleted 2026-06-12; all data
+//     access now flows through typed UseCases closures bound by service-admin.)
 //   - route_loading.go — blockLabels / blockRoutes types and their lyngua loaders
 //     (loadBlockLabels, loadBlockRoutes).
 //   - wiring.go        — dashboard reflective wiring helpers (wireLocationDashboard,

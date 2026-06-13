@@ -12,7 +12,6 @@ package block
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	commerce "github.com/erniealice/entydad-golang/domain/entity/commerce"
@@ -21,11 +20,8 @@ import (
 	locationareaaction "github.com/erniealice/entydad-golang/domain/entity/location/location_area/action"
 	locationarealist "github.com/erniealice/entydad-golang/domain/entity/location/location_area/list"
 	"github.com/erniealice/espyna-golang/reference"
-	"github.com/erniealice/espyna-golang/registry"
-	entityid "github.com/erniealice/espyna-golang/registry/entityid"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
 	locationareapb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/location_area"
-	paymenttermpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/payment_term"
 	pyeza "github.com/erniealice/pyeza-golang"
 )
 
@@ -227,17 +223,9 @@ func wireCommerceModule(ctx *pyeza.AppContext, w commerceWiring) error {
 	}
 
 	if cfg.enableAll || cfg.paymentTerm {
-		if ctx.SqlDB == nil {
-			log.Println("entydad.Block: warning: SqlDB is nil — skipping payment_term module")
+		if uc.PaymentTerm.GetListPageData == nil {
+			log.Println("entydad.Block: warning: PaymentTerm use cases not wired — skipping payment_term module")
 		} else {
-			repoAny, err := registry.CreateRepository("postgresql", entityid.PaymentTerm, ctx.SqlDB, entityid.PaymentTerm)
-			if err != nil {
-				return fmt.Errorf("entydad.Block: failed to create payment_term repository: %w", err)
-			}
-			ptRepo, ok := repoAny.(paymenttermpb.PaymentTermDomainServiceServer)
-			if !ok {
-				return fmt.Errorf("entydad.Block: payment_term repository does not implement PaymentTermDomainServiceServer")
-			}
 			setPaymentTermActive := setActiveClosure(uc, "payment_term")
 			// Client-context payment term list: shows terms with entity_scope IN ('client', 'both')
 			commerce.NewPaymentTermModule(&commerce.PaymentTermModuleDeps{
@@ -246,12 +234,12 @@ func wireCommerceModule(ctx *pyeza.AppContext, w commerceWiring) error {
 				SharedLabels:         labels.Shared,
 				Labels:               labels.PaymentTerm,
 				TableLabels:          ctx.Table,
-				GetListPageData:      ptRepo.GetPaymentTermListPageData,
+				GetListPageData:      uc.PaymentTerm.GetListPageData,
 				GetInUseIDs:          refChecker.GetPaymentTermInUseIDs,
-				CreatePaymentTerm:    ptRepo.CreatePaymentTerm,
-				ReadPaymentTerm:      ptRepo.ReadPaymentTerm,
-				UpdatePaymentTerm:    ptRepo.UpdatePaymentTerm,
-				DeletePaymentTerm:    ptRepo.DeletePaymentTerm,
+				CreatePaymentTerm:    uc.PaymentTerm.CreatePaymentTerm,
+				ReadPaymentTerm:      uc.PaymentTerm.ReadPaymentTerm,
+				UpdatePaymentTerm:    uc.PaymentTerm.UpdatePaymentTerm,
+				DeletePaymentTerm:    uc.PaymentTerm.DeletePaymentTerm,
 				SetPaymentTermActive: setPaymentTermActive,
 				Scope:                "client",
 			}).RegisterRoutes(ctx.Routes)
@@ -262,12 +250,12 @@ func wireCommerceModule(ctx *pyeza.AppContext, w commerceWiring) error {
 				SharedLabels:         labels.Shared,
 				Labels:               labels.PaymentTerm,
 				TableLabels:          ctx.Table,
-				GetListPageData:      ptRepo.GetPaymentTermListPageData,
+				GetListPageData:      uc.PaymentTerm.GetListPageData,
 				GetInUseIDs:          refChecker.GetPaymentTermInUseIDs,
-				CreatePaymentTerm:    ptRepo.CreatePaymentTerm,
-				ReadPaymentTerm:      ptRepo.ReadPaymentTerm,
-				UpdatePaymentTerm:    ptRepo.UpdatePaymentTerm,
-				DeletePaymentTerm:    ptRepo.DeletePaymentTerm,
+				CreatePaymentTerm:    uc.PaymentTerm.CreatePaymentTerm,
+				ReadPaymentTerm:      uc.PaymentTerm.ReadPaymentTerm,
+				UpdatePaymentTerm:    uc.PaymentTerm.UpdatePaymentTerm,
+				DeletePaymentTerm:    uc.PaymentTerm.DeletePaymentTerm,
 				SetPaymentTermActive: setPaymentTermActive,
 				Scope:                "supplier",
 			}).RegisterRoutes(ctx.Routes)

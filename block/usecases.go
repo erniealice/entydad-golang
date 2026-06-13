@@ -234,16 +234,24 @@ type LocationAreaUseCases struct {
 	Delete func(context.Context, *locationareapb.DeleteLocationAreaRequest) (*locationareapb.DeleteLocationAreaResponse, error)
 }
 
-// PaymentTermUseCases groups the typed payment_term reads the client + supplier
-// payment-terms dropdowns need. Replaces the duck-typed
-// DataSource.ListSimple("payment_term") path the party module used to call. The
-// block scopes/filters the returned rows itself (by entity_scope), so a single
-// unfiltered ListPaymentTerms closure serves both the client- and
-// supplier-context callers. Nil-safe — the dropdowns render empty (no
-// payment-term options) when unwired.
+// PaymentTermUseCases groups the typed payment_term operations the payment-term
+// settings module and the client/supplier payment-term dropdowns need. Replaces
+// the duck-typed DataSource.ListSimple("payment_term") path AND the block-local
+// registry.CreateRepository("postgresql", entityid.PaymentTerm, ...) calls that
+// bypassed typed UseCases and provider exclusivity (E6 fix). The block
+// scopes/filters the returned rows itself (by entity_scope), so unfiltered
+// closures serve both client- and supplier-context callers. All closures are
+// nil-safe — when unbound, the payment-term module is skipped at mount time and
+// the dropdowns render empty.
 // 20260612-datasource-typed-path (entydad duck delete).
+// 20260614-E6-provider-hardcode-fix.
 type PaymentTermUseCases struct {
-	ListPaymentTerms func(context.Context, *paymenttermpb.ListPaymentTermsRequest) (*paymenttermpb.ListPaymentTermsResponse, error)
+	ListPaymentTerms  func(context.Context, *paymenttermpb.ListPaymentTermsRequest) (*paymenttermpb.ListPaymentTermsResponse, error)
+	GetListPageData   func(context.Context, *paymenttermpb.GetPaymentTermListPageDataRequest) (*paymenttermpb.GetPaymentTermListPageDataResponse, error)
+	CreatePaymentTerm func(context.Context, *paymenttermpb.CreatePaymentTermRequest) (*paymenttermpb.CreatePaymentTermResponse, error)
+	ReadPaymentTerm   func(context.Context, *paymenttermpb.ReadPaymentTermRequest) (*paymenttermpb.ReadPaymentTermResponse, error)
+	UpdatePaymentTerm func(context.Context, *paymenttermpb.UpdatePaymentTermRequest) (*paymenttermpb.UpdatePaymentTermResponse, error)
+	DeletePaymentTerm func(context.Context, *paymenttermpb.DeletePaymentTermRequest) (*paymenttermpb.DeletePaymentTermResponse, error)
 }
 
 // setActiveClosure adapts the capability-narrow UseCases.SetActive into the
@@ -350,6 +358,14 @@ type CategoryUseCases struct {
 	Read   func(context.Context, *commonpb.ReadCategoryRequest) (*commonpb.ReadCategoryResponse, error)
 	Update func(context.Context, *commonpb.UpdateCategoryRequest) (*commonpb.UpdateCategoryResponse, error)
 	Delete func(context.Context, *commonpb.DeleteCategoryRequest) (*commonpb.DeleteCategoryResponse, error)
+	// GetListPageData returns all categories (active AND inactive) for the
+	// settings list page. This is distinct from List which returns only active
+	// categories for dropdowns. Nil-safe — when unbound, the client_tag and
+	// supplier_tag list pages render without category rows.
+	// E6 provider hardcode fix (20260614): replaces the block-local
+	// registry.CreateRepository("postgresql", entityid.Category, ...) calls that
+	// bypassed typed UseCases and provider exclusivity.
+	GetListPageData func(ctx context.Context) ([]*commonpb.Category, error)
 }
 
 type PriceScheduleUseCases struct {
