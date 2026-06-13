@@ -13,5 +13,11 @@ func Describe() compose.Unit {
 		LabelJSON: compose.JSONBinding{File: "role.json", Key: ""},
 		LabelName: "RoleLabels",
 		Templates: TemplatesFS,
+		Nav: compose.NavContrib{
+			Permission: "user:list",
+			Items: []compose.NavItem{
+				{Key: "roles", Route: "role.list", Label: "Roles", Icon: "icon-shield"},
+			},
+		},
 	}
 }

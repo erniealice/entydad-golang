@@ -13,5 +13,19 @@ func Describe() compose.Unit {
 		LabelJSON: compose.JSONBinding{File: "permission.json", Key: ""},
 		LabelName: "PermissionLabels",
 		Templates: TemplatesFS,
+		Nav: compose.NavContrib{
+			Permission: "permission:list",
+			AppEntry: &compose.AppEntry{
+				Key:        "admin",
+				Route:      "permission.list",
+				Label:      "Settings",
+				Icon:       "icon-settings",
+				Permission: "permission:list",
+			},
+			Items: []compose.NavItem{
+				{Key: "permissions-active", Route: "permission.list", Params: map[string]string{"status": "active"}, Label: "Active", Icon: "icon-key", Permission: "permission:list"},
+				{Key: "permissions-inactive", Route: "permission.list", Params: map[string]string{"status": "inactive"}, Label: "Inactive", Icon: "icon-key", Permission: "permission:list"},
+			},
+		},
 	}
 }

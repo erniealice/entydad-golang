@@ -13,5 +13,12 @@ func Describe() compose.Unit {
 		LabelJSON: compose.JSONBinding{File: "workspace.json", Key: ""},
 		LabelName: "WorkspaceLabels",
 		Templates: TemplatesFS,
+		Nav: compose.NavContrib{
+			Permission: "workspace:list",
+			Items: []compose.NavItem{
+				{Key: "workspaces-active", Route: "workspace.list", Params: map[string]string{"status": "active"}, Label: "Active", Icon: "icon-briefcase", Permission: "workspace:list"},
+				{Key: "workspaces-inactive", Route: "workspace.list", Params: map[string]string{"status": "inactive"}, Label: "Inactive", Icon: "icon-briefcase", Permission: "workspace:list"},
+			},
+		},
 	}
 }

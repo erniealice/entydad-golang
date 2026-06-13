@@ -13,5 +13,12 @@ func Describe() compose.Unit {
 		LabelJSON: compose.JSONBinding{File: "payment_term.json", Key: "paymentTerm"},
 		LabelName: "PaymentTermLabels",
 		Templates: TemplatesFS,
+		Nav: compose.NavContrib{
+			Permission: "client:list",
+			Items: []compose.NavItem{
+				// Client-context payment terms (under "client" app Settings section)
+				{Key: "payment-terms", Route: "payment_term.list", Label: "Payment Terms", Icon: "icon-clock", Permission: "client:list"},
+			},
+		},
 	}
 }

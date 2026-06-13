@@ -13,5 +13,19 @@ func Describe() compose.Unit {
 		LabelJSON: compose.JSONBinding{File: "location.json", Key: ""},
 		LabelName: "LocationLabels",
 		Templates: TemplatesFS,
+		Nav: compose.NavContrib{
+			Permission: "location:list",
+			AppEntry: &compose.AppEntry{
+				Key:        "location",
+				Route:      "location.list",
+				Label:      "Locations",
+				Icon:       "icon-map-pin",
+				Permission: "location:list",
+			},
+			Items: []compose.NavItem{
+				{Key: "locations-active", Route: "location.list", Params: map[string]string{"status": "active"}, Label: "Active", Icon: "icon-map-pin"},
+				{Key: "locations-inactive", Route: "location.list", Params: map[string]string{"status": "inactive"}, Label: "Inactive", Icon: "icon-map-pin"},
+			},
+		},
 	}
 }
