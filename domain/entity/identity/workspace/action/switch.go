@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	appcontext "github.com/erniealice/espyna-golang/appcontext"
+	"github.com/erniealice/espyna-golang/shared/identity"
 	workspacepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace"
 )
 
@@ -76,7 +76,7 @@ func NewSwitchWorkspaceHandler(deps *SwitchWorkspaceDeps) http.HandlerFunc {
 		}
 
 		// Get session token from cookie (try production name first, then dev name)
-		cookie, err := r.Cookie(appcontext.DefaultSessionCookieName)
+		cookie, err := r.Cookie(identity.DefaultSessionCookieName)
 		if err != nil {
 			cookie, err = r.Cookie("session_token")
 		}

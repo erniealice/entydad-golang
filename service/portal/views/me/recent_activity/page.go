@@ -15,7 +15,7 @@ import (
 	"context"
 
 	me "github.com/erniealice/entydad-golang/service/portal/views/me"
-	appcontext "github.com/erniealice/espyna-golang/appcontext"
+	"github.com/erniealice/espyna-golang/shared/identity"
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
 )
@@ -51,8 +51,8 @@ func NewView(deps *ModuleDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		var switches []SwitchEntry
 		if deps != nil && deps.ListRecentSwitches != nil {
-			if userID, err := appcontext.RequireUserIDFromContext(ctx); err == nil {
-				if rows, err := deps.ListRecentSwitches(ctx, userID, 50); err == nil {
+			if id, ok := identity.FromContext(ctx); ok {
+				if rows, err := deps.ListRecentSwitches(ctx, id.UserID, 50); err == nil {
 					switches = rows
 				}
 			}

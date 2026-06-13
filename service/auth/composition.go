@@ -68,7 +68,7 @@ type Deps struct {
 	WorkspaceCSRFCookieName string
 
 	// GetUserIDFromContext extracts the authenticated user ID from the request
-	// context. Defaults to espyna's consumer.GetUserIDFromContext when nil.
+	// context. Defaults to identity.FromContext(r.Context()).UserID when nil.
 	GetUserIDFromContext func(r *http.Request) string
 }
 

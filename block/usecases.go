@@ -61,7 +61,7 @@ import (
 //  4. Nested entity ops mirror proto nesting (e.g. Client.Category).
 type UseCases struct {
 	// GetWorkspaceIDFromCtx extracts the workspace ID from a request context.
-	// Wired by service-admin as consumer.GetWorkspaceIDFromContext.
+	// Wired by service-admin as identity.Must(ctx).WorkspaceID.
 	// Used by the dashboard wiring helpers in wiring.go.
 	GetWorkspaceIDFromCtx func(ctx context.Context) string
 

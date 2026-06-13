@@ -33,7 +33,7 @@ import (
 	"net/http"
 	"os"
 
-	appcontext "github.com/erniealice/espyna-golang/appcontext"
+	"github.com/erniealice/espyna-golang/shared/identity"
 
 	roleusers "github.com/erniealice/entydad-golang/domain/entity/identity/role/users"
 	userdashboard "github.com/erniealice/entydad-golang/domain/entity/identity/user/dashboard"
@@ -437,9 +437,11 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 				// id from context. The host's view_adapter populates it per
 				// request via consumer.WithActingAsClientID (sourced from the
 				// session binding / derived from client_portal_grant for a
-				// direct client). appcontext is the dependency-free leaf so the
+				// direct client). identity is the dependency-free leaf so the
 				// block never imports consumer. Fail-closed: "" => portal denies.
-				ActingAsClientID: appcontext.GetActingAsClientIDFromContext,
+				ActingAsClientID: func(ctx context.Context) string {
+					return identity.Must(ctx).ActingAsClientID
+				},
 			}
 			// ClientNameByID — best-effort display-name resolver for the inbox
 			// Client column. Backed by a single typed ListClients scan
@@ -485,7 +487,7 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 			// request (sourced from the session binding and, for a direct
 			// client, derived read-only from client_portal_grant in
 			// composition.lookupSessionPrincipalFull); convDeps.ActingAsClientID
-			// reads it back via appcontext. The portal handlers ALSO fail-closed
+			// reads it back via identity. The portal handlers ALSO fail-closed
 			// on an empty acting_as_client_id, so this stays defence-in-depth.
 			const portalPhase4Ready = true
 			authzEnforce := os.Getenv("AUTHZ_ENFORCE") == "true" ||

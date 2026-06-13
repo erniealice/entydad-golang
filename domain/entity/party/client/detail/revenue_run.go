@@ -14,7 +14,7 @@ import (
 	pyezatypes "github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
 
-	appcontext "github.com/erniealice/espyna-golang/appcontext"
+	"github.com/erniealice/espyna-golang/shared/identity"
 
 	entityclient "github.com/erniealice/entydad-golang/domain/entity/party/client"
 	detailform "github.com/erniealice/entydad-golang/domain/entity/party/client/detail/form"
@@ -154,7 +154,7 @@ func renderRevenueRunDrawer(
 	}
 
 	scope := RevenueRunScope{
-		WorkspaceID: appcontext.GetWorkspaceIDFromContext(ctx),
+		WorkspaceID: identity.Must(ctx).WorkspaceID,
 		ClientID:    clientID,
 		AsOfDate:    asOfDate,
 	}
@@ -243,7 +243,7 @@ func submitRevenueRun(
 	}
 
 	scope := RevenueRunScope{
-		WorkspaceID: appcontext.GetWorkspaceIDFromContext(ctx),
+		WorkspaceID: identity.Must(ctx).WorkspaceID,
 		ClientID:    clientID,
 		AsOfDate:    asOfDate,
 	}

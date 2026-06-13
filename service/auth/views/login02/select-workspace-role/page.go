@@ -40,7 +40,7 @@ type CardsResolver func(ctx context.Context) []PrincipalCard
 // Deps holds view dependencies for the select-workspace-role page.
 //
 // ResolveCards is called once per request — the view reads the User from
-// context (via consumer.GetUserIDFromContext on the host side) and returns
+// context (via identity.FromContext on the host side) and returns
 // the live list of principal cards. This indirection keeps the view
 // package free of any DB / loader concerns.
 type Deps struct {

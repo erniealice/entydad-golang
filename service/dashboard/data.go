@@ -19,7 +19,7 @@ import (
 )
 
 // WorkspaceIDExtractor resolves the workspace ID from context. Callers
-// typically pass consumer.GetWorkspaceIDFromContext from espyna.
+// typically pass identity.Must(ctx).WorkspaceID from espyna.
 type WorkspaceIDExtractor func(ctx context.Context) string
 
 // IconRenderer converts an icon template name to rendered HTML. Callers

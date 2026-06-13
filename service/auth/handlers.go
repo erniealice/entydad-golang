@@ -9,7 +9,7 @@ import (
 
 	entydad "github.com/erniealice/entydad-golang"
 	selectWorkspaceRole "github.com/erniealice/entydad-golang/service/auth/views/login02/select-workspace-role"
-	consumer "github.com/erniealice/espyna-golang/consumer"
+	"github.com/erniealice/espyna-golang/shared/identity"
 	"github.com/erniealice/pyeza-golang/view"
 )
 
@@ -382,11 +382,12 @@ func (m *AuthModule) handleChangePassword() http.HandlerFunc {
 			http.Redirect(w, r, entydad.AuthChangePasswordURL+"?error=mismatch", http.StatusSeeOther)
 			return
 		}
-		userID := consumer.GetUserIDFromContext(r.Context())
-		if userID == "" {
+		id, ok := identity.FromContext(r.Context())
+		if !ok || id.UserID == "" {
 			http.Redirect(w, r, entydad.AuthLoginURL, http.StatusSeeOther)
 			return
 		}
+		userID := id.UserID
 		if err := authAdapter.ChangePassword(r.Context(), userID, oldPassword, newPassword); err != nil {
 			log.Printf("[AUTH] change password failed for user %s: %v", userID, err)
 			// Map adapter error to a short code so the page handler can pick
@@ -441,7 +442,10 @@ func (m *AuthModule) handleSelectWorkspaceRole() http.HandlerFunc {
 			}
 			// Prefer ctx-injected user (test paths) before falling
 			// back to cookie validation done by the wrapping handler.
-			userID := consumer.GetUserIDFromContext(ctx)
+			var userID string
+			if id, ok := identity.FromContext(ctx); ok {
+				userID = id.UserID
+			}
 			if userID == "" {
 				if v, ok := ctx.Value(ctxKeyAuthUserID).(string); ok {
 					userID = v
@@ -532,7 +536,10 @@ func (m *AuthModule) handleSwitchPrincipal() http.HandlerFunc {
 			return
 		}
 		ctx := r.Context()
-		userID := consumer.GetUserIDFromContext(ctx)
+		var userID string
+		if id, ok := identity.FromContext(ctx); ok {
+			userID = id.UserID
+		}
 		if userID == "" {
 			// /action/* is normally session-middleware-protected, but
 			// defensively re-validate via cookie when context didn't
