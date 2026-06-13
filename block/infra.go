@@ -13,6 +13,7 @@ import (
 	roleusers "github.com/erniealice/entydad-golang/domain/entity/identity/role/users"
 	userdashboard "github.com/erniealice/entydad-golang/domain/entity/identity/user/dashboard"
 	workspaceaction "github.com/erniealice/entydad-golang/domain/entity/identity/workspace/action"
+	"github.com/erniealice/entydad-golang/service/auth"
 	centymo "github.com/erniealice/centymo-golang"
 	"github.com/erniealice/espyna-golang/reference"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
@@ -106,4 +107,13 @@ type Infra struct {
 	// newly-active workspace_id (used by WorkspaceUnit's switch handler).
 	// Nil-safe: falls back to "/home".
 	HomeURLForWorkspaceID func(ctx context.Context, workspaceID string) string
+
+	// AuthDeps carries all dependencies for the auth service module (login,
+	// signup, reset-password, change-password, logout, multi-principal chooser).
+	// When non-nil, AuthUnit() is mountable; when nil, the auth unit skips
+	// registration (non-fatal, with a log warning). Built once by the host
+	// app's composition layer — the auth module's narrow interfaces
+	// (AuthAdapter, SessionManager, PrincipalResolver, etc.) are bridged by
+	// the adapter closures in the host, not by entydad.
+	AuthDeps *auth.Deps
 }

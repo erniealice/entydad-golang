@@ -39,6 +39,7 @@ import (
 	entityclienttag "github.com/erniealice/entydad-golang/domain/entity/party/client_tag"
 	entitysupplier "github.com/erniealice/entydad-golang/domain/entity/party/supplier"
 	entitysuppliertag "github.com/erniealice/entydad-golang/domain/entity/party/supplier_tag"
+	"github.com/erniealice/entydad-golang/service/auth"
 	tax "github.com/erniealice/entydad-golang/domain/tax"
 	taxregistration "github.com/erniealice/entydad-golang/domain/tax/tax_registration"
 	"github.com/erniealice/espyna-golang/registry"
@@ -1020,14 +1021,58 @@ func TaxRegistrationUnit(uc *UseCases, _ *Infra) compose.Unit {
 }
 
 // ---------------------------------------------------------------------------
+// Service: Auth
+// ---------------------------------------------------------------------------
+
+// AuthUnit returns a compose.Unit that mounts the auth service module (login,
+// signup, reset-password, change-password, logout, multi-principal chooser).
+//
+// Auth is NOT a standard entity module with Describe() — it has no
+// Routes/Labels/Templates loaded via the compose engine. Instead, its
+// routes are hardcoded in entydad/service/auth, and labels are injected
+// through auth.Deps by the host app's composition layer.
+//
+// The Mount closure type-asserts MountContext.Routes to auth.RouteRegistrar
+// (view.RouteRegistrar + HandleFunc). The assertion always succeeds for
+// service-admin's chi-based RouteRegistry; other hosts that lack HandleFunc
+// degrade gracefully with a log warning (matching compose.HandleFunc's
+// existing behavior across all blocks).
+func AuthUnit(infra *Infra) compose.Unit {
+	return compose.Unit{
+		Key: "service.auth",
+		Mount: func(mc *compose.MountContext) error {
+			if infra.AuthDeps == nil {
+				log.Println("entydad catalog: warning: AuthDeps is nil — skipping auth module")
+				return nil
+			}
+
+			// The auth module's RegisterRoutes requires auth.RouteRegistrar
+			// (view.RouteRegistrar + HandleFunc). Assert the compose registrar
+			// to that interface.
+			authRoutes, ok := mc.Routes.(auth.RouteRegistrar)
+			if !ok {
+				log.Println("entydad catalog: warning: RouteRegistrar does not implement auth.RouteRegistrar (HandleFunc) — skipping auth module")
+				return nil
+			}
+
+			module := auth.NewAuthModule(infra.AuthDeps)
+			module.RegisterRoutes(authRoutes)
+
+			log.Println("  ✓ Auth module delegated to entydad/service/auth (compose Unit)")
+			return nil
+		},
+	}
+}
+
+// ---------------------------------------------------------------------------
 // Aggregator
 // ---------------------------------------------------------------------------
 
 // AllUnits returns the complete curated unit list for all entydad entity
 // domains in the same registration order as Block(): party → identity →
-// commerce → tax.
+// commerce → tax → service.auth.
 func AllUnits(uc *UseCases, infra *Infra) []compose.Unit {
-	return []compose.Unit{
+	units := []compose.Unit{
 		// Party sub-context
 		ClientUnit(uc, infra),
 		SupplierUnit(uc, infra),
@@ -1046,6 +1091,9 @@ func AllUnits(uc *UseCases, infra *Infra) []compose.Unit {
 		PaymentTermUnit(uc, infra),
 		// Tax domain
 		TaxRegistrationUnit(uc, infra),
+		// Service: auth (login, signup, reset-password, etc.)
+		AuthUnit(infra),
 	}
+	return units
 }
 
