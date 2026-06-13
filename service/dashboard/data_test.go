@@ -142,16 +142,6 @@ func TestMapActivityItem(t *testing.T) {
 	}
 }
 
-func TestBuildGetUsersByRoleID_NilDB(t *testing.T) {
-	fn := BuildGetUsersByRoleID(nil, nil)
-	if fn != nil {
-		t.Error("BuildGetUsersByRoleID(nil, nil) should return nil")
-	}
-}
-
-func TestBuildGetDashboardData_NilDB(t *testing.T) {
-	fn := BuildGetDashboardData(nil, nil, nil)
-	if fn != nil {
-		t.Error("BuildGetDashboardData(nil, nil, nil) should return nil")
-	}
-}
+// TestBuildGetUsersByRoleID_NilDB and TestBuildGetDashboardData_NilDB removed:
+// the raw-SQL builder functions have been migrated to espyna use cases at
+// packages/espyna-golang/internal/application/usecases/service/dashboard/home/.
