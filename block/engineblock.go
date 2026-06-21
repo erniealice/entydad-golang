@@ -33,10 +33,9 @@ import (
 	userdashboard "github.com/erniealice/entydad-golang/domain/entity/identity/user/dashboard"
 	"github.com/erniealice/entydad-golang/service/auth"
 	consumer "github.com/erniealice/espyna-golang/consumer"
-	composehelper "github.com/erniealice/espyna-golang/consumer/compose"
+	consumerapp "github.com/erniealice/espyna-golang/consumer/app"
 	"github.com/erniealice/espyna-golang/reference"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
-	pyeza "github.com/erniealice/pyeza-golang"
 	pytypes "github.com/erniealice/pyeza-golang/types"
 )
 
@@ -57,13 +56,13 @@ func WithEngineHomeURL(url string) EngineBlockOption {
 // EngineBlock returns a pyeza.AppOption that registers all entydad entity domain
 // modules via the compose engine AND registers the auth module directly (D2-β).
 // Replaces the app-side entydadEngineBlock wrapper.
-func EngineBlock(opts ...EngineBlockOption) pyeza.AppOption {
+func EngineBlock(opts ...EngineBlockOption) consumerapp.AppOption {
 	cfg := &engineBlockConfig{}
 	for _, opt := range opts {
 		opt(cfg)
 	}
-	return func(ctx *pyeza.AppContext) error {
-		uc, err := composehelper.RequireUseCases(ctx, "entydad.EngineBlock")
+	return func(ctx *consumerapp.AppContext) error {
+		uc, err := consumerapp.RequireUseCases(ctx, "entydad.EngineBlock")
 		if err != nil {
 			return err
 		}
@@ -125,7 +124,7 @@ func EngineBlock(opts ...EngineBlockOption) pyeza.AppOption {
 		// ── Map use cases + assemble (preserves the ComposeResult merge) ──────
 		adapted := buildEntydadUseCases(uc, ctx.DB)
 		units := AllUnits(adapted, infra)
-		return composehelper.AssembleEngineBlock("entydad", units, ctx)
+		return consumerapp.AssembleEngineBlock("entydad", units, ctx)
 	}
 }
 
@@ -134,12 +133,12 @@ func EngineBlock(opts ...EngineBlockOption) pyeza.AppOption {
 // a non-mock boot with a missing/wrong-type renderer, auth-label set, session
 // manager, CSRF issuer, or CSRF secret boot-FATALS (espyna finalize asserts do
 // NOT cover ctx.CSRFIssuer — the entydad block reads it).
-func buildAuthChainDeps(ctx *pyeza.AppContext, uc *consumer.UseCases) *authChainDeps {
+func buildAuthChainDeps(ctx *consumerapp.AppContext, uc *consumer.UseCases) *authChainDeps {
 	provider := getEnv("CONFIG_AUTH_PROVIDER", "")
 	nonMock := provider != "" && provider != "mock"
 
 	// UI bundle (Renderer + AuthLabels).
-	ui, _ := ctx.UI.(*pyeza.AppUIBundle)
+	ui, _ := ctx.UI.(*consumerapp.AppUIBundle)
 	if nonMock && ui == nil {
 		log.Fatalf("FATAL entydad.EngineBlock: ctx.UI is %T, want non-nil *pyeza.AppUIBundle "+
 			"(the host must stamp the auth-half UI bundle). Refusing to boot auth with a blank renderer/labels.", ctx.UI)

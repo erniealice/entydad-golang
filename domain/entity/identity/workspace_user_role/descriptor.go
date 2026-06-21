@@ -1,6 +1,6 @@
 package workspace_user_role
 
-import "github.com/erniealice/pyeza-golang/compose"
+import "github.com/erniealice/espyna-golang/consumer/compose"
 
 func Describe() compose.Unit {
 	r := DefaultRoutes()

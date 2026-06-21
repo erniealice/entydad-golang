@@ -30,30 +30,30 @@ import (
 	location "github.com/erniealice/entydad-golang/domain/entity/location"
 	entitylocation "github.com/erniealice/entydad-golang/domain/entity/location/location"
 	locationaction "github.com/erniealice/entydad-golang/domain/entity/location/location/action"
+	entitylocationarea "github.com/erniealice/entydad-golang/domain/entity/location/location_area"
 	locationareaaction "github.com/erniealice/entydad-golang/domain/entity/location/location_area/action"
 	locationarealist "github.com/erniealice/entydad-golang/domain/entity/location/location_area/list"
-	entitylocationarea "github.com/erniealice/entydad-golang/domain/entity/location/location_area"
 	party "github.com/erniealice/entydad-golang/domain/entity/party"
 	entityclient "github.com/erniealice/entydad-golang/domain/entity/party/client"
 	clientdetail "github.com/erniealice/entydad-golang/domain/entity/party/client/detail"
 	entityclienttag "github.com/erniealice/entydad-golang/domain/entity/party/client_tag"
 	entitysupplier "github.com/erniealice/entydad-golang/domain/entity/party/supplier"
 	entitysuppliertag "github.com/erniealice/entydad-golang/domain/entity/party/supplier_tag"
-	"github.com/erniealice/entydad-golang/service/auth"
 	tax "github.com/erniealice/entydad-golang/domain/tax"
 	taxregistration "github.com/erniealice/entydad-golang/domain/tax/tax_registration"
+	"github.com/erniealice/entydad-golang/service/auth"
+	"github.com/erniealice/espyna-golang/consumer/compose"
 	categorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
-	clientstmtpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/ledger/reporting/client_statement"
 	locationareapb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/location_area"
-	priceplanpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/price_plan"
-	priceschedulepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/price_schedule"
+	workspacepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace"
+	clientstmtpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/ledger/reporting/client_statement"
 	revenuepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/revenue/revenue"
 	revrunpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/revenue/revenue_run"
+	priceplanpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/price_plan"
+	priceschedulepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/price_schedule"
 	subscriptionpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/subscription"
 	collectionpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/collection"
 	suppstmtpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/reporting/supplier_statement"
-	workspacepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace"
-	"github.com/erniealice/pyeza-golang/compose"
 	"github.com/erniealice/pyeza-golang/route"
 	pyezatypes "github.com/erniealice/pyeza-golang/types"
 	"google.golang.org/protobuf/proto"
@@ -533,21 +533,21 @@ func UserUnit(uc *UseCases, infra *Infra) compose.Unit {
 		l := u.Labels.(*entityuser.Labels)
 
 		identity.NewUserModule(&identity.UserModuleDeps{
-			Routes:               *r,
-			CommonLabels:         mc.Common,
-			SharedLabels:         infra.SharedLabels,
-			Labels:               *l,
-			DashboardLabels:      infra.UserDashboardLabels,
-			DashboardTitleLabels: infra.DashboardTitleLabels,
-			UserRoleLabels:       infra.UserRoleLabels,
-			TableLabels:          mc.Table,
-			GetListPageData:      uc.User.GetListPageData,
-			GetUserWorkspacesMap: infra.GetUserWorkspacesMap,
-			CreateUser:           uc.User.Create,
-			ReadUser:             uc.User.Read,
-			UpdateUser:           uc.User.Update,
-			DeleteUser:           uc.User.Delete,
-			SetActive:            setActiveClosure(uc, "user"),
+			Routes:                       *r,
+			CommonLabels:                 mc.Common,
+			SharedLabels:                 infra.SharedLabels,
+			Labels:                       *l,
+			DashboardLabels:              infra.UserDashboardLabels,
+			DashboardTitleLabels:         infra.DashboardTitleLabels,
+			UserRoleLabels:               infra.UserRoleLabels,
+			TableLabels:                  mc.Table,
+			GetListPageData:              uc.User.GetListPageData,
+			GetUserWorkspacesMap:         infra.GetUserWorkspacesMap,
+			CreateUser:                   uc.User.Create,
+			ReadUser:                     uc.User.Read,
+			UpdateUser:                   uc.User.Update,
+			DeleteUser:                   uc.User.Delete,
+			SetActive:                    setActiveClosure(uc, "user"),
 			CreateWorkspaceUser:          uc.WorkspaceUser.Create,
 			ListWorkspaceUsers:           uc.WorkspaceUser.List,
 			GetWorkspaceUserItemPageData: uc.WorkspaceUser.GetItemPageData,
@@ -575,20 +575,20 @@ func RoleUnit(uc *UseCases, infra *Infra) compose.Unit {
 		l := u.Labels.(*entityrole.Labels)
 
 		identity.NewRoleModule(&identity.RoleModuleDeps{
-			Routes:               *r,
-			CommonLabels:         mc.Common,
-			SharedLabels:         infra.SharedLabels,
-			Labels:               *l,
-			RolePermissionLabels: infra.RolePermissionLabels,
-			RoleUserLabels:       infra.RoleUserLabels,
-			TableLabels:          mc.Table,
-			GetListPageData:      uc.Role.GetListPageData,
-			GetInUseIDs:          infra.RefChecker.GetRoleInUseIDs,
-			CreateRole:           uc.Role.Create,
-			ReadRole:             uc.Role.Read,
-			UpdateRole:           uc.Role.Update,
-			DeleteRole:           uc.Role.Delete,
-			SetActive:            setActiveClosure(uc, "role"),
+			Routes:                  *r,
+			CommonLabels:            mc.Common,
+			SharedLabels:            infra.SharedLabels,
+			Labels:                  *l,
+			RolePermissionLabels:    infra.RolePermissionLabels,
+			RoleUserLabels:          infra.RoleUserLabels,
+			TableLabels:             mc.Table,
+			GetListPageData:         uc.Role.GetListPageData,
+			GetInUseIDs:             infra.RefChecker.GetRoleInUseIDs,
+			CreateRole:              uc.Role.Create,
+			ReadRole:                uc.Role.Read,
+			UpdateRole:              uc.Role.Update,
+			DeleteRole:              uc.Role.Delete,
+			SetActive:               setActiveClosure(uc, "role"),
 			GetItemPageData:         uc.Role.GetItemPageData,
 			CreateRolePermission:    uc.RolePermission.Create,
 			DeleteRolePermission:    uc.RolePermission.Delete,
@@ -1075,4 +1075,3 @@ func AllUnits(uc *UseCases, infra *Infra) []compose.Unit {
 	}
 	return units
 }
-

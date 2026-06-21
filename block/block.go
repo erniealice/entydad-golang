@@ -41,6 +41,7 @@ import (
 	tax "github.com/erniealice/entydad-golang/domain/tax"
 	adminmod "github.com/erniealice/entydad-golang/service/dashboard/views/admin"
 	admindashboardroutes "github.com/erniealice/entydad-golang/service/dashboard/views/admin/dashboard"
+	consumerapp "github.com/erniealice/espyna-golang/consumer/app"
 	"github.com/erniealice/espyna-golang/reference"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
 	clientpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client"
@@ -222,7 +223,7 @@ func WithSecureSwitch(
 //   - ctx.GetUsersByRoleID, ctx.GetDashboardData, ctx.HashPassword,
 //     ctx.GetUserWorkspacesMap — user/workspace helpers
 //   - ctx.Routes, ctx.Common, ctx.Table, ctx.BusinessType — from pyeza.AppContext
-func Block(opts ...BlockOption) pyeza.AppOption {
+func Block(opts ...BlockOption) consumerapp.AppOption {
 	cfg := &blockConfig{}
 	for _, opt := range opts {
 		opt(cfg)
@@ -238,7 +239,7 @@ func Block(opts ...BlockOption) pyeza.AppOption {
 		cfg.supplier || cfg.taxRegistration || cfg.conversation
 	cfg.enableAll = !moduleSelected
 
-	return func(ctx *pyeza.AppContext) error {
+	return func(ctx *consumerapp.AppContext) error {
 		// --- typed UseCases supplied via WithUseCases() ---
 
 		if cfg.useCases == nil {

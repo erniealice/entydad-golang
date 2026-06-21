@@ -17,6 +17,7 @@ import (
 
 	party "github.com/erniealice/entydad-golang/domain/entity/party"
 	clientdetail "github.com/erniealice/entydad-golang/domain/entity/party/client/detail"
+	consumerapp "github.com/erniealice/espyna-golang/consumer/app"
 	"github.com/erniealice/espyna-golang/reference"
 	categorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
@@ -30,7 +31,6 @@ import (
 	subscriptionpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/subscription/subscription"
 	collectionpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/collection"
 	suppstmtpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/treasury/reporting/supplier_statement"
-	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/pyeza-golang/route"
 	pyezatypes "github.com/erniealice/pyeza-golang/types"
 	"google.golang.org/protobuf/proto"
@@ -57,7 +57,7 @@ type partyWiring struct {
 	newAttachmentID  func() string
 }
 
-func wirePartyModule(ctx *pyeza.AppContext, w partyWiring) {
+func wirePartyModule(ctx *consumerapp.AppContext, w partyWiring) {
 	cfg := w.cfg
 	uc := w.uc
 	labels := w.labels

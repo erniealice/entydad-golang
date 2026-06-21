@@ -19,10 +19,10 @@ import (
 	locationaction "github.com/erniealice/entydad-golang/domain/entity/location/location/action"
 	locationareaaction "github.com/erniealice/entydad-golang/domain/entity/location/location_area/action"
 	locationarealist "github.com/erniealice/entydad-golang/domain/entity/location/location_area/list"
+	consumerapp "github.com/erniealice/espyna-golang/consumer/app"
 	"github.com/erniealice/espyna-golang/reference"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
 	locationareapb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/location_area"
-	pyeza "github.com/erniealice/pyeza-golang"
 )
 
 // commerceWiring carries everything the commerce/location cluster needs from
@@ -41,7 +41,7 @@ type commerceWiring struct {
 	newAttachmentID  func() string
 }
 
-func wireCommerceModule(ctx *pyeza.AppContext, w commerceWiring) error {
+func wireCommerceModule(ctx *consumerapp.AppContext, w commerceWiring) error {
 	cfg := w.cfg
 	uc := w.uc
 	labels := w.labels

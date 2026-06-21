@@ -21,9 +21,9 @@ import (
 	roleusers "github.com/erniealice/entydad-golang/domain/entity/identity/role/users"
 	userdashboard "github.com/erniealice/entydad-golang/domain/entity/identity/user/dashboard"
 	workspaceaction "github.com/erniealice/entydad-golang/domain/entity/identity/workspace/action"
+	consumerapp "github.com/erniealice/espyna-golang/consumer/app"
 	"github.com/erniealice/espyna-golang/reference"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
-	pyeza "github.com/erniealice/pyeza-golang"
 	pyezatypes "github.com/erniealice/pyeza-golang/types"
 )
 
@@ -48,7 +48,7 @@ type identityWiring struct {
 	newAttachmentID  func() string
 }
 
-func wireIdentityModule(ctx *pyeza.AppContext, w identityWiring) {
+func wireIdentityModule(ctx *consumerapp.AppContext, w identityWiring) {
 	cfg := w.cfg
 	uc := w.uc
 	labels := w.labels
