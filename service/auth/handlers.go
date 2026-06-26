@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"net/http"
 	"net/url"
@@ -98,50 +99,136 @@ func (m *AuthModule) handleLogin() http.HandlerFunc {
 			return
 		}
 
-		principals, presolveErr := principalLoader.Resolve(r.Context(), userID)
-		if presolveErr != nil {
-			log.Printf("[AUTH] principal resolve failed for user %s: %v", userID, presolveErr)
-			http.Redirect(w, r, "/auth/no-access", http.StatusSeeOther)
-			return
-		}
-		switch len(principals) {
-		case 0:
-			// Authenticated but has no active grants — sign them out
-			// and surface the no-access page. The cookie is cleared so
-			// they don't sit on a permissionless session.
-			if invalidErr := authAdapter.InvalidateSession(r.Context(), token); invalidErr != nil {
-				log.Printf("[AUTH] no-access path: failed to invalidate session: %v", invalidErr)
-			}
-			sessionMw.ClearSessionCookie(w)
-			http.Redirect(w, r, "/auth/no-access", http.StatusSeeOther)
-			return
+		// Shared post-auth tail: resolve principals + auto-route/chooser.
+		// routePrincipals performs any session rotation + CSRF refresh as a
+		// side effect and RETURNS the redirect target; the password form
+		// answers with a 303. The Firebase endpoint reuses the exact same
+		// routePrincipals (answering with JSON), so the delegate-guard /
+		// fail-closed logic lives in ONE place.
+		http.Redirect(w, r, m.routePrincipals(w, r, token, userID), http.StatusSeeOther)
+	}
+}
 
-		case 1:
-			// codex RBC#1 — High-1 (2026-06-02). A multi-target delegate
-			// (len(ActingAsTargets) > 1) reaching this auto-route would be
-			// switched into WITHOUT an explicit acting-as id, persisting a
-			// delegate principal with an EMPTY acting_as_* (→ fail-closed
-			// to zero permissions). Even though there is exactly ONE
-			// principal, the ACT-AS identity is ambiguous — fail closed by
-			// routing to the chooser so the user picks a target, never
-			// calling executePrincipalSwitch with an empty acting-as.
-			// Single-target delegates and non-delegate principals pass.
-			if !DelegateActingAsResolved(principals[0], "", "") {
-				log.Printf("[AUTH] auto-route blocked: multi-target delegate for user %s requires target selection — routing to chooser", userID)
-				http.Redirect(w, r, "/auth/select-workspace-role", http.StatusSeeOther)
-				return
+// routePrincipals is the SHARED post-authentication tail for every login path
+// (password form + Firebase ID token). The caller has already minted a session
+// `token` for `userID` and set the session cookie + CSRF. This resolves the
+// user's active principal bindings and decides where to send them, performing
+// any session rotation / CSRF refresh as a SIDE EFFECT (on w). It RETURNS the
+// redirect target URL rather than writing the navigation itself, so the
+// password path can answer with a 303 and the Firebase fetch path with a JSON
+// redirect — both reuse the identical, security-critical principal-resolution
+// + delegate-guard logic. Behaviour for the password path is byte-identical to
+// the prior inline switch (same URLs, same cookie writes, same 303).
+func (m *AuthModule) routePrincipals(w http.ResponseWriter, r *http.Request, token, userID string) string {
+	authAdapter := m.deps.AuthAdapter
+	sessionMw := m.deps.SessionManager
+	principalLoader := m.deps.PrincipalResolver
+
+	principals, presolveErr := principalLoader.Resolve(r.Context(), userID)
+	if presolveErr != nil {
+		log.Printf("[AUTH] principal resolve failed for user %s: %v", userID, presolveErr)
+		return "/auth/no-access"
+	}
+	switch len(principals) {
+	case 0:
+		// Authenticated but has no active grants — sign them out
+		// and surface the no-access page. The cookie is cleared so
+		// they don't sit on a permissionless session.
+		if invalidErr := authAdapter.InvalidateSession(r.Context(), token); invalidErr != nil {
+			log.Printf("[AUTH] no-access path: failed to invalidate session: %v", invalidErr)
+		}
+		sessionMw.ClearSessionCookie(w)
+		return "/auth/no-access"
+
+	case 1:
+		// codex RBC#1 — High-1 (2026-06-02). A multi-target delegate
+		// (len(ActingAsTargets) > 1) reaching this auto-route would be
+		// switched into WITHOUT an explicit acting-as id, persisting a
+		// delegate principal with an EMPTY acting_as_* (→ fail-closed
+		// to zero permissions). Even though there is exactly ONE
+		// principal, the ACT-AS identity is ambiguous — fail closed by
+		// routing to the chooser so the user picks a target, never
+		// calling executePrincipalSwitch with an empty acting-as.
+		// Single-target delegates and non-delegate principals pass.
+		if !DelegateActingAsResolved(principals[0], "", "") {
+			log.Printf("[AUTH] auto-route blocked: multi-target delegate for user %s requires target selection — routing to chooser", userID)
+			return "/auth/select-workspace-role"
+		}
+		// Auto-route. Rotate the session so the cookie token
+		// reflects the principal-stamped row. This is the
+		// post-login "exactly one principal" branch; we always
+		// rotate to mint a principal-scoped session row.
+		result, err := m.deps.PrincipalSwitcher(r.Context(), PrincipalSwitchInput{
+			UserID:          userID,
+			Token:           token,
+			TargetPrincipal: principals[0],
+			// Explicit-form caller (this is the chooser GET that
+			// auto-routes); RequireAudit=false preserves dev-mode
+			// best-effort behavior. UseCase per red-team X-2.
+			UseCase:      "switch_explicit_rotate",
+			RequestURL:   r.URL.Path,
+			Referer:      r.Header.Get("Referer"),
+			SecFetchSite: r.Header.Get("Sec-Fetch-Site"),
+			UserAgent:    r.Header.Get("User-Agent"),
+			RequireAudit: false,
+		})
+		if err != nil {
+			log.Printf("[AUTH] auto-route principal switch failed for user %s: %v", userID, err)
+			return "/auth/no-access"
+		}
+		if result.NewToken != "" {
+			sessionMw.SetSessionCookie(w, result.NewToken)
+		}
+		// C2: always refresh the CSRF cookie after a successful
+		// principal switch — even when NewToken is empty (in-place
+		// session update, same workspace). The initial login CSRF
+		// cookie carries workspaceID="" which becomes stale once the
+		// session is stamped with a workspace. Use the effective
+		// session token (new if rotated, original if in-place).
+		effectiveToken := result.NewToken
+		if effectiveToken == "" {
+			effectiveToken = token
+		}
+		m.deps.CSRFIssuer(w, m.deps.CSRFSecret,
+			effectiveToken, principals[0].WorkspaceID)
+		return m.homeURLForWorkspaceID(r.Context(), principals[0].WorkspaceID)
+
+	default:
+		// 2+ principals. If all are the same kind (e.g. one user
+		// has OPERATOR_STAFF in multiple workspaces), auto-route to
+		// the first one — the workspace switcher in the sidebar
+		// handles same-kind workspace switching. Only show the
+		// chooser when principals span different kinds (e.g.
+		// OPERATOR_STAFF + CLIENT), where the UX role differs.
+		allSameKind := true
+		firstKind := principals[0].Type
+		for _, p := range principals[1:] {
+			if p.Type != firstKind {
+				allSameKind = false
+				break
 			}
-			// Auto-route. Rotate the session so the cookie token
-			// reflects the principal-stamped row. This is the
-			// post-login "exactly one principal" branch; we always
-			// rotate to mint a principal-scoped session row.
+		}
+		if allSameKind {
+			// codex RBC#1 — High-1 (2026-06-02). Same-kind auto-route
+			// silently lands on principals[0]. That is safe for staff
+			// (the sidebar workspace switcher handles multi-WU), but a
+			// delegate principal holding N>1 acting-as targets would be
+			// switched into with an EMPTY acting_as_* (→ fail-closed to
+			// zero permissions). The act-as identity is ambiguous —
+			// fail closed by routing to the chooser rather than calling
+			// executePrincipalSwitch with an empty acting-as. A
+			// single-target delegate is unambiguous and proceeds.
+			if !DelegateActingAsResolved(principals[0], "", "") {
+				log.Printf("[AUTH] same-kind auto-route blocked: multi-target delegate for user %s requires target selection — routing to chooser", userID)
+				return "/auth/select-workspace-role"
+			}
 			result, err := m.deps.PrincipalSwitcher(r.Context(), PrincipalSwitchInput{
 				UserID:          userID,
 				Token:           token,
 				TargetPrincipal: principals[0],
-				// Explicit-form caller (this is the chooser GET that
-				// auto-routes); RequireAudit=false preserves dev-mode
-				// best-effort behavior. UseCase per red-team X-2.
+				// Same-kind auto-route after login (multi-WU staff
+				// across N workspaces lands in the first one).
+				// Explicit-form caller; RequireAudit=false.
 				UseCase:      "switch_explicit_rotate",
 				RequestURL:   r.URL.Path,
 				Referer:      r.Header.Get("Referer"),
@@ -150,98 +237,150 @@ func (m *AuthModule) handleLogin() http.HandlerFunc {
 				RequireAudit: false,
 			})
 			if err != nil {
-				log.Printf("[AUTH] auto-route principal switch failed for user %s: %v", userID, err)
-				http.Redirect(w, r, "/auth/no-access", http.StatusSeeOther)
-				return
+				log.Printf("[AUTH] auto-route same-kind principal switch failed for user %s: %v", userID, err)
+				return "/auth/no-access"
 			}
 			if result.NewToken != "" {
 				sessionMw.SetSessionCookie(w, result.NewToken)
 			}
-			// C2: always refresh the CSRF cookie after a successful
-			// principal switch — even when NewToken is empty (in-place
-			// session update, same workspace). The initial login CSRF
-			// cookie carries workspaceID="" which becomes stale once the
-			// session is stamped with a workspace. Use the effective
-			// session token (new if rotated, original if in-place).
+			// C2: always refresh CSRF cookie (see case-1 comment).
 			effectiveToken := result.NewToken
 			if effectiveToken == "" {
 				effectiveToken = token
 			}
 			m.deps.CSRFIssuer(w, m.deps.CSRFSecret,
 				effectiveToken, principals[0].WorkspaceID)
-			http.Redirect(w, r, m.homeURLForWorkspaceID(r.Context(), principals[0].WorkspaceID), http.StatusSeeOther)
-			return
+			return m.homeURLForWorkspaceID(r.Context(), principals[0].WorkspaceID)
+		}
+		// Different kinds: present the chooser. The principal-less
+		// session stays — view_adapter's fail-closed default keeps
+		// the chooser page itself accessible (it doesn't gate on
+		// perms) but blocks everything else.
+		return "/auth/select-workspace-role"
+	}
+}
 
-		default:
-			// 2+ principals. If all are the same kind (e.g. one user
-			// has OPERATOR_STAFF in multiple workspaces), auto-route to
-			// the first one — the workspace switcher in the sidebar
-			// handles same-kind workspace switching. Only show the
-			// chooser when principals span different kinds (e.g.
-			// OPERATOR_STAFF + CLIENT), where the UX role differs.
-			allSameKind := true
-			firstKind := principals[0].Type
-			for _, p := range principals[1:] {
-				if p.Type != firstKind {
-					allSameKind = false
-					break
-				}
-			}
-			if allSameKind {
-				// codex RBC#1 — High-1 (2026-06-02). Same-kind auto-route
-				// silently lands on principals[0]. That is safe for staff
-				// (the sidebar workspace switcher handles multi-WU), but a
-				// delegate principal holding N>1 acting-as targets would be
-				// switched into with an EMPTY acting_as_* (→ fail-closed to
-				// zero permissions). The act-as identity is ambiguous —
-				// fail closed by routing to the chooser rather than calling
-				// executePrincipalSwitch with an empty acting-as. A
-				// single-target delegate is unambiguous and proceeds.
-				if !DelegateActingAsResolved(principals[0], "", "") {
-					log.Printf("[AUTH] same-kind auto-route blocked: multi-target delegate for user %s requires target selection — routing to chooser", userID)
-					http.Redirect(w, r, "/auth/select-workspace-role", http.StatusSeeOther)
-					return
-				}
-				result, err := m.deps.PrincipalSwitcher(r.Context(), PrincipalSwitchInput{
-					UserID:          userID,
-					Token:           token,
-					TargetPrincipal: principals[0],
-					// Same-kind auto-route after login (multi-WU staff
-					// across N workspaces lands in the first one).
-					// Explicit-form caller; RequireAudit=false.
-					UseCase:      "switch_explicit_rotate",
-					RequestURL:   r.URL.Path,
-					Referer:      r.Header.Get("Referer"),
-					SecFetchSite: r.Header.Get("Sec-Fetch-Site"),
-					UserAgent:    r.Header.Get("User-Agent"),
-					RequireAudit: false,
-				})
-				if err != nil {
-					log.Printf("[AUTH] auto-route same-kind principal switch failed for user %s: %v", userID, err)
-					http.Redirect(w, r, "/auth/no-access", http.StatusSeeOther)
-					return
-				}
-				if result.NewToken != "" {
-					sessionMw.SetSessionCookie(w, result.NewToken)
-				}
-				// C2: always refresh CSRF cookie (see case-1 comment).
-				effectiveToken := result.NewToken
-				if effectiveToken == "" {
-					effectiveToken = token
-				}
-				m.deps.CSRFIssuer(w, m.deps.CSRFSecret,
-					effectiveToken, principals[0].WorkspaceID)
-				http.Redirect(w, r, m.homeURLForWorkspaceID(r.Context(), principals[0].WorkspaceID), http.StatusSeeOther)
-				return
-			}
-			// Different kinds: present the chooser. The principal-less
-			// session stays — view_adapter's fail-closed default keeps
-			// the chooser page itself accessible (it doesn't gate on
-			// perms) but blocks everything else.
-			http.Redirect(w, r, "/auth/select-workspace-role", http.StatusSeeOther)
+// handleFirebaseLogin returns the POST /auth/firebase handler — the Firebase
+// ID-token login path (Microsoft / Google / etc. via the Firebase JS SDK). The
+// browser signs in with the Firebase SDK, obtains an ID token, and POSTs it
+// here as `id_token`. The server VERIFIES the token (FirebaseVerifier),
+// enforces the optional sign-in-method allow-list, resolves the DB user by
+// EMAIL (migrated users have no firebase_uid, so token.email -> user.email is
+// the join key), mints a server-side session (SessionMinter — provider-agnostic
+// after the session-decoupling), and reuses routePrincipals for the identical
+// principal-resolution / delegate-guard logic as the password path.
+//
+// Mounted at /auth/firebase — under the session-middleware exclude prefix
+// "/auth/" (like /auth/login) so this pre-session POST is not bounced to login,
+// and outside the /action/* CSRF surface. Only registered when FirebaseVerifier
+// + SessionMinter are wired (i.e. CONFIG_AUTH_PROVIDER=firebase).
+//
+// Answered as JSON {"redirect": "..."} because the client is a fetch(), which
+// cannot follow a 303 as a navigation — the browser JS does
+// window.location = redirect.
+func (m *AuthModule) handleFirebaseLogin() http.HandlerFunc {
+	verifier := m.deps.FirebaseVerifier
+	minter := m.deps.SessionMinter
+	sessionMw := m.deps.SessionManager
+	principalLoader := m.deps.PrincipalResolver
+	allowed := m.deps.AllowedSignInMethods
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		if verifier == nil || minter == nil || sessionMw == nil {
+			writeFirebaseJSON(w, http.StatusNotFound, "firebase sign-in not enabled")
 			return
 		}
+		if err := r.ParseForm(); err != nil {
+			writeFirebaseJSON(w, http.StatusBadRequest, "invalid_request")
+			return
+		}
+		idToken := strings.TrimSpace(r.FormValue("id_token"))
+		if idToken == "" {
+			writeFirebaseJSON(w, http.StatusBadRequest, "missing_token")
+			return
+		}
+		email, signInProvider, err := verifier(r.Context(), idToken)
+		if err != nil || strings.TrimSpace(email) == "" {
+			log.Printf("[AUTH] firebase verify failed (provider=%s): %v", signInProvider, err)
+			writeFirebaseError(w, http.StatusUnauthorized, "invalid")
+			return
+		}
+		// Layer 5: enforce the configured sign-in-method allow-list. Empty list
+		// = allow any verified method. The token's sign_in_provider claim is the
+		// source of truth (e.g. "microsoft.com", "google.com", "password").
+		if len(allowed) > 0 && !signInMethodAllowed(allowed, signInProvider) {
+			log.Printf("[AUTH] firebase sign-in method %q not in allow-list for %s", signInProvider, email)
+			writeFirebaseError(w, http.StatusForbidden, "method_not_allowed")
+			return
+		}
+		// Resolve the DB user by email (case-tolerant).
+		userID := ""
+		if m.deps.UserIDByEmail != nil {
+			userID = m.deps.UserIDByEmail(r.Context(), email)
+			if userID == "" {
+				userID = m.deps.UserIDByEmail(r.Context(), strings.ToLower(email))
+			}
+		}
+		if userID == "" {
+			log.Printf("[AUTH] firebase: no DB user maps to email %s", email)
+			writeFirebaseError(w, http.StatusForbidden, "no_account")
+			return
+		}
+		// Mint a server-side session (workspace-less; routePrincipals rotates it
+		// to a principal-stamped row, exactly like the password path).
+		token, err := minter(r.Context(), userID)
+		if err != nil || token == "" {
+			log.Printf("[AUTH] firebase: mint session failed for user %s: %v", userID, err)
+			writeFirebaseError(w, http.StatusInternalServerError, "session")
+			return
+		}
+		sessionMw.SetSessionCookie(w, token)
+		m.deps.CSRFIssuer(w, m.deps.CSRFSecret, token, "")
+		// Observability: a success line for the firebase login (failures are
+		// already logged above). userID + method, never the token.
+		log.Printf("[AUTH] firebase login OK: user=%s method=%s", userID, signInProvider)
+
+		if principalLoader == nil || !principalLoader.IsEnabled() {
+			writeFirebaseRedirect(w, entydad.DefaultAppRedirectURL)
+			return
+		}
+		writeFirebaseRedirect(w, m.routePrincipals(w, r, token, userID))
 	}
+}
+
+// signInMethodAllowed reports whether the Firebase sign_in_provider claim is in
+// the configured allow-list, case-insensitively.
+func signInMethodAllowed(allowed []string, method string) bool {
+	for _, a := range allowed {
+		if strings.EqualFold(strings.TrimSpace(a), strings.TrimSpace(method)) {
+			return true
+		}
+	}
+	return false
+}
+
+// writeFirebaseRedirect answers the Firebase login fetch with the post-login
+// navigation target.
+func writeFirebaseRedirect(w http.ResponseWriter, target string) {
+	writeFirebaseBody(w, http.StatusOK, map[string]string{"redirect": target})
+}
+
+// writeFirebaseError answers the Firebase login fetch with a short error code
+// (never the raw error — not localisable, may leak internals).
+func writeFirebaseError(w http.ResponseWriter, status int, code string) {
+	writeFirebaseBody(w, status, map[string]string{"error": code})
+}
+
+// writeFirebaseJSON is the bare-message form used before a code is resolved.
+func writeFirebaseJSON(w http.ResponseWriter, status int, msg string) {
+	writeFirebaseBody(w, status, map[string]string{"error": msg})
+}
+
+func writeFirebaseBody(w http.ResponseWriter, status int, body map[string]string) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-store")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(body)
 }
 
 // handleSignup returns the POST /auth/signup handler.
@@ -250,6 +389,12 @@ func (m *AuthModule) handleSignup() http.HandlerFunc {
 	sessionMw := m.deps.SessionManager
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		// AUTH_FIREBASE_ALLOW_SIGNUPS=false → self-signup disabled: reject the
+		// endpoint, not just hide the link (defense-in-depth).
+		if !m.deps.AllowSignups {
+			http.Redirect(w, r, entydad.AuthLoginURL, http.StatusSeeOther)
+			return
+		}
 		if authAdapter == nil || sessionMw == nil {
 			// mock_auth: no real adapter — redirect to login
 			http.Redirect(w, r, entydad.AuthLoginURL, http.StatusSeeOther)
@@ -366,6 +511,13 @@ func (m *AuthModule) handleChangePassword() http.HandlerFunc {
 	authAdapter := m.deps.AuthAdapter
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		// Federated / IdP-managed deployments have no local password to change
+		// (AUTH_FIREBASE_PASSWORD_CHANGE_ENABLED / derived) — reject the endpoint,
+		// not just hide the link (defense-in-depth).
+		if !m.deps.AllowPasswordChange {
+			http.Redirect(w, r, entydad.DefaultAppRedirectURL, http.StatusSeeOther)
+			return
+		}
 		if authAdapter == nil {
 			// mock_auth: no-op — redirect back to app
 			http.Redirect(w, r, entydad.DefaultAppRedirectURL, http.StatusSeeOther)

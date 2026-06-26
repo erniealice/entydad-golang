@@ -42,7 +42,7 @@ import (
 	adminmod "github.com/erniealice/entydad-golang/service/dashboard/views/admin"
 	admindashboardroutes "github.com/erniealice/entydad-golang/service/dashboard/views/admin/dashboard"
 	consumerapp "github.com/erniealice/espyna-golang/consumer/app"
-	"github.com/erniealice/espyna-golang/reference"
+	"github.com/erniealice/espyna-golang/ports"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
 	clientpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client"
 	clientstmtpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/ledger/reporting/client_statement"
@@ -216,7 +216,7 @@ func WithSecureSwitch(
 // When called with specific WithXxx() options, only those modules are registered.
 //
 // Expected ctx fields (type-asserted from any):
-//   - ctx.RefChecker   → reference.Checker
+//   - ctx.RefChecker   → ports.Checker
 //   - ctx.Translations → *lynguaV1.TranslationProvider
 //   - ctx.UploadFile, ctx.ListAttachments, ctx.CreateAttachment,
 //     ctx.DeleteAttachment, ctx.NewAttachmentID — attachment funcs
@@ -252,9 +252,9 @@ func Block(opts ...BlockOption) consumerapp.AppOption {
 		}
 		uc := cfg.useCases // local alias for brevity
 
-		refChecker, ok := ctx.RefChecker.(reference.Checker)
+		refChecker, ok := ctx.RefChecker.(ports.Checker)
 		if !ok {
-			return fmt.Errorf("entydad.Block: RefChecker must be reference.Checker")
+			return fmt.Errorf("entydad.Block: RefChecker must be ports.Checker")
 		}
 
 		translations, ok := ctx.Translations.(*lynguaV1.TranslationProvider)

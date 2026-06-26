@@ -49,20 +49,39 @@ type updateUserCall struct {
 	active       bool
 }
 
+type resetPasswordCall struct {
+	userID      string
+	newPassword string
+}
+
 type userActionRecorder struct {
-	deleteCalls      []deleteCall
-	statusCalls      []statusCall
-	createUserCalls  []createUserCall
-	createWSCalls    []createWSUserCall
-	updateUserCalls  []updateUserCall
-	deleteErrByID    map[string]error
-	statusErrByID    map[string]error
-	createUserErr    error
-	createWSErr      error
-	updateUserErr    error
-	readUserErr      error
-	createdUserID    string // returned as the new user ID
-	hashPasswordFunc func(string) (string, error)
+	deleteCalls        []deleteCall
+	statusCalls        []statusCall
+	createUserCalls    []createUserCall
+	createWSCalls      []createWSUserCall
+	updateUserCalls    []updateUserCall
+	resetPasswordCalls []resetPasswordCall
+	deleteErrByID      map[string]error
+	statusErrByID      map[string]error
+	createUserErr      error
+	createWSErr        error
+	updateUserErr      error
+	readUserErr        error
+	resetPasswordErr   error
+	createdUserID      string // returned as the new user ID
+	hashPasswordFunc   func(string) (string, error)
+}
+
+func (r *userActionRecorder) adminResetPassword(_ context.Context, req *userpb.AdminResetPasswordRequest) (*userpb.AdminResetPasswordResponse, error) {
+	call := resetPasswordCall{userID: req.GetUserId()}
+	if np, ok := req.GetMethod().(*userpb.AdminResetPasswordRequest_NewPassword); ok {
+		call.newPassword = np.NewPassword
+	}
+	r.resetPasswordCalls = append(r.resetPasswordCalls, call)
+	if r.resetPasswordErr != nil {
+		return nil, r.resetPasswordErr
+	}
+	return &userpb.AdminResetPasswordResponse{Reset_: true, Success: true}, nil
 }
 
 func (r *userActionRecorder) deleteUser(_ context.Context, req *userpb.DeleteUserRequest) (*userpb.DeleteUserResponse, error) {
@@ -1117,15 +1136,13 @@ func TestNewResetPasswordAction_Negative(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name            string
-		pathID          string // value set via SetPathValue("id", ...)
-		form            url.Values
-		readUserErr     error
-		updateUserErr   error
-		hashPassword    func(string) (string, error)
-		wantStatus      int
-		wantErrorHeader string
-		wantUpdateCount int
+		name             string
+		pathID           string // value set via SetPathValue("id", ...)
+		form             url.Values
+		resetPasswordErr error
+		wantStatus       int
+		wantErrorHeader  string
+		wantResetCount   int
 	}{
 		{
 			name:            "missing user ID in path",
@@ -1149,36 +1166,20 @@ func TestNewResetPasswordAction_Negative(t *testing.T) {
 			wantErrorHeader: "password required",
 		},
 		{
-			name:            "read user fails (user not found)",
-			pathID:          "u-missing",
-			form:            url.Values{"password": {"newpass"}},
-			readUserErr:     errors.New("user not found"),
-			wantStatus:      http.StatusUnprocessableEntity,
-			wantErrorHeader: "not found",
+			name:             "reset use case fails (propagates provider error)",
+			pathID:           "u-1",
+			form:             url.Values{"password": {"newpass"}},
+			resetPasswordErr: errors.New("reset failed"),
+			wantStatus:       http.StatusUnprocessableEntity,
+			wantErrorHeader:  "reset failed",
+			wantResetCount:   1,
 		},
 		{
-			name:            "hash password fails",
-			pathID:          "u-1",
-			form:            url.Values{"password": {"newpass"}},
-			hashPassword:    func(string) (string, error) { return "", errors.New("hash error") },
-			wantStatus:      http.StatusUnprocessableEntity,
-			wantErrorHeader: "password failed",
-		},
-		{
-			name:            "update user fails",
-			pathID:          "u-1",
-			form:            url.Values{"password": {"newpass"}},
-			updateUserErr:   errors.New("update failed"),
-			wantStatus:      http.StatusUnprocessableEntity,
-			wantErrorHeader: "update failed",
-			wantUpdateCount: 1,
-		},
-		{
-			name:            "very long password passes through",
-			pathID:          "u-1",
-			form:            url.Values{"password": {strings.Repeat("P", 1000)}},
-			wantStatus:      http.StatusOK,
-			wantUpdateCount: 1,
+			name:           "very long password passes through to the use case",
+			pathID:         "u-1",
+			form:           url.Values{"password": {strings.Repeat("P", 1000)}},
+			wantStatus:     http.StatusOK,
+			wantResetCount: 1,
 		},
 	}
 
@@ -1188,13 +1189,10 @@ func TestNewResetPasswordAction_Negative(t *testing.T) {
 			t.Parallel()
 
 			rec := &userActionRecorder{
-				readUserErr:   tt.readUserErr,
-				updateUserErr: tt.updateUserErr,
+				resetPasswordErr: tt.resetPasswordErr,
 			}
 			deps := &Deps{
-				ReadUser:     rec.readUser,
-				UpdateUser:   rec.updateUser,
-				HashPassword: tt.hashPassword,
+				AdminResetPassword: rec.adminResetPassword,
 			}
 
 			req := makePostRequestWithPathValue("/action/users/reset-password", tt.form, "id", tt.pathID)
@@ -1207,8 +1205,8 @@ func TestNewResetPasswordAction_Negative(t *testing.T) {
 			if tt.wantErrorHeader != "" {
 				assertErrorHeader(t, res, tt.wantErrorHeader)
 			}
-			if len(rec.updateUserCalls) != tt.wantUpdateCount {
-				t.Fatalf("UpdateUser call count = %d, want %d", len(rec.updateUserCalls), tt.wantUpdateCount)
+			if len(rec.resetPasswordCalls) != tt.wantResetCount {
+				t.Fatalf("AdminResetPassword call count = %d, want %d", len(rec.resetPasswordCalls), tt.wantResetCount)
 			}
 		})
 	}

@@ -18,7 +18,7 @@ import (
 	party "github.com/erniealice/entydad-golang/domain/entity/party"
 	clientdetail "github.com/erniealice/entydad-golang/domain/entity/party/client/detail"
 	consumerapp "github.com/erniealice/espyna-golang/consumer/app"
-	"github.com/erniealice/espyna-golang/reference"
+	"github.com/erniealice/espyna-golang/ports"
 	categorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
 	paymenttermpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/payment_term"
@@ -43,7 +43,7 @@ type partyWiring struct {
 	uc         *UseCases
 	labels     blockLabels
 	routes     blockRoutes
-	refChecker reference.Checker
+	refChecker ports.Checker
 
 	getClientStatement   func(ctx context.Context, req *clientstmtpb.ClientStatementRequest) (*clientstmtpb.ClientStatementResponse, error)
 	getClientBalances    func(ctx context.Context) (map[string]int64, error)

@@ -7,7 +7,7 @@ import (
 
 	"github.com/erniealice/entydad-golang"
 	user "github.com/erniealice/entydad-golang/domain/entity/identity/user"
-	"github.com/erniealice/espyna-golang/tableparams"
+	"github.com/erniealice/espyna-golang/shared/tableparams"
 	commonpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
 	userpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/user"
 	pyeza "github.com/erniealice/pyeza-golang"

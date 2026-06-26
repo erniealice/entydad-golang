@@ -64,9 +64,15 @@ func NewAddAction(deps *Deps) view.View {
 		if viewCtx.Request.Method == http.MethodGet {
 			workspaceUserID := viewCtx.Request.URL.Query().Get("workspace_user_id")
 
-			// Load workspace user to populate the read-only label.
+			// Load workspace user to populate the read-only label AND the
+			// workspace_id. The workspace_id is required by the action_workspace_guard
+			// middleware: the drawer template renders {{actionForm .FormAction
+			// .WorkspaceID}} → the signed _workspace_id / _workspace_id_sig hidden
+			// fields. Without a non-empty WorkspaceID the form posts with no guard
+			// fields and the POST fails closed with 409 "missing fields".
 			userName := ""
 			email := ""
+			workspaceID := ""
 			if workspaceUserID != "" && deps.GetWorkspaceUserItemPageData != nil {
 				resp, err := deps.GetWorkspaceUserItemPageData(ctx, &workspaceuserpb.GetWorkspaceUserItemPageDataRequest{
 					WorkspaceUserId: workspaceUserID,
@@ -74,6 +80,7 @@ func NewAddAction(deps *Deps) view.View {
 				if err != nil {
 					log.Printf("workspace_user_role add form: failed to load workspace_user %s: %v", workspaceUserID, err)
 				} else if wu := resp.GetWorkspaceUser(); wu != nil {
+					workspaceID = wu.GetWorkspaceId()
 					if u := wu.GetUser(); u != nil {
 						userName = strings.TrimSpace(u.GetFirstName() + " " + u.GetLastName())
 						email = u.GetEmailAddress()
@@ -83,6 +90,7 @@ func NewAddAction(deps *Deps) view.View {
 
 			return view.OK("wur-assign-form", &form.Data{
 				FormAction:         deps.Routes.AddURL,
+				WorkspaceID:        workspaceID,
 				WorkspaceUserID:    workspaceUserID,
 				WorkspaceUserName:  userName,
 				WorkspaceUserEmail: email,

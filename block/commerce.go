@@ -20,7 +20,7 @@ import (
 	locationareaaction "github.com/erniealice/entydad-golang/domain/entity/location/location_area/action"
 	locationarealist "github.com/erniealice/entydad-golang/domain/entity/location/location_area/list"
 	consumerapp "github.com/erniealice/espyna-golang/consumer/app"
-	"github.com/erniealice/espyna-golang/reference"
+	"github.com/erniealice/espyna-golang/ports"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
 	locationareapb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/location_area"
 )
@@ -32,7 +32,7 @@ type commerceWiring struct {
 	uc         *UseCases
 	labels     blockLabels
 	routes     blockRoutes
-	refChecker reference.Checker
+	refChecker ports.Checker
 
 	uploadFile       func(ctx context.Context, bucket, key string, content []byte, contentType string) error
 	listAttachments  func(ctx context.Context, moduleKey, foreignKey string) (*attachmentpb.ListAttachmentsResponse, error)

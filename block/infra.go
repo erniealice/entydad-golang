@@ -14,7 +14,7 @@ import (
 	workspaceaction "github.com/erniealice/entydad-golang/domain/entity/identity/workspace/action"
 	"github.com/erniealice/entydad-golang/service/auth"
 	centymo "github.com/erniealice/centymo-golang"
-	"github.com/erniealice/espyna-golang/reference"
+	"github.com/erniealice/espyna-golang/ports"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
 	pyezatypes "github.com/erniealice/pyeza-golang/types"
 )
@@ -40,7 +40,7 @@ type Infra struct {
 	NewAttachmentID  func() string
 
 	// RefChecker provides in-use-ID gating for deletable entities.
-	RefChecker reference.Checker
+	RefChecker ports.Checker
 
 	// Identity helpers — passed into the user / role module Deps.
 	// All are nil-safe: the relevant UI sections degrade gracefully when unset.

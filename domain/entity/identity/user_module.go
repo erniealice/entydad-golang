@@ -43,6 +43,11 @@ type UserModuleDeps struct {
 	UpdateUser func(ctx context.Context, req *userpb.UpdateUserRequest) (*userpb.UpdateUserResponse, error)
 	DeleteUser func(ctx context.Context, req *userpb.DeleteUserRequest) (*userpb.DeleteUserResponse, error)
 	SetActive  func(ctx context.Context, id string, active bool) error
+	// Provider-abstracted admin user-lifecycle use cases (design §5/§6). Wired
+	// by service-admin/school-admin from the espyna user use cases; nil-safe.
+	DisableUser        func(ctx context.Context, req *userpb.DisableUserRequest) (*userpb.DisableUserResponse, error)
+	EnableUser         func(ctx context.Context, req *userpb.EnableUserRequest) (*userpb.EnableUserResponse, error)
+	AdminResetPassword func(ctx context.Context, req *userpb.AdminResetPasswordRequest) (*userpb.AdminResetPasswordResponse, error)
 	// Workspace user (for user creation + detail)
 	CreateWorkspaceUser          func(ctx context.Context, req *workspaceuserpb.CreateWorkspaceUserRequest) (*workspaceuserpb.CreateWorkspaceUserResponse, error)
 	ListWorkspaceUsers           func(ctx context.Context, req *workspaceuserpb.ListWorkspaceUsersRequest) (*workspaceuserpb.ListWorkspaceUsersResponse, error)
@@ -105,6 +110,9 @@ func NewUserModule(deps *UserModuleDeps) *UserModule {
 		CreateWorkspaceUser: deps.CreateWorkspaceUser,
 		DefaultWorkspaceID:  deps.DefaultWorkspaceID,
 		HashPassword:        deps.HashPassword,
+		DisableUser:         deps.DisableUser,
+		EnableUser:          deps.EnableUser,
+		AdminResetPassword:  deps.AdminResetPassword,
 	}
 	listDeps := &userlist.ListViewDeps{
 		Routes:               deps.Routes,

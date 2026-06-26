@@ -185,6 +185,13 @@ type UserUseCases struct {
 	Update          func(context.Context, *userpb.UpdateUserRequest) (*userpb.UpdateUserResponse, error)
 	Delete          func(context.Context, *userpb.DeleteUserRequest) (*userpb.DeleteUserResponse, error)
 	List            func(context.Context, *userpb.ListUsersRequest) (*userpb.ListUsersResponse, error)
+	// Provider-abstracted admin user-lifecycle use cases (design §5/§6). These
+	// call the AuthService port so the disable/enable/reset effect is applied at
+	// the configured IdP. Bound by service-admin from the espyna user use cases;
+	// nil-safe at the view layer.
+	Disable       func(context.Context, *userpb.DisableUserRequest) (*userpb.DisableUserResponse, error)
+	Enable        func(context.Context, *userpb.EnableUserRequest) (*userpb.EnableUserResponse, error)
+	ResetPassword func(context.Context, *userpb.AdminResetPasswordRequest) (*userpb.AdminResetPasswordResponse, error)
 }
 
 type RoleUseCases struct {

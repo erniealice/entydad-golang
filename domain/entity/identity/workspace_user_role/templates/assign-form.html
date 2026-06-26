@@ -59,8 +59,9 @@ Data: AssignFormData (defined in action/action.go)
     <div class="sheet-footer">
         <button type="button"
                 class="btn btn-outline"
+                data-testid="wur-form-cancel"
                 data-sheet-close>
-            {{if .CommonLabels}}{{with index (printf "%v" .CommonLabels) "Actions"}}{{end}}{{end}}Cancel
+            {{if .Labels.Buttons.Cancel}}{{.Labels.Buttons.Cancel}}{{else}}Cancel{{end}}
         </button>
         <button type="submit"
                 class="btn btn-primary"

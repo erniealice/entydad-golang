@@ -17,8 +17,24 @@ type CarouselSlide struct {
 
 // SocialProvider holds data for a social login button.
 type SocialProvider struct {
-	Name    string // e.g. "Google", "Apple"
+	Name    string // e.g. "Google", "Microsoft"
 	IconSVG string // raw SVG markup
+	Method  string // Firebase provider id, e.g. "google.com", "microsoft.com"
+}
+
+// FirebaseConfig is the PUBLIC browser config for the Firebase JS SDK. When
+// non-nil the login page renders in "firebase mode": the email/password form
+// and every social button sign in via the Firebase SDK and POST the resulting
+// ID token to FirebasePostURL (/auth/firebase). The legacy password POST
+// (/auth/login) is NOT used in firebase mode. Nil = classic password mode
+// (the page is byte-identical to before).
+type FirebaseConfig struct {
+	APIKey          string
+	AuthDomain      string
+	ProjectID       string
+	EmulatorHost    string // optional FIREBASE_AUTH_EMULATOR_HOST
+	MicrosoftTenant string // optional: pin the Azure-AD tenant for microsoft.com (single-tenant apps reject /common — AADSTS50194)
+	FirebasePostURL string // where the client POSTs the verified ID token
 }
 
 // Deps holds view dependencies for the login02 page.
@@ -33,6 +49,13 @@ type Deps struct {
 	ForgotURL       string           // forgot password URL (default: /auth/reset-password)
 	Slides          []CarouselSlide  // carousel slides (left panel)
 	SocialProviders []SocialProvider // social login buttons
+	// FirebaseConfig non-nil ⇒ firebase mode (see type doc). ShowPasswordForm
+	// controls whether the email/password form renders; it is forced true in
+	// classic password mode (FirebaseConfig == nil) so legacy is unchanged.
+	FirebaseConfig   *FirebaseConfig
+	ShowPasswordForm bool
+	// AllowSignups renders the "no account? sign up" footer link when true.
+	AllowSignups bool
 }
 
 // PageData holds the data for the login02 page.
@@ -46,9 +69,12 @@ type PageData struct {
 	LoginPostURL    string
 	RegisterURL     string
 	ForgotURL       string
-	Slides          []CarouselSlide
-	SocialProviders []SocialProvider
-	Error           string // non-empty when login failed (e.g. ?error=invalid)
+	Slides           []CarouselSlide
+	SocialProviders  []SocialProvider
+	FirebaseConfig   *FirebaseConfig
+	ShowPasswordForm bool
+	AllowSignups     bool
+	Error            string // non-empty when login failed (e.g. ?error=invalid)
 }
 
 // NewView creates the login02 page view (GET /login).
@@ -68,6 +94,13 @@ func NewView(deps *Deps) view.View {
 	forgotURL := deps.ForgotURL
 	if forgotURL == "" {
 		forgotURL = "/auth/reset-password"
+	}
+	// Classic password mode (no firebase config) ALWAYS shows the password form
+	// — preserves the legacy page exactly. In firebase mode the composition
+	// layer decides via ShowPasswordForm (password ∈ allowed methods).
+	showPasswordForm := deps.ShowPasswordForm
+	if deps.FirebaseConfig == nil {
+		showPasswordForm = true
 	}
 
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
@@ -93,9 +126,12 @@ func NewView(deps *Deps) view.View {
 			LoginPostURL:    loginPostURL,
 			RegisterURL:     registerURL,
 			ForgotURL:       forgotURL,
-			Slides:          deps.Slides,
-			SocialProviders: deps.SocialProviders,
-			Error:           errorMsg,
+			Slides:           deps.Slides,
+			SocialProviders:  deps.SocialProviders,
+			FirebaseConfig:   deps.FirebaseConfig,
+			ShowPasswordForm: showPasswordForm,
+			AllowSignups:     deps.AllowSignups,
+			Error:            errorMsg,
 		}
 
 		return view.OK("login02", pageData)

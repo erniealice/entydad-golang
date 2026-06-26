@@ -131,6 +131,18 @@ func buildEntydadUseCases(uc *consumer.UseCases, db any) *UseCases {
 		result.User.Update = e.User.UpdateUser.Execute
 		result.User.Delete = e.User.DeleteUser.Execute
 		result.User.List = e.User.ListUsers.Execute
+		// Provider-abstracted admin user-lifecycle use cases (design §5/§6).
+		// nil-safe: present only when espyna wired them (they are part of the
+		// standard user use-case group, so they accompany the CRUD ops above).
+		if e.User.DisableUser != nil {
+			result.User.Disable = e.User.DisableUser.Execute
+		}
+		if e.User.EnableUser != nil {
+			result.User.Enable = e.User.EnableUser.Execute
+		}
+		if e.User.AdminResetPassword != nil {
+			result.User.ResetPassword = e.User.AdminResetPassword.Execute
+		}
 	}
 
 	// Role

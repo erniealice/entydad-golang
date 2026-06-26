@@ -2,6 +2,7 @@ package action
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net/http"
 
@@ -25,7 +26,19 @@ type Deps struct {
 	SetUserActive       func(ctx context.Context, id string, active bool) error
 	CreateWorkspaceUser func(ctx context.Context, req *workspaceuserpb.CreateWorkspaceUserRequest) (*workspaceuserpb.CreateWorkspaceUserResponse, error)
 	DefaultWorkspaceID  string
-	HashPassword        func(password string) (string, error) // optional; if nil, password stored as-is
+	HashPassword        func(password string) (string, error) // optional; if nil, password stored as-is (used by Add on create)
+
+	// Provider-abstracted admin user-lifecycle use cases (design §5/§6).
+	// These call the AuthService port so the credential/disable/enable effect
+	// is applied at the configured IdP (firebase / password / mock) instead of
+	// the entydad view layer hashing passwords or writing user.active itself.
+	// DisableUser sets user.active=false + disables the IdP account & revokes tokens.
+	DisableUser func(ctx context.Context, req *userpb.DisableUserRequest) (*userpb.DisableUserResponse, error)
+	// EnableUser sets user.active=true + re-enables the IdP account.
+	EnableUser func(ctx context.Context, req *userpb.EnableUserRequest) (*userpb.EnableUserResponse, error)
+	// AdminResetPassword sets a new password (or generates a reset link) at the
+	// active provider — replaces the HashPassword type-assert path.
+	AdminResetPassword func(ctx context.Context, req *userpb.AdminResetPasswordRequest) (*userpb.AdminResetPasswordResponse, error)
 }
 
 // hashPassword hashes the password using the deps.HashPassword func, or returns it as-is.
@@ -178,22 +191,31 @@ func NewEditAction(deps *Deps) view.View {
 			userData.Timezone = &tz
 		}
 
-		// Only update password if a new one was provided
-		if pw := r.FormValue("password"); pw != "" {
-			pwHash, hashErr := hashPassword(deps, pw)
-			if hashErr != nil {
-				log.Printf("Failed to hash password: %v", hashErr)
-				return view.HTMXError(viewCtx.T("shared.errors.passwordFailed"))
-			}
-			userData.PasswordHash = pwHash
-		}
-
+		// UpdateUser is the provider-syncing use case (design §6): on a detected
+		// email change it also calls AuthService.UpdateEmailAtProvider so the IdP
+		// account email matches the DB (closes the firebase change-email
+		// lockout/takeover). The view layer no longer pre-hashes anything here.
 		_, updateErr := deps.UpdateUser(ctx, &userpb.UpdateUserRequest{
 			Data: userData,
 		})
 		if updateErr != nil {
 			log.Printf("Failed to update user %s: %v", id, updateErr)
 			return view.HTMXError(updateErr.Error())
+		}
+
+		// A password supplied in the edit form is routed through the
+		// provider-abstracted AdminResetPassword use case (NOT a raw hash write),
+		// so it lands at the active IdP. Nil-safe: if the use case is unwired the
+		// password field is ignored rather than silently stored as plaintext.
+		if pw := r.FormValue("password"); pw != "" && deps.AdminResetPassword != nil {
+			_, resetErr := deps.AdminResetPassword(ctx, &userpb.AdminResetPasswordRequest{
+				UserId: id,
+				Method: &userpb.AdminResetPasswordRequest_NewPassword{NewPassword: pw},
+			})
+			if resetErr != nil {
+				log.Printf("Failed to set password for user %s during edit: %v", id, resetErr)
+				return view.HTMXError(resetErr.Error())
+			}
 		}
 
 		return view.HTMXSuccess("users-table")
@@ -260,9 +282,12 @@ func NewBulkDeleteAction(deps *Deps) view.View {
 // NewSetStatusAction creates the user activate/deactivate action (POST only).
 // Expects query params: ?id={userId}&status={active|inactive}
 //
-// Uses SetUserActive (raw map update) instead of UpdateUser (protobuf) because
-// proto3's protojson omits bool fields with value false, which means
-// deactivation (active=false) would silently be skipped.
+// Routes through the provider-abstracted DisableUser / EnableUser use cases
+// (design §6) so the activate/deactivate effect is applied BOTH on the DB
+// (user.active) AND at the configured IdP (firebase disables/revokes; password
+// & mock no-op). Each use case enforces its own authcheck (user:disable /
+// user:enable). proto3 false-omission is moot — the use cases set active via a
+// typed UpdateUser whose value is fixed by the use case, not protojson.
 func NewSetStatusAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
@@ -284,7 +309,7 @@ func NewSetStatusAction(deps *Deps) view.View {
 			return view.HTMXError(viewCtx.T("shared.errors.invalidStatus"))
 		}
 
-		if err := deps.SetUserActive(ctx, id, targetStatus == "active"); err != nil {
+		if err := setUserStatus(ctx, deps, id, targetStatus == "active"); err != nil {
 			log.Printf("Failed to update user status %s: %v", id, err)
 			return view.HTMXError(err.Error())
 		}
@@ -293,9 +318,39 @@ func NewSetStatusAction(deps *Deps) view.View {
 	})
 }
 
+// setUserStatus toggles a user's active status through the provider-abstracted
+// DisableUser / EnableUser use cases (design §6). Falls back to the legacy
+// SetUserActive closure only when the use cases are unwired (keeps the unit
+// tests and any partial wiring nil-safe); errors when neither is available.
+func setUserStatus(ctx context.Context, deps *Deps, id string, active bool) error {
+	if active {
+		if deps.EnableUser != nil {
+			_, err := deps.EnableUser(ctx, &userpb.EnableUserRequest{UserId: id})
+			return err
+		}
+	} else {
+		if deps.DisableUser != nil {
+			_, err := deps.DisableUser(ctx, &userpb.DisableUserRequest{UserId: id})
+			return err
+		}
+	}
+	if deps.SetUserActive != nil {
+		return deps.SetUserActive(ctx, id, active)
+	}
+	return errors.New("user status use cases are not wired")
+}
+
 // NewResetPasswordAction creates the password reset action (POST only).
 // Expects path param {id} and form field "password".
-// Reads the existing user first so all required fields are present for the update.
+//
+// Routes through the provider-abstracted AdminResetPassword use case (design
+// §6) — the use case applies the new password at the active IdP (firebase:
+// UpdateUser{Password}; password: bcrypt → user.password_hash) instead of the
+// view layer hashing and writing the hash itself. This removes the
+// HashPassword type-assert inversion (the old path silently stored a plaintext
+// password when HashPassword was nil under a firebase build). The use case
+// enforces its own authcheck (user:reset-password). No read-before-write is
+// needed — the use case targets the user by id.
 func NewResetPasswordAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
@@ -316,34 +371,17 @@ func NewResetPasswordAction(deps *Deps) view.View {
 			return view.HTMXError(viewCtx.T("shared.errors.passwordRequired"))
 		}
 
-		// Read existing user to preserve all required fields
-		resp, err := deps.ReadUser(ctx, &userpb.ReadUserRequest{
-			Data: &userpb.User{Id: id},
-		})
-		if err != nil {
-			log.Printf("Failed to read user %s for password reset: %v", id, err)
-			return view.HTMXError(viewCtx.T("shared.errors.notFound"))
-		}
-		data := resp.GetData()
-		if len(data) == 0 {
-			return view.HTMXError(viewCtx.T("shared.errors.notFound"))
-		}
-		user := data[0]
-
-		pwHash, hashErr := hashPassword(deps, password)
-		if hashErr != nil {
-			log.Printf("Failed to hash password: %v", hashErr)
+		if deps.AdminResetPassword == nil {
 			return view.HTMXError(viewCtx.T("shared.errors.passwordFailed"))
 		}
 
-		user.PasswordHash = pwHash
-
-		_, updateErr := deps.UpdateUser(ctx, &userpb.UpdateUserRequest{
-			Data: user,
+		_, resetErr := deps.AdminResetPassword(ctx, &userpb.AdminResetPasswordRequest{
+			UserId: id,
+			Method: &userpb.AdminResetPasswordRequest_NewPassword{NewPassword: password},
 		})
-		if updateErr != nil {
-			log.Printf("Failed to reset password for user %s: %v", id, updateErr)
-			return view.HTMXError(updateErr.Error())
+		if resetErr != nil {
+			log.Printf("Failed to reset password for user %s: %v", id, resetErr)
+			return view.HTMXError(resetErr.Error())
 		}
 
 		return view.HTMXSuccess("")
@@ -373,7 +411,7 @@ func NewBulkSetStatusAction(deps *Deps) view.View {
 		active := targetStatus == "active"
 
 		for _, id := range ids {
-			if err := deps.SetUserActive(ctx, id, active); err != nil {
+			if err := setUserStatus(ctx, deps, id, active); err != nil {
 				log.Printf("Failed to update user status %s: %v", id, err)
 			}
 		}

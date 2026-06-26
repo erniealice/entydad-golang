@@ -68,6 +68,21 @@ type Renderer interface {
 // include a user ID (mock providers). Injected as a closure.
 type UserIDByEmail func(ctx context.Context, email string) (userID string)
 
+// FirebaseVerifier verifies a Firebase ID token and returns the signed-in
+// user's email plus the firebase.sign_in_provider claim (e.g. "microsoft.com",
+// "google.com", "password"). Returns an error for an invalid/expired token.
+// Injected by the app composition ONLY under CONFIG_AUTH_PROVIDER=firebase;
+// when nil the /auth/firebase endpoint is not mounted.
+type FirebaseVerifier func(ctx context.Context, idToken string) (email, signInProvider string, err error)
+
+// SessionMinter creates a server-side session for an already-authenticated
+// user and returns the opaque token. Injected from the app's consumer
+// AuthAdapter.CreateSession (provider-agnostic after the session-decoupling),
+// so a Firebase-verified user gets a real session row in the same table the
+// password provider uses. Required (alongside FirebaseVerifier) to mount
+// /auth/firebase.
+type SessionMinter func(ctx context.Context, userID string) (token string, err error)
+
 // WorkspaceSlugResolver resolves a workspace's slug from its ID for
 // constructing post-login redirect URLs (/w/{slug}/home).
 type WorkspaceSlugResolver func(ctx context.Context, workspaceID string) (slug string)

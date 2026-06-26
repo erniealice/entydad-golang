@@ -22,7 +22,7 @@ import (
 	userdashboard "github.com/erniealice/entydad-golang/domain/entity/identity/user/dashboard"
 	workspaceaction "github.com/erniealice/entydad-golang/domain/entity/identity/workspace/action"
 	consumerapp "github.com/erniealice/espyna-golang/consumer/app"
-	"github.com/erniealice/espyna-golang/reference"
+	"github.com/erniealice/espyna-golang/ports"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
 	pyezatypes "github.com/erniealice/pyeza-golang/types"
 )
@@ -34,7 +34,7 @@ type identityWiring struct {
 	uc         *UseCases
 	labels     blockLabels
 	routes     blockRoutes
-	refChecker reference.Checker
+	refChecker ports.Checker
 
 	getUserWorkspacesMap func(ctx context.Context) (map[string][]pyezatypes.ChipData, error)
 	getDashboardData     func(ctx context.Context) (*userdashboard.DashboardData, error)
@@ -81,6 +81,9 @@ func wireIdentityModule(ctx *consumerapp.AppContext, w identityWiring) {
 			UpdateUser:                   uc.User.Update,
 			DeleteUser:                   uc.User.Delete,
 			SetActive:                    setActiveClosure(uc, "user"),
+			DisableUser:                  uc.User.Disable,
+			EnableUser:                   uc.User.Enable,
+			AdminResetPassword:           uc.User.ResetPassword,
 			CreateWorkspaceUser:          uc.WorkspaceUser.Create,
 			ListWorkspaceUsers:           uc.WorkspaceUser.List,
 			GetWorkspaceUserItemPageData: uc.WorkspaceUser.GetItemPageData,

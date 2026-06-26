@@ -74,6 +74,90 @@
             carousel.addEventListener('mouseleave', function() { startAutoPlay(); });
         })();
     </script>
+
+    {{if .FirebaseConfig}}
+    <!-- Firebase Web SDK (federated + email/password sign-in). The server only
+         VERIFIES the resulting ID token at /auth/firebase; the browser does the
+         sign-in. CSP is widened for gstatic + the Identity Platform origins when
+         the firebase provider is active (see security_headers.go). -->
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js" nonce="{{.Nonce}}"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js" nonce="{{.Nonce}}"></script>
+    <script nonce="{{.Nonce}}">
+        (function() {
+            var cfg = document.getElementById('fb-config');
+            if (!cfg || !window.firebase) return;
+            var postURL = cfg.getAttribute('data-post-url');
+            firebase.initializeApp({
+                apiKey: cfg.getAttribute('data-api-key'),
+                authDomain: cfg.getAttribute('data-auth-domain'),
+                projectId: cfg.getAttribute('data-project-id')
+            });
+            var auth = firebase.auth();
+            var emulator = cfg.getAttribute('data-emulator');
+            if (emulator) { try { auth.useEmulator('http://' + emulator); } catch (e) {} }
+            var msTenant = cfg.getAttribute('data-microsoft-tenant');
+
+            var errEl = document.getElementById('fb-error');
+            function showError(msg) {
+                if (errEl) { errEl.textContent = msg || 'Sign-in failed'; errEl.hidden = false; }
+            }
+            function postToken(idToken) {
+                return fetch(postURL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'id_token=' + encodeURIComponent(idToken)
+                }).then(function(r) {
+                    return r.json().then(function(d) { return { ok: r.ok, data: d }; });
+                });
+            }
+            function onResult(res) {
+                if (res.ok && res.data && res.data.redirect) {
+                    window.location.assign(res.data.redirect);
+                } else {
+                    showError((res.data && res.data.error) || 'Sign-in failed');
+                }
+            }
+            function providerFor(method) {
+                if (method === 'google.com') { return new firebase.auth.GoogleAuthProvider(); }
+                var p = new firebase.auth.OAuthProvider(method); // microsoft.com, apple.com, custom OIDC
+                // Single-tenant Azure AD apps REJECT Firebase's default /common
+                // endpoint (AADSTS50194). When a tenant is configured, pin it so
+                // the request hits the tenant-specific endpoint
+                // (login.microsoftonline.com/{tenant}/...). Accepts a tenant GUID
+                // or a verified domain (e.g. "mmis.edu.ph").
+                if (method === 'microsoft.com' && msTenant) {
+                    p.setCustomParameters({ tenant: msTenant });
+                }
+                return p;
+            }
+            // Federated sign-in buttons (Microsoft, Google, ...).
+            document.querySelectorAll('[data-fb-method]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    if (errEl) { errEl.hidden = true; }
+                    auth.signInWithPopup(providerFor(btn.getAttribute('data-fb-method')))
+                        .then(function(result) { return result.user.getIdToken(); })
+                        .then(postToken).then(onResult)
+                        .catch(function(e) { showError(e && e.message); });
+                });
+            });
+            // Email/password form — in firebase mode this signs in via Firebase
+            // (signInWithEmailAndPassword), NOT the legacy /auth/login POST.
+            var form = document.getElementById('login-form');
+            if (form && form.getAttribute('data-fb-mode') === '1') {
+                form.addEventListener('submit', function(ev) {
+                    ev.preventDefault();
+                    if (errEl) { errEl.hidden = true; }
+                    var emailEl = form.querySelector('#email');
+                    var passEl = form.querySelector('#password');
+                    auth.signInWithEmailAndPassword(emailEl ? emailEl.value : '', passEl ? passEl.value : '')
+                        .then(function(result) { return result.user.getIdToken(); })
+                        .then(postToken).then(onResult)
+                        .catch(function(e) { showError(e && e.message); });
+                });
+            }
+        })();
+    </script>
+    {{end}}
     </main>
 </body>
 </html>
@@ -118,6 +202,15 @@
         <!-- Right Side - Login Form -->
         <div class="auth-form-section">
             <div class="auth-form-container">
+                {{if .FirebaseConfig}}
+                <div id="fb-config" hidden
+                    data-api-key="{{.FirebaseConfig.APIKey}}"
+                    data-auth-domain="{{.FirebaseConfig.AuthDomain}}"
+                    data-project-id="{{.FirebaseConfig.ProjectID}}"
+                    data-emulator="{{.FirebaseConfig.EmulatorHost}}"
+                    data-microsoft-tenant="{{.FirebaseConfig.MicrosoftTenant}}"
+                    data-post-url="{{.FirebaseConfig.FirebasePostURL}}"></div>
+                {{end}}
                 <!-- Logo -->
                 {{if .LogoText}}
                 <a href="/" class="auth-logo">
@@ -135,7 +228,8 @@
                 <p class="auth-subheading">{{.Labels.Subheading}}</p>
 
                 <!-- Login Form -->
-                <form class="auth-form" action="{{.LoginPostURL}}" method="POST">
+                {{if .ShowPasswordForm}}
+                <form id="login-form" class="auth-form" action="{{.LoginPostURL}}" method="POST"{{if .FirebaseConfig}} data-fb-mode="1"{{end}}>
                     <div class="auth-form-group">
                         <label class="auth-form-label" for="email">{{.Labels.EmailLabel}}</label>
                         <input
@@ -173,6 +267,11 @@
 
                     <button type="submit" class="auth-button" data-testid="login-submit">{{.Labels.SignInButton}}</button>
                 </form>
+                {{end}}
+
+                {{if .FirebaseConfig}}
+                <div id="fb-error" class="auth-form-alert" role="alert" data-testid="fb-login-error" hidden></div>
+                {{end}}
 
                 {{if .Error}}
                 <div data-testid="login-error" class="auth-form-alert">
@@ -188,11 +287,11 @@
                     <span>{{.Labels.SocialDivider}}</span>
                 </div>
 
-                <!-- Social Login Buttons -->
+                <!-- Social Login Buttons (Firebase federated sign-in) -->
                 <div class="auth-social-buttons">
                     {{range .SocialProviders}}
-                    <button type="button" class="auth-social-button">
-                        {{.IconSVG}}
+                    <button type="button" class="auth-social-button" data-fb-method="{{.Method}}" data-testid="fb-signin-{{.Method}}">
+                        {{if eq .Method "microsoft.com"}}<svg width="18" height="18" viewBox="0 0 21 21" aria-hidden="true"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg>{{else if eq .Method "google.com"}}<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.02-3.7H.96v2.34A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.98 10.72a5.4 5.4 0 0 1 0-3.44V4.94H.96a9 9 0 0 0 0 8.12l3.02-2.34z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.46 3.44 1.35l2.58-2.59C13.47.9 11.43 0 9 0A9 9 0 0 0 .96 4.94l3.02 2.34C4.68 5.16 6.66 3.58 9 3.58z"/></svg>{{end}}
                         {{$.Labels.ContinueWith}} {{.Name}}
                     </button>
                     {{end}}
@@ -200,7 +299,7 @@
                 {{end}}
 
                 <!-- Footer -->
-                {{if .Labels.NoAccount}}
+                {{if and .AllowSignups .Labels.NoAccount}}
                 <div class="auth-form-footer">
                     <span>{{.Labels.NoAccount}}</span>
                     <a href="{{.RegisterURL}}" class="auth-form-link">{{.Labels.SignUpLink}}</a>

@@ -14,7 +14,10 @@ package block
 
 import (
 	"context"
+	"log"
+	"strings"
 
+	entydad "github.com/erniealice/entydad-golang"
 	"github.com/erniealice/entydad-golang/service/auth"
 	consumer "github.com/erniealice/espyna-golang/consumer"
 
@@ -198,9 +201,53 @@ func (d *authChainDeps) buildAuthDeps() *auth.Deps {
 	}
 
 	cookieSecure := d.cookieSecure
+
+	// Firebase web-login wiring — ONLY under CONFIG_AUTH_PROVIDER=firebase and
+	// when the auth adapter is present. These closures make POST /auth/firebase
+	// reachable (composition.go mounts it only when both are non-nil): verify
+	// the ID token (surfacing the sign_in_provider claim for the allow-list) and
+	// mint a provider-agnostic session via the decoupled session lifecycle.
+	var firebaseVerifier auth.FirebaseVerifier
+	var sessionMinter auth.SessionMinter
+	var allowedSignInMethods []string
+	var firebaseWebConfig *auth.FirebaseWebConfig
+	if d.authAdapter != nil && getEnv("CONFIG_AUTH_PROVIDER", "") == "firebase" {
+		aa := d.authAdapter
+		firebaseVerifier = func(ctx context.Context, idToken string) (string, string, error) {
+			return aa.VerifyTokenWithSignInProvider(ctx, idToken)
+		}
+		sessionMinter = func(ctx context.Context, userID string) (string, error) {
+			return aa.CreateSession(ctx, userID)
+		}
+		allowedSignInMethods = splitAndTrim(getEnv("AUTH_FIREBASE_ALLOWED_SIGN_IN_METHODS", ""))
+		firebaseWebConfig = &auth.FirebaseWebConfig{
+			APIKey:          getEnv("FIREBASE_WEB_API_KEY", ""),
+			AuthDomain:      getEnv("FIREBASE_AUTH_DOMAIN", ""),
+			ProjectID:       getEnv("AUTH_FIREBASE_PROJECT_ID", ""),
+			EmulatorHost:    getEnv("FIREBASE_AUTH_EMULATOR_HOST", ""),
+			MicrosoftTenant: getEnv("AUTH_FIREBASE_MICROSOFT_TENANT", ""),
+		}
+	}
+
+	// AUTH_FIREBASE_ALLOW_SIGNUPS gates the login02 "no account? sign up" link
+	// AND the POST /auth/signup endpoint. Default true (preserve behavior); set
+	// false on invite-only deployments to hide the link + reject self-signup.
+	allowSignups := true
+	switch strings.ToLower(strings.TrimSpace(getEnv("AUTH_FIREBASE_ALLOW_SIGNUPS", "true"))) {
+	case "false", "0", "no", "off":
+		allowSignups = false
+	}
+
 	return &auth.Deps{
 		AuthAdapter:    authAdapter,
 		SessionManager: d.sessionMw,
+
+		FirebaseVerifier:     firebaseVerifier,
+		SessionMinter:        sessionMinter,
+		AllowedSignInMethods: allowedSignInMethods,
+		FirebaseWebConfig:    firebaseWebConfig,
+		AllowSignups:         allowSignups,
+		AllowPasswordChange:  entydad.PasswordChangeEnabled(),
 
 		PrincipalResolver: resolver,
 		PrincipalSwitcher: func(ctx context.Context, input auth.PrincipalSwitchInput) (*auth.PrincipalSwitchResult, error) {
@@ -242,7 +289,7 @@ func (d *authChainDeps) buildAuthDeps() *auth.Deps {
 			id, _ := uc.Execute(ctx, email)
 			return id
 		},
-		WorkspaceSlugResolver: func(ctx context.Context, wsID string) string {
+		WorkspaceSlugResolver: func(ctx context.Context, wsID string) (slug string) {
 			if d.uc.Entity == nil || d.uc.Entity.Workspace == nil {
 				return ""
 			}
@@ -250,21 +297,50 @@ func (d *authChainDeps) buildAuthDeps() *auth.Deps {
 			if uc == nil || wsID == "" {
 				return ""
 			}
-			slug, _ := uc.Execute(ctx, wsID)
-			return slug
+			// This runs during the post-login redirect (homeURLForWorkspaceID),
+			// where the request context has NOT yet been re-stamped with a
+			// RequestIdentity (the session was only just minted). The underlying
+			// use case's authcheck calls identity.Must, which panics on a
+			// no-identity context. Recover and fall back to /me/inbox (the
+			// caller's fallback) rather than 500 the whole login. Fail-safe: a
+			// failed slug lookup only affects the landing URL, not auth.
+			defer func() {
+				if rec := recover(); rec != nil {
+					log.Printf("[auth] WorkspaceSlugResolver recovered (pre-identity login redirect): %v", rec)
+					slug = ""
+				}
+			}()
+			s, _ := uc.Execute(ctx, wsID)
+			return s
 		},
 
 		Labels: d.authLabels,
 
 		LogoText:     getEnv("ICHIZEN_LOGO_TEXT", "Ichizen"),
 		AuthProvider: getEnv("CONFIG_AUTH_PROVIDER", ""),
-		TestMode:     equalFoldTrue(getEnv("PASSWORD_AUTH_TEST_MODE", "")),
+		TestMode:     equalFoldTrue(getEnv("AUTH_PASSWORD_TEST_MODE", "")),
 		// SecureCookies — derived from the host-resolved cookie-secure policy
 		// (ctx.CookieSecure). Closure-captured so the auth module reads the SAME
 		// policy the 4-arg CSRF issuer self-derives. WorkspaceCSRFCookieName left
 		// "" → NewAuthModule defaults "ws_csrf" (the app default).
 		SecureCookies: func() bool { return cookieSecure },
 	}
+}
+
+// splitAndTrim splits a comma-separated list into trimmed, non-empty tokens.
+// Used for AUTH_FIREBASE_ALLOWED_SIGN_IN_METHODS ("microsoft.com, google.com").
+func splitAndTrim(s string) []string {
+	if strings.TrimSpace(s) == "" {
+		return nil
+	}
+	parts := strings.Split(s, ",")
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if t := strings.TrimSpace(p); t != "" {
+			out = append(out, t)
+		}
+	}
+	return out
 }
 
 // equalFoldTrue reports whether s case-insensitively equals "true".

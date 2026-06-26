@@ -31,6 +31,9 @@ const (
 	AuthResetConfirmPostURL  = "/auth/reset-password/confirm"
 	AuthChangePasswordURL    = "/auth/change-password"
 	AuthLogoutURL            = "/auth/logout"
+	// AuthFirebaseLoginURL is the Firebase ID-token login POST. Under /auth/ so
+	// it shares the session-exclude + CSRF-exempt posture of /auth/login.
+	AuthFirebaseLoginURL = "/auth/firebase"
 
 	// Legacy login routes (redirect to /auth/login)
 	LoginURL     = "/login"

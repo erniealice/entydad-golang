@@ -3,6 +3,7 @@ package auth
 import (
 	"log"
 	"net/http"
+	"strings"
 	"sync"
 
 	entydad "github.com/erniealice/entydad-golang"
@@ -21,6 +22,17 @@ type AuthLabels struct {
 	ChangePassword  entydad.ChangePasswordLabels
 	Common          pyeza.CommonLabels
 	Messages        map[string]string
+}
+
+// FirebaseWebConfig is the PUBLIC browser config for the Firebase JS SDK
+// (apiKey/authDomain/projectId/emulator). Sourced from env by the app
+// composition under the firebase provider; threaded to login02.
+type FirebaseWebConfig struct {
+	APIKey          string
+	AuthDomain      string
+	ProjectID       string
+	EmulatorHost    string
+	MicrosoftTenant string // optional: pin the Azure-AD tenant for the microsoft.com provider
 }
 
 // Deps holds all dependencies the auth module needs from the host application.
@@ -57,6 +69,29 @@ type Deps struct {
 	AuthProvider string // e.g. "password"
 	TestMode     bool
 
+	// Firebase sign-in (wired ONLY under CONFIG_AUTH_PROVIDER=firebase). When
+	// FirebaseVerifier or SessionMinter is nil, POST /auth/firebase is not
+	// mounted. AllowedSignInMethods is the optional allow-list from
+	// AUTH_FIREBASE_ALLOWED_SIGN_IN_METHODS (e.g. "microsoft.com","google.com");
+	// empty = allow any verified method.
+	FirebaseVerifier     FirebaseVerifier
+	SessionMinter        SessionMinter
+	AllowedSignInMethods []string
+
+	// FirebaseWebConfig is the PUBLIC browser config (apiKey/authDomain/
+	// projectId) threaded to login02. Non-nil ⇒ login02 renders in firebase
+	// mode (SDK init + sign-in buttons + Firebase-backed email/password). Set
+	// only under the firebase provider.
+	FirebaseWebConfig *FirebaseWebConfig
+
+	// AllowSignups gates the login02 "no account? sign up" footer link AND the
+	// POST /auth/signup endpoint. From AUTH_FIREBASE_ALLOW_SIGNUPS (default true).
+	AllowSignups bool
+
+	// AllowPasswordChange gates the /auth/change-password endpoint (the account
+	// link is gated app-side via ChangePasswordURL). From PasswordChangeEnabled().
+	AllowPasswordChange bool
+
 	// Cookie policy
 	SecureCookies func() bool
 
@@ -76,7 +111,7 @@ type Deps struct {
 type AuthModule struct {
 	deps *Deps
 	// lastResetTokens stores raw HMAC reset tokens keyed by user_id for test
-	// environments where PASSWORD_AUTH_TEST_MODE=true. This map is populated by
+	// environments where AUTH_PASSWORD_TEST_MODE=true. This map is populated by
 	// the POST /auth/reset-password handler and consumed by the test-only
 	// GET /test/last-reset-token endpoint so E2E specs can obtain the raw token
 	// without a real email delivery pipeline.
@@ -107,20 +142,53 @@ func (m *AuthModule) RegisterRoutes(routes RouteRegistrar) {
 	signup02Slides := toSignup02Slides(carouselSlides)
 	resetpassword02Slides := toResetPassword02Slides(carouselSlides)
 
+	// Firebase-mode login wiring (only when the web config is present). In
+	// firebase mode login02 renders the SDK + sign-in buttons and the
+	// email/password form signs in via Firebase; the legacy /auth/login POST is
+	// not used. Classic password mode leaves all three zero/nil → login02
+	// renders exactly as before.
+	var fbConfig *login02mod.FirebaseConfig
+	var socialProviders []login02mod.SocialProvider
+	showPasswordForm := true
+	if deps.FirebaseWebConfig != nil {
+		fbConfig = &login02mod.FirebaseConfig{
+			APIKey:          deps.FirebaseWebConfig.APIKey,
+			AuthDomain:      deps.FirebaseWebConfig.AuthDomain,
+			ProjectID:       deps.FirebaseWebConfig.ProjectID,
+			EmulatorHost:    deps.FirebaseWebConfig.EmulatorHost,
+			MicrosoftTenant: deps.FirebaseWebConfig.MicrosoftTenant,
+			FirebasePostURL: entydad.AuthFirebaseLoginURL,
+		}
+		socialProviders = firebaseSocialProviders(deps.AllowedSignInMethods)
+		showPasswordForm = passwordMethodEnabled(deps.AllowedSignInMethods)
+	}
+
 	// Login (GET + POST)
 	routes.GET(entydad.AuthLoginURL, login02mod.NewView(&login02mod.Deps{
-		Labels:       deps.Labels.Login02,
-		CommonLabels: deps.Labels.Common,
-		LogoText:     logoText,
-		LogoIcon:     deps.LogoIcon,
-		LoginPostURL: entydad.AuthLoginPostURL,
-		RegisterURL:  entydad.AuthSignupURL,
-		ForgotURL:    entydad.AuthResetPasswordURL,
-		Slides:       login02Slides,
+		Labels:           deps.Labels.Login02,
+		CommonLabels:     deps.Labels.Common,
+		LogoText:         logoText,
+		LogoIcon:         deps.LogoIcon,
+		LoginPostURL:     entydad.AuthLoginPostURL,
+		RegisterURL:      entydad.AuthSignupURL,
+		ForgotURL:        entydad.AuthResetPasswordURL,
+		Slides:           login02Slides,
+		SocialProviders:  socialProviders,
+		FirebaseConfig:   fbConfig,
+		ShowPasswordForm: showPasswordForm,
+		AllowSignups:     deps.AllowSignups,
 	}))
 
 	// POST /auth/login
 	routes.HandleFunc("POST", entydad.AuthLoginPostURL, m.handleLogin())
+
+	// POST /auth/firebase — Firebase ID-token login (only when wired). Lives
+	// under /auth/ so it shares the session-exclude + CSRF-exempt posture of
+	// the password login POST.
+	if deps.FirebaseVerifier != nil && deps.SessionMinter != nil {
+		routes.HandleFunc("POST", entydad.AuthFirebaseLoginURL, m.handleFirebaseLogin())
+		log.Println("  ✓ Firebase ID-token login mounted: POST /auth/firebase")
+	}
 
 	// Signup (GET + POST)
 	routes.GET(entydad.AuthSignupURL, signup02mod.NewView(&signup02mod.Deps{
@@ -186,4 +254,43 @@ func (m *AuthModule) RegisterRoutes(routes RouteRegistrar) {
 	}
 
 	log.Println("  ✓ Auth screens initialized (login, signup, reset-password, change-password, logout)")
+}
+
+// firebaseSocialProviders maps the federated sign-in methods in the allow-list
+// to login02 social buttons. "password" is the email/password form (not a
+// button) and is skipped here. An empty allow-list ⇒ no social buttons.
+func firebaseSocialProviders(methods []string) []login02mod.SocialProvider {
+	var out []login02mod.SocialProvider
+	for _, raw := range methods {
+		m := strings.ToLower(strings.TrimSpace(raw))
+		switch m {
+		case "microsoft.com":
+			out = append(out, login02mod.SocialProvider{Name: "Microsoft", Method: "microsoft.com"})
+		case "google.com":
+			out = append(out, login02mod.SocialProvider{Name: "Google", Method: "google.com"})
+		case "apple.com":
+			out = append(out, login02mod.SocialProvider{Name: "Apple", Method: "apple.com"})
+		case "", "password":
+			// email/password form, not a social button
+		default:
+			// Unknown / custom OIDC provider id — render a generic button.
+			out = append(out, login02mod.SocialProvider{Name: raw, Method: m})
+		}
+	}
+	return out
+}
+
+// passwordMethodEnabled reports whether the email/password form renders in
+// firebase mode: true when the allow-list is empty (default) or includes
+// "password" (Firebase email/password sign-in).
+func passwordMethodEnabled(methods []string) bool {
+	if len(methods) == 0 {
+		return true
+	}
+	for _, m := range methods {
+		if strings.EqualFold(strings.TrimSpace(m), "password") {
+			return true
+		}
+	}
+	return false
 }
