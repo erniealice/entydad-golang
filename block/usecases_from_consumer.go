@@ -123,6 +123,19 @@ func buildEntydadUseCases(uc *consumer.UseCases, db any) *UseCases {
 		result.Client.Category.Delete = e.ClientCategory.DeleteClientCategory.Execute
 	}
 
+	// Delegate — workspace-scoped read adapter committed in espyna; view layer is
+	// list + CRUD. ListDelegates is optional (not surfaced in the view yet).
+	if e.Delegate != nil {
+		result.Delegate.GetListPageData = e.Delegate.GetDelegateListPageData.Execute
+		result.Delegate.Create = e.Delegate.CreateDelegate.Execute
+		result.Delegate.Read = e.Delegate.ReadDelegate.Execute
+		result.Delegate.Update = e.Delegate.UpdateDelegate.Execute
+		result.Delegate.Delete = e.Delegate.DeleteDelegate.Execute
+		if e.Delegate.ListDelegates != nil {
+			result.Delegate.List = e.Delegate.ListDelegates.Execute
+		}
+	}
+
 	// User
 	if e.User != nil {
 		result.User.GetListPageData = e.User.GetUserListPageData.Execute

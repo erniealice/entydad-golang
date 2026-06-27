@@ -1,0 +1,67 @@
+{{/*
+Delegate / Guardian drawer form — loaded into #sheetContent via HTMX.
+Used by both Add and Edit actions.
+Data: .FirstName, .LastName, .Email, .Mobile, .ID, .FormAction, .IsEdit,
+      .Labels, .CommonLabels, .WorkspaceID
+
+Fields capture only the guardian's user identity (first/last name, email,
+mobile). Company/address/accounting/status sections are NOT present — Delegate
+has no such fields. Create sets Active=true server-side.
+*/}}
+{{define "delegate-drawer-form"}}
+<form hx-post="{{.FormAction}}" hx-swap="none" data-hx-on="sheet-response">
+    {{actionForm .FormAction .WorkspaceID}}
+    {{if .ID}}<input type="hidden" name="id" value="{{.ID}}">{{end}}
+
+    <div class="sheet-body">
+        {{/* --- Guardian Details Section --- */}}
+        {{template "form-section" (dict "Title" .Labels.SectionGuardian)}}
+
+        <div class="form-row">
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "first_name"
+                "Label" .Labels.FirstName
+                "Value" .FirstName
+                "Required" true
+                "Placeholder" .Labels.FirstNamePlaceholder
+                "TestId" "delegate-first-name"
+            )}}
+            {{template "form-group" (dict
+                "Type" "text"
+                "Name" "last_name"
+                "Label" .Labels.LastName
+                "Value" .LastName
+                "Required" true
+                "Placeholder" .Labels.LastNamePlaceholder
+                "TestId" "delegate-last-name"
+            )}}
+        </div>
+
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "email"
+                "Name" "email_address"
+                "Label" .Labels.Email
+                "Value" .Email
+                "Required" true
+                "Placeholder" .Labels.EmailPlaceholder
+                "TestId" "delegate-email"
+            )}}
+        </div>
+
+        <div class="form-row single">
+            {{template "form-group" (dict
+                "Type" "tel"
+                "Name" "mobile_number"
+                "Label" .Labels.Mobile
+                "Value" .Mobile
+                "Placeholder" .Labels.MobilePlaceholder
+                "TestId" "delegate-mobile"
+            )}}
+        </div>
+    </div>
+
+    {{template "sheet-form-footer" (dict "CommonLabels" .CommonLabels "ShowCancel" true "IsEdit" .IsEdit)}}
+</form>
+{{end}}

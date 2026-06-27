@@ -24,6 +24,7 @@ import (
 	conversationreadreceiptpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/communication/conversation_read_receipt"
 	clientpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client"
 	clientcatpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client_category"
+	delegatepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/delegate"
 	locationpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/location"
 	locationareapb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/location_area"
 	paymenttermpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/payment_term"
@@ -89,6 +90,7 @@ type UseCases struct {
 
 	// Domain CRUD + use-case groups (singular field, XxxUseCases type)
 	Client            ClientUseCases
+	Delegate          DelegateUseCases
 	User              UserUseCases
 	Role              RoleUseCases
 	RolePermission    RolePermissionUseCases
@@ -176,6 +178,19 @@ type ClientCategoryUseCases struct {
 	List   func(context.Context, *clientcatpb.ListClientCategoriesRequest) (*clientcatpb.ListClientCategoriesResponse, error)
 	Create func(context.Context, *clientcatpb.CreateClientCategoryRequest) (*clientcatpb.CreateClientCategoryResponse, error)
 	Delete func(context.Context, *clientcatpb.DeleteClientCategoryRequest) (*clientcatpb.DeleteClientCategoryResponse, error)
+}
+
+// DelegateUseCases — direct CRUD + page-data use cases for the Delegate entity.
+// Delegate has only active bool (no multi-status lifecycle). The view layer
+// uses GetListPageData for the list and Create/Read/Update/Delete for CRUD.
+// List (ListDelegates) is optional and not currently used by the view layer.
+type DelegateUseCases struct {
+	GetListPageData func(context.Context, *delegatepb.GetDelegateListPageDataRequest) (*delegatepb.GetDelegateListPageDataResponse, error)
+	Create          func(context.Context, *delegatepb.CreateDelegateRequest) (*delegatepb.CreateDelegateResponse, error)
+	Read            func(context.Context, *delegatepb.ReadDelegateRequest) (*delegatepb.ReadDelegateResponse, error)
+	Update          func(context.Context, *delegatepb.UpdateDelegateRequest) (*delegatepb.UpdateDelegateResponse, error)
+	Delete          func(context.Context, *delegatepb.DeleteDelegateRequest) (*delegatepb.DeleteDelegateResponse, error)
+	List            func(context.Context, *delegatepb.ListDelegatesRequest) (*delegatepb.ListDelegatesResponse, error)
 }
 
 type UserUseCases struct {

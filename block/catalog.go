@@ -37,6 +37,7 @@ import (
 	entityclient "github.com/erniealice/entydad-golang/domain/entity/party/client"
 	clientdetail "github.com/erniealice/entydad-golang/domain/entity/party/client/detail"
 	entityclienttag "github.com/erniealice/entydad-golang/domain/entity/party/client_tag"
+	entitydelegate "github.com/erniealice/entydad-golang/domain/entity/party/delegate"
 	entitysupplier "github.com/erniealice/entydad-golang/domain/entity/party/supplier"
 	entitysuppliertag "github.com/erniealice/entydad-golang/domain/entity/party/supplier_tag"
 	tax "github.com/erniealice/entydad-golang/domain/tax"
@@ -359,6 +360,34 @@ func ClientUnit(uc *UseCases, infra *Infra) compose.Unit {
 			}
 		}
 		party.NewClientModule(deps).RegisterRoutes(mc.Routes)
+		return nil
+	}
+	return u
+}
+
+// DelegateUnit wires the Delegate entity view module (Guardian vocabulary in
+// the education vertical). Trimmed vs ClientUnit: no payment-terms, categories,
+// subscriptions, attachments, audit, statement, or revenue-run deps.
+// Active/inactive filter is applied at the view layer via the BooleanFilter.
+func DelegateUnit(uc *UseCases, infra *Infra) compose.Unit {
+	u := entitydelegate.Describe()
+	u.Mount = func(mc *compose.MountContext) error {
+		r := u.Routes.(*entitydelegate.Routes)
+		l := u.Labels.(*entitydelegate.Labels)
+
+		deps := &party.DelegateModuleDeps{
+			Routes:          *r,
+			CommonLabels:    mc.Common,
+			SharedLabels:    infra.SharedLabels,
+			Labels:          *l,
+			TableLabels:     mc.Table,
+			GetListPageData: uc.Delegate.GetListPageData,
+			CreateDelegate:  uc.Delegate.Create,
+			ReadDelegate:    uc.Delegate.Read,
+			UpdateDelegate:  uc.Delegate.Update,
+			DeleteDelegate:  uc.Delegate.Delete,
+		}
+		party.NewDelegateModule(deps).RegisterRoutes(mc.Routes)
 		return nil
 	}
 	return u
@@ -1054,6 +1083,7 @@ func AllUnits(uc *UseCases, infra *Infra) []compose.Unit {
 	units := []compose.Unit{
 		// Party sub-context
 		ClientUnit(uc, infra),
+		DelegateUnit(uc, infra),
 		SupplierUnit(uc, infra),
 		ClientTagUnit(uc, infra),
 		SupplierTagUnit(uc, infra),
