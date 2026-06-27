@@ -90,13 +90,16 @@ type DetailLabels struct {
 
 // DetailSecurityLabels holds labels for the security tab.
 type DetailSecurityLabels struct {
-	Title           string `json:"title"`
-	LastLogin       string `json:"lastLogin"`
-	MfaStatus       string `json:"mfaStatus"`
-	MfaEnabled      string `json:"mfaEnabled"`
-	MfaDisabled     string `json:"mfaDisabled"`
-	PasswordSection string `json:"passwordSection"`
-	ResetPassword   string `json:"resetPassword"`
+	Title             string `json:"title"`
+	LastLogin         string `json:"lastLogin"`
+	MfaStatus         string `json:"mfaStatus"`
+	MfaEnabled        string `json:"mfaEnabled"`
+	MfaDisabled       string `json:"mfaDisabled"`
+	PasswordSection   string `json:"passwordSection"`
+	ResetPassword     string `json:"resetPassword"`
+	AuthMethod        string `json:"authMethod"`
+	ManagedByProvider string `json:"managedByProvider"`
+	ManageAccountLink string `json:"manageAccountLink"`
 }
 
 // DetailEmptyStateLabels holds empty-state labels for user detail tabs.

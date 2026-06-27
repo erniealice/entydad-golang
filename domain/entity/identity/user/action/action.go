@@ -39,6 +39,9 @@ type Deps struct {
 	// AdminResetPassword sets a new password (or generates a reset link) at the
 	// active provider — replaces the HashPassword type-assert path.
 	AdminResetPassword func(ctx context.Context, req *userpb.AdminResetPasswordRequest) (*userpb.AdminResetPasswordResponse, error)
+	// GetUserAuthCapability reports the user's sign-in methods (WS-4). Optional/
+	// nil-safe: nil => treat as local-managed (guard allows reset).
+	GetUserAuthCapability func(ctx context.Context, userID string) (bool, []string, error)
 }
 
 // hashPassword hashes the password using the deps.HashPassword func, or returns it as-is.
@@ -369,6 +372,20 @@ func NewResetPasswordAction(deps *Deps) view.View {
 		password := viewCtx.Request.FormValue("password")
 		if password == "" {
 			return view.HTMXError(viewCtx.T("shared.errors.passwordRequired"))
+		}
+
+		// WS-4 security control: reject a local password reset for an
+		// IdP-managed (no local password) user. Fail-OPEN only when the optional
+		// capability port is unwired (nil); a lookup error fails CLOSED.
+		if deps.GetUserAuthCapability != nil {
+			hasPwd, _, capErr := deps.GetUserAuthCapability(ctx, id)
+			if capErr != nil {
+				log.Printf("Failed to read auth capability for user %s: %v", id, capErr)
+				return view.HTMXError(viewCtx.T("shared.errors.passwordFailed"))
+			}
+			if !hasPwd {
+				return view.HTMXError(viewCtx.T("shared.errors.passwordManagedByProvider"))
+			}
 		}
 
 		if deps.AdminResetPassword == nil {

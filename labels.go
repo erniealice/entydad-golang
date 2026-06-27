@@ -302,22 +302,23 @@ type SharedLabels struct {
 
 // SharedErrorLabels holds HTMXError messages used across all action handlers.
 type SharedErrorLabels struct {
-	PermissionDenied    string `json:"permissionDenied"`
-	InvalidFormData     string `json:"invalidFormData"`
-	InvalidStatus       string `json:"invalidStatus"`
-	InvalidTargetStatus string `json:"invalidTargetStatus"`
-	NotFound            string `json:"notFound"`
-	IDRequired          string `json:"idRequired"`
-	NoIDsProvided       string `json:"noIdsProvided"`
-	PasswordRequired    string `json:"passwordRequired"`
-	PasswordFailed      string `json:"passwordFailed"`
-	RoleRequired        string `json:"roleRequired"`
-	PermissionRequired  string `json:"permissionRequired"`
-	UserRequired        string `json:"userRequired"`
-	TagNotFound         string `json:"tagNotFound"`
-	TagNameExists       string `json:"tagNameExists"`
-	VerifyFailed        string `json:"verifyFailed"`
-	CannotDeleteInUse   string `json:"cannotDeleteInUse"`
+	PermissionDenied          string `json:"permissionDenied"`
+	InvalidFormData           string `json:"invalidFormData"`
+	InvalidStatus             string `json:"invalidStatus"`
+	InvalidTargetStatus       string `json:"invalidTargetStatus"`
+	NotFound                  string `json:"notFound"`
+	IDRequired                string `json:"idRequired"`
+	NoIDsProvided             string `json:"noIdsProvided"`
+	PasswordRequired          string `json:"passwordRequired"`
+	PasswordFailed            string `json:"passwordFailed"`
+	PasswordManagedByProvider string `json:"passwordManagedByProvider"`
+	RoleRequired              string `json:"roleRequired"`
+	PermissionRequired        string `json:"permissionRequired"`
+	UserRequired              string `json:"userRequired"`
+	TagNotFound               string `json:"tagNotFound"`
+	TagNameExists             string `json:"tagNameExists"`
+	VerifyFailed              string `json:"verifyFailed"`
+	CannotDeleteInUse         string `json:"cannotDeleteInUse"`
 }
 
 // SharedConfirmLabels holds confirm dialog message templates used across modules.

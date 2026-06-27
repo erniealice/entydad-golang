@@ -21,6 +21,7 @@ import (
 	roleusers "github.com/erniealice/entydad-golang/domain/entity/identity/role/users"
 	userdashboard "github.com/erniealice/entydad-golang/domain/entity/identity/user/dashboard"
 	workspaceaction "github.com/erniealice/entydad-golang/domain/entity/identity/workspace/action"
+	"github.com/erniealice/espyna-golang/consumer"
 	consumerapp "github.com/erniealice/espyna-golang/consumer/app"
 	"github.com/erniealice/espyna-golang/ports"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
@@ -64,7 +65,37 @@ func wireIdentityModule(ctx *consumerapp.AppContext, w identityWiring) {
 	deleteAttachment := w.deleteAttachment
 	newAttachmentID := w.newAttachmentID
 
+	// WS-4: capability closure sourced from the auth adapter (NOT a proto use case).
+	var getUserAuthCapability func(ctx context.Context, userID string) (bool, []string, error)
+	if aa, ok := ctx.AuthAdapter.(*consumer.AuthAdapter); ok && aa != nil {
+		getUserAuthCapability = func(ctx context.Context, userID string) (bool, []string, error) {
+			c, err := aa.GetUserAuthCapability(ctx, userID)
+			return c.HasPassword, c.Providers, err
+		}
+	}
+
 	if cfg.enableAll || cfg.user {
+		// WS-4 fail-closed boot guard (M-5). getUserAuthCapability is the
+		// AUTHORITATIVE server-side control that rejects a local password reset
+		// for an IdP-federated (SSO) user: NewResetPasswordAction runs the guard
+		// ONLY when this closure is non-nil, and the detail page defaults
+		// CanResetPasswordHere=true. A nil closure therefore fails OPEN (an SSO
+		// user's reset would be allowed). The closure is nil only when
+		// ctx.AuthAdapter is not a live *consumer.AuthAdapter (unwired / typed-nil
+		// / wrong type). For the real identity providers (firebase / password)
+		// that is a wiring fault — refuse to boot rather than silently run with the
+		// SSO password-reset guard disabled. mock / noop / unset providers
+		// legitimately have no capability source and stay fail-OPEN for dev.
+		if getUserAuthCapability == nil {
+			switch getEnv("CONFIG_AUTH_PROVIDER", "") {
+			case "firebase", "password":
+				log.Fatalf("FATAL entydad.Block: WS-4 boot guard: CONFIG_AUTH_PROVIDER=%q but the "+
+					"GetUserAuthCapability closure is nil (ctx.AuthAdapter is %T, want a live "+
+					"*consumer.AuthAdapter). Refusing to boot with the SSO password-reset guard "+
+					"disabled — it would fail OPEN and allow resetting an IdP-managed user's password.",
+					getEnv("CONFIG_AUTH_PROVIDER", ""), ctx.AuthAdapter)
+			}
+		}
 		identity.NewUserModule(&identity.UserModuleDeps{
 			Routes:                       routes.User,
 			CommonLabels:                 ctx.Common,
@@ -84,6 +115,7 @@ func wireIdentityModule(ctx *consumerapp.AppContext, w identityWiring) {
 			DisableUser:                  uc.User.Disable,
 			EnableUser:                   uc.User.Enable,
 			AdminResetPassword:           uc.User.ResetPassword,
+			GetUserAuthCapability:        getUserAuthCapability,
 			CreateWorkspaceUser:          uc.WorkspaceUser.Create,
 			ListWorkspaceUsers:           uc.WorkspaceUser.List,
 			GetWorkspaceUserItemPageData: uc.WorkspaceUser.GetItemPageData,

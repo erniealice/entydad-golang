@@ -27,6 +27,7 @@ type DetailViewDeps struct {
 	ReadUser                     func(ctx context.Context, req *userpb.ReadUserRequest) (*userpb.ReadUserResponse, error)
 	GetWorkspaceUserItemPageData func(ctx context.Context, req *workspaceuserpb.GetWorkspaceUserItemPageDataRequest) (*workspaceuserpb.GetWorkspaceUserItemPageDataResponse, error)
 	ListWorkspaceUsers           func(ctx context.Context, req *workspaceuserpb.ListWorkspaceUsersRequest) (*workspaceuserpb.ListWorkspaceUsersResponse, error)
+	GetUserAuthCapability        func(ctx context.Context, userID string) (bool, []string, error)
 	Labels                       user.Labels
 	SharedLabels                 entydad.SharedLabels
 	UserRoleLabels               user.RoleLabels
@@ -43,22 +44,25 @@ type DetailViewDeps struct {
 // PageData holds the data for the user detail page.
 type PageData struct {
 	types.PageData
-	ContentTemplate  string
-	Labels           user.Labels
-	ActiveTab        string
-	TabItems         []pyeza.TabItem
-	ID               string
-	UserFirstName    string
-	UserLastName     string
-	UserEmail        string
-	UserMobile       string
-	UserStatus       string
-	StatusVariant    string
-	RoleNames        []string
-	RolesTable       *types.TableConfig
-	ResetPasswordURL string
-	EditURL          string
-	AttachmentTable  *types.TableConfig
+	ContentTemplate      string
+	Labels               user.Labels
+	ActiveTab            string
+	TabItems             []pyeza.TabItem
+	ID                   string
+	UserFirstName        string
+	UserLastName         string
+	UserEmail            string
+	UserMobile           string
+	UserStatus           string
+	StatusVariant        string
+	RoleNames            []string
+	RolesTable           *types.TableConfig
+	ResetPasswordURL     string
+	CanResetPasswordHere bool
+	ProviderLabel        string
+	ManageAccountURL     string
+	EditURL              string
+	AttachmentTable      *types.TableConfig
 	// Audit history tab
 	AuditEntries    []auditlog.AuditEntryView
 	AuditHasNext    bool
@@ -198,6 +202,17 @@ func buildPageData(ctx context.Context, deps *DetailViewDeps, id, activeTab stri
 		EditURL:          route.ResolveURL(deps.Routes.EditURL, "id", id),
 	}
 
+	// WS-4 auth-capability gate. Default local-managed so a nil/optional port or a
+	// lookup error keeps today's reset form visible (fail-OPEN at the view; the
+	// handler guard in action.go is the authoritative fail-CLOSED control).
+	pageData.CanResetPasswordHere = true
+	if deps.GetUserAuthCapability != nil && activeTab == "security" {
+		if hasPwd, providers, capErr := deps.GetUserAuthCapability(ctx, id); capErr == nil {
+			pageData.CanResetPasswordHere = hasPwd
+			pageData.ProviderLabel, pageData.ManageAccountURL = providerPresentation(providers)
+		}
+	}
+
 	// Load tab-specific data
 	switch activeTab {
 	case "roles":
@@ -242,6 +257,22 @@ func buildPageData(ctx context.Context, deps *DetailViewDeps, id, activeTab stri
 	}
 
 	return pageData, nil
+}
+
+// providerPresentation maps the user's IdP providers to a display label and a
+// manage-account deep link for the "managed by your provider" panel (WS-4). It
+// derives from the first non-"password" provider; unknown providers fall back to
+// a generic label with no deep link.
+func providerPresentation(providers []string) (label, url string) {
+	for _, p := range providers {
+		switch p {
+		case "google.com":
+			return "Google", "https://myaccount.google.com/security"
+		case "microsoft.com":
+			return "Microsoft", "https://myaccount.microsoft.com"
+		}
+	}
+	return "external provider", ""
 }
 
 func buildTabItems(id string, labels user.Labels, roleCount int, routes user.Routes) []pyeza.TabItem {

@@ -139,6 +139,7 @@
         </div>
     </div>
 
+    {{if .CanResetPasswordHere}}
     <h4 class="detail-section-title detail-section-title--spaced">{{.Labels.Detail.Security.PasswordSection}}</h4>
     <form id="reset-password-form"
           hx-post="{{.ResetPasswordURL}}"
@@ -173,6 +174,11 @@
             </button>
         </div>
     </form>
+    {{else}}
+    <h4 class="detail-section-title detail-section-title--spaced">{{.Labels.Detail.Security.AuthMethod}}</h4>
+    <p class="detail-info-value">{{.Labels.Detail.Security.ManagedByProvider}} {{.ProviderLabel}}.</p>
+    <a href="{{.ManageAccountURL}}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">{{.Labels.Detail.Security.ManageAccountLink}}</a>
+    {{end}}
 </div>
 <script nonce="{{.Nonce}}">
 (function() {

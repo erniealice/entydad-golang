@@ -48,6 +48,9 @@ type UserModuleDeps struct {
 	DisableUser        func(ctx context.Context, req *userpb.DisableUserRequest) (*userpb.DisableUserResponse, error)
 	EnableUser         func(ctx context.Context, req *userpb.EnableUserRequest) (*userpb.EnableUserResponse, error)
 	AdminResetPassword func(ctx context.Context, req *userpb.AdminResetPasswordRequest) (*userpb.AdminResetPasswordResponse, error)
+	// GetUserAuthCapability reports the user's sign-in methods (WS-4). Optional/
+	// nil-safe: nil => treat as local-managed (reset form stays visible).
+	GetUserAuthCapability func(ctx context.Context, userID string) (bool, []string, error)
 	// Workspace user (for user creation + detail)
 	CreateWorkspaceUser          func(ctx context.Context, req *workspaceuserpb.CreateWorkspaceUserRequest) (*workspaceuserpb.CreateWorkspaceUserResponse, error)
 	ListWorkspaceUsers           func(ctx context.Context, req *workspaceuserpb.ListWorkspaceUsersRequest) (*workspaceuserpb.ListWorkspaceUsersResponse, error)
@@ -101,18 +104,19 @@ type UserModule struct {
 
 func NewUserModule(deps *UserModuleDeps) *UserModule {
 	actionDeps := &useraction.Deps{
-		Routes:              deps.Routes,
-		CreateUser:          deps.CreateUser,
-		ReadUser:            deps.ReadUser,
-		UpdateUser:          deps.UpdateUser,
-		DeleteUser:          deps.DeleteUser,
-		SetUserActive:       deps.SetActive,
-		CreateWorkspaceUser: deps.CreateWorkspaceUser,
-		DefaultWorkspaceID:  deps.DefaultWorkspaceID,
-		HashPassword:        deps.HashPassword,
-		DisableUser:         deps.DisableUser,
-		EnableUser:          deps.EnableUser,
-		AdminResetPassword:  deps.AdminResetPassword,
+		Routes:                deps.Routes,
+		CreateUser:            deps.CreateUser,
+		ReadUser:              deps.ReadUser,
+		UpdateUser:            deps.UpdateUser,
+		DeleteUser:            deps.DeleteUser,
+		SetUserActive:         deps.SetActive,
+		CreateWorkspaceUser:   deps.CreateWorkspaceUser,
+		DefaultWorkspaceID:    deps.DefaultWorkspaceID,
+		HashPassword:          deps.HashPassword,
+		DisableUser:           deps.DisableUser,
+		EnableUser:            deps.EnableUser,
+		AdminResetPassword:    deps.AdminResetPassword,
+		GetUserAuthCapability: deps.GetUserAuthCapability,
 	}
 	listDeps := &userlist.ListViewDeps{
 		Routes:               deps.Routes,
@@ -134,6 +138,7 @@ func NewUserModule(deps *UserModuleDeps) *UserModule {
 		UserRoleLabels:               deps.UserRoleLabels,
 		CommonLabels:                 deps.CommonLabels,
 		TableLabels:                  deps.TableLabels,
+		GetUserAuthCapability:        deps.GetUserAuthCapability,
 		AttachmentOps: attachment.AttachmentOps{
 			UploadFile:       deps.UploadFile,
 			ListAttachments:  deps.ListAttachments,
