@@ -89,6 +89,9 @@
                                 {{end}}
                                 <span class="auth-principal-text">
                                     <span class="auth-principal-name">{{$card.DisplayName}}</span>
+                                    {{if $card.KindLabel}}
+                                    <span class="auth-principal-kind" aria-hidden="true">{{$card.KindLabel}}</span>
+                                    {{end}}
                                     {{if $card.Subtitle}}
                                     <span class="auth-principal-subtitle">{{$card.Subtitle}}</span>
                                     {{end}}

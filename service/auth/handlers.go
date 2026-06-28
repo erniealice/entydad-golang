@@ -580,8 +580,18 @@ func (m *AuthModule) handleSelectWorkspaceRole() http.HandlerFunc {
 		return userID
 	}
 
+	// Use lyngua-loaded labels when the host has wired them
+	// (AuthLabels.SelectWorkspaceRole non-zero means Page.Title was set by
+	// lyngua); otherwise fall back to built-in English defaults. Either path
+	// guarantees KindLabels is fully populated so the role badge always
+	// renders.
+	selectWRLabels := deps.Labels.SelectWorkspaceRole
+	if selectWRLabels.Page.Title == "" {
+		selectWRLabels = selectWorkspaceRole.DefaultLabels()
+	}
+
 	chooseDeps := &selectWorkspaceRole.Deps{
-		Labels:        selectWorkspaceRole.DefaultLabels(),
+		Labels:        selectWRLabels,
 		Login02:       deps.Labels.Login02,
 		CommonLabels:  deps.Labels.Common,
 		LogoText:      deps.LogoText,

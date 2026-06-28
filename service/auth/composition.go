@@ -9,6 +9,7 @@ import (
 	entydad "github.com/erniealice/entydad-golang"
 	changepasswordmod "github.com/erniealice/entydad-golang/service/auth/views/change-password"
 	login02mod "github.com/erniealice/entydad-golang/service/auth/views/login02"
+	selectWorkspaceRole "github.com/erniealice/entydad-golang/service/auth/views/login02/select-workspace-role"
 	resetpassword02mod "github.com/erniealice/entydad-golang/service/auth/views/reset-password02"
 	signup02mod "github.com/erniealice/entydad-golang/service/auth/views/signup02"
 	pyeza "github.com/erniealice/pyeza-golang"
@@ -22,6 +23,14 @@ type AuthLabels struct {
 	ChangePassword  entydad.ChangePasswordLabels
 	Common          pyeza.CommonLabels
 	Messages        map[string]string
+	// SelectWorkspaceRole holds per-kind role labels for the principal
+	// chooser page (/auth/select-workspace-role). Loaded from the
+	// "select_workspace_role" subtree in auth.json. Business-type overlays
+	// (e.g. education/auth.json) override individual kindLabels keys via
+	// lyngua's recursive deep-merge; education sets kindLabels.staff →
+	// "Teacher". When the zero value, handlers.go falls back to
+	// selectWorkspaceRole.DefaultLabels().
+	SelectWorkspaceRole selectWorkspaceRole.Labels
 }
 
 // FirebaseWebConfig is the PUBLIC browser config for the Firebase JS SDK
