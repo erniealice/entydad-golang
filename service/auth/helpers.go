@@ -115,6 +115,8 @@ func iconForPrincipalKind(t PrincipalType) string {
 		return "icon-briefcase"
 	case PrincipalTypeSupplierDelegate:
 		return "icon-users"
+	case PrincipalTypeStaff:
+		return "icon-clipboard-check"
 	}
 	return ""
 }

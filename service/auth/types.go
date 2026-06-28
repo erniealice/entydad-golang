@@ -26,6 +26,7 @@ const (
 	PrincipalTypeClientDelegate   = pyezarender.PrincipalTypeClientDelegate
 	PrincipalTypeSupplier         = pyezarender.PrincipalTypeSupplier
 	PrincipalTypeSupplierDelegate = pyezarender.PrincipalTypeSupplierDelegate
+	PrincipalTypeStaff            = pyezarender.PrincipalTypeStaff
 )
 
 // ActingAsTarget is one target a delegate may act for. A single
@@ -156,6 +157,8 @@ func PrincipalTypeString(t PrincipalType) string {
 		return "supplier"
 	case PrincipalTypeSupplierDelegate:
 		return "supplier_delegate"
+	case PrincipalTypeStaff:
+		return "staff"
 	default:
 		return "unspecified"
 	}
