@@ -453,9 +453,7 @@ func (m *AuthModule) handleResetPasswordRequest() http.HandlerFunc {
 		// Ignore errors to prevent email enumeration
 		resetToken, err := authAdapter.RequestPasswordReset(r.Context(), email)
 		if err == nil && resetToken != "" {
-			log.Printf("[AUTH] Password reset token for %s: %s", email, resetToken)
-			log.Printf("[AUTH] Reset URL: %s?token=%s", entydad.AuthResetConfirmURL, resetToken)
-
+			// SEC-004: never log the raw reset token (a full-account-takeover secret).
 			// In test mode, store the raw token keyed by user_id so the
 			// test-only GET /test/last-reset-token endpoint can return it.
 			if m.deps.TestMode && m.deps.UserIDByEmail != nil {

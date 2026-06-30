@@ -3,6 +3,7 @@ package auth
 import (
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 
@@ -258,6 +259,12 @@ func (m *AuthModule) RegisterRoutes(routes RouteRegistrar) {
 
 	// Test-only endpoint: GET /test/last-reset-token?user_id=...
 	if deps.AuthProvider == "password" && deps.TestMode {
+		// SEC-022: this endpoint returns password-reset tokens with NO authentication.
+		// It must NEVER be mounted in production. Refuse to boot if test mode is on
+		// outside an explicitly-declared dev/test environment (APP_ENV).
+		if env := strings.ToLower(strings.TrimSpace(os.Getenv("APP_ENV"))); env != "development" && env != "dev" && env != "test" && env != "local" {
+			log.Fatalf("[SECURITY][SEC-022] AUTH_PASSWORD_TEST_MODE is enabled but APP_ENV=%q is not a dev/test environment — refusing to start (the unauthenticated GET /test/last-reset-token endpoint would be exposed in production).", env)
+		}
 		routes.HandleFunc("GET", "/test/last-reset-token", m.handleTestLastResetToken())
 		log.Println("  ✓ Test-only endpoint mounted: GET /test/last-reset-token (live — reads in-process sync.Map)")
 	}
