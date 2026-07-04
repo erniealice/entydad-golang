@@ -23,8 +23,8 @@ func Describe() compose.Unit {
 				Permission: "permission:list",
 			},
 			Items: []compose.NavItem{
-				{Key: "permissions-active", Route: "permission.list", Params: map[string]string{"status": "active"}, Label: "Active", Icon: "icon-key", Permission: "permission:list"},
-				{Key: "permissions-inactive", Route: "permission.list", Params: map[string]string{"status": "inactive"}, Label: "Inactive", Icon: "icon-key", Permission: "permission:list"},
+				{Key: "permissions-active", Route: "permission.list", Params: map[string]string{"status": "active"}, Label: "Active", Icon: "icon-key", Permission: "permission:list", LabelKey: "active_label", IconKey: "permissions_active_icon"},
+				{Key: "permissions-inactive", Route: "permission.list", Params: map[string]string{"status": "inactive"}, Label: "Inactive", Icon: "icon-key", Permission: "permission:list", LabelKey: "inactive_label", IconKey: "permissions_inactive_icon"},
 			},
 		},
 	}

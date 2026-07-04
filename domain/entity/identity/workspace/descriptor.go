@@ -16,8 +16,8 @@ func Describe() compose.Unit {
 		Nav: compose.NavContrib{
 			Permission: "workspace:list",
 			Items: []compose.NavItem{
-				{Key: "workspaces-active", Route: "workspace.list", Params: map[string]string{"status": "active"}, Label: "Active", Icon: "icon-briefcase", Permission: "workspace:list"},
-				{Key: "workspaces-inactive", Route: "workspace.list", Params: map[string]string{"status": "inactive"}, Label: "Inactive", Icon: "icon-briefcase", Permission: "workspace:list"},
+				{Key: "workspaces-active", Route: "workspace.list", Params: map[string]string{"status": "active"}, Label: "Active", Icon: "icon-briefcase", Permission: "workspace:list", LabelKey: "active_label", IconKey: "workspaces_active_icon"},
+				{Key: "workspaces-inactive", Route: "workspace.list", Params: map[string]string{"status": "inactive"}, Label: "Inactive", Icon: "icon-briefcase", Permission: "workspace:list", LabelKey: "inactive_label", IconKey: "workspaces_inactive_icon"},
 			},
 		},
 	}

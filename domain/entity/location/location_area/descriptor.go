@@ -16,8 +16,8 @@ func Describe() compose.Unit {
 		Nav: compose.NavContrib{
 			Permission: "location_area:list",
 			Items: []compose.NavItem{
-				{Key: "location-areas-active", Route: "location_area.list", Params: map[string]string{"status": "active"}, Label: "Active", Icon: "icon-layers", Permission: "location_area:list"},
-				{Key: "location-areas-inactive", Route: "location_area.list", Params: map[string]string{"status": "inactive"}, Label: "Inactive", Icon: "icon-layers-off", Permission: "location_area:list"},
+				{Key: "location-areas-active", Route: "location_area.list", Params: map[string]string{"status": "active"}, Label: "Active", Icon: "icon-layers", Permission: "location_area:list", LabelKey: "active_label", IconKey: "location_area_active_icon"},
+				{Key: "location-areas-inactive", Route: "location_area.list", Params: map[string]string{"status": "inactive"}, Label: "Inactive", Icon: "icon-layers-off", Permission: "location_area:list", LabelKey: "inactive_label", IconKey: "location_area_inactive_icon"},
 			},
 		},
 	}

@@ -16,7 +16,7 @@ func Describe() compose.Unit {
 		Nav: compose.NavContrib{
 			Permission: "client:list",
 			Items: []compose.NavItem{
-				{Key: "tags", Route: "client_tag.list", Label: "Tags", Icon: "icon-tag", Permission: "client:list"},
+				{Key: "tags", Route: "client_tag.list", Label: "Tags", Icon: "icon-tag", Permission: "client:list", LabelKey: "clients_tags_label", IconKey: "clients_tags_icon"},
 			},
 		},
 	}

@@ -23,8 +23,8 @@ func Describe() compose.Unit {
 				Permission: "location:list",
 			},
 			Items: []compose.NavItem{
-				{Key: "locations-active", Route: "location.list", Params: map[string]string{"status": "active"}, Label: "Active", Icon: "icon-map-pin"},
-				{Key: "locations-inactive", Route: "location.list", Params: map[string]string{"status": "inactive"}, Label: "Inactive", Icon: "icon-map-pin"},
+				{Key: "locations-active", Route: "location.list", Params: map[string]string{"status": "active"}, Label: "Active", Icon: "icon-map-pin", LabelKey: "active_label", IconKey: "locations_active_icon"},
+				{Key: "locations-inactive", Route: "location.list", Params: map[string]string{"status": "inactive"}, Label: "Inactive", Icon: "icon-map-pin", LabelKey: "inactive_label", IconKey: "locations_inactive_icon"},
 			},
 		},
 	}

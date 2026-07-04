@@ -29,8 +29,8 @@ func Describe() compose.Unit {
 				Permission: "delegate:list",
 			},
 			Items: []compose.NavItem{
-				{Key: "active", Route: "delegate.list", Params: map[string]string{"status": "active"}, Label: "Active", Icon: "icon-user-check"},
-				{Key: "inactive", Route: "delegate.list", Params: map[string]string{"status": "inactive"}, Label: "Inactive", Icon: "icon-user-minus"},
+				{Key: "active", Route: "delegate.list", Params: map[string]string{"status": "active"}, Label: "Active", Icon: "icon-user-check", LabelKey: "active_label", IconKey: "clients_active_icon"},
+				{Key: "inactive", Route: "delegate.list", Params: map[string]string{"status": "inactive"}, Label: "Inactive", Icon: "icon-user-minus", LabelKey: "inactive_label", IconKey: "clients_inactive_icon"},
 			},
 		},
 	}

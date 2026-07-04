@@ -23,12 +23,12 @@ func Describe() compose.Unit {
 				Permission: "supplier:list",
 			},
 			Items: []compose.NavItem{
-				{Key: "dashboard", Route: "supplier.dashboard", Label: "Dashboard", Icon: "icon-dashboard"},
-				{Key: "suppliers-active", Route: "supplier.list", Params: map[string]string{"status": "active"}, Label: "Active", Icon: "icon-truck"},
-				{Key: "suppliers-blocked", Route: "supplier.list", Params: map[string]string{"status": "blocked"}, Label: "Blocked", Icon: "icon-x-circle"},
-				{Key: "suppliers-on-hold", Route: "supplier.list", Params: map[string]string{"status": "on_hold"}, Label: "On Hold", Icon: "icon-pause-circle"},
-				{Key: "payment-terms", Route: "supplier.payment_terms", Label: "Payment Terms", Icon: "icon-clock", Permission: "supplier:list"},
-				{Key: "payables-aging", Route: "supplier.payables_aging", Label: "Payables Aging", Icon: "icon-file-text"},
+				{Key: "dashboard", Route: "supplier.dashboard", Label: "Dashboard", Icon: "icon-dashboard", LabelKey: "dashboard_label", IconKey: "dashboard_icon"},
+				{Key: "suppliers-active", Route: "supplier.list", Params: map[string]string{"status": "active"}, Label: "Active", Icon: "icon-truck", LabelKey: "active_label", IconKey: "suppliers_active_icon"},
+				{Key: "suppliers-blocked", Route: "supplier.list", Params: map[string]string{"status": "blocked"}, Label: "Blocked", Icon: "icon-x-circle", LabelKey: "blocked_label", IconKey: "suppliers_blocked_icon"},
+				{Key: "suppliers-on-hold", Route: "supplier.list", Params: map[string]string{"status": "on_hold"}, Label: "On Hold", Icon: "icon-pause-circle", LabelKey: "on_hold_label", IconKey: "suppliers_on_hold_icon"},
+				{Key: "payment-terms", Route: "supplier.payment_terms", Label: "Payment Terms", Icon: "icon-clock", Permission: "supplier:list", LabelKey: "payment_terms_label", IconKey: "payment_terms_icon"},
+				{Key: "payables-aging", Route: "supplier.payables_aging", Label: "Payables Aging", Icon: "icon-file-text", LabelKey: "payables_aging_label", IconKey: "payables_aging_icon"},
 			},
 		},
 	}
