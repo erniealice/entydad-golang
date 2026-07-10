@@ -94,7 +94,7 @@ func loadBlockLabels(t *lynguaV1.TranslationProvider, businessType string) block
 	_ = t.LoadPathIfExists("en", businessType, "client.json", "client.dashboard", &l.ClientDashboard)
 	_ = t.LoadPathIfExists("en", businessType, "client_tag.json", "", &l.ClientTag)
 	_ = t.LoadPathIfExists("en", businessType, "supplier_tag.json", "", &l.SupplierTag)
-	_ = t.LoadPathIfExists("en", businessType, "payment_term.json", "paymentTerm", &l.PaymentTerm)
+	_ = t.LoadPathIfExists("en", businessType, "payment_term.json", "payment_term", &l.PaymentTerm)
 
 	if err := t.LoadPath("en", businessType, "user.json", "", &l.User); err != nil {
 		log.Printf("entydad.Block: warning: failed to load user labels: %v", err)
@@ -142,7 +142,7 @@ func loadBlockLabels(t *lynguaV1.TranslationProvider, businessType string) block
 	l.Conversation = convmodel.DefaultConversationLabels()
 	_ = t.LoadPathIfExists("en", businessType, "conversation.json", "conversation", &l.Conversation)
 	l.ConversationPost = convmodel.DefaultConversationPostLabels()
-	_ = t.LoadPathIfExists("en", businessType, "conversation_post.json", "conversationPost", &l.ConversationPost)
+	_ = t.LoadPathIfExists("en", businessType, "conversation_post.json", "conversation_post", &l.ConversationPost)
 
 	return l
 }

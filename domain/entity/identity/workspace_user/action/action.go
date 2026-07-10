@@ -42,7 +42,7 @@ func NewAddAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("workspace_user", "create") {
-			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permission_denied"))
 		}
 
 		if viewCtx.Request.Method == http.MethodGet {
@@ -58,7 +58,7 @@ func NewAddAction(deps *Deps) view.View {
 
 		// POST — create workspace_user
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return view.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalid_form_data"))
 		}
 
 		r := viewCtx.Request
@@ -90,7 +90,7 @@ func NewDeleteAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("workspace_user", "delete") {
-			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permission_denied"))
 		}
 
 		id := viewCtx.Request.PathValue("id")
@@ -118,7 +118,7 @@ func NewSetStatusAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("workspace_user", "update") {
-			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permission_denied"))
 		}
 
 		id := viewCtx.Request.PathValue("id")
@@ -127,7 +127,7 @@ func NewSetStatusAction(deps *Deps) view.View {
 		}
 
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return view.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalid_form_data"))
 		}
 		active := viewCtx.Request.FormValue("active") == "true"
 

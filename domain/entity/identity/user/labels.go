@@ -23,15 +23,15 @@ type Labels struct {
 
 type PageLabels struct {
 	Heading         string `json:"heading"`
-	HeadingActive   string `json:"headingActive"`
-	HeadingInactive string `json:"headingInactive"`
+	HeadingActive   string `json:"heading_active"`
+	HeadingInactive string `json:"heading_inactive"`
 	Caption         string `json:"caption"`
-	CaptionActive   string `json:"captionActive"`
-	CaptionInactive string `json:"captionInactive"`
+	CaptionActive   string `json:"caption_active"`
+	CaptionInactive string `json:"caption_inactive"`
 }
 
 type ButtonLabels struct {
-	AddUser string `json:"addUser"`
+	AddUser string `json:"add_user"`
 }
 
 type ColumnLabels struct {
@@ -39,22 +39,22 @@ type ColumnLabels struct {
 	Email       string `json:"email"`
 	Roles       string `json:"roles"`
 	Workspaces  string `json:"workspaces"`
-	DateCreated string `json:"dateCreated"`
+	DateCreated string `json:"date_created"`
 	Status      string `json:"status"`
 }
 
 type EmptyLabels struct {
-	ActiveTitle     string `json:"activeTitle"`
-	ActiveMessage   string `json:"activeMessage"`
-	InactiveTitle   string `json:"inactiveTitle"`
-	InactiveMessage string `json:"inactiveMessage"`
+	ActiveTitle     string `json:"active_title"`
+	ActiveMessage   string `json:"active_message"`
+	InactiveTitle   string `json:"inactive_title"`
+	InactiveMessage string `json:"inactive_message"`
 }
 
 type FormLabels struct {
 	Mobile              string `json:"mobile"`
 	Timezone            string `json:"timezone"`
-	TimezonePlaceholder string `json:"timezonePlaceholder"`
-	TimezoneInfo        string `json:"timezoneInfo"`
+	TimezonePlaceholder string `json:"timezone_placeholder"`
+	TimezoneInfo        string `json:"timezone_info"`
 }
 
 type ActionLabels struct {
@@ -63,65 +63,65 @@ type ActionLabels struct {
 	Delete      string `json:"delete"`
 	Activate    string `json:"activate"`
 	Deactivate  string `json:"deactivate"`
-	ManageRoles string `json:"manageRoles"`
+	ManageRoles string `json:"manage_roles"`
 }
 
 // DetailLabels holds labels for the user detail page.
 type DetailLabels struct {
-	BasicInfo   DetailBasicInfoLabels  `json:"basicInfo"`
+	BasicInfo   DetailBasicInfoLabels  `json:"basic_info"`
 	Tabs        DetailTabLabels        `json:"tabs"`
 	Security    DetailSecurityLabels   `json:"security"`
-	EmptyStates DetailEmptyStateLabels `json:"emptyStates"`
+	EmptyStates DetailEmptyStateLabels `json:"empty_states"`
 	// Inline feedback and empty-state messages
-	UpdateSuccess            string `json:"updateSuccess"`
-	UpdateError              string `json:"updateError"`
-	NoRolesAssigned          string `json:"noRolesAssigned"`
-	NoRolesDesc              string `json:"noRolesDesc"`
-	NewPasswordPlaceholder   string `json:"newPasswordPlaceholder"`
-	TogglePasswordVisibility string `json:"togglePasswordVisibility"`
-	GeneratePassword         string `json:"generatePassword"`
-	PasswordUpdated          string `json:"passwordUpdated"`
-	PasswordFailed           string `json:"passwordFailed"`
+	UpdateSuccess            string `json:"update_success"`
+	UpdateError              string `json:"update_error"`
+	NoRolesAssigned          string `json:"no_roles_assigned"`
+	NoRolesDesc              string `json:"no_roles_desc"`
+	NewPasswordPlaceholder   string `json:"new_password_placeholder"`
+	TogglePasswordVisibility string `json:"toggle_password_visibility"`
+	GeneratePassword         string `json:"generate_password"`
+	PasswordUpdated          string `json:"password_updated"`
+	PasswordFailed           string `json:"password_failed"`
 	// Tab label for attachments (shared across all detail pages)
-	AttachmentsTab string `json:"attachmentsTab"`
+	AttachmentsTab string `json:"attachments_tab"`
 	// Tab label for audit history
-	AuditHistoryTab string `json:"auditHistoryTab"`
+	AuditHistoryTab string `json:"audit_history_tab"`
 }
 
 // DetailSecurityLabels holds labels for the security tab.
 type DetailSecurityLabels struct {
 	Title             string `json:"title"`
-	LastLogin         string `json:"lastLogin"`
-	MfaStatus         string `json:"mfaStatus"`
-	MfaEnabled        string `json:"mfaEnabled"`
-	MfaDisabled       string `json:"mfaDisabled"`
-	PasswordSection   string `json:"passwordSection"`
-	ResetPassword     string `json:"resetPassword"`
-	AuthMethod        string `json:"authMethod"`
-	ManagedByProvider string `json:"managedByProvider"`
-	ManageAccountLink string `json:"manageAccountLink"`
+	LastLogin         string `json:"last_login"`
+	MfaStatus         string `json:"mfa_status"`
+	MfaEnabled        string `json:"mfa_enabled"`
+	MfaDisabled       string `json:"mfa_disabled"`
+	PasswordSection   string `json:"password_section"`
+	ResetPassword     string `json:"reset_password"`
+	AuthMethod        string `json:"auth_method"`
+	ManagedByProvider string `json:"managed_by_provider"`
+	ManageAccountLink string `json:"manage_account_link"`
 }
 
 // DetailEmptyStateLabels holds empty-state labels for user detail tabs.
 type DetailEmptyStateLabels struct {
-	AuditTitle string `json:"auditTitle"`
-	AuditDesc  string `json:"auditDesc"`
+	AuditTitle string `json:"audit_title"`
+	AuditDesc  string `json:"audit_desc"`
 }
 
 type DetailBasicInfoLabels struct {
 	Title                string `json:"title"`
-	FirstName            string `json:"firstName"`
-	FirstNamePlaceholder string `json:"firstNamePlaceholder"`
-	LastName             string `json:"lastName"`
-	LastNamePlaceholder  string `json:"lastNamePlaceholder"`
+	FirstName            string `json:"first_name"`
+	FirstNamePlaceholder string `json:"first_name_placeholder"`
+	LastName             string `json:"last_name"`
+	LastNamePlaceholder  string `json:"last_name_placeholder"`
 	Email                string `json:"email"`
-	EmailPlaceholder     string `json:"emailPlaceholder"`
+	EmailPlaceholder     string `json:"email_placeholder"`
 	Username             string `json:"username"`
 	Division             string `json:"division"`
 	Status               string `json:"status"`
-	UserType             string `json:"userType"`
+	UserType             string `json:"user_type"`
 	Mobile               string `json:"mobile"`
-	MobilePlaceholder    string `json:"mobilePlaceholder"`
+	MobilePlaceholder    string `json:"mobile_placeholder"`
 	Active               string `json:"active"`
 	Save                 string `json:"save"`
 }
@@ -130,7 +130,7 @@ type DetailTabLabels struct {
 	Info       string `json:"info"`
 	Roles      string `json:"roles"`
 	Security   string `json:"security"`
-	AuditTrail string `json:"auditTrail"`
+	AuditTrail string `json:"audit_trail"`
 }
 
 // ---------------------------------------------------------------------------
@@ -139,29 +139,29 @@ type DetailTabLabels struct {
 
 // DashboardLabels holds translatable strings for the user dashboard.
 type DashboardLabels struct {
-	TotalUsers       string `json:"totalUsers"`
+	TotalUsers       string `json:"total_users"`
 	Active           string `json:"active"`
 	Inactive         string `json:"inactive"`
 	Roles            string `json:"roles"`
-	UserActivity     string `json:"userActivity"`
-	FilterWeek       string `json:"filterWeek"`
-	FilterMonth      string `json:"filterMonth"`
-	FilterYear       string `json:"filterYear"`
-	RecentActivity   string `json:"recentActivity"`
-	ViewAll          string `json:"viewAll"`
-	NoRecentActivity string `json:"noRecentActivity"`
+	UserActivity     string `json:"user_activity"`
+	FilterWeek       string `json:"filter_week"`
+	FilterMonth      string `json:"filter_month"`
+	FilterYear       string `json:"filter_year"`
+	RecentActivity   string `json:"recent_activity"`
+	ViewAll          string `json:"view_all"`
+	NoRecentActivity string `json:"no_recent_activity"`
 
 	// Quick action labels (Phase 1b — pyeza dashboard block refactor)
-	QuickNew         string `json:"quickNew"`
-	QuickViewAll     string `json:"quickViewAll"`
-	QuickRoles       string `json:"quickRoles"`
-	QuickPermissions string `json:"quickPermissions"`
+	QuickNew         string `json:"quick_new"`
+	QuickViewAll     string `json:"quick_view_all"`
+	QuickRoles       string `json:"quick_roles"`
+	QuickPermissions string `json:"quick_permissions"`
 
 	// Activity feed titles
-	UserAdded      string `json:"userAdded"`
-	UserActivated  string `json:"userActivated"`
-	RoleAssigned   string `json:"roleAssigned"`
-	ProfileUpdated string `json:"profileUpdated"`
+	UserAdded      string `json:"user_added"`
+	UserActivated  string `json:"user_activated"`
+	RoleAssigned   string `json:"role_assigned"`
+	ProfileUpdated string `json:"profile_updated"`
 }
 
 // ---------------------------------------------------------------------------
@@ -184,14 +184,14 @@ type RolePageLabels struct {
 }
 
 type RoleButtonLabels struct {
-	AssignRole string `json:"assignRole"`
+	AssignRole string `json:"assign_role"`
 }
 
 type RoleColumnLabels struct {
-	RoleName     string `json:"roleName"`
+	RoleName     string `json:"role_name"`
 	Description  string `json:"description"`
 	Color        string `json:"color"`
-	DateAssigned string `json:"dateAssigned"`
+	DateAssigned string `json:"date_assigned"`
 }
 
 type RoleEmptyLabels struct {
@@ -206,5 +206,5 @@ type RoleFormLabels struct {
 type RoleActionLabels struct {
 	Assign      string `json:"assign"`
 	Remove      string `json:"remove"`
-	ManageRoles string `json:"manageRoles"`
+	ManageRoles string `json:"manage_roles"`
 }

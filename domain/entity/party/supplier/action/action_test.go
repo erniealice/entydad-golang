@@ -285,11 +285,11 @@ func newTestViewContext(req *http.Request) *view.ViewContext {
 	return &view.ViewContext{
 		Request: req,
 		Messages: map[string]string{
-			"shared.errors.permissionDenied":    "permission denied",
-			"shared.errors.idRequired":          "id required",
-			"shared.errors.invalidStatus":       "invalid status",
-			"shared.errors.noIdsProvided":       "no ids provided",
-			"shared.errors.invalidTargetStatus": "invalid target status",
+			"shared.errors.permission_denied":     "permission denied",
+			"shared.errors.id_required":           "id required",
+			"shared.errors.invalid_status":        "invalid status",
+			"shared.errors.no_ids_provided":       "no ids provided",
+			"shared.errors.invalid_target_status": "invalid target status",
 		},
 	}
 }

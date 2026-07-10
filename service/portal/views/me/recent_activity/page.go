@@ -58,7 +58,7 @@ func NewView(deps *ModuleDeps) view.View {
 			}
 		}
 
-		title := me.Msg(deps.Messages, "me.recentActivity.title", "Recent Activity")
+		title := me.Msg(deps.Messages, "me.recent_activity.title", "Recent Activity")
 		pd := &PageData{
 			PageData: me.PageData{
 				PageData: types.PageData{
@@ -72,8 +72,8 @@ func NewView(deps *ModuleDeps) view.View {
 					Messages:        deps.Messages,
 				},
 			},
-			Subtitle:     me.Msg(deps.Messages, "me.recentActivity.subtitle", "Your recent workspace switches across all sessions."),
-			EmptyMessage: me.Msg(deps.Messages, "me.recentActivity.empty", "No recent workspace switches."),
+			Subtitle:     me.Msg(deps.Messages, "me.recent_activity.subtitle", "Your recent workspace switches across all sessions."),
+			EmptyMessage: me.Msg(deps.Messages, "me.recent_activity.empty", "No recent workspace switches."),
 			Switches:     switches,
 		}
 		return view.OK("me-page", pd)

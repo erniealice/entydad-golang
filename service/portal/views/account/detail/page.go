@@ -42,8 +42,8 @@ func NewView(deps *ModuleDeps) view.View {
 			activeTab = "email"
 		}
 
-		titleKey := "memberPages.section.account.title"
-		iconKey := "memberPages.section.account.icon"
+		titleKey := "member_pages.section.account.title"
+		iconKey := "member_pages.section.account.icon"
 
 		pageData := &PageData{
 			PageData: types.PageData{
@@ -69,9 +69,9 @@ func buildTabs(messages map[string]string, pageURL string) []pyeza.TabItem {
 		pageURL = "/app/account"
 	}
 	return []pyeza.TabItem{
-		{Key: "email", Label: lookup(messages, "memberPages.account.tab.email", "Sign-in email"), Href: pageURL + "?tab=email"},
-		{Key: "password", Label: lookup(messages, "memberPages.account.tab.password", "Password"), Href: pageURL + "?tab=password"},
-		{Key: "sessions", Label: lookup(messages, "memberPages.account.tab.sessions", "Sessions"), Href: pageURL + "?tab=sessions"},
+		{Key: "email", Label: lookup(messages, "member_pages.account.tab.email", "Sign-in email"), Href: pageURL + "?tab=email"},
+		{Key: "password", Label: lookup(messages, "member_pages.account.tab.password", "Password"), Href: pageURL + "?tab=password"},
+		{Key: "sessions", Label: lookup(messages, "member_pages.account.tab.sessions", "Sessions"), Href: pageURL + "?tab=sessions"},
 	}
 }
 

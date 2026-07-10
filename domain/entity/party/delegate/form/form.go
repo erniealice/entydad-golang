@@ -43,13 +43,13 @@ type Data struct {
 func BuildLabels(t func(string) string) Labels {
 	return Labels{
 		SectionGuardian:      t("delegate.page.heading"),
-		FirstName:            t("client.form.firstName"),
-		FirstNamePlaceholder: t("client.form.firstNamePlaceholder"),
-		LastName:             t("client.form.lastName"),
-		LastNamePlaceholder:  t("client.form.lastNamePlaceholder"),
+		FirstName:            t("client.form.first_name"),
+		FirstNamePlaceholder: t("client.form.first_name_placeholder"),
+		LastName:             t("client.form.last_name"),
+		LastNamePlaceholder:  t("client.form.last_name_placeholder"),
 		Email:                t("client.form.email"),
-		EmailPlaceholder:     t("client.form.emailPlaceholder"),
+		EmailPlaceholder:     t("client.form.email_placeholder"),
 		Mobile:               t("client.form.phone"),
-		MobilePlaceholder:    t("client.form.phonePlaceholder"),
+		MobilePlaceholder:    t("client.form.phone_placeholder"),
 	}
 }

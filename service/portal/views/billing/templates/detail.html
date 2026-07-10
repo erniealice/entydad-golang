@@ -7,34 +7,34 @@
 {{define "billing-page-content"}}
 {{template "header-oob" .}}
 <div class="account-page" data-account-area-page="billing" data-page-css="/assets/css/app/account-area.css?v={{.CacheVersion}}">
-    {{template "tabs" (dict "Items" .TabItems "ActiveTab" .ActiveTab "Variant" "main" "ID" "billing-page-tabs" "Label" (.T "memberPages.billing.tabsAriaLabel"))}}
+    {{template "tabs" (dict "Items" .TabItems "ActiveTab" .ActiveTab "Variant" "main" "ID" "billing-page-tabs" "Label" (.T "member_pages.billing.tabs_aria_label"))}}
 
     <section class="account-page-section" id="tabContent">
         {{if eq .ActiveTab "subscription"}}
         <div class="account-section-card">
             <header class="account-section-card-header">
-                <h2 class="account-section-card-title">{{.T "memberPages.billing.subscription.title"}}</h2>
-                <p class="account-section-card-help">{{.T "memberPages.billing.subscription.help"}}</p>
+                <h2 class="account-section-card-title">{{.T "member_pages.billing.subscription.title"}}</h2>
+                <p class="account-section-card-help">{{.T "member_pages.billing.subscription.help"}}</p>
             </header>
-            <p class="account-section-empty-hint">{{.T "memberPages.billing.subscription.empty"}}</p>
+            <p class="account-section-empty-hint">{{.T "member_pages.billing.subscription.empty"}}</p>
         </div>
 
         {{else if eq .ActiveTab "payment-method"}}
         <div class="account-section-card">
             <header class="account-section-card-header">
-                <h2 class="account-section-card-title">{{.T "memberPages.billing.paymentMethod.title"}}</h2>
-                <p class="account-section-card-help">{{.T "memberPages.billing.paymentMethod.help"}}</p>
+                <h2 class="account-section-card-title">{{.T "member_pages.billing.payment_method.title"}}</h2>
+                <p class="account-section-card-help">{{.T "member_pages.billing.payment_method.help"}}</p>
             </header>
-            <p class="account-section-empty-hint">{{.T "memberPages.billing.paymentMethod.empty"}}</p>
+            <p class="account-section-empty-hint">{{.T "member_pages.billing.payment_method.empty"}}</p>
         </div>
 
         {{else if eq .ActiveTab "invoices"}}
         <div class="account-section-card">
             <header class="account-section-card-header">
-                <h2 class="account-section-card-title">{{.T "memberPages.billing.invoices.title"}}</h2>
-                <p class="account-section-card-help">{{.T "memberPages.billing.invoices.help"}}</p>
+                <h2 class="account-section-card-title">{{.T "member_pages.billing.invoices.title"}}</h2>
+                <p class="account-section-card-help">{{.T "member_pages.billing.invoices.help"}}</p>
             </header>
-            <p class="account-section-empty-hint">{{.T "memberPages.billing.invoices.empty"}}</p>
+            <p class="account-section-empty-hint">{{.T "member_pages.billing.invoices.empty"}}</p>
         </div>
         {{end}}
     </section>

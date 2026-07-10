@@ -24,15 +24,15 @@ type Labels struct {
 
 type PageLabels struct {
 	Heading         string `json:"heading"`
-	HeadingActive   string `json:"headingActive"`
-	HeadingInactive string `json:"headingInactive"`
+	HeadingActive   string `json:"heading_active"`
+	HeadingInactive string `json:"heading_inactive"`
 	Caption         string `json:"caption"`
-	CaptionActive   string `json:"captionActive"`
-	CaptionInactive string `json:"captionInactive"`
+	CaptionActive   string `json:"caption_active"`
+	CaptionInactive string `json:"caption_inactive"`
 }
 
 type ButtonLabels struct {
-	AddLocation string `json:"addLocation"`
+	AddLocation string `json:"add_location"`
 }
 
 type ColumnLabels struct {
@@ -42,35 +42,35 @@ type ColumnLabels struct {
 	Country     string `json:"country"`
 	Timezone    string `json:"timezone"`
 	Status      string `json:"status"`
-	DateCreated string `json:"dateCreated"`
+	DateCreated string `json:"date_created"`
 }
 
 type EmptyLabels struct {
-	ActiveTitle     string `json:"activeTitle"`
-	ActiveMessage   string `json:"activeMessage"`
-	InactiveTitle   string `json:"inactiveTitle"`
-	InactiveMessage string `json:"inactiveMessage"`
+	ActiveTitle     string `json:"active_title"`
+	ActiveMessage   string `json:"active_message"`
+	InactiveTitle   string `json:"inactive_title"`
+	InactiveMessage string `json:"inactive_message"`
 }
 
 type FormLabels struct {
 	Name                   string `json:"name"`
-	NamePlaceholder        string `json:"namePlaceholder"`
+	NamePlaceholder        string `json:"name_placeholder"`
 	Address                string `json:"address"`
-	AddressPlaceholder     string `json:"addressPlaceholder"`
+	AddressPlaceholder     string `json:"address_placeholder"`
 	Description            string `json:"description"`
-	DescriptionPlaceholder string `json:"descriptionPlaceholder"`
+	DescriptionPlaceholder string `json:"description_placeholder"`
 	Timezone               string `json:"timezone"`
 	Area                   string `json:"area"`
-	AreaPlaceholder        string `json:"areaPlaceholder"`
+	AreaPlaceholder        string `json:"area_placeholder"`
 	Active                 string `json:"active"`
 
 	// Field-level info text surfaced via an info button beside each label.
-	NameInfo        string `json:"nameInfo"`
-	AddressInfo     string `json:"addressInfo"`
-	DescriptionInfo string `json:"descriptionInfo"`
-	TimezoneInfo    string `json:"timezoneInfo"`
-	AreaInfo        string `json:"areaInfo"`
-	ActiveInfo      string `json:"activeInfo"`
+	NameInfo        string `json:"name_info"`
+	AddressInfo     string `json:"address_info"`
+	DescriptionInfo string `json:"description_info"`
+	TimezoneInfo    string `json:"timezone_info"`
+	AreaInfo        string `json:"area_info"`
+	ActiveInfo      string `json:"active_info"`
 }
 
 type ActionLabels struct {
@@ -82,26 +82,26 @@ type ActionLabels struct {
 }
 
 type DetailLabels struct {
-	BasicInfo   DetailBasicInfoLabels `json:"basicInfo"`
+	BasicInfo   DetailBasicInfoLabels `json:"basic_info"`
 	Tabs        DetailTabLabels       `json:"tabs"`
-	EmptyStates DetailEmptyLabels     `json:"emptyStates"`
+	EmptyStates DetailEmptyLabels     `json:"empty_states"`
 	// Inline feedback messages
-	UpdateSuccess string `json:"updateSuccess"`
-	UpdateError   string `json:"updateError"`
+	UpdateSuccess string `json:"update_success"`
+	UpdateError   string `json:"update_error"`
 	// Tab label for attachments
-	AttachmentsTab string `json:"attachmentsTab"`
+	AttachmentsTab string `json:"attachments_tab"`
 	// Tab label for audit history
-	AuditHistoryTab string `json:"auditHistoryTab"`
+	AuditHistoryTab string `json:"audit_history_tab"`
 }
 
 type DetailBasicInfoLabels struct {
 	Title                  string `json:"title"`
 	Name                   string `json:"name"`
-	NamePlaceholder        string `json:"namePlaceholder"`
+	NamePlaceholder        string `json:"name_placeholder"`
 	Address                string `json:"address"`
-	AddressPlaceholder     string `json:"addressPlaceholder"`
+	AddressPlaceholder     string `json:"address_placeholder"`
 	Description            string `json:"description"`
-	DescriptionPlaceholder string `json:"descriptionPlaceholder"`
+	DescriptionPlaceholder string `json:"description_placeholder"`
 	Active                 string `json:"active"`
 	Save                   string `json:"save"`
 }
@@ -109,44 +109,44 @@ type DetailBasicInfoLabels struct {
 type DetailTabLabels struct {
 	Info       string `json:"info"`
 	Users      string `json:"users"`
-	PriceLists string `json:"priceLists"`
-	AuditTrail string `json:"auditTrail"`
+	PriceLists string `json:"price_lists"`
+	AuditTrail string `json:"audit_trail"`
 }
 
 type DetailEmptyLabels struct {
-	UsersTitle      string `json:"usersTitle"`
-	UsersDesc       string `json:"usersDesc"`
-	PriceListsTitle string `json:"priceListsTitle"`
-	PriceListsDesc  string `json:"priceListsDesc"`
-	AuditTitle      string `json:"auditTitle"`
-	AuditDesc       string `json:"auditDesc"`
+	UsersTitle      string `json:"users_title"`
+	UsersDesc       string `json:"users_desc"`
+	PriceListsTitle string `json:"price_lists_title"`
+	PriceListsDesc  string `json:"price_lists_desc"`
+	AuditTitle      string `json:"audit_title"`
+	AuditDesc       string `json:"audit_desc"`
 }
 
 // DashboardLabels holds translatable strings for the location dashboard.
 type DashboardLabels struct {
 	// Stats (4): Total / Active / Regions / Areas Count
-	TotalLocations string `json:"totalLocations"`
+	TotalLocations string `json:"total_locations"`
 	Active         string `json:"active"`
 	Regions        string `json:"regions"`
-	AreasCount     string `json:"areasCount"`
+	AreasCount     string `json:"areas_count"`
 
 	// Widget titles
-	LocationsByRegion  string `json:"locationsByRegion"`
-	TopLocationsByArea string `json:"topLocationsByArea"`
-	RecentAdditions    string `json:"recentAdditions"`
-	ViewAll            string `json:"viewAll"`
+	LocationsByRegion  string `json:"locations_by_region"`
+	TopLocationsByArea string `json:"top_locations_by_area"`
+	RecentAdditions    string `json:"recent_additions"`
+	ViewAll            string `json:"view_all"`
 
 	// Chart filter labels
-	FilterWeek  string `json:"filterWeek"`
-	FilterMonth string `json:"filterMonth"`
-	FilterYear  string `json:"filterYear"`
+	FilterWeek  string `json:"filter_week"`
+	FilterMonth string `json:"filter_month"`
+	FilterYear  string `json:"filter_year"`
 
 	// Quick action labels
-	QuickNewLocation string `json:"quickNewLocation"`
-	QuickNewArea     string `json:"quickNewArea"`
+	QuickNewLocation string `json:"quick_new_location"`
+	QuickNewArea     string `json:"quick_new_area"`
 
 	// Activity / table column labels
-	ColumnLocation string `json:"columnLocation"`
-	ColumnAreas    string `json:"columnAreas"`
-	LocationAdded  string `json:"locationAdded"`
+	ColumnLocation string `json:"column_location"`
+	ColumnAreas    string `json:"column_areas"`
+	LocationAdded  string `json:"location_added"`
 }

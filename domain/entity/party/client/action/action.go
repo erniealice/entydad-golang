@@ -243,7 +243,7 @@ func NewAddAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("client", "create") {
-			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permission_denied"))
 		}
 		if viewCtx.Request.Method == http.MethodGet {
 			mode := viewCtx.Request.URL.Query().Get("mode")
@@ -277,7 +277,7 @@ func NewAddAction(deps *Deps) view.View {
 
 		// POST — create client
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return view.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalid_form_data"))
 		}
 
 		r := viewCtx.Request
@@ -353,7 +353,7 @@ func NewEditAction(deps *Deps) view.View {
 			requiredAction = "create"
 		}
 		if !perms.Can("client", requiredAction) {
-			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permission_denied"))
 		}
 
 		if viewCtx.Request.Method == http.MethodGet {
@@ -363,7 +363,7 @@ func NewEditAction(deps *Deps) view.View {
 			})
 			if err != nil {
 				log.Printf("Failed to read client %s: %v", id, err)
-				return view.HTMXError(viewCtx.T("shared.errors.notFound"))
+				return view.HTMXError(viewCtx.T("shared.errors.not_found"))
 			}
 
 			c := resp.GetData()[0]
@@ -376,7 +376,7 @@ func NewEditAction(deps *Deps) view.View {
 			formAction := route.ResolveURL(deps.Routes.EditURL, "id", id) + "?mode=" + mode
 			formID := id
 			if isClone {
-				name = strings.TrimSpace(name) + viewCtx.T("actions.copySuffix")
+				name = strings.TrimSpace(name) + viewCtx.T("actions.copy_suffix")
 				formAction = deps.Routes.AddURL
 				formID = ""
 			}
@@ -432,7 +432,7 @@ func NewEditAction(deps *Deps) view.View {
 
 		// POST — update client
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return view.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalid_form_data"))
 		}
 
 		r := viewCtx.Request
@@ -544,7 +544,7 @@ func NewDeleteAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("client", "delete") {
-			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permission_denied"))
 		}
 		id := viewCtx.Request.URL.Query().Get("id")
 		if id == "" {
@@ -552,7 +552,7 @@ func NewDeleteAction(deps *Deps) view.View {
 			id = viewCtx.Request.FormValue("id")
 		}
 		if id == "" {
-			return view.HTMXError(viewCtx.T("shared.errors.idRequired"))
+			return view.HTMXError(viewCtx.T("shared.errors.id_required"))
 		}
 
 		_, err := deps.DeleteClient(ctx, &clientpb.DeleteClientRequest{
@@ -573,13 +573,13 @@ func NewBulkDeleteAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("client", "delete") {
-			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permission_denied"))
 		}
 		_ = viewCtx.Request.ParseMultipartForm(32 << 20)
 
 		ids := viewCtx.Request.Form["id"]
 		if len(ids) == 0 {
-			return view.HTMXError(viewCtx.T("shared.errors.noIdsProvided"))
+			return view.HTMXError(viewCtx.T("shared.errors.no_ids_provided"))
 		}
 
 		for _, id := range ids {
@@ -616,7 +616,7 @@ func NewSetStatusAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("client", "update") {
-			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permission_denied"))
 		}
 		id := viewCtx.Request.URL.Query().Get("id")
 		targetStatus := viewCtx.Request.URL.Query().Get("status")
@@ -627,10 +627,10 @@ func NewSetStatusAction(deps *Deps) view.View {
 			targetStatus = viewCtx.Request.FormValue("status")
 		}
 		if id == "" {
-			return view.HTMXError(viewCtx.T("shared.errors.idRequired"))
+			return view.HTMXError(viewCtx.T("shared.errors.id_required"))
 		}
 		if !validClientStatus(targetStatus) {
-			return view.HTMXError(viewCtx.T("shared.errors.invalidStatus"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalid_status"))
 		}
 
 		if err := deps.SetClientStatus(ctx, id, targetStatus); err != nil {
@@ -648,7 +648,7 @@ func NewBulkSetStatusAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("client", "update") {
-			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permission_denied"))
 		}
 		_ = viewCtx.Request.ParseMultipartForm(32 << 20)
 
@@ -656,10 +656,10 @@ func NewBulkSetStatusAction(deps *Deps) view.View {
 		targetStatus := viewCtx.Request.FormValue("target_status")
 
 		if len(ids) == 0 {
-			return view.HTMXError(viewCtx.T("shared.errors.noIdsProvided"))
+			return view.HTMXError(viewCtx.T("shared.errors.no_ids_provided"))
 		}
 		if !validClientStatus(targetStatus) {
-			return view.HTMXError(viewCtx.T("shared.errors.invalidTargetStatus"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalid_target_status"))
 		}
 
 		for _, id := range ids {

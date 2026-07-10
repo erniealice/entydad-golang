@@ -117,14 +117,14 @@ func (r *locationActionRecorder) getInUseIDs(_ context.Context, ids []string) (m
 
 func testMessages() map[string]string {
 	return map[string]string{
-		"shared.errors.permissionDenied":    "permission denied",
-		"shared.errors.idRequired":          "id required",
-		"shared.errors.noIdsProvided":       "no ids provided",
-		"shared.errors.invalidStatus":       "invalid status",
-		"shared.errors.invalidTargetStatus": "invalid target status",
-		"shared.errors.invalidFormData":     "invalid form data",
-		"shared.errors.cannotDeleteInUse":   "cannot delete in use",
-		"shared.errors.verifyFailed":        "verify failed",
+		"shared.errors.permission_denied":     "permission denied",
+		"shared.errors.id_required":           "id required",
+		"shared.errors.no_ids_provided":       "no ids provided",
+		"shared.errors.invalid_status":        "invalid status",
+		"shared.errors.invalid_target_status": "invalid target status",
+		"shared.errors.invalid_form_data":     "invalid form data",
+		"shared.errors.cannot_delete_in_use":  "cannot delete in use",
+		"shared.errors.verify_failed":         "verify failed",
 	}
 }
 

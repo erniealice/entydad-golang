@@ -23,11 +23,11 @@ type PageLabels struct {
 }
 
 type ButtonLabels struct {
-	AddTag string `json:"addTag"`
+	AddTag string `json:"add_tag"`
 }
 
 type ColumnLabels struct {
-	TagName     string `json:"tagName"`
+	TagName     string `json:"tag_name"`
 	Customers   string `json:"customers"`
 	Description string `json:"description"`
 	Status      string `json:"status"`
@@ -46,7 +46,7 @@ type ActionLabels struct {
 }
 
 type ConfirmLabels struct {
-	DeleteTitle   string `json:"deleteTitle"`
-	DeleteMessage string `json:"deleteMessage"`
-	CannotDelete  string `json:"cannotDelete"`
+	DeleteTitle   string `json:"delete_title"`
+	DeleteMessage string `json:"delete_message"`
+	CannotDelete  string `json:"cannot_delete"`
 }

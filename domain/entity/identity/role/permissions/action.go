@@ -46,11 +46,11 @@ func NewAssignAction(deps *ActionDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("role", "update") {
-			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permission_denied"))
 		}
 		roleID := viewCtx.Request.PathValue("id")
 		if roleID == "" {
-			return view.HTMXError(viewCtx.T("shared.errors.idRequired"))
+			return view.HTMXError(viewCtx.T("shared.errors.id_required"))
 		}
 
 		if viewCtx.Request.Method == http.MethodGet {
@@ -107,12 +107,12 @@ func NewAssignAction(deps *ActionDeps) view.View {
 
 		// POST -- assign permission to role
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return view.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalid_form_data"))
 		}
 
 		permissionID := viewCtx.Request.FormValue("permission_id")
 		if permissionID == "" {
-			return view.HTMXError(viewCtx.T("shared.errors.permissionRequired"))
+			return view.HTMXError(viewCtx.T("shared.errors.permission_required"))
 		}
 
 		_, err := deps.CreateRolePermission(ctx, &rolepermissionpb.CreateRolePermissionRequest{
@@ -136,11 +136,11 @@ func NewRemoveAction(deps *ActionDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("role", "update") {
-			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permission_denied"))
 		}
 		roleID := viewCtx.Request.PathValue("id")
 		if roleID == "" {
-			return view.HTMXError(viewCtx.T("shared.errors.idRequired"))
+			return view.HTMXError(viewCtx.T("shared.errors.id_required"))
 		}
 
 		rpID := viewCtx.Request.URL.Query().Get("id")
@@ -149,7 +149,7 @@ func NewRemoveAction(deps *ActionDeps) view.View {
 			rpID = viewCtx.Request.FormValue("id")
 		}
 		if rpID == "" {
-			return view.HTMXError(viewCtx.T("shared.errors.idRequired"))
+			return view.HTMXError(viewCtx.T("shared.errors.id_required"))
 		}
 
 		_, err := deps.DeleteRolePermission(ctx, &rolepermissionpb.DeleteRolePermissionRequest{

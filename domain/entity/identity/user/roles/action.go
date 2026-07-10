@@ -50,11 +50,11 @@ func NewAssignAction(deps *ActionDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("user", "update") {
-			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permission_denied"))
 		}
 		userID := viewCtx.Request.PathValue("id")
 		if userID == "" {
-			return view.HTMXError(viewCtx.T("shared.errors.idRequired"))
+			return view.HTMXError(viewCtx.T("shared.errors.id_required"))
 		}
 
 		if viewCtx.Request.Method == http.MethodGet {
@@ -106,12 +106,12 @@ func NewAssignAction(deps *ActionDeps) view.View {
 
 		// POST -- assign role to user
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return view.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalid_form_data"))
 		}
 
 		roleID := viewCtx.Request.FormValue("role_id")
 		if roleID == "" {
-			return view.HTMXError(viewCtx.T("shared.errors.roleRequired"))
+			return view.HTMXError(viewCtx.T("shared.errors.role_required"))
 		}
 
 		// Find workspace_user for this user
@@ -142,11 +142,11 @@ func NewRemoveAction(deps *ActionDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("user", "update") {
-			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permission_denied"))
 		}
 		userID := viewCtx.Request.PathValue("id")
 		if userID == "" {
-			return view.HTMXError(viewCtx.T("shared.errors.idRequired"))
+			return view.HTMXError(viewCtx.T("shared.errors.id_required"))
 		}
 
 		wurID := viewCtx.Request.URL.Query().Get("id")
@@ -155,7 +155,7 @@ func NewRemoveAction(deps *ActionDeps) view.View {
 			wurID = viewCtx.Request.FormValue("id")
 		}
 		if wurID == "" {
-			return view.HTMXError(viewCtx.T("shared.errors.idRequired"))
+			return view.HTMXError(viewCtx.T("shared.errors.id_required"))
 		}
 
 		_, err := deps.DeleteWorkspaceUserRole(ctx, &workspaceuserrolepb.DeleteWorkspaceUserRoleRequest{

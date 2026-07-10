@@ -57,7 +57,7 @@ func NewAddAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("user", "create") {
-			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permission_denied"))
 		}
 		if viewCtx.Request.Method == http.MethodGet {
 			return view.OK("user-drawer-form", &userform.Data{
@@ -71,7 +71,7 @@ func NewAddAction(deps *Deps) view.View {
 
 		// POST — create user
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return view.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalid_form_data"))
 		}
 
 		r := viewCtx.Request
@@ -82,7 +82,7 @@ func NewAddAction(deps *Deps) view.View {
 			h, hashErr := hashPassword(deps, pw)
 			if hashErr != nil {
 				log.Printf("Failed to hash password: %v", hashErr)
-				return view.HTMXError(viewCtx.T("shared.errors.passwordFailed"))
+				return view.HTMXError(viewCtx.T("shared.errors.password_failed"))
 			}
 			pwHash = h
 		}
@@ -143,7 +143,7 @@ func NewEditAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("user", "update") {
-			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permission_denied"))
 		}
 		id := viewCtx.Request.PathValue("id")
 
@@ -153,7 +153,7 @@ func NewEditAction(deps *Deps) view.View {
 			})
 			if err != nil {
 				log.Printf("Failed to read user %s: %v", id, err)
-				return view.HTMXError(viewCtx.T("shared.errors.notFound"))
+				return view.HTMXError(viewCtx.T("shared.errors.not_found"))
 			}
 
 			u := resp.GetData()[0]
@@ -176,7 +176,7 @@ func NewEditAction(deps *Deps) view.View {
 
 		// POST — update user
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return view.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalid_form_data"))
 		}
 
 		r := viewCtx.Request
@@ -231,7 +231,7 @@ func NewDeleteAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("user", "delete") {
-			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permission_denied"))
 		}
 		id := viewCtx.Request.URL.Query().Get("id")
 		if id == "" {
@@ -239,7 +239,7 @@ func NewDeleteAction(deps *Deps) view.View {
 			id = viewCtx.Request.FormValue("id")
 		}
 		if id == "" {
-			return view.HTMXError(viewCtx.T("shared.errors.idRequired"))
+			return view.HTMXError(viewCtx.T("shared.errors.id_required"))
 		}
 
 		_, err := deps.DeleteUser(ctx, &userpb.DeleteUserRequest{
@@ -260,13 +260,13 @@ func NewBulkDeleteAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("user", "delete") {
-			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permission_denied"))
 		}
 		_ = viewCtx.Request.ParseMultipartForm(32 << 20)
 
 		ids := viewCtx.Request.Form["id"]
 		if len(ids) == 0 {
-			return view.HTMXError(viewCtx.T("shared.errors.noIdsProvided"))
+			return view.HTMXError(viewCtx.T("shared.errors.no_ids_provided"))
 		}
 
 		for _, id := range ids {
@@ -295,7 +295,7 @@ func NewSetStatusAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("user", "update") {
-			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permission_denied"))
 		}
 		id := viewCtx.Request.URL.Query().Get("id")
 		targetStatus := viewCtx.Request.URL.Query().Get("status")
@@ -306,10 +306,10 @@ func NewSetStatusAction(deps *Deps) view.View {
 			targetStatus = viewCtx.Request.FormValue("status")
 		}
 		if id == "" {
-			return view.HTMXError(viewCtx.T("shared.errors.idRequired"))
+			return view.HTMXError(viewCtx.T("shared.errors.id_required"))
 		}
 		if targetStatus != "active" && targetStatus != "inactive" {
-			return view.HTMXError(viewCtx.T("shared.errors.invalidStatus"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalid_status"))
 		}
 
 		if err := setUserStatus(ctx, deps, id, targetStatus == "active"); err != nil {
@@ -358,20 +358,20 @@ func NewResetPasswordAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("user", "update") {
-			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permission_denied"))
 		}
 		id := viewCtx.Request.PathValue("id")
 		if id == "" {
-			return view.HTMXError(viewCtx.T("shared.errors.idRequired"))
+			return view.HTMXError(viewCtx.T("shared.errors.id_required"))
 		}
 
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return view.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalid_form_data"))
 		}
 
 		password := viewCtx.Request.FormValue("password")
 		if password == "" {
-			return view.HTMXError(viewCtx.T("shared.errors.passwordRequired"))
+			return view.HTMXError(viewCtx.T("shared.errors.password_required"))
 		}
 
 		// WS-4 security control: reject a local password reset for an
@@ -381,15 +381,15 @@ func NewResetPasswordAction(deps *Deps) view.View {
 			hasPwd, _, capErr := deps.GetUserAuthCapability(ctx, id)
 			if capErr != nil {
 				log.Printf("Failed to read auth capability for user %s: %v", id, capErr)
-				return view.HTMXError(viewCtx.T("shared.errors.passwordFailed"))
+				return view.HTMXError(viewCtx.T("shared.errors.password_failed"))
 			}
 			if !hasPwd {
-				return view.HTMXError(viewCtx.T("shared.errors.passwordManagedByProvider"))
+				return view.HTMXError(viewCtx.T("shared.errors.password_managed_by_provider"))
 			}
 		}
 
 		if deps.AdminResetPassword == nil {
-			return view.HTMXError(viewCtx.T("shared.errors.passwordFailed"))
+			return view.HTMXError(viewCtx.T("shared.errors.password_failed"))
 		}
 
 		_, resetErr := deps.AdminResetPassword(ctx, &userpb.AdminResetPasswordRequest{
@@ -411,7 +411,7 @@ func NewBulkSetStatusAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("user", "update") {
-			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permission_denied"))
 		}
 		_ = viewCtx.Request.ParseMultipartForm(32 << 20)
 
@@ -419,10 +419,10 @@ func NewBulkSetStatusAction(deps *Deps) view.View {
 		targetStatus := viewCtx.Request.FormValue("target_status")
 
 		if len(ids) == 0 {
-			return view.HTMXError(viewCtx.T("shared.errors.noIdsProvided"))
+			return view.HTMXError(viewCtx.T("shared.errors.no_ids_provided"))
 		}
 		if targetStatus != "active" && targetStatus != "inactive" {
-			return view.HTMXError(viewCtx.T("shared.errors.invalidTargetStatus"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalid_target_status"))
 		}
 
 		active := targetStatus == "active"

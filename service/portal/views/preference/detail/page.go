@@ -40,8 +40,8 @@ func NewView(deps *ModuleDeps) view.View {
 			activeTab = "appearance"
 		}
 
-		titleKey := "memberPages.section.preferences.title"
-		iconKey := "memberPages.section.preferences.icon"
+		titleKey := "member_pages.section.preferences.title"
+		iconKey := "member_pages.section.preferences.icon"
 
 		pageData := &PageData{
 			PageData: types.PageData{
@@ -66,9 +66,9 @@ func buildTabs(messages map[string]string, pageURL string) []pyeza.TabItem {
 		pageURL = "/app/preferences"
 	}
 	return []pyeza.TabItem{
-		{Key: "appearance", Label: lookup(messages, "memberPages.preferences.tab.appearance", "Appearance"), Href: pageURL + "?tab=appearance"},
-		{Key: "notifications", Label: lookup(messages, "memberPages.preferences.tab.notifications", "Notifications"), Href: pageURL + "?tab=notifications"},
-		{Key: "language-region", Label: lookup(messages, "memberPages.preferences.tab.languageRegion", "Language & region"), Href: pageURL + "?tab=language-region"},
+		{Key: "appearance", Label: lookup(messages, "member_pages.preferences.tab.appearance", "Appearance"), Href: pageURL + "?tab=appearance"},
+		{Key: "notifications", Label: lookup(messages, "member_pages.preferences.tab.notifications", "Notifications"), Href: pageURL + "?tab=notifications"},
+		{Key: "language-region", Label: lookup(messages, "member_pages.preferences.tab.language_region", "Language & region"), Href: pageURL + "?tab=language-region"},
 	}
 }
 

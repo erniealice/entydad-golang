@@ -17,13 +17,13 @@ type Labels struct {
 
 // FormLabels holds field labels for the assign-form drawer.
 type FormLabels struct {
-	WorkspaceUser         string `json:"workspaceUser"`
+	WorkspaceUser         string `json:"workspace_user"`
 	Role                  string `json:"role"`
-	RolePlaceholder       string `json:"rolePlaceholder"`
-	RoleSearchPlaceholder string `json:"roleSearchPlaceholder"`
-	RoleNoResults         string `json:"roleNoResults"`
+	RolePlaceholder       string `json:"role_placeholder"`
+	RoleSearchPlaceholder string `json:"role_search_placeholder"`
+	RoleNoResults         string `json:"role_no_results"`
 	Permissions           string `json:"permissions"`
-	PermissionsHint       string `json:"permissionsHint"`
+	PermissionsHint       string `json:"permissions_hint"`
 }
 
 // ButtonLabels holds button text for the assign-form drawer.

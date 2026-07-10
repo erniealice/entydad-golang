@@ -40,8 +40,8 @@ func NewView(deps *ModuleDeps) view.View {
 			activeTab = "subscription"
 		}
 
-		titleKey := "memberPages.section.billing.title"
-		iconKey := "memberPages.section.billing.icon"
+		titleKey := "member_pages.section.billing.title"
+		iconKey := "member_pages.section.billing.icon"
 
 		pageData := &PageData{
 			PageData: types.PageData{
@@ -66,9 +66,9 @@ func buildTabs(messages map[string]string, pageURL string) []pyeza.TabItem {
 		pageURL = "/app/billing"
 	}
 	return []pyeza.TabItem{
-		{Key: "subscription", Label: lookup(messages, "memberPages.billing.tab.subscription", "Subscription"), Href: pageURL + "?tab=subscription"},
-		{Key: "payment-method", Label: lookup(messages, "memberPages.billing.tab.paymentMethod", "Payment method"), Href: pageURL + "?tab=payment-method"},
-		{Key: "invoices", Label: lookup(messages, "memberPages.billing.tab.invoices", "Invoices"), Href: pageURL + "?tab=invoices"},
+		{Key: "subscription", Label: lookup(messages, "member_pages.billing.tab.subscription", "Subscription"), Href: pageURL + "?tab=subscription"},
+		{Key: "payment-method", Label: lookup(messages, "member_pages.billing.tab.payment_method", "Payment method"), Href: pageURL + "?tab=payment-method"},
+		{Key: "invoices", Label: lookup(messages, "member_pages.billing.tab.invoices", "Invoices"), Href: pageURL + "?tab=invoices"},
 	}
 }
 

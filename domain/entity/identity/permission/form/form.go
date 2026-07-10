@@ -46,19 +46,19 @@ type Data struct {
 func BuildLabels(t func(string) string) Labels {
 	return Labels{
 		Name:                      t("form.name"),
-		NamePlaceholder:           t("form.namePlaceholder"),
-		PermissionCode:            t("form.permissionCode"),
-		PermissionCodePlaceholder: t("form.permissionCodePlaceholder"),
-		PermissionCodeHint:        t("form.permissionCodeHint"),
-		PermissionType:            t("form.permissionType"),
+		NamePlaceholder:           t("form.name_placeholder"),
+		PermissionCode:            t("form.permission_code"),
+		PermissionCodePlaceholder: t("form.permission_code_placeholder"),
+		PermissionCodeHint:        t("form.permission_code_hint"),
+		PermissionType:            t("form.permission_type"),
 		Description:               t("form.description"),
-		DescriptionPlaceholder:    t("form.descriptionPlaceholder"),
+		DescriptionPlaceholder:    t("form.description_placeholder"),
 		Active:                    t("form.active"),
-		NameInfo:                  t("permission.form.nameInfo"),
-		PermissionCodeInfo:        t("permission.form.permissionCodeInfo"),
-		PermissionTypeInfo:        t("permission.form.permissionTypeInfo"),
-		DescriptionInfo:           t("permission.form.descriptionInfo"),
-		ActiveInfo:                t("permission.form.activeInfo"),
+		NameInfo:                  t("permission.form.name_info"),
+		PermissionCodeInfo:        t("permission.form.permission_code_info"),
+		PermissionTypeInfo:        t("permission.form.permission_type_info"),
+		DescriptionInfo:           t("permission.form.description_info"),
+		ActiveInfo:                t("permission.form.active_info"),
 	}
 }
 

@@ -50,24 +50,24 @@ type Data struct {
 func BuildLabels(t func(string) string) Labels {
 	return Labels{
 		Name:                   t("form.name"),
-		NamePlaceholder:        t("form.namePlaceholder"),
+		NamePlaceholder:        t("form.name_placeholder"),
 		Description:            t("form.description"),
-		DescriptionPlaceholder: t("form.descriptionPlaceholder"),
+		DescriptionPlaceholder: t("form.description_placeholder"),
 		Private:                t("form.private"),
 		Active:                 t("form.active"),
 
 		// Tax section
-		SectionTax:                  t("form.sectionTax"),
-		TaxInclusivePricing:         t("form.taxInclusivePricing"),
-		TaxInclusivePricingInfo:     t("form.taxInclusivePricingInfo"),
-		TaxComputationEnabled:       t("form.taxComputationEnabled"),
-		TaxComputationEnabledInfo:   t("form.taxComputationEnabledInfo"),
-		HomeJurisdiction:            t("form.homeJurisdiction"),
-		HomeJurisdictionPlaceholder: t("form.homeJurisdictionPlaceholder"),
-		HomeJurisdictionInfo:        t("form.homeJurisdictionInfo"),
+		SectionTax:                  t("form.section_tax"),
+		TaxInclusivePricing:         t("form.tax_inclusive_pricing"),
+		TaxInclusivePricingInfo:     t("form.tax_inclusive_pricing_info"),
+		TaxComputationEnabled:       t("form.tax_computation_enabled"),
+		TaxComputationEnabledInfo:   t("form.tax_computation_enabled_info"),
+		HomeJurisdiction:            t("form.home_jurisdiction"),
+		HomeJurisdictionPlaceholder: t("form.home_jurisdiction_placeholder"),
+		HomeJurisdictionInfo:        t("form.home_jurisdiction_info"),
 		TIN:                         t("form.tin"),
-		TINPlaceholder:              t("form.tinPlaceholder"),
-		TINInfo:                     t("form.tinInfo"),
-		MoreInfo:                    t("form.moreInfo"),
+		TINPlaceholder:              t("form.tin_placeholder"),
+		TINInfo:                     t("form.tin_info"),
+		MoreInfo:                    t("form.more_info"),
 	}
 }

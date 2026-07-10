@@ -29,11 +29,11 @@ type Data struct {
 func BuildLabels(t func(string) string) Labels {
 	return Labels{
 		Name:                   t("form.name"),
-		NamePlaceholder:        t("form.namePlaceholder"),
+		NamePlaceholder:        t("form.name_placeholder"),
 		Description:            t("form.description"),
-		DescriptionPlaceholder: t("form.descriptionPlaceholder"),
+		DescriptionPlaceholder: t("form.description_placeholder"),
 		Color:                  t("form.color"),
-		ColorPlaceholder:       t("form.colorPlaceholder"),
+		ColorPlaceholder:       t("form.color_placeholder"),
 		Active:                 t("form.active"),
 	}
 }

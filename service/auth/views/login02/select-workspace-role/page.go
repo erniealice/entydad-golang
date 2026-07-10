@@ -127,7 +127,7 @@ type Deps struct {
 // JSON tags match the "select_workspace_role" subtree in common/auth.json so
 // lyngua.LoadPathIfExists("en", bt, "auth.json", "select_workspace_role", &labels)
 // populates every field directly. Business-type overlays (e.g.
-// education/auth.json) can override individual kindLabels keys via lyngua's
+// education/auth.json) can override individual kind_labels keys via lyngua's
 // recursive deep-merge.
 type Labels struct {
 	Page struct {
@@ -135,17 +135,17 @@ type Labels struct {
 		Heading    string `json:"heading"`
 		Subheading string `json:"subheading"`
 	} `json:"page"`
-	SignOutLink          string `json:"signOutLink"`
-	SubmitLabel          string `json:"submitLabel"`
-	EmptyState           string `json:"emptyState"`
-	ErrorSwitchPrincipal string `json:"errorSwitchPrincipal"`
+	SignOutLink          string `json:"sign_out_link"`
+	SubmitLabel          string `json:"submit_label"`
+	EmptyState           string `json:"empty_state"`
+	ErrorSwitchPrincipal string `json:"error_switch_principal"`
 
 	// KindLabels maps principal Kind tokens to localized role labels.
-	// Loaded from the "kindLabels" sub-object within the
+	// Loaded from the "kind_labels" sub-object within the
 	// "select_workspace_role" JSON subtree. Education overlay sets
-	// kindLabels.staff = "Teacher"; all other kinds default to generic
+	// kind_labels.staff = "Teacher"; all other kinds default to generic
 	// English values from common/auth.json.
-	KindLabels KindLabels `json:"kindLabels"`
+	KindLabels KindLabels `json:"kind_labels"`
 
 	// Flat convenience accessors (populated by DefaultLabels / lyngua shim).
 	Title      string
@@ -159,8 +159,8 @@ type Labels struct {
 func DefaultLabels() Labels {
 	l := Labels{
 		SignOutLink:          "Sign out",
-		SubmitLabel:         "Continue as",
-		EmptyState:          "You don't have any active workspace roles for this account.",
+		SubmitLabel:          "Continue as",
+		EmptyState:           "You don't have any active workspace roles for this account.",
 		ErrorSwitchPrincipal: "Could not switch principal. Please try again.",
 		// Generic English role labels for all canonical principal kinds.
 		// Business-type overlays (e.g. education/auth.json) can override

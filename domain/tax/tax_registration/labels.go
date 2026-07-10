@@ -26,21 +26,21 @@ type Labels struct {
 // PageLabels holds page heading strings.
 type PageLabels struct {
 	Heading          string `json:"heading"`
-	HeadingClient    string `json:"headingClient"`
-	HeadingWorkspace string `json:"headingWorkspace"`
+	HeadingClient    string `json:"heading_client"`
+	HeadingWorkspace string `json:"heading_workspace"`
 	Caption          string `json:"caption"`
-	AddDrawerTitle   string `json:"addDrawerTitle"`
-	EditDrawerTitle  string `json:"editDrawerTitle"`
+	AddDrawerTitle   string `json:"add_drawer_title"`
+	EditDrawerTitle  string `json:"edit_drawer_title"`
 }
 
 // ColumnLabels holds table column headers.
 type ColumnLabels struct {
-	KindName           string `json:"kindName"`
-	ComputePath        string `json:"computePath"`
-	PartyRole          string `json:"partyRole"`
+	KindName           string `json:"kind_name"`
+	ComputePath        string `json:"compute_path"`
+	PartyRole          string `json:"party_role"`
 	Status             string `json:"status"`
-	EffectiveFrom      string `json:"effectiveFrom"`
-	RegistrationNumber string `json:"registrationNumber"`
+	EffectiveFrom      string `json:"effective_from"`
+	RegistrationNumber string `json:"registration_number"`
 }
 
 // ButtonLabels holds button text.
@@ -55,7 +55,7 @@ type ActionLabels struct {
 	View         string `json:"view"`
 	Edit         string `json:"edit"`
 	Delete       string `json:"delete"`
-	NoPermission string `json:"noPermission"`
+	NoPermission string `json:"no_permission"`
 }
 
 // EmptyLabels holds empty-state strings.
@@ -66,25 +66,25 @@ type EmptyLabels struct {
 
 // FieldLabels holds drawer form field labels.
 type FieldLabels struct {
-	TaxRegistrationKindID string `json:"taxRegistrationKindId"`
-	RegistrationNumber    string `json:"registrationNumber"`
-	EffectiveFrom         string `json:"effectiveFrom"`
+	TaxRegistrationKindID string `json:"tax_registration_kind_id"`
+	RegistrationNumber    string `json:"registration_number"`
+	EffectiveFrom         string `json:"effective_from"`
 	Notes                 string `json:"notes"`
 	Status                string `json:"status"`
 }
 
 // RevokeLabels holds strings for the revoke confirm dialog.
 type RevokeLabels struct {
-	WarningMessage        string `json:"warningMessage"`
-	EffectiveTo           string `json:"effectiveTo"`
-	AffectedPeriodsNotice string `json:"affectedPeriodsNotice"`
+	WarningMessage        string `json:"warning_message"`
+	EffectiveTo           string `json:"effective_to"`
+	AffectedPeriodsNotice string `json:"affected_periods_notice"`
 	// AffectedPeriodsCount is the row label for the pending-period count (Phase 5 M3).
-	AffectedPeriodsCount string `json:"affectedPeriodsCount"`
+	AffectedPeriodsCount string `json:"affected_periods_count"`
 	// AffectedSubscriptionsCount is the row label for the subscription count (Phase 5 M3).
-	AffectedSubscriptionsCount string `json:"affectedSubscriptionsCount"`
-	ReasonLabel                string `json:"reasonLabel"`
-	ReasonPlaceholder          string `json:"reasonPlaceholder"`
-	ConfirmButton              string `json:"confirmButton"`
+	AffectedSubscriptionsCount string `json:"affected_subscriptions_count"`
+	ReasonLabel                string `json:"reason_label"`
+	ReasonPlaceholder          string `json:"reason_placeholder"`
+	ConfirmButton              string `json:"confirm_button"`
 }
 
 // DefaultLabels returns Labels with sensible English defaults.

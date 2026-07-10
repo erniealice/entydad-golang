@@ -23,12 +23,12 @@ type PortalLabels struct {
 
 // PortalClientLabels holds client-specific portal labels.
 type PortalClientLabels struct {
-	Name        string             `json:"name"`
-	Home        PortalHomeLabels   `json:"home"`
-	Profile     PortalTitleOnly    `json:"profile"`
-	Account     PortalTitleOnly    `json:"account"`
-	Billing     PortalTitleOnly    `json:"billing"`
-	Preferences PortalTitleOnly    `json:"preferences"`
+	Name        string           `json:"name"`
+	Home        PortalHomeLabels `json:"home"`
+	Profile     PortalTitleOnly  `json:"profile"`
+	Account     PortalTitleOnly  `json:"account"`
+	Billing     PortalTitleOnly  `json:"billing"`
+	Preferences PortalTitleOnly  `json:"preferences"`
 }
 
 // PortalSupplierLabels holds supplier-specific portal labels.
@@ -43,13 +43,13 @@ type PortalSupplierLabels struct {
 
 // PortalClientDelegateLabels holds client-delegate-specific portal labels.
 type PortalClientDelegateLabels struct {
-	Name        string                   `json:"name"`
-	Home        PortalHomeLabels         `json:"home"`
-	Profile     PortalTitleOnly          `json:"profile"`
-	Account     PortalTitleOnly          `json:"account"`
-	Billing     PortalTitleOnly          `json:"billing"`
-	Preferences PortalTitleOnly          `json:"preferences"`
-	Select      PortalSelectLabels       `json:"select"`
+	Name        string             `json:"name"`
+	Home        PortalHomeLabels   `json:"home"`
+	Profile     PortalTitleOnly    `json:"profile"`
+	Account     PortalTitleOnly    `json:"account"`
+	Billing     PortalTitleOnly    `json:"billing"`
+	Preferences PortalTitleOnly    `json:"preferences"`
+	Select      PortalSelectLabels `json:"select"`
 }
 
 // PortalSupplierDelegateLabels holds supplier-delegate-specific portal labels.
@@ -65,7 +65,7 @@ type PortalSupplierDelegateLabels struct {
 
 // PortalHomeLabels holds labels for a portal home page (per principal kind).
 type PortalHomeLabels struct {
-	PageTitle  string `json:"pageTitle"`
+	PageTitle  string `json:"page_title"`
 	Heading    string `json:"heading"`
 	Subheading string `json:"subheading"`
 }
@@ -73,54 +73,54 @@ type PortalHomeLabels struct {
 // PortalTitleOnly holds only a pageTitle — for stub pages that have no other
 // per-kind label variation.
 type PortalTitleOnly struct {
-	PageTitle string `json:"pageTitle"`
+	PageTitle string `json:"page_title"`
 }
 
 // PortalSelectLabels holds labels for the acting-as delegate picker page.
 type PortalSelectLabels struct {
-	PageTitle  string `json:"pageTitle"`
+	PageTitle  string `json:"page_title"`
 	Heading    string `json:"heading"`
 	Subheading string `json:"subheading"`
-	EmptyState string `json:"emptyState"`
+	EmptyState string `json:"empty_state"`
 }
 
 // PortalHomeSharedLabels holds labels shared across all portal home pages
 // (recent-activity section).
 type PortalHomeSharedLabels struct {
-	RecentActivityTitle string `json:"recentActivityTitle"`
-	NoRecentActivity    string `json:"noRecentActivity"`
+	RecentActivityTitle string `json:"recent_activity_title"`
+	NoRecentActivity    string `json:"no_recent_activity"`
 }
 
 // PortalPageSectionLabels holds labels for stub content pages.
 type PortalPageSectionLabels struct {
-	Profile     PortalPageLabels         `json:"profile"`
-	Account     PortalPageLabels         `json:"account"`
-	Billing     PortalBillingPageLabels  `json:"billing"`
-	Preferences PortalPageLabels         `json:"preferences"`
+	Profile     PortalPageLabels        `json:"profile"`
+	Account     PortalPageLabels        `json:"account"`
+	Billing     PortalBillingPageLabels `json:"billing"`
+	Preferences PortalPageLabels        `json:"preferences"`
 }
 
 // PortalPageLabels holds title + comingSoon for a stub page.
 type PortalPageLabels struct {
-	Title     string `json:"title"`
-	ComingSoon string `json:"comingSoon"`
+	Title      string `json:"title"`
+	ComingSoon string `json:"coming_soon"`
 }
 
 // PortalBillingPageLabels extends PortalPageLabels with delegate variants.
 type PortalBillingPageLabels struct {
 	Title                      string `json:"title"`
-	ComingSoon                 string `json:"comingSoon"`
-	ComingSoonDelegate         string `json:"comingSoonDelegate"`
-	ComingSoonSupplierDelegate string `json:"comingSoonSupplierDelegate"`
+	ComingSoon                 string `json:"coming_soon"`
+	ComingSoonDelegate         string `json:"coming_soon_delegate"`
+	ComingSoonSupplierDelegate string `json:"coming_soon_supplier_delegate"`
 }
 
 // PortalHeaderLabels holds labels for the portal header.
 type PortalHeaderLabels struct {
-	NavAriaLabel string `json:"navAriaLabel"`
+	NavAriaLabel string `json:"nav_aria_label"`
 }
 
 // PortalAccessibilityLabels holds accessibility-specific portal labels.
 type PortalAccessibilityLabels struct {
-	SkipToMainContent string `json:"skipToMainContent"`
+	SkipToMainContent string `json:"skip_to_main_content"`
 }
 
 // PortalSidebarLabels holds labels for the portal sidebar.
@@ -139,22 +139,22 @@ type PortalSidebarNavLabels struct {
 	Invoices          string `json:"invoices"`
 	Messages          string `json:"messages"`
 	Documents         string `json:"documents"`
-	PurchaseOrders    string `json:"purchaseOrders"`
-	SubmittedInvoices string `json:"submittedInvoices"`
+	PurchaseOrders    string `json:"purchase_orders"`
+	SubmittedInvoices string `json:"submitted_invoices"`
 	Contracts         string `json:"contracts"`
 }
 
 // PortalSidebarSectionLabels holds labels for sidebar section headings.
 type PortalSidebarSectionLabels struct {
-	Overview      string `json:"overview"`
-	Summary       string `json:"summary"`
-	PaymentMethod string `json:"paymentMethod"`
-	PaymentHistory string `json:"paymentHistory"`
-	Outstanding   string `json:"outstanding"`
-	Paid          string `json:"paid"`
-	Draft         string `json:"draft"`
-	Pending       string `json:"pending"`
-	Active        string `json:"active"`
-	Expiring      string `json:"expiring"`
-	Terminated    string `json:"terminated"`
+	Overview       string `json:"overview"`
+	Summary        string `json:"summary"`
+	PaymentMethod  string `json:"payment_method"`
+	PaymentHistory string `json:"payment_history"`
+	Outstanding    string `json:"outstanding"`
+	Paid           string `json:"paid"`
+	Draft          string `json:"draft"`
+	Pending        string `json:"pending"`
+	Active         string `json:"active"`
+	Expiring       string `json:"expiring"`
+	Terminated     string `json:"terminated"`
 }

@@ -20,11 +20,11 @@ import (
 const rolesTableTrigger = `{"formSuccess":true,"refreshTable":"roles-table"}`
 
 var testMessages = map[string]string{
-	"shared.errors.permissionDenied":    "permission denied",
-	"shared.errors.idRequired":          "id required",
-	"shared.errors.noIdsProvided":       "no ids provided",
-	"shared.errors.invalidStatus":       "invalid status",
-	"shared.errors.invalidTargetStatus": "invalid target status",
+	"shared.errors.permission_denied":     "permission denied",
+	"shared.errors.id_required":           "id required",
+	"shared.errors.no_ids_provided":       "no ids provided",
+	"shared.errors.invalid_status":        "invalid status",
+	"shared.errors.invalid_target_status": "invalid target status",
 }
 
 type setRoleActiveCall struct {
@@ -52,7 +52,7 @@ func TestNewDeleteAction(t *testing.T) {
 				return httptest.NewRequest(http.MethodPost, "/action/roles/delete?id=role-1", nil)
 			},
 			wantStatus: http.StatusUnprocessableEntity,
-			wantError:  testMessages["shared.errors.permissionDenied"],
+			wantError:  testMessages["shared.errors.permission_denied"],
 		},
 		{
 			name:  "missing id in query and form",
@@ -61,7 +61,7 @@ func TestNewDeleteAction(t *testing.T) {
 				return httptest.NewRequest(http.MethodPost, "/action/roles/delete", nil)
 			},
 			wantStatus: http.StatusUnprocessableEntity,
-			wantError:  testMessages["shared.errors.idRequired"],
+			wantError:  testMessages["shared.errors.id_required"],
 		},
 		{
 			name:  "uses form id fallback",
@@ -150,7 +150,7 @@ func TestNewBulkDeleteAction(t *testing.T) {
 				return newMultipartRequest(t, http.MethodPost, "/action/roles/bulk-delete", map[string][]string{"id": {"r1"}})
 			},
 			wantStatus: http.StatusUnprocessableEntity,
-			wantError:  testMessages["shared.errors.permissionDenied"],
+			wantError:  testMessages["shared.errors.permission_denied"],
 		},
 		{
 			name:  "missing ids",
@@ -159,7 +159,7 @@ func TestNewBulkDeleteAction(t *testing.T) {
 				return httptest.NewRequest(http.MethodPost, "/action/roles/bulk-delete", nil)
 			},
 			wantStatus: http.StatusUnprocessableEntity,
-			wantError:  testMessages["shared.errors.noIdsProvided"],
+			wantError:  testMessages["shared.errors.no_ids_provided"],
 		},
 		{
 			name:  "success with multiple ids",
@@ -238,7 +238,7 @@ func TestNewSetStatusAction(t *testing.T) {
 				return httptest.NewRequest(http.MethodPost, "/action/roles/set-status?id=r1&status=active", nil)
 			},
 			wantStatus: http.StatusUnprocessableEntity,
-			wantError:  testMessages["shared.errors.permissionDenied"],
+			wantError:  testMessages["shared.errors.permission_denied"],
 		},
 		{
 			name:  "missing id",
@@ -247,7 +247,7 @@ func TestNewSetStatusAction(t *testing.T) {
 				return httptest.NewRequest(http.MethodPost, "/action/roles/set-status?status=active", nil)
 			},
 			wantStatus: http.StatusUnprocessableEntity,
-			wantError:  testMessages["shared.errors.idRequired"],
+			wantError:  testMessages["shared.errors.id_required"],
 		},
 		{
 			name:  "invalid status",
@@ -256,7 +256,7 @@ func TestNewSetStatusAction(t *testing.T) {
 				return httptest.NewRequest(http.MethodPost, "/action/roles/set-status?id=r1&status=blocked", nil)
 			},
 			wantStatus: http.StatusUnprocessableEntity,
-			wantError:  testMessages["shared.errors.invalidStatus"],
+			wantError:  testMessages["shared.errors.invalid_status"],
 		},
 		{
 			name:  "uses form fallback and sets active false",
@@ -347,7 +347,7 @@ func TestNewBulkSetStatusAction(t *testing.T) {
 				return newMultipartRequest(t, http.MethodPost, "/action/roles/bulk-set-status", map[string][]string{"id": {"r1"}, "target_status": {"active"}})
 			},
 			wantStatus: http.StatusUnprocessableEntity,
-			wantError:  testMessages["shared.errors.permissionDenied"],
+			wantError:  testMessages["shared.errors.permission_denied"],
 		},
 		{
 			name:  "missing ids",
@@ -356,7 +356,7 @@ func TestNewBulkSetStatusAction(t *testing.T) {
 				return newMultipartRequest(t, http.MethodPost, "/action/roles/bulk-set-status", map[string][]string{"target_status": {"active"}})
 			},
 			wantStatus: http.StatusUnprocessableEntity,
-			wantError:  testMessages["shared.errors.noIdsProvided"],
+			wantError:  testMessages["shared.errors.no_ids_provided"],
 		},
 		{
 			name:  "invalid target status",
@@ -365,7 +365,7 @@ func TestNewBulkSetStatusAction(t *testing.T) {
 				return newMultipartRequest(t, http.MethodPost, "/action/roles/bulk-set-status", map[string][]string{"id": {"r1"}, "target_status": {"blocked"}})
 			},
 			wantStatus: http.StatusUnprocessableEntity,
-			wantError:  testMessages["shared.errors.invalidTargetStatus"],
+			wantError:  testMessages["shared.errors.invalid_target_status"],
 		},
 		{
 			name:  "success active",

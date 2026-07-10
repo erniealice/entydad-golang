@@ -168,15 +168,15 @@ func (r *userActionRecorder) updateUser(_ context.Context, req *userpb.UpdateUse
 
 func testMessages() map[string]string {
 	return map[string]string{
-		"shared.errors.permissionDenied":    "permission denied",
-		"shared.errors.idRequired":          "id required",
-		"shared.errors.noIdsProvided":       "no ids provided",
-		"shared.errors.invalidStatus":       "invalid status",
-		"shared.errors.invalidTargetStatus": "invalid target status",
-		"shared.errors.invalidFormData":     "invalid form data",
-		"shared.errors.passwordFailed":      "password failed",
-		"shared.errors.passwordRequired":    "password required",
-		"shared.errors.notFound":            "not found",
+		"shared.errors.permission_denied":     "permission denied",
+		"shared.errors.id_required":           "id required",
+		"shared.errors.no_ids_provided":       "no ids provided",
+		"shared.errors.invalid_status":        "invalid status",
+		"shared.errors.invalid_target_status": "invalid target status",
+		"shared.errors.invalid_form_data":     "invalid form data",
+		"shared.errors.password_failed":       "password failed",
+		"shared.errors.password_required":     "password required",
+		"shared.errors.not_found":             "not found",
 	}
 }
 

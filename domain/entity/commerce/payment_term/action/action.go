@@ -78,7 +78,7 @@ func validateAndNilOutTypeFields(termType string, r *http.Request, t func(string
 		// net_days is required for Net type.
 		rawNetDays := r.FormValue("net_days")
 		if rawNetDays == "" {
-			return 0, nil, t("paymentTerm.form.errors.netDaysRequired")
+			return 0, nil, t("payment_term.form.errors.net_days_required")
 		}
 		return requiredInt32(rawNetDays), nil, ""
 	case "due_on_receipt", "cod":
@@ -88,15 +88,15 @@ func validateAndNilOutTypeFields(termType string, r *http.Request, t func(string
 		// proximate_day is required for Proximate type.
 		rawProximateDay := r.FormValue("proximate_day")
 		if rawProximateDay == "" {
-			return 0, nil, t("paymentTerm.form.errors.proximateDayRequired")
+			return 0, nil, t("payment_term.form.errors.proximate_day_required")
 		}
 		return 0, optionalInt32(rawProximateDay), ""
 	default:
 		// Unknown or empty type.
 		if termType == "" {
-			return 0, nil, t("paymentTerm.form.errors.typeRequired")
+			return 0, nil, t("payment_term.form.errors.type_required")
 		}
-		return 0, nil, t("paymentTerm.form.errors.typeInvalid")
+		return 0, nil, t("payment_term.form.errors.type_invalid")
 	}
 }
 
@@ -105,7 +105,7 @@ func NewAddAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("payment_term", "create") {
-			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permission_denied"))
 		}
 
 		if viewCtx.Request.Method == http.MethodGet {
@@ -132,7 +132,7 @@ func NewAddAction(deps *Deps) view.View {
 
 		// POST — create payment term
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return view.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalid_form_data"))
 		}
 
 		r := viewCtx.Request
@@ -177,7 +177,7 @@ func NewEditAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("payment_term", "update") {
-			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permission_denied"))
 		}
 
 		id := viewCtx.Request.PathValue("id")
@@ -188,12 +188,12 @@ func NewEditAction(deps *Deps) view.View {
 			})
 			if err != nil {
 				log.Printf("Failed to read payment term %s: %v", id, err)
-				return view.HTMXError(viewCtx.T("shared.errors.notFound"))
+				return view.HTMXError(viewCtx.T("shared.errors.not_found"))
 			}
 
 			data := resp.GetData()
 			if len(data) == 0 {
-				return view.HTMXError(viewCtx.T("shared.errors.notFound"))
+				return view.HTMXError(viewCtx.T("shared.errors.not_found"))
 			}
 			pt := data[0]
 
@@ -244,7 +244,7 @@ func NewEditAction(deps *Deps) view.View {
 
 		// POST — update payment term
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return view.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalid_form_data"))
 		}
 
 		r := viewCtx.Request
@@ -290,7 +290,7 @@ func NewDeleteAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("payment_term", "delete") {
-			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permission_denied"))
 		}
 
 		id := viewCtx.Request.URL.Query().Get("id")
@@ -299,7 +299,7 @@ func NewDeleteAction(deps *Deps) view.View {
 			id = viewCtx.Request.FormValue("id")
 		}
 		if id == "" {
-			return view.HTMXError(viewCtx.T("shared.errors.idRequired"))
+			return view.HTMXError(viewCtx.T("shared.errors.id_required"))
 		}
 
 		_, err := deps.DeletePaymentTerm(ctx, &paymenttermpb.DeletePaymentTermRequest{
@@ -319,14 +319,14 @@ func NewBulkDeleteAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("payment_term", "delete") {
-			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permission_denied"))
 		}
 
 		_ = viewCtx.Request.ParseMultipartForm(32 << 20)
 
 		ids := viewCtx.Request.Form["id"]
 		if len(ids) == 0 {
-			return view.HTMXError(viewCtx.T("shared.errors.noIdsProvided"))
+			return view.HTMXError(viewCtx.T("shared.errors.no_ids_provided"))
 		}
 
 		for _, id := range ids {
@@ -347,7 +347,7 @@ func NewSetStatusAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("payment_term", "update") {
-			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permission_denied"))
 		}
 
 		id := viewCtx.Request.URL.Query().Get("id")
@@ -359,10 +359,10 @@ func NewSetStatusAction(deps *Deps) view.View {
 			targetStatus = viewCtx.Request.FormValue("status")
 		}
 		if id == "" {
-			return view.HTMXError(viewCtx.T("shared.errors.idRequired"))
+			return view.HTMXError(viewCtx.T("shared.errors.id_required"))
 		}
 		if targetStatus != "active" && targetStatus != "inactive" {
-			return view.HTMXError(viewCtx.T("shared.errors.invalidStatus"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalid_status"))
 		}
 
 		if err := deps.SetPaymentTermActive(ctx, id, targetStatus == "active"); err != nil {
@@ -379,7 +379,7 @@ func NewBulkSetStatusAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("payment_term", "update") {
-			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permission_denied"))
 		}
 
 		_ = viewCtx.Request.ParseMultipartForm(32 << 20)
@@ -388,10 +388,10 @@ func NewBulkSetStatusAction(deps *Deps) view.View {
 		targetStatus := viewCtx.Request.FormValue("target_status")
 
 		if len(ids) == 0 {
-			return view.HTMXError(viewCtx.T("shared.errors.noIdsProvided"))
+			return view.HTMXError(viewCtx.T("shared.errors.no_ids_provided"))
 		}
 		if targetStatus != "active" && targetStatus != "inactive" {
-			return view.HTMXError(viewCtx.T("shared.errors.invalidTargetStatus"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalid_target_status"))
 		}
 
 		active := targetStatus == "active"

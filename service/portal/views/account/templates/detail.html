@@ -5,21 +5,21 @@
 {{end}}
 
 {{define "account-page-content"}}
-{{- $fallback := .T "memberPages.fallback.noValue" -}}
+{{- $fallback := .T "member_pages.fallback.no_value" -}}
 {{template "header-oob" .}}
 <div class="account-page" data-account-area-page="account" data-page-css="/assets/css/app/account-area.css?v={{.CacheVersion}}">
-    {{template "tabs" (dict "Items" .TabItems "ActiveTab" .ActiveTab "Variant" "main" "ID" "account-page-tabs" "Label" (.T "memberPages.account.tabsAriaLabel"))}}
+    {{template "tabs" (dict "Items" .TabItems "ActiveTab" .ActiveTab "Variant" "main" "ID" "account-page-tabs" "Label" (.T "member_pages.account.tabs_aria_label"))}}
 
     <section class="account-page-section" id="tabContent">
         {{if eq .ActiveTab "email"}}
         <div class="account-section-card">
             <header class="account-section-card-header">
-                <h2 class="account-section-card-title">{{.T "memberPages.account.email.title"}}</h2>
-                <p class="account-section-card-help">{{.T "memberPages.account.email.help"}}</p>
+                <h2 class="account-section-card-title">{{.T "member_pages.account.email.title"}}</h2>
+                <p class="account-section-card-help">{{.T "member_pages.account.email.help"}}</p>
             </header>
             <dl class="account-section-fields">
                 <div class="account-section-field">
-                    <dt class="account-section-field-label">{{.T "memberPages.account.email.fieldLabel"}}</dt>
+                    <dt class="account-section-field-label">{{.T "member_pages.account.email.field_label"}}</dt>
                     <dd class="account-section-field-value">{{if .Sidebar.CurrentUser.Email}}{{.Sidebar.CurrentUser.Email}}{{else}}{{$fallback}}{{end}}</dd>
                 </div>
             </dl>
@@ -28,13 +28,13 @@
         {{else if eq .ActiveTab "password"}}
         <div class="account-section-card">
             <header class="account-section-card-header">
-                <h2 class="account-section-card-title">{{.T "memberPages.account.password.title"}}</h2>
-                <p class="account-section-card-help">{{.T "memberPages.account.password.help"}}</p>
+                <h2 class="account-section-card-title">{{.T "member_pages.account.password.title"}}</h2>
+                <p class="account-section-card-help">{{.T "member_pages.account.password.help"}}</p>
             </header>
             <div class="account-section-actions">
                 {{if .ChangePasswordURL}}
                 <a href="{{.ChangePasswordURL}}" class="account-section-action" data-testid="account-change-password-link" hx-boost="false">
-                    {{.T "memberPages.account.password.changeLink"}}
+                    {{.T "member_pages.account.password.change_link"}}
                     <span class="account-section-action-icon" aria-hidden="true">{{template "icon-arrow-right"}}</span>
                 </a>
                 {{end}}
@@ -44,10 +44,10 @@
         {{else if eq .ActiveTab "sessions"}}
         <div class="account-section-card">
             <header class="account-section-card-header">
-                <h2 class="account-section-card-title">{{.T "memberPages.account.sessions.title"}}</h2>
-                <p class="account-section-card-help">{{.T "memberPages.account.sessions.help"}}</p>
+                <h2 class="account-section-card-title">{{.T "member_pages.account.sessions.title"}}</h2>
+                <p class="account-section-card-help">{{.T "member_pages.account.sessions.help"}}</p>
             </header>
-            <p class="account-section-empty-hint">{{.T "memberPages.account.sessions.empty"}}</p>
+            <p class="account-section-empty-hint">{{.T "member_pages.account.sessions.empty"}}</p>
         </div>
         {{end}}
     </section>

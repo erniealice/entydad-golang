@@ -22,18 +22,18 @@ type PageLabels struct {
 }
 
 type ColumnLabels struct {
-	UserName   string `json:"userName"`
+	UserName   string `json:"user_name"`
 	Email      string `json:"email"`
 	Roles      string `json:"roles"`
 	Status     string `json:"status"`
-	RoleName   string `json:"roleName"`
-	PermCount  string `json:"permCount"`
-	DateJoined string `json:"dateJoined"`
+	RoleName   string `json:"role_name"`
+	PermCount  string `json:"perm_count"`
+	DateJoined string `json:"date_joined"`
 }
 
 // DetailLabels holds i18n strings for the workspace_user detail page (Phase 2).
 type DetailLabels struct {
-	BackToWorkspace string            `json:"backToWorkspace"`
+	BackToWorkspace string            `json:"back_to_workspace"`
 	Tabs            DetailTabLabels   `json:"tabs"`
 	Roles           DetailRolesLabels `json:"roles"`
 	// Info holds the Info-tab section title + field labels (W4.5 label
@@ -44,11 +44,11 @@ type DetailLabels struct {
 // DetailInfoLabels holds the Info-tab labels on the
 // workspace_user detail page (W4.5 label remediation).
 type DetailInfoLabels struct {
-	SectionTitle string `json:"sectionTitle"`
+	SectionTitle string `json:"section_title"`
 	Name         string `json:"name"`
 	Email        string `json:"email"`
 	Workspace    string `json:"workspace"`
-	DateJoined   string `json:"dateJoined"`
+	DateJoined   string `json:"date_joined"`
 	Status       string `json:"status"`
 }
 
@@ -59,18 +59,18 @@ type DetailTabLabels struct {
 }
 
 type DetailRolesLabels struct {
-	AssignButton string `json:"assignButton"`
+	AssignButton string `json:"assign_button"`
 	// Empty-state copy shown when no roles are assigned yet (W4.5 label
 	// remediation — previously hardcoded in roles-tab.html).
-	EmptyTitle   string `json:"emptyTitle"`
-	EmptyMessage string `json:"emptyMessage"`
+	EmptyTitle   string `json:"empty_title"`
+	EmptyMessage string `json:"empty_message"`
 }
 
 type FormLabels struct {
 	User                  string `json:"user"`
-	UserPlaceholder       string `json:"userPlaceholder"`
-	UserSearchPlaceholder string `json:"userSearchPlaceholder"`
-	WorkspaceID           string `json:"workspaceId"`
+	UserPlaceholder       string `json:"user_placeholder"`
+	UserSearchPlaceholder string `json:"user_search_placeholder"`
+	WorkspaceID           string `json:"workspace_id"`
 	Active                string `json:"active"`
 }
 

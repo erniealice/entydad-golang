@@ -59,16 +59,16 @@ type FormData struct {
 // tagFormLabels builds i18n labels for the tag drawer form using dot-notation keys.
 func tagFormLabels(t func(string) string) TagFormLabels {
 	return TagFormLabels{
-		TagName:                t("client.tagForm.tagName"),
-		Code:                   t("client.tagForm.code"),
-		CodeAutoPlaceholder:    t("client.tagForm.codeAutoPlaceholder"),
-		Description:            t("client.tagForm.description"),
-		DescriptionPlaceholder: t("client.tagForm.descriptionPlaceholder"),
-		Active:                 t("client.tagForm.active"),
-		TagNameInfo:            t("client.tagForm.tagNameInfo"),
-		CodeInfo:               t("client.tagForm.codeInfo"),
-		DescriptionInfo:        t("client.tagForm.descriptionInfo"),
-		ActiveInfo:             t("client.tagForm.activeInfo"),
+		TagName:                t("client.tag_form.tag_name"),
+		Code:                   t("client.tag_form.code"),
+		CodeAutoPlaceholder:    t("client.tag_form.code_auto_placeholder"),
+		Description:            t("client.tag_form.description"),
+		DescriptionPlaceholder: t("client.tag_form.description_placeholder"),
+		Active:                 t("client.tag_form.active"),
+		TagNameInfo:            t("client.tag_form.tag_name_info"),
+		CodeInfo:               t("client.tag_form.code_info"),
+		DescriptionInfo:        t("client.tag_form.description_info"),
+		ActiveInfo:             t("client.tag_form.active_info"),
 	}
 }
 
@@ -123,7 +123,7 @@ func NewAddAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("client", "update") {
-			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permission_denied"))
 		}
 		if viewCtx.Request.Method == http.MethodGet {
 			return view.OK("client-tag-drawer-form", &FormData{
@@ -135,7 +135,7 @@ func NewAddAction(deps *Deps) view.View {
 		}
 
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return view.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalid_form_data"))
 		}
 
 		r := viewCtx.Request
@@ -143,7 +143,7 @@ func NewAddAction(deps *Deps) view.View {
 		active := r.FormValue("active") == "true"
 
 		if isDuplicateTagName(ctx, deps.ListCategories, name, "") {
-			return view.HTMXError(viewCtx.T("shared.errors.tagNameExists"))
+			return view.HTMXError(viewCtx.T("shared.errors.tag_name_exists"))
 		}
 
 		_, err := deps.CreateCategory(ctx, &categorypb.CreateCategoryRequest{
@@ -169,7 +169,7 @@ func NewEditAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("client", "update") {
-			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permission_denied"))
 		}
 		id := viewCtx.Request.PathValue("id")
 
@@ -179,12 +179,12 @@ func NewEditAction(deps *Deps) view.View {
 			})
 			if err != nil {
 				log.Printf("Failed to read client tag %s: %v", id, err)
-				return view.HTMXError(viewCtx.T("shared.errors.notFound"))
+				return view.HTMXError(viewCtx.T("shared.errors.not_found"))
 			}
 
 			data := resp.GetData()
 			if len(data) == 0 {
-				return view.HTMXError(viewCtx.T("shared.errors.notFound"))
+				return view.HTMXError(viewCtx.T("shared.errors.not_found"))
 			}
 			cat := data[0]
 
@@ -202,7 +202,7 @@ func NewEditAction(deps *Deps) view.View {
 		}
 
 		if err := viewCtx.Request.ParseForm(); err != nil {
-			return view.HTMXError(viewCtx.T("shared.errors.invalidFormData"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalid_form_data"))
 		}
 
 		r := viewCtx.Request
@@ -210,7 +210,7 @@ func NewEditAction(deps *Deps) view.View {
 		active := r.FormValue("active") == "true"
 
 		if isDuplicateTagName(ctx, deps.ListCategories, name, id) {
-			return view.HTMXError(viewCtx.T("shared.errors.tagNameExists"))
+			return view.HTMXError(viewCtx.T("shared.errors.tag_name_exists"))
 		}
 
 		_, err := deps.UpdateCategory(ctx, &categorypb.UpdateCategoryRequest{
@@ -237,7 +237,7 @@ func NewDeleteAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("client", "update") {
-			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permission_denied"))
 		}
 		id := viewCtx.Request.URL.Query().Get("id")
 		if id == "" {
@@ -245,7 +245,7 @@ func NewDeleteAction(deps *Deps) view.View {
 			id = viewCtx.Request.FormValue("id")
 		}
 		if id == "" {
-			return view.HTMXError(viewCtx.T("shared.errors.idRequired"))
+			return view.HTMXError(viewCtx.T("shared.errors.id_required"))
 		}
 
 		_, err := deps.DeleteCategory(ctx, &categorypb.DeleteCategoryRequest{
@@ -265,13 +265,13 @@ func NewBulkDeleteAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("client", "update") {
-			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permission_denied"))
 		}
 		_ = viewCtx.Request.ParseMultipartForm(32 << 20)
 
 		ids := viewCtx.Request.Form["id"]
 		if len(ids) == 0 {
-			return view.HTMXError(viewCtx.T("shared.errors.noIdsProvided"))
+			return view.HTMXError(viewCtx.T("shared.errors.no_ids_provided"))
 		}
 
 		for _, id := range ids {
@@ -292,7 +292,7 @@ func NewSetStatusAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("client", "update") {
-			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permission_denied"))
 		}
 		id := viewCtx.Request.URL.Query().Get("id")
 		targetStatus := viewCtx.Request.URL.Query().Get("status")
@@ -303,10 +303,10 @@ func NewSetStatusAction(deps *Deps) view.View {
 			targetStatus = viewCtx.Request.FormValue("status")
 		}
 		if id == "" {
-			return view.HTMXError(viewCtx.T("shared.errors.idRequired"))
+			return view.HTMXError(viewCtx.T("shared.errors.id_required"))
 		}
 		if targetStatus != "active" && targetStatus != "inactive" {
-			return view.HTMXError(viewCtx.T("shared.errors.invalidStatus"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalid_status"))
 		}
 
 		if err := deps.SetCategoryActive(ctx, id, targetStatus == "active"); err != nil {
@@ -323,7 +323,7 @@ func NewBulkSetStatusAction(deps *Deps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
 		perms := view.GetUserPermissions(ctx)
 		if !perms.Can("client", "update") {
-			return view.HTMXError(viewCtx.T("shared.errors.permissionDenied"))
+			return view.HTMXError(viewCtx.T("shared.errors.permission_denied"))
 		}
 		_ = viewCtx.Request.ParseMultipartForm(32 << 20)
 
@@ -331,10 +331,10 @@ func NewBulkSetStatusAction(deps *Deps) view.View {
 		targetStatus := viewCtx.Request.FormValue("target_status")
 
 		if len(ids) == 0 {
-			return view.HTMXError(viewCtx.T("shared.errors.noIdsProvided"))
+			return view.HTMXError(viewCtx.T("shared.errors.no_ids_provided"))
 		}
 		if targetStatus != "active" && targetStatus != "inactive" {
-			return view.HTMXError(viewCtx.T("shared.errors.invalidTargetStatus"))
+			return view.HTMXError(viewCtx.T("shared.errors.invalid_target_status"))
 		}
 
 		active := targetStatus == "active"

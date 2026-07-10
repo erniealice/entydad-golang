@@ -23,15 +23,15 @@ type Labels struct {
 
 type PageLabels struct {
 	Heading         string `json:"heading"`
-	HeadingActive   string `json:"headingActive"`
-	HeadingInactive string `json:"headingInactive"`
+	HeadingActive   string `json:"heading_active"`
+	HeadingInactive string `json:"heading_inactive"`
 	Caption         string `json:"caption"`
-	CaptionActive   string `json:"captionActive"`
-	CaptionInactive string `json:"captionInactive"`
+	CaptionActive   string `json:"caption_active"`
+	CaptionInactive string `json:"caption_inactive"`
 }
 
 type ButtonLabels struct {
-	AddRole string `json:"addRole"`
+	AddRole string `json:"add_role"`
 }
 
 type ColumnLabels struct {
@@ -40,23 +40,23 @@ type ColumnLabels struct {
 	Color       string `json:"color"`
 	Permissions string `json:"permissions"`
 	Status      string `json:"status"`
-	DateCreated string `json:"dateCreated"`
+	DateCreated string `json:"date_created"`
 }
 
 type EmptyLabels struct {
-	ActiveTitle     string `json:"activeTitle"`
-	ActiveMessage   string `json:"activeMessage"`
-	InactiveTitle   string `json:"inactiveTitle"`
-	InactiveMessage string `json:"inactiveMessage"`
+	ActiveTitle     string `json:"active_title"`
+	ActiveMessage   string `json:"active_message"`
+	InactiveTitle   string `json:"inactive_title"`
+	InactiveMessage string `json:"inactive_message"`
 }
 
 type FormLabels struct {
 	Name                   string `json:"name"`
-	NamePlaceholder        string `json:"namePlaceholder"`
+	NamePlaceholder        string `json:"name_placeholder"`
 	Description            string `json:"description"`
-	DescriptionPlaceholder string `json:"descriptionPlaceholder"`
+	DescriptionPlaceholder string `json:"description_placeholder"`
 	Color                  string `json:"color"`
-	ColorPlaceholder       string `json:"colorPlaceholder"`
+	ColorPlaceholder       string `json:"color_placeholder"`
 	Active                 string `json:"active"`
 }
 
@@ -66,7 +66,7 @@ type ActionLabels struct {
 	Delete            string `json:"delete"`
 	Activate          string `json:"activate"`
 	Deactivate        string `json:"deactivate"`
-	ManagePermissions string `json:"managePermissions"`
+	ManagePermissions string `json:"manage_permissions"`
 }
 
 // DetailLabels holds labels for the role detail page.
@@ -74,14 +74,14 @@ type DetailLabels struct {
 	Tabs DetailTabLabels  `json:"tabs"`
 	Info DetailInfoLabels `json:"info"`
 	// Empty-state labels for role detail tabs
-	NoPermissionsAssigned string `json:"noPermissionsAssigned"`
-	NoPermissionsDesc     string `json:"noPermissionsDesc"`
-	NoUsersAssigned       string `json:"noUsersAssigned"`
-	NoUsersDesc           string `json:"noUsersDesc"`
+	NoPermissionsAssigned string `json:"no_permissions_assigned"`
+	NoPermissionsDesc     string `json:"no_permissions_desc"`
+	NoUsersAssigned       string `json:"no_users_assigned"`
+	NoUsersDesc           string `json:"no_users_desc"`
 	// Tab label for attachments
-	AttachmentsTab string `json:"attachmentsTab"`
+	AttachmentsTab string `json:"attachments_tab"`
 	// Tab label for audit history
-	AuditHistoryTab string `json:"auditHistoryTab"`
+	AuditHistoryTab string `json:"audit_history_tab"`
 }
 
 type DetailTabLabels struct {
@@ -118,14 +118,14 @@ type PermissionPageLabels struct {
 }
 
 type PermissionButtonLabels struct {
-	AssignPermission string `json:"assignPermission"`
+	AssignPermission string `json:"assign_permission"`
 }
 
 type PermissionColumnLabels struct {
-	PermissionName string `json:"permissionName"`
+	PermissionName string `json:"permission_name"`
 	Code           string `json:"code"`
 	Type           string `json:"type"`
-	DateAssigned   string `json:"dateAssigned"`
+	DateAssigned   string `json:"date_assigned"`
 }
 
 type PermissionEmptyLabels struct {
@@ -140,7 +140,7 @@ type PermissionFormLabels struct {
 type PermissionActionLabels struct {
 	Assign            string `json:"assign"`
 	Remove            string `json:"remove"`
-	ManagePermissions string `json:"managePermissions"`
+	ManagePermissions string `json:"manage_permissions"`
 }
 
 // ---------------------------------------------------------------------------
@@ -163,13 +163,13 @@ type UserPageLabels struct {
 }
 
 type UserButtonLabels struct {
-	AssignUser string `json:"assignUser"`
+	AssignUser string `json:"assign_user"`
 }
 
 type UserColumnLabels struct {
-	UserName     string `json:"userName"`
+	UserName     string `json:"user_name"`
 	Email        string `json:"email"`
-	DateAssigned string `json:"dateAssigned"`
+	DateAssigned string `json:"date_assigned"`
 }
 
 type UserEmptyLabels struct {

@@ -19,41 +19,41 @@ type Labels struct {
 
 type PageLabels struct {
 	Heading         string `json:"heading"`
-	HeadingActive   string `json:"headingActive"`
-	HeadingInactive string `json:"headingInactive"`
+	HeadingActive   string `json:"heading_active"`
+	HeadingInactive string `json:"heading_inactive"`
 	Caption         string `json:"caption"`
-	CaptionActive   string `json:"captionActive"`
-	CaptionInactive string `json:"captionInactive"`
+	CaptionActive   string `json:"caption_active"`
+	CaptionInactive string `json:"caption_inactive"`
 }
 
 type ButtonLabels struct {
-	AddPermission string `json:"addPermission"`
+	AddPermission string `json:"add_permission"`
 }
 
 type ColumnLabels struct {
 	Name           string `json:"name"`
 	Entity         string `json:"entity"`
-	PermissionCode string `json:"permissionCode"`
+	PermissionCode string `json:"permission_code"`
 	Type           string `json:"type"`
 	Status         string `json:"status"`
 }
 
 type EmptyLabels struct {
-	ActiveTitle     string `json:"activeTitle"`
-	ActiveMessage   string `json:"activeMessage"`
-	InactiveTitle   string `json:"inactiveTitle"`
-	InactiveMessage string `json:"inactiveMessage"`
+	ActiveTitle     string `json:"active_title"`
+	ActiveMessage   string `json:"active_message"`
+	InactiveTitle   string `json:"inactive_title"`
+	InactiveMessage string `json:"inactive_message"`
 }
 
 type FormLabels struct {
 	Name                      string `json:"name"`
-	NamePlaceholder           string `json:"namePlaceholder"`
-	PermissionCode            string `json:"permissionCode"`
-	PermissionCodePlaceholder string `json:"permissionCodePlaceholder"`
-	PermissionCodeHint        string `json:"permissionCodeHint"`
-	PermissionType            string `json:"permissionType"`
+	NamePlaceholder           string `json:"name_placeholder"`
+	PermissionCode            string `json:"permission_code"`
+	PermissionCodePlaceholder string `json:"permission_code_placeholder"`
+	PermissionCodeHint        string `json:"permission_code_hint"`
+	PermissionType            string `json:"permission_type"`
 	Description               string `json:"description"`
-	DescriptionPlaceholder    string `json:"descriptionPlaceholder"`
+	DescriptionPlaceholder    string `json:"description_placeholder"`
 	Active                    string `json:"active"`
 }
 

@@ -28,7 +28,7 @@ type DetailLabels struct {
 	Info DetailInfoLabels `json:"info"`
 	// TaxReg holds the Tax Registrations tab panel copy (W4.5 label
 	// remediation — previously hardcoded in detail.html).
-	TaxReg DetailTaxRegLabels `json:"taxReg"`
+	TaxReg DetailTaxRegLabels `json:"tax_reg"`
 }
 
 // DetailTaxRegLabels holds the Tax Registrations tab panel copy
@@ -36,14 +36,14 @@ type DetailLabels struct {
 type DetailTaxRegLabels struct {
 	Loading       string `json:"loading"`
 	Title         string `json:"title"`
-	NotConfigured string `json:"notConfigured"`
+	NotConfigured string `json:"not_configured"`
 }
 
 // DetailInfoLabels holds the Info-tab labels on the workspace detail
 // page (W4.5 label remediation). SectionTitle is the "Details" heading;
 // Currency/Region are the optional workspace fields shown on the Info tab.
 type DetailInfoLabels struct {
-	SectionTitle string `json:"sectionTitle"`
+	SectionTitle string `json:"section_title"`
 	Currency     string `json:"currency"`
 	Region       string `json:"region"`
 }
@@ -54,29 +54,29 @@ type DetailTabLabels struct {
 	Users       string `json:"users"`
 	Attachments string `json:"attachments"`
 	// Phase 2 — polymorphic tax registrations tab
-	TaxRegistrations string `json:"taxRegistrations"`
+	TaxRegistrations string `json:"tax_registrations"`
 }
 
 // DetailUserLabels holds i18n strings for the Users tab on the workspace detail page.
 type DetailUserLabels struct {
-	AddButton string `json:"addButton"`
+	AddButton string `json:"add_button"`
 	// Empty-state copy shown when the workspace has no user assignments yet
 	// (W4.5 label remediation — previously hardcoded in users-tab.html).
-	EmptyTitle   string `json:"emptyTitle"`
-	EmptyMessage string `json:"emptyMessage"`
+	EmptyTitle   string `json:"empty_title"`
+	EmptyMessage string `json:"empty_message"`
 }
 
 type PageLabels struct {
 	Heading         string `json:"heading"`
-	HeadingActive   string `json:"headingActive"`
-	HeadingInactive string `json:"headingInactive"`
+	HeadingActive   string `json:"heading_active"`
+	HeadingInactive string `json:"heading_inactive"`
 	Caption         string `json:"caption"`
-	CaptionActive   string `json:"captionActive"`
-	CaptionInactive string `json:"captionInactive"`
+	CaptionActive   string `json:"caption_active"`
+	CaptionInactive string `json:"caption_inactive"`
 }
 
 type ButtonLabels struct {
-	AddWorkspace string `json:"addWorkspace"`
+	AddWorkspace string `json:"add_workspace"`
 }
 
 type ColumnLabels struct {
@@ -87,17 +87,17 @@ type ColumnLabels struct {
 }
 
 type EmptyLabels struct {
-	ActiveTitle     string `json:"activeTitle"`
-	ActiveMessage   string `json:"activeMessage"`
-	InactiveTitle   string `json:"inactiveTitle"`
-	InactiveMessage string `json:"inactiveMessage"`
+	ActiveTitle     string `json:"active_title"`
+	ActiveMessage   string `json:"active_message"`
+	InactiveTitle   string `json:"inactive_title"`
+	InactiveMessage string `json:"inactive_message"`
 }
 
 type FormLabels struct {
 	Name                   string `json:"name"`
-	NamePlaceholder        string `json:"namePlaceholder"`
+	NamePlaceholder        string `json:"name_placeholder"`
 	Description            string `json:"description"`
-	DescriptionPlaceholder string `json:"descriptionPlaceholder"`
+	DescriptionPlaceholder string `json:"description_placeholder"`
 	Private                string `json:"private"`
 	Active                 string `json:"active"`
 }

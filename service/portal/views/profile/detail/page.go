@@ -25,8 +25,8 @@ func NewView(deps *ModuleDeps) view.View {
 			return view.Forbidden("user:read")
 		}
 
-		titleKey := "memberPages.section.profile.title"
-		iconKey := "memberPages.section.profile.icon"
+		titleKey := "member_pages.section.profile.title"
+		iconKey := "member_pages.section.profile.icon"
 
 		pageData := &PageData{
 			PageData: types.PageData{

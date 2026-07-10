@@ -21,36 +21,36 @@ type Labels struct {
 
 type PageLabels struct {
 	Heading         string `json:"heading"`
-	HeadingActive   string `json:"headingActive"`
-	HeadingInactive string `json:"headingInactive"`
+	HeadingActive   string `json:"heading_active"`
+	HeadingInactive string `json:"heading_inactive"`
 	Caption         string `json:"caption"`
-	CaptionActive   string `json:"captionActive"`
-	CaptionInactive string `json:"captionInactive"`
+	CaptionActive   string `json:"caption_active"`
+	CaptionInactive string `json:"caption_inactive"`
 }
 
 type ButtonLabels struct {
-	AddLocationArea string `json:"addLocationArea"`
+	AddLocationArea string `json:"add_location_area"`
 }
 
 type ColumnLabels struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Status      string `json:"status"`
-	DateCreated string `json:"dateCreated"`
+	DateCreated string `json:"date_created"`
 }
 
 type EmptyLabels struct {
-	ActiveTitle     string `json:"activeTitle"`
-	ActiveMessage   string `json:"activeMessage"`
-	InactiveTitle   string `json:"inactiveTitle"`
-	InactiveMessage string `json:"inactiveMessage"`
+	ActiveTitle     string `json:"active_title"`
+	ActiveMessage   string `json:"active_message"`
+	InactiveTitle   string `json:"inactive_title"`
+	InactiveMessage string `json:"inactive_message"`
 }
 
 type FormLabels struct {
 	Name                   string `json:"name"`
-	NamePlaceholder        string `json:"namePlaceholder"`
+	NamePlaceholder        string `json:"name_placeholder"`
 	Description            string `json:"description"`
-	DescriptionPlaceholder string `json:"descriptionPlaceholder"`
+	DescriptionPlaceholder string `json:"description_placeholder"`
 	Active                 string `json:"active"`
 }
 
@@ -63,7 +63,7 @@ type ActionLabels struct {
 }
 
 type ErrorLabels struct {
-	CannotDeleteInUse string `json:"cannotDeleteInUse"`
+	CannotDeleteInUse string `json:"cannot_delete_in_use"`
 }
 
 // DefaultLabels returns sensible English defaults for Labels.

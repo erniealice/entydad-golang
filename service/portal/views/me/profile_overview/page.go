@@ -30,7 +30,7 @@ type PageData struct {
 // NewView constructs the /me/profile-overview view.
 func NewView(deps *ModuleDeps) view.View {
 	return view.ViewFunc(func(ctx context.Context, viewCtx *view.ViewContext) view.ViewResult {
-		title := me.Msg(deps.Messages, "me.profileOverview.title", "Profile Overview")
+		title := me.Msg(deps.Messages, "me.profile_overview.title", "Profile Overview")
 		pd := &PageData{
 			PageData: me.PageData{
 				PageData: types.PageData{
@@ -44,8 +44,8 @@ func NewView(deps *ModuleDeps) view.View {
 					Messages:        deps.Messages,
 				},
 			},
-			Subtitle:     me.Msg(deps.Messages, "me.profileOverview.subtitle", "Your identity and workspace bindings."),
-			EmptyMessage: me.Msg(deps.Messages, "me.profileOverview.empty", "Workspace-binding aggregation coming soon — see Sidebar profile button for current identity."),
+			Subtitle:     me.Msg(deps.Messages, "me.profile_overview.subtitle", "Your identity and workspace bindings."),
+			EmptyMessage: me.Msg(deps.Messages, "me.profile_overview.empty", "Workspace-binding aggregation coming soon — see Sidebar profile button for current identity."),
 		}
 		return view.OK("me-page", pd)
 	})
