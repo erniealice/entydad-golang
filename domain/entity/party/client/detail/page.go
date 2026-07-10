@@ -791,6 +791,26 @@ func loadClientTags(ctx context.Context, deps *DetailViewDeps, clientID string) 
 			catNames[cat.GetId()] = cat.GetName()
 		}
 	}
+	// Status-agnostic display: a client may still be tagged with an inactive
+	// category, which the active-only List default drops. Merge inactive
+	// categories so an assigned-but-deactivated tag still renders instead of
+	// silently vanishing. Non-fatal (active names already loaded above).
+	if inactiveResp, ierr := deps.ListCategories(ctx, &categorypb.ListCategoriesRequest{
+		Filters: &categorypb.FilterRequest{
+			Filters: []*categorypb.TypedFilter{{
+				Field: "active",
+				FilterType: &categorypb.TypedFilter_BooleanFilter{
+					BooleanFilter: &categorypb.BooleanFilter{Value: false},
+				},
+			}},
+		},
+	}); ierr == nil {
+		for _, cat := range inactiveResp.GetData() {
+			if cat.GetModule() == "client" {
+				catNames[cat.GetId()] = cat.GetName()
+			}
+		}
+	}
 
 	// Load junction records for this client
 	ccResp, err := deps.ListClientCategories(ctx, &clientcategorypb.ListClientCategoriesRequest{})
