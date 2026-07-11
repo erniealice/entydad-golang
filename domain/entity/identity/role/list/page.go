@@ -65,7 +65,7 @@ func NewView(deps *ListViewDeps) view.View {
 				Title:          deps.Labels.Page.Heading,
 				CurrentPath:    viewCtx.CurrentPath,
 				ActiveNav:      "user",
-				ActiveSubNav:   "role",
+				ActiveSubNav:   "roles",
 				HeaderTitle:    deps.Labels.Page.Heading,
 				HeaderSubtitle: deps.Labels.Page.Caption,
 				HeaderIcon:     "icon-shield",
@@ -140,7 +140,7 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, columns []types.T
 	}
 
 	l := deps.Labels
-	rows := buildTableRows(resp.GetRoleList(), l, deps.SharedLabels, deps.Routes, inUseIDs, perms)
+	rows := buildTableRows(resp.GetRoleList(), l, deps.SharedLabels, deps.CommonLabels, deps.Routes, inUseIDs, perms)
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := pyeza.MapBulkConfig(deps.CommonLabels)
@@ -212,7 +212,7 @@ func roleColumns(l role.Labels) []types.TableColumn {
 	}
 }
 
-func buildTableRows(roles []*rolepb.Role, l role.Labels, sl entydad.SharedLabels, routes role.Routes, inUseIDs map[string]bool, perms *types.UserPermissions) []types.TableRow {
+func buildTableRows(roles []*rolepb.Role, l role.Labels, sl entydad.SharedLabels, cl pyeza.CommonLabels, routes role.Routes, inUseIDs map[string]bool, perms *types.UserPermissions) []types.TableRow {
 	rows := []types.TableRow{}
 	for _, r := range roles {
 		active := r.GetActive()
@@ -273,7 +273,7 @@ func buildTableRows(roles []*rolepb.Role, l role.Labels, sl entydad.SharedLabels
 				{Type: "text", Value: description},
 				{Type: "text", Value: color},
 				{Type: "badge", Value: permCountStr, Variant: "default", BadgeType: "count"},
-				{Type: "badge", Value: recordStatus, Variant: statusVariant(recordStatus)},
+				{Type: "badge", Value: statusLabel(cl, recordStatus), Variant: statusVariant(recordStatus)},
 				types.DateTimeCell(r.GetDateCreatedString(), types.DateReadable),
 			},
 			DataAttrs: map[string]string{
@@ -298,6 +298,19 @@ func statusVariant(status string) string {
 		return "warning"
 	default:
 		return "default"
+	}
+}
+
+// statusLabel maps the raw status key to its lyngua display label — the badge
+// cell renders Value verbatim, so passing the raw key would bypass translation.
+func statusLabel(cl pyeza.CommonLabels, status string) string {
+	switch status {
+	case "active":
+		return cl.Status.Active
+	case "inactive":
+		return cl.Status.Inactive
+	default:
+		return status
 	}
 }
 

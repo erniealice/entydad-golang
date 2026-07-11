@@ -76,10 +76,12 @@ func NewView(deps *ListViewDeps) view.View {
 					}
 					roleCount := len(wu.GetWorkspaceUserRoles())
 					active := wu.GetActive()
-					statusValue := "active"
+					// Badge Value renders verbatim — use the lyngua status labels,
+					// not the raw status key.
+					statusValue := deps.CommonLabels.Status.Active
 					statusVariant := "success"
 					if !active {
-						statusValue = "inactive"
+						statusValue = deps.CommonLabels.Status.Inactive
 						statusVariant = "warning"
 					}
 

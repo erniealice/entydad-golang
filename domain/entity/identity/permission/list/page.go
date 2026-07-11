@@ -106,7 +106,7 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, status string) (*
 
 	l := deps.Labels
 	columns := permissionColumns(l)
-	rows := buildTableRows(resp.GetPermissionList(), status, l, deps.SharedLabels, deps.Routes, perms)
+	rows := buildTableRows(resp.GetPermissionList(), status, l, deps.SharedLabels, deps.CommonLabels, deps.Routes, perms)
 	types.ApplyColumnStyles(columns, rows)
 
 	bulkCfg := pyeza.MapBulkConfig(deps.CommonLabels)
@@ -167,7 +167,7 @@ func extractEntity(code string) string {
 	return code
 }
 
-func buildTableRows(permissions []*permissionpb.Permission, status string, l permission.Labels, sl entydad.SharedLabels, routes permission.Routes, perms *types.UserPermissions) []types.TableRow {
+func buildTableRows(permissions []*permissionpb.Permission, status string, l permission.Labels, sl entydad.SharedLabels, cl pyeza.CommonLabels, routes permission.Routes, perms *types.UserPermissions) []types.TableRow {
 	// Filter permissions by status first
 	filtered := make([]*permissionpb.Permission, 0, len(permissions))
 	for _, p := range permissions {
@@ -245,7 +245,7 @@ func buildTableRows(permissions []*permissionpb.Permission, status string, l per
 				{Type: "badge", Value: entity, Variant: "default", BadgeType: "type"},
 				{Type: "text", Value: code},
 				{Type: "badge", Value: permType, Variant: permTypeVariant(p.GetPermissionType())},
-				{Type: "badge", Value: recordStatus, Variant: statusVariant(recordStatus)},
+				{Type: "badge", Value: statusLabel(cl, recordStatus), Variant: statusVariant(recordStatus)},
 			},
 			DataAttrs: map[string]string{
 				"name":            name,
@@ -334,6 +334,19 @@ func statusVariant(status string) string {
 		return "warning"
 	default:
 		return "default"
+	}
+}
+
+// statusLabel maps the raw status key to its lyngua display label — the badge
+// cell renders Value verbatim, so passing the raw key would bypass translation.
+func statusLabel(cl pyeza.CommonLabels, status string) string {
+	switch status {
+	case "active":
+		return cl.Status.Active
+	case "inactive":
+		return cl.Status.Inactive
+	default:
+		return status
 	}
 }
 

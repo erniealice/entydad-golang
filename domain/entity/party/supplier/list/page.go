@@ -72,7 +72,7 @@ func NewView(deps *ListViewDeps) view.View {
 				Title:          statusPageTitle(deps.Labels, status),
 				CurrentPath:    viewCtx.CurrentPath,
 				ActiveNav:      "supplier",
-				ActiveSubNav:   status,
+				ActiveSubNav:   supplierSubNav(status),
 				HeaderTitle:    statusPageTitle(deps.Labels, status),
 				HeaderSubtitle: statusPageCaption(deps.Labels, status),
 				HeaderIcon:     "icon-truck",
@@ -353,6 +353,16 @@ func supplierStatus(s *supplierpb.Supplier) string {
 		return st
 	}
 	return "active"
+}
+
+// supplierSubNav maps a supplier status to its sidebar item-key suffix
+// ("suppliers-" + status), with the DB's underscore-cased "on_hold" status
+// rewritten to the sidebar's hyphen-cased "on-hold" key.
+func supplierSubNav(status string) string {
+	if status == "on_hold" {
+		return "suppliers-on-hold"
+	}
+	return "suppliers-" + status
 }
 
 func statusPageTitle(l entitysupplier.Labels, status string) string {

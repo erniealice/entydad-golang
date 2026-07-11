@@ -54,6 +54,7 @@ type PageData struct {
 	RoleDescription  string
 	RoleColor        string
 	RoleStatus       string
+	RoleStatusLabel  string
 	StatusVariant    string
 	PermissionsTable *types.TableConfig
 	UsersTable       *types.TableConfig
@@ -158,6 +159,11 @@ func buildPageData(ctx context.Context, deps *DetailViewDeps, id, activeTab stri
 	if roleStatus == "inactive" {
 		statusVariant = "warning"
 	}
+	// Badge Value renders verbatim — use the lyngua status labels, not the raw key.
+	roleStatusLabel := deps.CommonLabels.Status.Active
+	if roleStatus == "inactive" {
+		roleStatusLabel = deps.CommonLabels.Status.Inactive
+	}
 
 	// Get counts for tab badges
 	permCount := 0
@@ -191,7 +197,7 @@ func buildPageData(ctx context.Context, deps *DetailViewDeps, id, activeTab stri
 			Title:          roleName,
 			CurrentPath:    viewCtx.CurrentPath,
 			ActiveNav:      "user",
-			ActiveSubNav:   "role",
+			ActiveSubNav:   "roles",
 			HeaderTitle:    roleName,
 			HeaderSubtitle: roleDesc,
 			HeaderIcon:     "icon-shield",
@@ -206,6 +212,7 @@ func buildPageData(ctx context.Context, deps *DetailViewDeps, id, activeTab stri
 		RoleDescription: roleDesc,
 		RoleColor:       roleColor,
 		RoleStatus:      roleStatus,
+		RoleStatusLabel: roleStatusLabel,
 		StatusVariant:   statusVariant,
 	}
 

@@ -71,6 +71,7 @@ type PageData struct {
 	SupplierType  string
 	InternalID    string
 	Status        string
+	StatusLabel   string
 	StatusVariant string
 	// Contact info (from user)
 	ContactName  string
@@ -374,6 +375,20 @@ func buildPageData(supplier *supplierpb.Supplier, id, activeTab string, viewCtx 
 	case "on_hold":
 		statusVariant = "warning"
 	}
+	// Badge Value renders verbatim — use the lyngua status labels, not the raw
+	// key. Falls back to the raw status for any value pyeza.StatusLabels
+	// doesn't cover.
+	statusLabel := status
+	switch status {
+	case "active":
+		statusLabel = deps.CommonLabels.Status.Active
+	case "inactive":
+		statusLabel = deps.CommonLabels.Status.Inactive
+	case "blocked":
+		statusLabel = deps.CommonLabels.Status.Blocked
+	case "on_hold":
+		statusLabel = deps.CommonLabels.Status.OnHold
+	}
 
 	contactName := ""
 	contactEmail := ""
@@ -443,6 +458,7 @@ func buildPageData(supplier *supplierpb.Supplier, id, activeTab string, viewCtx 
 		SupplierType:       supplierType,
 		InternalID:         internalID,
 		Status:             status,
+		StatusLabel:        statusLabel,
 		StatusVariant:      statusVariant,
 		ContactName:        contactName,
 		ContactEmail:       contactEmail,

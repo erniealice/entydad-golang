@@ -122,6 +122,7 @@ type PageData struct {
 	ClientEmail        string
 	ClientPhone        string
 	ClientStatus       string
+	ClientStatusLabel  string
 	StatusVariant      string
 	// CRM fields
 	Name          string
@@ -221,6 +222,11 @@ func NewView(deps *DetailViewDeps) view.View {
 		if clientStatus == "inactive" {
 			statusVariant = "warning"
 		}
+		// Badge Value renders verbatim — use the lyngua status labels, not the raw key.
+		clientStatusLabel := deps.CommonLabels.Status.Active
+		if clientStatus == "inactive" {
+			clientStatusLabel = deps.CommonLabels.Status.Inactive
+		}
 
 		tabItems := buildTabItems(id, deps, countClientSubscriptions(ctx, deps, id), countClientPriceSchedules(ctx, deps, id))
 
@@ -266,6 +272,7 @@ func NewView(deps *DetailViewDeps) view.View {
 			ClientEmail:              clientEmail,
 			ClientPhone:              clientPhone,
 			ClientStatus:             clientStatus,
+			ClientStatusLabel:        clientStatusLabel,
 			StatusVariant:            statusVariant,
 			Name:                     name,
 			StreetAddress:            streetAddress,
@@ -429,6 +436,11 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 		if clientStatus == "inactive" {
 			statusVariant = "warning"
 		}
+		// Badge Value renders verbatim — use the lyngua status labels, not the raw key.
+		clientStatusLabel := deps.CommonLabels.Status.Active
+		if clientStatus == "inactive" {
+			clientStatusLabel = deps.CommonLabels.Status.Inactive
+		}
 
 		pageData := &PageData{
 			PageData: types.PageData{
@@ -444,6 +456,7 @@ func NewTabAction(deps *DetailViewDeps) view.View {
 			ClientEmail:              clientEmail,
 			ClientPhone:              clientPhone,
 			ClientStatus:             clientStatus,
+			ClientStatusLabel:        clientStatusLabel,
 			StatusVariant:            statusVariant,
 			EditURL:                  route.ResolveURL(deps.Routes.EditURL, "id", id),
 			SubscriptionAddURL:       buildSubscriptionAddURL(deps.SubscriptionAddURL, id, clientName, client.GetBillingCurrency()),

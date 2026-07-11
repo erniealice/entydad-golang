@@ -56,7 +56,7 @@ func NewView(deps *Deps) view.View {
 				Title:          fmt.Sprintf("%s - %s", deps.Labels.Page.Heading, roleName),
 				CurrentPath:    viewCtx.CurrentPath,
 				ActiveNav:      "user",
-				ActiveSubNav:   "roles-active",
+				ActiveSubNav:   "roles",
 				HeaderTitle:    fmt.Sprintf("%s: %s", deps.Labels.Page.Heading, roleName),
 				HeaderSubtitle: deps.Labels.Page.Caption,
 				HeaderIcon:     "icon-key",
