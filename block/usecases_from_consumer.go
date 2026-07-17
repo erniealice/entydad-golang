@@ -122,6 +122,12 @@ func buildEntydadUseCases(uc *consumer.UseCases, db any) *UseCases {
 		result.Client.Category.Create = e.ClientCategory.CreateClientCategory.Execute
 		result.Client.Category.Delete = e.ClientCategory.DeleteClientCategory.Execute
 	}
+	// ClientAttribute — read-only current values for the drawer's Attributes
+	// section (edit pre-fill). Write path lives in the espyna Create/Update client
+	// use cases (Q-GSE-10). Nil-safe.
+	if e.ClientAttribute != nil && e.ClientAttribute.ListClientAttributes != nil {
+		result.Client.ClientAttribute.List = e.ClientAttribute.ListClientAttributes.Execute
+	}
 
 	// Delegate — workspace-scoped read adapter committed in espyna; view layer is
 	// list + CRUD. ListDelegates is optional (not surfaced in the view yet).
@@ -261,6 +267,16 @@ func buildEntydadUseCases(uc *consumer.UseCases, db any) *UseCases {
 		result.Supplier.Category.List = e.SupplierCategory.ListSupplierCategories.Execute
 		result.Supplier.Category.Create = e.SupplierCategory.CreateSupplierCategory.Execute
 		result.Supplier.Category.Delete = e.SupplierCategory.DeleteSupplierCategory.Execute
+	}
+
+	// Common attribute definitions + enum option values — feed the client
+	// drawer's Attributes section (Q-GSE-10). AttributeValue.ListAttributeValues
+	// is the label-preserving generic list path (W3-part1 MED#6). Nil-safe.
+	if uc.Common != nil && uc.Common.Attribute != nil && uc.Common.Attribute.ListAttributes != nil {
+		result.Attribute.List = uc.Common.Attribute.ListAttributes.Execute
+	}
+	if uc.Common != nil && uc.Common.AttributeValue != nil && uc.Common.AttributeValue.ListAttributeValues != nil {
+		result.AttributeValue.List = uc.Common.AttributeValue.ListAttributeValues.Execute
 	}
 
 	// Common categories (used by ClientTag and SupplierTag modules)

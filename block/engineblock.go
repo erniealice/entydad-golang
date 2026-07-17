@@ -43,7 +43,8 @@ import (
 type EngineBlockOption func(*engineBlockConfig)
 
 type engineBlockConfig struct {
-	homeURL string
+	homeURL          string
+	clientAttributes bool
 }
 
 // WithEngineHomeURL sets the static fallback post-switch redirect URL (the home
@@ -51,6 +52,14 @@ type engineBlockConfig struct {
 // the workspace use case. (Distinct from the legacy BlockOption WithHomeURL.)
 func WithEngineHomeURL(url string) EngineBlockOption {
 	return func(c *engineBlockConfig) { c.homeURL = url }
+}
+
+// WithClientAttributes enables the client drawer's optional generic Attributes
+// (EAV) section (Q-GSE-10). Off by default; hosts opt in (e.g. school-admin for
+// the education vertical's Gender/LRN attributes). Threads through to
+// infra.EnableClientAttributes → ClientUnit → the client action Deps.
+func WithClientAttributes() EngineBlockOption {
+	return func(c *engineBlockConfig) { c.clientAttributes = true }
 }
 
 // EngineBlock returns a pyeza.AppOption that registers all entydad entity domain
@@ -83,6 +92,7 @@ func EngineBlock(opts ...EngineBlockOption) consumerapp.AppOption {
 
 		// ── Infra ───────────────────────────────────────────────────────────
 		infra := &Infra{}
+		infra.EnableClientAttributes = cfg.clientAttributes
 		infra.UploadFile, _ = ctx.UploadFile.(func(context.Context, string, string, []byte, string) error)
 		infra.ListAttachments, _ = ctx.ListAttachments.(func(context.Context, string, string) (*attachmentpb.ListAttachmentsResponse, error))
 		infra.CreateAttachment, _ = ctx.CreateAttachment.(func(context.Context, *attachmentpb.CreateAttachmentRequest) (*attachmentpb.CreateAttachmentResponse, error))

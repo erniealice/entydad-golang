@@ -5,6 +5,7 @@ import (
 	"log"
 	"math"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -14,6 +15,7 @@ import (
 
 	categorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
 	clientpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client"
+	clientattributepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client_attribute"
 	clientcategorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client_category"
 	userpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/user"
 
@@ -53,6 +55,159 @@ type Deps struct {
 	// ModuleDeps.CommonLabels so the action handler can call
 	// clientform.BuildCurrencyOptions without importing pyeza.CommonLabels.
 	CurrencyOptions []pyezatypes.SelectOption
+
+	// --- Client attributes (generic EAV overlay, Q-GSE-10) ---
+	// EnableAttributes gates the optional Attributes drawer section. When false
+	// (or the list closures below are nil) the section is never rendered and the
+	// POST never sets req.Attributes/AttributesPresent — the client_attribute
+	// rows are left untouched. The espyna use case remains the real validator;
+	// these closures only feed the drawer's read/display path.
+	EnableAttributes bool
+	// ListAttributes returns the active attribute definitions (read-only). The
+	// loader filters to the entity/client module (B3: Attribute.module is loose).
+	ListAttributes func(ctx context.Context, req *categorypb.ListAttributesRequest) (*categorypb.ListAttributesResponse, error)
+	// ListAttributeValues returns the enum option rows for a definition. Uses the
+	// generic list path that preserves av.label (W3-part1 MED#6).
+	ListAttributeValues func(ctx context.Context, req *categorypb.ListAttributeValuesRequest) (*categorypb.ListAttributeValuesResponse, error)
+	// ListClientAttributes returns the current client_attribute rows for a client
+	// (edit pre-fill).
+	ListClientAttributes func(ctx context.Context, req *clientattributepb.ListClientAttributesRequest) (*clientattributepb.ListClientAttributesResponse, error)
+}
+
+// clientAttrModule is the set of Attribute.module values whose definitions are
+// relevant to the client drawer. B3: Attribute.module is a loose free-text label
+// ("entity"/"general"/"client"/…), not a strict per-junction filter — the live
+// education1 attr-gender row carries module="entity". Accept the entity-scope
+// buckets a client can carry.
+func isClientAttributeModule(module string) bool {
+	switch module {
+	case "entity", "client", "general":
+		return true
+	default:
+		return false
+	}
+}
+
+// stringEqualsFilter builds a single-field STRING_EQUALS FilterRequest, matching
+// the shape the espyna list repositories expect.
+func stringEqualsFilter(field, value string) *categorypb.FilterRequest {
+	return &categorypb.FilterRequest{
+		Filters: []*categorypb.TypedFilter{{
+			Field: field,
+			FilterType: &categorypb.TypedFilter_StringFilter{
+				StringFilter: &categorypb.StringFilter{
+					Value:    value,
+					Operator: categorypb.StringOperator_STRING_EQUALS,
+				},
+			},
+		}},
+	}
+}
+
+// loadClientAttributeData builds the drawer's Attributes-section fields by
+// calling the three read use cases: active definitions (entity/client module),
+// their enum options (preserving label), and — for edit — the client's current
+// values. Every dependency is nil-safe and every failure degrades to an empty
+// (unrendered) section: the drawer never blocks on the attribute overlay, and
+// the espyna use case remains the authoritative validator on submit.
+func loadClientAttributeData(ctx context.Context, deps *Deps, clientID string) []clientform.AttributeField {
+	if !deps.EnableAttributes || deps.ListAttributes == nil {
+		return nil
+	}
+	defResp, err := deps.ListAttributes(ctx, &categorypb.ListAttributesRequest{})
+	if err != nil {
+		log.Printf("Failed to load attribute definitions: %v", err)
+		return nil
+	}
+	var defs []*categorypb.Attribute
+	for _, def := range defResp.GetData() {
+		if def == nil || !def.GetActive() || def.GetCode() == "" {
+			continue
+		}
+		if !isClientAttributeModule(def.GetModule()) {
+			continue
+		}
+		defs = append(defs, def)
+	}
+	if len(defs) == 0 {
+		return nil
+	}
+
+	// Enum options per attribute_id (only the select-family definitions need them,
+	// but fetching for all is harmless — non-select fields ignore the map).
+	//
+	// W3-HIGH-1 FAIL-SAFE: on ANY prefill-data-load error we return nil so the
+	// drawer does NOT render the Attributes section. The template gates both the
+	// fields AND the hidden `attributes_present=1` marker on a non-empty field list,
+	// so an unrendered section means the marker is never posted — and the espyna
+	// update-sync path (which is the ONLY thing that deletes client_attribute rows)
+	// is skipped entirely. Rendering the section with partially-loaded (blank)
+	// options/values would instead post the marker and let a Save silently CLEAR the
+	// client's stored attributes. Fail-closed (no section) is the safe degrade.
+	optionsByAttr := make(map[string][]*categorypb.AttributeValue, len(defs))
+	if deps.ListAttributeValues != nil {
+		for _, def := range defs {
+			avResp, err := deps.ListAttributeValues(ctx, &categorypb.ListAttributeValuesRequest{
+				Filters: stringEqualsFilter("attribute_id", def.GetId()),
+			})
+			if err != nil {
+				log.Printf("Failed to load attribute options for %q: %v — suppressing Attributes section (fail-safe)", def.GetCode(), err)
+				return nil
+			}
+			optionsByAttr[def.GetId()] = avResp.GetData()
+		}
+	}
+
+	// Current values (edit only), keyed by attribute code.
+	currentValues := map[string]string{}
+	if clientID != "" && deps.ListClientAttributes != nil {
+		caResp, err := deps.ListClientAttributes(ctx, &clientattributepb.ListClientAttributesRequest{
+			Filters: stringEqualsFilter("client_id", clientID),
+		})
+		if err != nil {
+			// A transient read failure here previously rendered the section with
+			// EMPTY current values; a subsequent Save then posted `attributes_present`
+			// with blank fields, which the sync layer interprets as DELETE — silently
+			// erasing stored attributes. Suppress the whole section instead.
+			log.Printf("Failed to load client attributes for %s: %v — suppressing Attributes section (fail-safe)", clientID, err)
+			return nil
+		}
+		codeByID := make(map[string]string, len(defs))
+		for _, def := range defs {
+			codeByID[def.GetId()] = def.GetCode()
+		}
+		for _, ca := range caResp.GetData() {
+			if ca == nil || ca.GetClientId() != clientID {
+				continue
+			}
+			if code := codeByID[ca.GetAttributeId()]; code != "" {
+				currentValues[code] = ca.GetValue()
+			}
+		}
+	}
+
+	return clientform.BuildAttributeFields(defs, optionsByAttr, currentValues)
+}
+
+// parseSubmittedAttributes reads the "attributes.<code>" inputs from a parsed
+// form into []AttributeCodeValue (deterministic order). Unknown/crafted codes
+// are harmless — the espyna use case validates every code fail-closed. Call only
+// after r.ParseForm().
+func parseSubmittedAttributes(r *http.Request) []*categorypb.AttributeCodeValue {
+	const prefix = "attributes."
+	out := make([]*categorypb.AttributeCodeValue, 0, len(r.Form))
+	for key, vals := range r.Form {
+		if !strings.HasPrefix(key, prefix) {
+			continue
+		}
+		code := strings.TrimPrefix(key, prefix)
+		if code == "" || len(vals) == 0 {
+			continue
+		}
+		out = append(out, &categorypb.AttributeCodeValue{Code: code, Value: vals[0]})
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].GetCode() < out[j].GetCode() })
+	return out
 }
 
 // loadPaymentTerms fetches the payment term options. Returns nil slice on error (graceful degradation).
@@ -249,6 +404,7 @@ func NewAddAction(deps *Deps) view.View {
 			mode := viewCtx.Request.URL.Query().Get("mode")
 			tagOptions, _ := loadTagData(ctx, deps, "")
 			paymentTerms := loadPaymentTerms(ctx, deps)
+			attributeFields := loadClientAttributeData(ctx, deps, "")
 			labels := clientform.BuildLabels(viewCtx.T)
 			functionalCurrency := ""
 			if deps.GetFunctionalCurrency != nil {
@@ -270,6 +426,7 @@ func NewAddAction(deps *Deps) view.View {
 				StatusOptions:            clientform.BuildStatusOptions("active", labels),
 				BillingCurrencyOptions:   clientform.BuildCurrencyOptions(functionalCurrency, deps.CurrencyOptions),
 				TagOptions:               tagOptions,
+				AttributeFields:          attributeFields,
 				Labels:                   labels,
 				CommonLabels:             nil, // injected by ViewAdapter
 			})
@@ -295,7 +452,7 @@ func NewAddAction(deps *Deps) view.View {
 			repUser.Timezone = &tz
 		}
 
-		resp, err := deps.CreateClient(ctx, &clientpb.CreateClientRequest{
+		createReq := &clientpb.CreateClientRequest{
 			Data: &clientpb.Client{
 				Active:             true,
 				Name:               optionalString(r.FormValue("name")),
@@ -317,7 +474,15 @@ func NewAddAction(deps *Deps) view.View {
 				CountryCode:        optionalString(r.FormValue("country_code")),
 				User:               repUser,
 			},
-		})
+		}
+		// Attach generic attributes when the drawer's Attributes section was
+		// rendered (marker present). The espyna use case validates + persists them
+		// in the same transaction as the client (Q-GSE-10).
+		if r.FormValue("attributes_present") == "1" {
+			createReq.Attributes = parseSubmittedAttributes(r)
+			createReq.AttributesPresent = true
+		}
+		resp, err := deps.CreateClient(ctx, createReq)
 		if err != nil {
 			log.Printf("Failed to create client: %v", err)
 			return view.HTMXError(err.Error())
@@ -371,6 +536,13 @@ func NewEditAction(deps *Deps) view.View {
 			tagOptions, selectedTags := loadTagData(ctx, deps, id)
 			paymentTerms := loadPaymentTerms(ctx, deps)
 			selectedPaymentTermID := c.GetPaymentTermId()
+			// Attributes render only on the full drawer (list-page edit / clone),
+			// not on the detail-page partial tabs (info/accounting/representative),
+			// so a partial-tab save never touches the client_attribute rows.
+			var attributeFields []clientform.AttributeField
+			if mode == "" {
+				attributeFields = loadClientAttributeData(ctx, deps, id)
+			}
 
 			name := c.GetName()
 			formAction := route.ResolveURL(deps.Routes.EditURL, "id", id) + "?mode=" + mode
@@ -425,6 +597,7 @@ func NewEditAction(deps *Deps) view.View {
 				BillingCurrencyOptions:   clientform.BuildCurrencyOptions(c.GetBillingCurrency(), deps.CurrencyOptions),
 				TagOptions:               tagOptions,
 				SelectedTags:             selectedTags,
+				AttributeFields:          attributeFields,
 				Labels:                   labels,
 				CommonLabels:             nil, // injected by ViewAdapter
 			})
@@ -507,9 +680,18 @@ func NewEditAction(deps *Deps) view.View {
 			clientData.User = userData
 		}
 
-		_, err := deps.UpdateClient(ctx, &clientpb.UpdateClientRequest{
+		updateReq := &clientpb.UpdateClientRequest{
 			Data: clientData,
-		})
+		}
+		// Sync attributes ONLY on the full drawer (mode==""), and only when the
+		// section was actually rendered (marker present). The detail-page partial
+		// tabs never carry the section, so their saves leave attributes untouched
+		// (AttributesPresent stays false => the use case skips the attribute sync).
+		if mode == "" && r.FormValue("attributes_present") == "1" {
+			updateReq.Attributes = parseSubmittedAttributes(r)
+			updateReq.AttributesPresent = true
+		}
+		_, err := deps.UpdateClient(ctx, updateReq)
 		if err != nil {
 			log.Printf("Failed to update client %s: %v", id, err)
 			return view.HTMXError(err.Error())

@@ -19,6 +19,7 @@ import (
 	categorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
 	clientpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client"
+	clientattributepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client_attribute"
 	clientcategorypb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client_category"
 	clientstmtpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/ledger/reporting/client_statement"
 	revenuepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/revenue/revenue"
@@ -61,6 +62,14 @@ type ClientModuleDeps struct {
 	ListClientCategories func(ctx context.Context, req *clientcategorypb.ListClientCategoriesRequest) (*clientcategorypb.ListClientCategoriesResponse, error)
 	CreateClientCategory func(ctx context.Context, req *clientcategorypb.CreateClientCategoryRequest) (*clientcategorypb.CreateClientCategoryResponse, error)
 	DeleteClientCategory func(ctx context.Context, req *clientcategorypb.DeleteClientCategoryRequest) (*clientcategorypb.DeleteClientCategoryResponse, error)
+	// Client attributes (generic EAV overlay, Q-GSE-10). EnableClientAttributes
+	// gates the optional drawer Attributes section; the three read closures feed
+	// its definitions / enum options / current values. All nil-safe — the section
+	// is skipped when unset. The espyna use case is the real validator on submit.
+	EnableClientAttributes bool
+	ListAttributes         func(ctx context.Context, req *categorypb.ListAttributesRequest) (*categorypb.ListAttributesResponse, error)
+	ListAttributeValues    func(ctx context.Context, req *categorypb.ListAttributeValuesRequest) (*categorypb.ListAttributeValuesResponse, error)
+	ListClientAttributes   func(ctx context.Context, req *clientattributepb.ListClientAttributesRequest) (*clientattributepb.ListClientAttributesResponse, error)
 	// Client statement (for detail view)
 	GetClientStatement func(ctx context.Context, req *clientstmtpb.ClientStatementRequest) (*clientstmtpb.ClientStatementResponse, error)
 	// Subscription listing (for detail view)
@@ -155,6 +164,10 @@ func NewClientModule(deps *ClientModuleDeps) *ClientModule {
 		DeleteClientCategory:  deps.DeleteClientCategory,
 		GetFunctionalCurrency: deps.GetFunctionalCurrency,
 		CurrencyOptions:       deps.CommonLabels.Currency.Options,
+		EnableAttributes:      deps.EnableClientAttributes,
+		ListAttributes:        deps.ListAttributes,
+		ListAttributeValues:   deps.ListAttributeValues,
+		ListClientAttributes:  deps.ListClientAttributes,
 	}
 	listDeps := &clientlist.ListViewDeps{
 		Routes:                      deps.Routes,

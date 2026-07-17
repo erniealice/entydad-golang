@@ -23,6 +23,7 @@ import (
 	conversationpostpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/communication/conversation_post"
 	conversationreadreceiptpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/communication/conversation_read_receipt"
 	clientpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client"
+	clientattributepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client_attribute"
 	clientcatpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client_category"
 	delegatepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/delegate"
 	locationpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/location"
@@ -106,6 +107,8 @@ type UseCases struct {
 	Revenue           RevenueUseCases
 	Collection        CollectionUseCases
 	Category          CategoryUseCases
+	Attribute         AttributeUseCases
+	AttributeValue    AttributeValueUseCases
 	PriceSchedule     PriceScheduleUseCases
 	PricePlan         PricePlanUseCases
 	PurchaseOrder     PurchaseOrderUseCases
@@ -170,14 +173,22 @@ type ClientUseCases struct {
 	// from the espyna ListClients use case; nil-safe — when unbound the inbox
 	// Client column simply shows ids.
 	// 20260612-datasource-typed-path (entydad duck delete).
-	List     func(context.Context, *clientpb.ListClientsRequest) (*clientpb.ListClientsResponse, error)
-	Category ClientCategoryUseCases
+	List            func(context.Context, *clientpb.ListClientsRequest) (*clientpb.ListClientsResponse, error)
+	Category        ClientCategoryUseCases
+	ClientAttribute ClientAttributeUseCases
 }
 
 type ClientCategoryUseCases struct {
 	List   func(context.Context, *clientcatpb.ListClientCategoriesRequest) (*clientcatpb.ListClientCategoriesResponse, error)
 	Create func(context.Context, *clientcatpb.CreateClientCategoryRequest) (*clientcatpb.CreateClientCategoryResponse, error)
 	Delete func(context.Context, *clientcatpb.DeleteClientCategoryRequest) (*clientcatpb.DeleteClientCategoryResponse, error)
+}
+
+// ClientAttributeUseCases — read-only current client_attribute values for the
+// drawer's Attributes section (edit pre-fill). Write/sync happens inside the
+// espyna Create/Update client use cases (Q-GSE-10), not here.
+type ClientAttributeUseCases struct {
+	List func(context.Context, *clientattributepb.ListClientAttributesRequest) (*clientattributepb.ListClientAttributesResponse, error)
 }
 
 // DelegateUseCases — direct CRUD + page-data use cases for the Delegate entity.
@@ -388,6 +399,18 @@ type CategoryUseCases struct {
 	// registry.CreateRepository("postgresql", entityid.Category, ...) calls that
 	// bypassed typed UseCases and provider exclusivity.
 	GetListPageData func(ctx context.Context) ([]*commonpb.Category, error)
+}
+
+// AttributeUseCases — generic common/attribute definitions (read-only). Feeds
+// the client drawer's Attributes section with the active definitions (Q-GSE-10).
+type AttributeUseCases struct {
+	List func(context.Context, *commonpb.ListAttributesRequest) (*commonpb.ListAttributesResponse, error)
+}
+
+// AttributeValueUseCases — generic common/attribute_value enum rows (read-only).
+// Uses the list path that preserves av.label for select display (W3-part1 MED#6).
+type AttributeValueUseCases struct {
+	List func(context.Context, *commonpb.ListAttributeValuesRequest) (*commonpb.ListAttributeValuesResponse, error)
 }
 
 type PriceScheduleUseCases struct {

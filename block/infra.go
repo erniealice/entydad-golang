@@ -4,16 +4,16 @@ import (
 	"context"
 	"net/http"
 
+	centymo "github.com/erniealice/centymo-golang"
 	entydad "github.com/erniealice/entydad-golang"
-	entityclient "github.com/erniealice/entydad-golang/domain/entity/party/client"
-	entitysupplier "github.com/erniealice/entydad-golang/domain/entity/party/supplier"
 	entityrole "github.com/erniealice/entydad-golang/domain/entity/identity/role"
-	entityuser "github.com/erniealice/entydad-golang/domain/entity/identity/user"
 	roleusers "github.com/erniealice/entydad-golang/domain/entity/identity/role/users"
+	entityuser "github.com/erniealice/entydad-golang/domain/entity/identity/user"
 	userdashboard "github.com/erniealice/entydad-golang/domain/entity/identity/user/dashboard"
 	workspaceaction "github.com/erniealice/entydad-golang/domain/entity/identity/workspace/action"
+	entityclient "github.com/erniealice/entydad-golang/domain/entity/party/client"
+	entitysupplier "github.com/erniealice/entydad-golang/domain/entity/party/supplier"
 	"github.com/erniealice/entydad-golang/service/auth"
-	centymo "github.com/erniealice/centymo-golang"
 	"github.com/erniealice/espyna-golang/ports"
 	attachmentpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/document/attachment"
 	pyezatypes "github.com/erniealice/pyeza-golang/types"
@@ -99,6 +99,12 @@ type Infra struct {
 	// newly-active workspace_id (used by WorkspaceUnit's switch handler).
 	// Nil-safe: falls back to "/home".
 	HomeURLForWorkspaceID func(ctx context.Context, workspaceID string) string
+
+	// EnableClientAttributes turns on the client drawer's optional generic
+	// Attributes (EAV) section (Q-GSE-10). Set by WithClientAttributes() on the
+	// EngineBlock. When false the section is never rendered and client_attribute
+	// rows are never written by the drawer. Off by default so hosts opt in.
+	EnableClientAttributes bool
 
 	// AuthDeps carries all dependencies for the auth service module (login,
 	// signup, reset-password, change-password, logout, multi-principal chooser).

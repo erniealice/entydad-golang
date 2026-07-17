@@ -129,6 +129,22 @@ func ClientUnit(uc *UseCases, infra *Infra) compose.Unit {
 			deps.CreateClientCategory = uc.Client.Category.Create
 			deps.DeleteClientCategory = uc.Client.Category.Delete
 		}
+		// Client attributes (generic EAV overlay, Q-GSE-10) — enabled per host via
+		// WithClientAttributes(). Read-only closures feed the drawer's Attributes
+		// section; the espyna Create/Update client use cases validate + persist on
+		// submit. All nil-safe: an unwired closure leaves that read empty.
+		if infra.EnableClientAttributes {
+			deps.EnableClientAttributes = true
+			if uc.Attribute.List != nil {
+				deps.ListAttributes = uc.Attribute.List
+			}
+			if uc.AttributeValue.List != nil {
+				deps.ListAttributeValues = uc.AttributeValue.List
+			}
+			if uc.Client.ClientAttribute.List != nil {
+				deps.ListClientAttributes = uc.Client.ClientAttribute.List
+			}
+		}
 		if uc.Subscription.List != nil {
 			deps.ListSubscriptions = uc.Subscription.List
 			deps.GetSubscriptionListPageData = uc.Subscription.GetListPageData

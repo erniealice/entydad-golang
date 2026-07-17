@@ -277,6 +277,47 @@ and preserved by the Update Client use case when the request omits it.
         </div>
         {{end}}
 
+        {{/* --- Attributes Section (generic EAV overlay, Q-GSE-10) ---
+             Optional: rendered only when active attribute definitions exist for
+             the entity/client module. Each field's control + native constraints
+             mirror the espyna server validator (attribute_sync.go). Fields are
+             hand-rendered (not via form-group) so text inputs can carry native
+             minlength/maxlength, which the shared form-group primitive does not
+             expose. No on*=/hx-on handlers (CSP). --- */}}
+        {{if .AttributeFields}}
+        {{template "form-section" (dict "Title" .Labels.SectionAttributes)}}
+        {{range .AttributeFields}}
+        <div class="form-row single">
+            <div class="form-group">
+                <label class="form-label" for="{{.Name}}">
+                    {{.Label}}{{if .Required}} <span class="form-required" aria-hidden="true">*</span>{{end}}
+                </label>
+                {{if eq .Type "select"}}
+                <select class="form-select" id="{{.Name}}" name="{{.Name}}" data-testid="{{.TestID}}"{{if .Required}} required aria-required="true"{{end}}>
+                    <option value=""{{if not .Value}} selected{{end}}></option>
+                    {{range .Options}}
+                    <option value="{{.Value}}"{{if .Selected}} selected{{end}}>{{.Label}}</option>
+                    {{end}}
+                </select>
+                {{else}}
+                <input type="{{.Type}}" class="form-input" id="{{.Name}}" name="{{.Name}}" data-testid="{{.TestID}}"
+                    {{if .Value}}value="{{.Value}}"{{end}}
+                    {{if .Required}}required aria-required="true"{{end}}
+                    {{if .Min}}min="{{.Min}}"{{end}}
+                    {{if .Max}}max="{{.Max}}"{{end}}
+                    {{if .Step}}step="{{.Step}}"{{end}}
+                    {{if .MinLength}}minlength="{{.MinLength}}"{{end}}
+                    {{if .MaxLength}}maxlength="{{.MaxLength}}"{{end}}>
+                {{end}}
+            </div>
+        </div>
+        {{end}}
+        {{/* Section-present marker: tells the POST handler the Attributes section
+             was rendered, so a submit with a cleared optional field intentionally
+             clears that row. Absent => the update never touches client_attribute. */}}
+        <input type="hidden" name="attributes_present" value="1">
+        {{end}}
+
         {{/* --- Status (lifecycle) — placed at the form bottom because it
              governs the record's visibility/lifecycle, not its accounting
              configuration. The "active" derived flag is updated server-side
