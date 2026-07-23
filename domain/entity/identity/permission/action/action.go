@@ -8,6 +8,8 @@ import (
 	"github.com/erniealice/pyeza-golang/route"
 	"github.com/erniealice/pyeza-golang/view"
 
+	"github.com/erniealice/espyna-golang/consumer"
+
 	permissionpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/permission"
 
 	permission "github.com/erniealice/entydad-golang/domain/entity/identity/permission"
@@ -50,13 +52,24 @@ func NewAddAction(deps *Deps) view.View {
 		r := viewCtx.Request
 		active := r.FormValue("active") == "true"
 
+		// Tenancy + provenance come from the signed session context, NEVER the
+		// request body (no IDOR): workspace from the ActionGuard-signed
+		// _workspace_id resolved into ctx; user/granted-by from the
+		// authenticated principal. Without these the espyna CreatePermission
+		// use case fail-closes ("Workspace ID is required").
+		workspaceID := consumer.GetWorkspaceIDFromContext(ctx)
+		userID := consumer.ExtractUserIDFromContext(ctx)
+
 		_, err := deps.CreatePermission(ctx, &permissionpb.CreatePermissionRequest{
 			Data: &permissionpb.Permission{
-				Name:           r.FormValue("name"),
-				PermissionCode: r.FormValue("permission_code"),
-				PermissionType: form.ParsePermissionType(r.FormValue("permission_type")),
-				Description:    r.FormValue("description"),
-				Active:         active,
+				WorkspaceId:     workspaceID,
+				UserId:          userID,
+				GrantedByUserId: userID,
+				Name:            r.FormValue("name"),
+				PermissionCode:  r.FormValue("permission_code"),
+				PermissionType:  form.ParsePermissionType(r.FormValue("permission_type")),
+				Description:     r.FormValue("description"),
+				Active:          active,
 			},
 		})
 		if err != nil {
@@ -111,14 +124,25 @@ func NewEditAction(deps *Deps) view.View {
 		r := viewCtx.Request
 		active := r.FormValue("active") == "true"
 
+		// Tenancy + provenance come from the signed session context, NEVER the
+		// request body (no IDOR): workspace from the ActionGuard-signed
+		// _workspace_id resolved into ctx; user/granted-by from the
+		// authenticated principal. The espyna UpdatePermission use case shares
+		// the CreatePermission validation gap and requires all three.
+		workspaceID := consumer.GetWorkspaceIDFromContext(ctx)
+		userID := consumer.ExtractUserIDFromContext(ctx)
+
 		_, err := deps.UpdatePermission(ctx, &permissionpb.UpdatePermissionRequest{
 			Data: &permissionpb.Permission{
-				Id:             id,
-				Name:           r.FormValue("name"),
-				PermissionCode: r.FormValue("permission_code"),
-				PermissionType: form.ParsePermissionType(r.FormValue("permission_type")),
-				Description:    r.FormValue("description"),
-				Active:         active,
+				Id:              id,
+				WorkspaceId:     workspaceID,
+				UserId:          userID,
+				GrantedByUserId: userID,
+				Name:            r.FormValue("name"),
+				PermissionCode:  r.FormValue("permission_code"),
+				PermissionType:  form.ParsePermissionType(r.FormValue("permission_type")),
+				Description:     r.FormValue("description"),
+				Active:          active,
 			},
 		})
 		if err != nil {

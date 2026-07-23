@@ -32,6 +32,7 @@ import (
 	permissionpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/permission"
 	rolepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/role"
 	rolepermissionpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/role_permission"
+	staffpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/staff"
 	supplierpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/supplier"
 	suppliercatpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/supplier_category"
 	userpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/user"
@@ -92,6 +93,7 @@ type UseCases struct {
 	// Domain CRUD + use-case groups (singular field, XxxUseCases type)
 	Client            ClientUseCases
 	Delegate          DelegateUseCases
+	Staff             StaffUseCases
 	User              UserUseCases
 	Role              RoleUseCases
 	RolePermission    RolePermissionUseCases
@@ -202,6 +204,21 @@ type DelegateUseCases struct {
 	Update          func(context.Context, *delegatepb.UpdateDelegateRequest) (*delegatepb.UpdateDelegateResponse, error)
 	Delete          func(context.Context, *delegatepb.DeleteDelegateRequest) (*delegatepb.DeleteDelegateResponse, error)
 	List            func(context.Context, *delegatepb.ListDelegatesRequest) (*delegatepb.ListDelegatesResponse, error)
+}
+
+// StaffUseCases — direct CRUD + page-data use cases for the Staff entity
+// (Q-STF, AY2627 enrollment build-out). GetItemPageData enriches Staff.User
+// via a SQL JOIN (unlike the generic Read) — the edit drawer's user
+// auto-complete pre-fill needs it. List (ListStaffs) is optional and not
+// currently used by the view layer.
+type StaffUseCases struct {
+	GetListPageData func(context.Context, *staffpb.GetStaffListPageDataRequest) (*staffpb.GetStaffListPageDataResponse, error)
+	GetItemPageData func(context.Context, *staffpb.GetStaffItemPageDataRequest) (*staffpb.GetStaffItemPageDataResponse, error)
+	Create          func(context.Context, *staffpb.CreateStaffRequest) (*staffpb.CreateStaffResponse, error)
+	Read            func(context.Context, *staffpb.ReadStaffRequest) (*staffpb.ReadStaffResponse, error)
+	Update          func(context.Context, *staffpb.UpdateStaffRequest) (*staffpb.UpdateStaffResponse, error)
+	Delete          func(context.Context, *staffpb.DeleteStaffRequest) (*staffpb.DeleteStaffResponse, error)
+	List            func(context.Context, *staffpb.ListStaffsRequest) (*staffpb.ListStaffsResponse, error)
 }
 
 type UserUseCases struct {

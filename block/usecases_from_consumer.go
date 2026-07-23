@@ -142,6 +142,22 @@ func buildEntydadUseCases(uc *consumer.UseCases, db any) *UseCases {
 		}
 	}
 
+	// Staff — Q-STF (AY2627 enrollment build-out). GetStaffItemPageData
+	// enriches via a user JOIN; the edit drawer's autocomplete pre-fill uses
+	// it instead of the generic ReadStaff. ListStaffs is optional (not
+	// surfaced in the view yet).
+	if e.Staff != nil {
+		result.Staff.GetListPageData = e.Staff.GetStaffListPageData.Execute
+		result.Staff.GetItemPageData = e.Staff.GetStaffItemPageData.Execute
+		result.Staff.Create = e.Staff.CreateStaff.Execute
+		result.Staff.Read = e.Staff.ReadStaff.Execute
+		result.Staff.Update = e.Staff.UpdateStaff.Execute
+		result.Staff.Delete = e.Staff.DeleteStaff.Execute
+		if e.Staff.ListStaffs != nil {
+			result.Staff.List = e.Staff.ListStaffs.Execute
+		}
+	}
+
 	// User
 	if e.User != nil {
 		result.User.GetListPageData = e.User.GetUserListPageData.Execute

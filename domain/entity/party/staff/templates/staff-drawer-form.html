@@ -1,0 +1,62 @@
+{{/*
+Staff drawer form — loaded into #sheetContent via HTMX.
+Used by both Add and Edit actions.
+Data: .UserID, .UserSelectedLabel, .UserSearchURL, .EmploymentType, .Status,
+      .EmploymentTypeOptions, .StatusOptions, .ID, .FormAction, .IsEdit,
+      .Labels, .CommonLabels, .WorkspaceID
+
+Staff links to an EXISTING user (auto-complete over ListUsers) — it does not
+embed a brand-new user record the way Delegate does. employment_type and
+status are the EMPLOYMENT-model and AVAILABILITY string columns documented on
+staff.proto (proto-generic option values; human-readable copy lives in
+lyngua staff.form.* keys).
+*/}}
+{{define "staff-drawer-form"}}
+<form hx-post="{{.FormAction}}" hx-swap="none" data-hx-on="sheet-response" data-testid="staff-drawer-form">
+    {{actionForm .FormAction .WorkspaceID}}
+    {{if .ID}}<input type="hidden" name="id" value="{{.ID}}">{{end}}
+
+    <div class="sheet-body">
+        {{/* --- Staff Details Section --- */}}
+        {{template "form-section" (dict "Title" .Labels.SectionStaff)}}
+
+        <div class="form-row single">
+            {{template "auto-complete" (dict
+                "ID"                "staff-user-search"
+                "Name"              "user_id"
+                "Label"             .Labels.User
+                "Placeholder"       .Labels.UserPlaceholder
+                "SearchPlaceholder" .Labels.UserSearchPlaceholder
+                "SearchURL"         .UserSearchURL
+                "Value"             .UserID
+                "SelectedLabel"     .UserSelectedLabel
+                "NoResults"         .Labels.UserNoResults
+                "Required"          true
+            )}}
+        </div>
+
+        <div class="form-row">
+            {{template "form-group" (dict
+                "Type" "select"
+                "Name" "employment_type"
+                "Label" .Labels.EmploymentType
+                "Placeholder" .Labels.EmploymentTypePlaceholder
+                "Value" .EmploymentType
+                "Options" .EmploymentTypeOptions
+                "TestId" "staff-employment-type"
+            )}}
+            {{template "form-group" (dict
+                "Type" "select"
+                "Name" "status"
+                "Label" .Labels.Status
+                "Placeholder" .Labels.StatusPlaceholder
+                "Value" .Status
+                "Options" .StatusOptions
+                "TestId" "staff-status"
+            )}}
+        </div>
+    </div>
+
+    {{template "sheet-form-footer" (dict "CommonLabels" .CommonLabels "ShowCancel" true "IsEdit" .IsEdit)}}
+</form>
+{{end}}

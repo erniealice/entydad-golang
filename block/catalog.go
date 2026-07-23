@@ -38,6 +38,7 @@ import (
 	clientdetail "github.com/erniealice/entydad-golang/domain/entity/party/client/detail"
 	entityclienttag "github.com/erniealice/entydad-golang/domain/entity/party/client_tag"
 	entitydelegate "github.com/erniealice/entydad-golang/domain/entity/party/delegate"
+	entitystaff "github.com/erniealice/entydad-golang/domain/entity/party/staff"
 	entitysupplier "github.com/erniealice/entydad-golang/domain/entity/party/supplier"
 	entitysuppliertag "github.com/erniealice/entydad-golang/domain/entity/party/supplier_tag"
 	tax "github.com/erniealice/entydad-golang/domain/tax"
@@ -404,6 +405,42 @@ func DelegateUnit(uc *UseCases, infra *Infra) compose.Unit {
 			DeleteDelegate:  uc.Delegate.Delete,
 		}
 		party.NewDelegateModule(deps).RegisterRoutes(mc.Routes)
+		return nil
+	}
+	return u
+}
+
+// StaffUnit wires the Staff entity view module (Q-STF, AY2627 enrollment
+// build-out — the "create teacher" surface). Trimmed vs ClientUnit like
+// DelegateUnit: no payment-terms, categories, subscriptions, attachments,
+// audit, statement, or revenue-run deps. Unlike Delegate, Staff links to an
+// EXISTING user via auto-complete (ReadUser/ListUsers) rather than embedding
+// a brand-new one — see party.StaffModuleDeps.
+func StaffUnit(uc *UseCases, infra *Infra) compose.Unit {
+	u := entitystaff.Describe()
+	u.Mount = func(mc *compose.MountContext) error {
+		r := u.Routes.(*entitystaff.Routes)
+		l := u.Labels.(*entitystaff.Labels)
+
+		deps := &party.StaffModuleDeps{
+			Routes:          *r,
+			CommonLabels:    mc.Common,
+			SharedLabels:    infra.SharedLabels,
+			Labels:          *l,
+			TableLabels:     mc.Table,
+			GetListPageData: uc.Staff.GetListPageData,
+			GetItemPageData: uc.Staff.GetItemPageData,
+			CreateStaff:     uc.Staff.Create,
+			UpdateStaff:     uc.Staff.Update,
+			DeleteStaff:     uc.Staff.Delete,
+		}
+		if uc.User.Read != nil {
+			deps.ReadUser = uc.User.Read
+		}
+		if uc.User.List != nil {
+			deps.ListUsers = uc.User.List
+		}
+		party.NewStaffModule(deps).RegisterRoutes(mc.Routes)
 		return nil
 	}
 	return u
@@ -1100,6 +1137,7 @@ func AllUnits(uc *UseCases, infra *Infra) []compose.Unit {
 		// Party sub-context
 		ClientUnit(uc, infra),
 		DelegateUnit(uc, infra),
+		StaffUnit(uc, infra),
 		SupplierUnit(uc, infra),
 		ClientTagUnit(uc, infra),
 		SupplierTagUnit(uc, infra),
