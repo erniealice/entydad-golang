@@ -1,7 +1,7 @@
 package form
 
 import (
-	workspace_user "github.com/erniealice/entydad-golang/domain/entity/identity/workspace_user"
+	"github.com/erniealice/entydad-golang/domain/entity/identity/workspace_user"
 )
 
 // Data is the template data for the "Add user to workspace" drawer form.

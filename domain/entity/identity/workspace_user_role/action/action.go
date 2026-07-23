@@ -20,7 +20,7 @@ import (
 
 	"github.com/erniealice/pyeza-golang/view"
 
-	workspace_user_role "github.com/erniealice/entydad-golang/domain/entity/identity/workspace_user_role"
+	"github.com/erniealice/entydad-golang/domain/entity/identity/workspace_user_role"
 	rolepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/role"
 	workspaceuserpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace_user"
 	workspaceuserrolepb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace_user_role"

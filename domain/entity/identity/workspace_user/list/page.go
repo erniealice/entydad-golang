@@ -12,7 +12,7 @@ import (
 	"github.com/erniealice/pyeza-golang/types"
 	"github.com/erniealice/pyeza-golang/view"
 
-	workspace_user "github.com/erniealice/entydad-golang/domain/entity/identity/workspace_user"
+	"github.com/erniealice/entydad-golang/domain/entity/identity/workspace_user"
 	workspaceuserpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/workspace_user"
 )
 

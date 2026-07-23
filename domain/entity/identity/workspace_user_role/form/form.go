@@ -1,7 +1,7 @@
 package form
 
 import (
-	workspace_user_role "github.com/erniealice/entydad-golang/domain/entity/identity/workspace_user_role"
+	"github.com/erniealice/entydad-golang/domain/entity/identity/workspace_user_role"
 )
 
 // Data is the template data for the "Assign role" drawer form.
