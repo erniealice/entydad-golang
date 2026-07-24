@@ -545,7 +545,13 @@ func NewEditAction(deps *Deps) view.View {
 			}
 
 			name := c.GetName()
-			formAction := route.ResolveURL(deps.Routes.EditURL, "id", id) + "?mode=" + mode
+			// Sign & post the BARE edit path (no ?mode= querystring). The
+			// action_workspace_guard verifies the HMAC over the query-less
+			// r.URL.Path, and rowActionTokens/every other action form signs the
+			// bare path too — a query-bearing FormAction never matches and 409s.
+			// `mode` rides as a hidden form field instead (see the drawer template
+			// + the POST handler, which reads it via r.FormValue).
+			formAction := route.ResolveURL(deps.Routes.EditURL, "id", id)
 			formID := id
 			if isClone {
 				name = strings.TrimSpace(name) + viewCtx.T("actions.copy_suffix")
@@ -609,7 +615,11 @@ func NewEditAction(deps *Deps) view.View {
 		}
 
 		r := viewCtx.Request
-		mode := r.URL.Query().Get("mode")
+		// mode now rides as a hidden form field (the FormAction is the bare,
+		// signed edit path — no ?mode= querystring). r.FormValue reads the POST
+		// body AND the URL query, so this stays backward compatible with any
+		// still-query-bearing caller.
+		mode := r.FormValue("mode")
 
 		// The drawer form no longer exposes an "active" toggle. Active is
 		// derived from status server-side; when the request payload omits

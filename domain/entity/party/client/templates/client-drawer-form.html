@@ -15,6 +15,9 @@ and preserved by the Update Client use case when the request omits it.
 <form hx-post="{{.FormAction}}" hx-swap="none" data-hx-on="sheet-response">
     {{actionForm .FormAction .WorkspaceID}}
     {{if .ID}}<input type="hidden" name="id" value="{{.ID}}">{{end}}
+    {{/* mode rides as a hidden field (detail-page partial tabs: info/accounting/
+         representative) so the FormAction stays the bare, signed edit path. */}}
+    {{if .Mode}}<input type="hidden" name="mode" value="{{.Mode}}">{{end}}
 
     <div class="sheet-body">
         {{/* --- Company Details Section --- */}}
