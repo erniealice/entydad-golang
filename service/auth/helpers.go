@@ -98,9 +98,17 @@ func classifyChangePasswordError(err error) string {
 }
 
 // iconForPrincipalKind returns a pyeza icon template name for a given
-// principal type. Used by the select-workspace-role page card list. Keep these
-// in sync with packages/pyeza-golang/web/templates/components/icons/ —
-// adding a new principal type means adding (or aliasing) an icon.
+// principal type. Used by the select-workspace-role page card list.
+//
+// EVERY name returned here MUST have a matching {{define}} in
+// packages/pyeza-golang/web/templates/icons/ (the doc-comment here previously
+// pointed at .../templates/components/icons/, a path that does not exist —
+// which is how two names drifted out of the set unnoticed). A name with no
+// template made the card render pyeza's renderContent miss-fallback INSIDE the
+// button, so the card's accessible name literally began "Page content not
+// available" and the operator avoided the card they were supposed to pick.
+// Verified against the icon set: shield-check, users, user, user-check,
+// briefcase, clipboard-check all resolve.
 func iconForPrincipalKind(t PrincipalType) string {
 	switch t {
 	case PrincipalTypeOperatorOwner:
@@ -110,7 +118,9 @@ func iconForPrincipalKind(t PrincipalType) string {
 	case PrincipalTypeClient:
 		return "icon-user"
 	case PrincipalTypeClientDelegate:
-		return "icon-user-group"
+		// Was "icon-user-group" — never defined in the icon set (same latent
+		// defect as the staff card's, on the client-delegate card).
+		return "icon-user-check"
 	case PrincipalTypeSupplier:
 		return "icon-briefcase"
 	case PrincipalTypeSupplierDelegate:
