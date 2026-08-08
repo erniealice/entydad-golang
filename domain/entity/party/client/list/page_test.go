@@ -11,14 +11,21 @@ package list
 // combinatorial value in entydad after workspace/user/role.
 
 import (
+	"context"
+	"errors"
 	"fmt"
+	"reflect"
 	"testing"
 
 	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/pyeza-golang/types"
+	"github.com/erniealice/pyeza-golang/view"
 
 	"github.com/erniealice/entydad-golang"
 	entityclient "github.com/erniealice/entydad-golang/domain/entity/party/client"
+	"github.com/erniealice/espyna-golang/shared/tableparams"
+	commonpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/common"
+	clientpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/client"
 )
 
 func clientTestCommonLabels() pyeza.CommonLabels {
@@ -70,6 +77,97 @@ func findClientAction(actions []types.TableAction, typ string) *types.TableActio
 		}
 	}
 	return nil
+}
+
+func TestBuildTableConfig_ActiveSubscriptionCountsUseOnlyReturnedPageIDs(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		clients   []*clientpb.Client
+		wantIDs   []string
+		wantCalls int
+	}{
+		{
+			name: "page IDs in returned order, skipping nil and empty IDs",
+			clients: []*clientpb.Client{
+				{Id: "client-2", Active: true}, nil, {Id: "", Active: true}, {Id: "client-1", Active: true},
+			},
+			wantIDs:   []string{"client-2", "client-1"},
+			wantCalls: 1,
+		},
+		{
+			name:      "empty page does not invoke count callback",
+			clients:   nil,
+			wantCalls: 0,
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			var gotIDs []string
+			calls := 0
+			deps := &ListViewDeps{
+				Routes:       entityclient.DefaultRoutes(),
+				Labels:       clientTestLabels(),
+				SharedLabels: clientTestSharedLabels(),
+				CommonLabels: clientTestCommonLabels(),
+				GetListPageData: func(context.Context, *clientpb.GetClientListPageDataRequest) (*clientpb.GetClientListPageDataResponse, error) {
+					return &clientpb.GetClientListPageDataResponse{
+						ClientList: tc.clients,
+						Pagination: &commonpb.PaginationResponse{TotalItems: int32(len(tc.clients))},
+					}, nil
+				},
+				GetActiveSubscriptionCounts: func(_ context.Context, ids []string) (map[string]int32, error) {
+					calls++
+					gotIDs = append([]string(nil), ids...)
+					return map[string]int32{}, nil
+				},
+			}
+
+			ctx := view.WithUserPermissions(context.Background(), types.NewUserPermissions([]string{"client:list"}))
+			_, err := buildTableConfig(ctx, deps, clientColumns(deps.Labels), "active", tableparams.TableQueryParams{Page: 1, PageSize: 20})
+			if err != nil {
+				t.Fatalf("buildTableConfig() error = %v", err)
+			}
+			if calls != tc.wantCalls {
+				t.Fatalf("count callback calls = %d, want %d", calls, tc.wantCalls)
+			}
+			if !reflect.DeepEqual(gotIDs, tc.wantIDs) {
+				t.Errorf("count callback IDs = %v, want %v", gotIDs, tc.wantIDs)
+			}
+		})
+	}
+}
+
+func TestBuildTableConfig_ActiveSubscriptionCountErrorIsVisible(t *testing.T) {
+	t.Parallel()
+
+	wantErr := errors.New("count query failed")
+	deps := &ListViewDeps{
+		Routes:       entityclient.DefaultRoutes(),
+		Labels:       clientTestLabels(),
+		SharedLabels: clientTestSharedLabels(),
+		CommonLabels: clientTestCommonLabels(),
+		GetListPageData: func(context.Context, *clientpb.GetClientListPageDataRequest) (*clientpb.GetClientListPageDataResponse, error) {
+			return &clientpb.GetClientListPageDataResponse{
+				ClientList: []*clientpb.Client{{Id: "client-1", Active: true}},
+				Pagination: &commonpb.PaginationResponse{TotalItems: 1},
+			}, nil
+		},
+		GetActiveSubscriptionCounts: func(context.Context, []string) (map[string]int32, error) {
+			return nil, wantErr
+		},
+	}
+
+	ctx := view.WithUserPermissions(context.Background(), types.NewUserPermissions([]string{"client:list"}))
+	_, err := buildTableConfig(ctx, deps, clientColumns(deps.Labels), "active", tableparams.TableQueryParams{Page: 1, PageSize: 20})
+	if !errors.Is(err, wantErr) {
+		t.Fatalf("buildTableConfig() error = %v, want wrapped %v", err, wantErr)
+	}
 }
 
 // TestBuildRowActions_ClientPermissionMatrix exercises the

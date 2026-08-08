@@ -30,9 +30,10 @@ type ListViewDeps struct {
 	GetInUseIDs       func(ctx context.Context, ids []string) (map[string]bool, error)
 	GetClientBalances func(ctx context.Context) (map[string]int64, error)
 	// GetActiveSubscriptionCounts returns a map of client_id → count of active
-	// subscriptions for that client. Fetched once per page render so the per-row
-	// cell lookup is O(1). Empty map when nil — the cell falls back to "0".
-	GetActiveSubscriptionCounts func(ctx context.Context) (map[string]int32, error)
+	// subscriptions for the supplied page IDs. Fetched once per page render so
+	// the per-row cell lookup is O(1). Empty map when nil — the cell falls back
+	// to "0".
+	GetActiveSubscriptionCounts func(ctx context.Context, clientIDs []string) (map[string]int32, error)
 	Labels                      entityclient.Labels
 	SharedLabels                entydad.SharedLabels
 	CommonLabels                pyeza.CommonLabels
@@ -186,7 +187,19 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, columns []types.T
 
 	var subscriptionCounts map[string]int32
 	if deps.GetActiveSubscriptionCounts != nil {
-		subscriptionCounts, _ = deps.GetActiveSubscriptionCounts(ctx)
+		clientIDs := make([]string, 0, len(resp.GetClientList()))
+		for _, client := range resp.GetClientList() {
+			if client == nil || client.GetId() == "" {
+				continue
+			}
+			clientIDs = append(clientIDs, client.GetId())
+		}
+		if len(clientIDs) > 0 {
+			subscriptionCounts, err = deps.GetActiveSubscriptionCounts(ctx, clientIDs)
+			if err != nil {
+				return nil, fmt.Errorf("failed to load active subscription counts: %w", err)
+			}
+		}
 	}
 
 	l := deps.Labels
@@ -266,7 +279,7 @@ func clientColumns(l entityclient.Labels) []types.TableColumn {
 		// clicking this header would 500. Disable sort until the adapter learns
 		// the rep_name expression — at that point set NoSort:false and
 		// SortKey:"rep_name". Tracked in docs/plan/20260503-sortkey-positive-form-and-rep-sort/.
-		{Key: "representative", Label: l.Columns.Representative, NoSort: true},
+		{Key: "representative", Label: l.Columns.Representative, NoSort: true, NoFilter: true},
 		{Key: "active_subscriptions", Label: l.Columns.ActiveSubscriptions, NoFilter: true, Align: "right", WidthClass: "col-3xl"},
 		{Key: "payment_term", Label: l.Columns.PaymentTerm, NoFilter: true, WidthClass: "col-3xl"},
 		{Key: "outstanding_balance", Label: "Outstanding", NoSort: true, NoFilter: true, Align: "right", WidthClass: "col-4xl"},

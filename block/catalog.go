@@ -233,8 +233,8 @@ func ClientUnit(uc *UseCases, infra *Infra) compose.Unit {
 		}
 		if uc.Subscription.CountActiveByClientIDs != nil {
 			countActive := uc.Subscription.CountActiveByClientIDs
-			deps.GetActiveSubscriptionCounts = func(fctx context.Context) (map[string]int32, error) {
-				resp, err := countActive(fctx, &subscriptionpb.CountActiveByClientIdsRequest{})
+			deps.GetActiveSubscriptionCounts = func(fctx context.Context, clientIDs []string) (map[string]int32, error) {
+				resp, err := countActive(fctx, &subscriptionpb.CountActiveByClientIdsRequest{ClientIds: clientIDs})
 				if err != nil {
 					return nil, err
 				}

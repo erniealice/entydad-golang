@@ -48,7 +48,7 @@ type ClientModuleDeps struct {
 	GetListPageData             func(ctx context.Context, req *clientpb.GetClientListPageDataRequest) (*clientpb.GetClientListPageDataResponse, error)
 	GetInUseIDs                 func(ctx context.Context, ids []string) (map[string]bool, error)
 	GetClientBalances           func(ctx context.Context) (map[string]int64, error)
-	GetActiveSubscriptionCounts func(ctx context.Context) (map[string]int32, error)
+	GetActiveSubscriptionCounts func(ctx context.Context, clientIDs []string) (map[string]int32, error)
 	// Client CRUD
 	CreateClient func(ctx context.Context, req *clientpb.CreateClientRequest) (*clientpb.CreateClientResponse, error)
 	ReadClient   func(ctx context.Context, req *clientpb.ReadClientRequest) (*clientpb.ReadClientResponse, error)
