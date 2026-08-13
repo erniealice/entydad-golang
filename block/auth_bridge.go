@@ -221,8 +221,8 @@ func (d *authChainDeps) buildAuthDeps() *auth.Deps {
 		}
 		allowedSignInMethods = splitAndTrim(getEnv("AUTH_FIREBASE_ALLOWED_SIGN_IN_METHODS", ""))
 		firebaseWebConfig = &auth.FirebaseWebConfig{
-			APIKey:          getEnv("FIREBASE_WEB_API_KEY", ""),
-			AuthDomain:      getEnv("FIREBASE_AUTH_DOMAIN", ""),
+			APIKey:          getEnv("AUTH_FIREBASE_WEB_API_KEY", ""),
+			AuthDomain:      getEnv("AUTH_FIREBASE_AUTH_DOMAIN", ""),
 			ProjectID:       getEnv("AUTH_FIREBASE_PROJECT_ID", ""),
 			EmulatorHost:    getEnv("FIREBASE_AUTH_EMULATOR_HOST", ""),
 			MicrosoftTenant: getEnv("AUTH_FIREBASE_MICROSOFT_TENANT", ""),
