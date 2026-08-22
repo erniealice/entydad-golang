@@ -2,7 +2,8 @@ package auth
 
 import (
 	"context"
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"log"
 	"net/http"
 	"net/url"
@@ -26,22 +27,23 @@ var ctxKeyAuthUserID = ctxKeyAuthUserIDType{}
 //
 // Sequence (the auth-cycle UX flow):
 //
-//	 1. Validate credentials via authAdapter.Login (existing path).
-//	 2. Resolve all active principal bindings for the user via
-//	    principalLoader.Resolve. Three branches follow:
-//	      a. 0 principals    → /auth/no-access (signed-in but no access)
-//	      b. 1 principal     → mint principal-scoped session row,
-//	                            redirect to that principal's home
-//	      c. 2+ principals   → keep the (principal-less) session cookie
-//	                            from step 1, redirect to chooser
+//  1. Validate credentials via authAdapter.Login (existing path).
 //
-//	The 1-principal branch ROTATES the session: the token from step 1
-//	is invalidated and a fresh, principal-stamped session row is
-//	inserted in its place. The fresh token becomes the cookie. This
-//	is the same security invariant as the cross-principal switch
-//	(see principal_switch.go) — the cookie that ever sees a
-//	principal-less authenticated state has a different value from
-//	the cookie that sees authenticated+principal-resolved state.
+//  2. Resolve all active principal bindings for the user via
+//     principalLoader.Resolve. Three branches follow:
+//     a. 0 principals    → /auth/no-access (signed-in but no access)
+//     b. 1 principal     → mint principal-scoped session row,
+//     redirect to that principal's home
+//     c. 2+ principals   → keep the (principal-less) session cookie
+//     from step 1, redirect to chooser
+//
+//     The 1-principal branch ROTATES the session: the token from step 1
+//     is invalidated and a fresh, principal-stamped session row is
+//     inserted in its place. The fresh token becomes the cookie. This
+//     is the same security invariant as the cross-principal switch
+//     (see principal_switch.go) — the cookie that ever sees a
+//     principal-less authenticated state has a different value from
+//     the cookie that sees authenticated+principal-resolved state.
 func (m *AuthModule) handleLogin() http.HandlerFunc {
 	authAdapter := m.deps.AuthAdapter
 	sessionMw := m.deps.SessionManager
@@ -380,7 +382,7 @@ func writeFirebaseBody(w http.ResponseWriter, status int, body map[string]string
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-store")
 	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(body)
+	_ = json.MarshalEncode(jsontext.NewEncoder(w), body)
 }
 
 // handleSignup returns the POST /auth/signup handler.

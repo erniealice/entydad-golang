@@ -12,7 +12,8 @@ package action
 
 import (
 	"context"
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"log"
 	"net/http"
 	"strings"
@@ -346,7 +347,7 @@ func NewUserSearchAction(deps *Deps) http.HandlerFunc {
 func writeSearchJSON(w http.ResponseWriter, status int, data any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(data); err != nil {
+	if err := json.MarshalEncode(jsontext.NewEncoder(w), data); err != nil {
 		log.Printf("staff search: failed to encode JSON response: %v", err)
 	}
 }

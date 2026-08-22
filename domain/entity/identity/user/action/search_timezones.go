@@ -1,7 +1,8 @@
 package action
 
 import (
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"log"
 	"net/http"
 	"strings"
@@ -29,7 +30,7 @@ func NewSearchTimezonesAction() http.HandlerFunc {
 			results = append(results, timezoneOption{Value: tz, Label: tz})
 		}
 		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(results); err != nil {
+		if err := json.MarshalEncode(jsontext.NewEncoder(w), results); err != nil {
 			log.Printf("search timezones: encode failed: %v", err)
 		}
 	}

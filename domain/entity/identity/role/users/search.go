@@ -6,7 +6,8 @@ package users
 
 import (
 	"context"
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"log"
 	"net/http"
 	"strings"
@@ -83,7 +84,7 @@ func NewSearchUsersAction(deps *SearchDeps) http.HandlerFunc {
 // writeSearchJSON marshals data as JSON and writes it to the response writer.
 func writeSearchJSON(w http.ResponseWriter, data any) {
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(data); err != nil {
+	if err := json.MarshalEncode(jsontext.NewEncoder(w), data); err != nil {
 		log.Printf("search users: failed to encode JSON response: %v", err)
 	}
 }
