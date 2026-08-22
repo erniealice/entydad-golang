@@ -6,6 +6,7 @@ import (
 	"encoding/json/v2"
 	"log"
 	"net/http"
+	"net/mail"
 	"net/url"
 	"strings"
 
@@ -280,7 +281,7 @@ func (m *AuthModule) routePrincipals(w http.ResponseWriter, r *http.Request, tok
 // Answered as JSON {"redirect": "..."} because the client is a fetch(), which
 // cannot follow a 303 as a navigation — the browser JS does
 // window.location = redirect.
-func (m *AuthModule) handleFirebaseLogin() http.HandlerFunc {
+func (m *AuthModule) handleFirebaseLogin(allowFirebaseImpersonation bool) http.HandlerFunc {
 	verifier := m.deps.FirebaseVerifier
 	minter := m.deps.SessionMinter
 	sessionMw := m.deps.SessionManager
@@ -310,7 +311,7 @@ func (m *AuthModule) handleFirebaseLogin() http.HandlerFunc {
 		// Layer 5: enforce the configured sign-in-method allow-list. Empty list
 		// = allow any verified method. The token's sign_in_provider claim is the
 		// source of truth (e.g. "microsoft.com", "google.com", "password").
-		if len(allowed) > 0 && !signInMethodAllowed(allowed, signInProvider) {
+		if !firebaseSignInMethodAllowed(allowed, signInProvider, allowFirebaseImpersonation) {
 			log.Printf("[AUTH] firebase sign-in method %q not in allow-list for %s", signInProvider, email)
 			writeFirebaseError(w, http.StatusForbidden, "method_not_allowed")
 			return
@@ -350,6 +351,53 @@ func (m *AuthModule) handleFirebaseLogin() http.HandlerFunc {
 	}
 }
 
+// handleFirebaseImpersonation returns the local-only custom-token minting
+// endpoint. Composition registers it only when the Firebase provider is wired
+// and the exact APP_ENVIRONMENT=local + ALLOW_IMPERSONATION=true gate holds.
+// It requires the requested email to exist in Ichizen before the provider is
+// asked to resolve the corresponding existing Firebase identity.
+func (m *AuthModule) handleFirebaseImpersonation() http.HandlerFunc {
+	minter := m.deps.FirebaseCustomTokenMinter
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		if !m.deps.AllowFirebaseImpersonation || minter == nil || m.deps.UserIDByEmail == nil {
+			writeFirebaseError(w, http.StatusNotFound, "impersonation_not_enabled")
+			return
+		}
+		if err := r.ParseForm(); err != nil {
+			writeFirebaseError(w, http.StatusBadRequest, "invalid_request")
+			return
+		}
+
+		email := strings.TrimSpace(r.FormValue("email"))
+		parsed, err := mail.ParseAddress(email)
+		if err != nil || !strings.EqualFold(parsed.Address, email) {
+			writeFirebaseError(w, http.StatusBadRequest, "invalid_email")
+			return
+		}
+
+		userID := m.deps.UserIDByEmail(r.Context(), email)
+		if userID == "" {
+			userID = m.deps.UserIDByEmail(r.Context(), strings.ToLower(email))
+		}
+		if userID == "" {
+			log.Printf("[AUTH] local firebase impersonation rejected: no DB account")
+			writeFirebaseError(w, http.StatusForbidden, "impersonation_unavailable")
+			return
+		}
+
+		customToken, err := minter(r.Context(), email)
+		if err != nil || strings.TrimSpace(customToken) == "" {
+			log.Printf("[AUTH] local firebase impersonation mint failed for user=%s: %v", userID, err)
+			writeFirebaseError(w, http.StatusInternalServerError, "impersonation_failed")
+			return
+		}
+
+		log.Printf("[AUTH] local firebase impersonation token minted: user=%s", userID)
+		writeFirebaseBody(w, http.StatusOK, map[string]string{"custom_token": customToken})
+	}
+}
+
 // signInMethodAllowed reports whether the Firebase sign_in_provider claim is in
 // the configured allow-list, case-insensitively.
 func signInMethodAllowed(allowed []string, method string) bool {
@@ -359,6 +407,17 @@ func signInMethodAllowed(allowed []string, method string) bool {
 		}
 	}
 	return false
+}
+
+// firebaseSignInMethodAllowed keeps the existing allow-list behavior for
+// password/federated methods, but treats the Firebase "custom" provider as a
+// separate local-only capability. Even an empty configured allow-list does not
+// admit custom tokens unless the server-computed impersonation gate is true.
+func firebaseSignInMethodAllowed(allowed []string, method string, allowImpersonation bool) bool {
+	if strings.EqualFold(strings.TrimSpace(method), "custom") {
+		return allowImpersonation
+	}
+	return len(allowed) == 0 || signInMethodAllowed(allowed, method)
 }
 
 // writeFirebaseRedirect answers the Firebase login fetch with the post-login

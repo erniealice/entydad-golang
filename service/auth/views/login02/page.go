@@ -35,6 +35,9 @@ type FirebaseConfig struct {
 	EmulatorHost    string // optional FIREBASE_AUTH_EMULATOR_HOST
 	MicrosoftTenant string // optional: pin the Azure-AD tenant for microsoft.com (single-tenant apps reject /common — AADSTS50194)
 	FirebasePostURL string // where the client POSTs the verified ID token
+	// ImpersonationPostURL is non-empty only under the server-computed local
+	// impersonation gate. Its presence controls the button and token request.
+	ImpersonationPostURL string
 }
 
 // Deps holds view dependencies for the login02 page.
@@ -61,14 +64,14 @@ type Deps struct {
 // PageData holds the data for the login02 page.
 type PageData struct {
 	types.PageData
-	ContentTemplate string
-	Labels          entydad.Login02Labels
-	RedirectURL     string
-	LogoText        string
-	LogoIcon        string
-	LoginPostURL    string
-	RegisterURL     string
-	ForgotURL       string
+	ContentTemplate  string
+	Labels           entydad.Login02Labels
+	RedirectURL      string
+	LogoText         string
+	LogoIcon         string
+	LoginPostURL     string
+	RegisterURL      string
+	ForgotURL        string
 	Slides           []CarouselSlide
 	SocialProviders  []SocialProvider
 	FirebaseConfig   *FirebaseConfig
@@ -118,14 +121,14 @@ func NewView(deps *Deps) view.View {
 				CurrentPath:  viewCtx.CurrentPath,
 				CommonLabels: deps.CommonLabels,
 			},
-			ContentTemplate: "login02-content",
-			Labels:          deps.Labels,
-			RedirectURL:     redirectURL,
-			LogoText:        deps.LogoText,
-			LogoIcon:        deps.LogoIcon,
-			LoginPostURL:    loginPostURL,
-			RegisterURL:     registerURL,
-			ForgotURL:       forgotURL,
+			ContentTemplate:  "login02-content",
+			Labels:           deps.Labels,
+			RedirectURL:      redirectURL,
+			LogoText:         deps.LogoText,
+			LogoIcon:         deps.LogoIcon,
+			LoginPostURL:     loginPostURL,
+			RegisterURL:      registerURL,
+			ForgotURL:        forgotURL,
 			Slides:           deps.Slides,
 			SocialProviders:  deps.SocialProviders,
 			FirebaseConfig:   deps.FirebaseConfig,

@@ -75,6 +75,11 @@ type UserIDByEmail func(ctx context.Context, email string) (userID string)
 // when nil the /auth/firebase endpoint is not mounted.
 type FirebaseVerifier func(ctx context.Context, idToken string) (email, signInProvider string, err error)
 
+// FirebaseCustomTokenMinter mints a short-lived Firebase custom token for an
+// existing email or UID. It is injected only for explicitly enabled local
+// impersonation and never creates an Ichizen session itself.
+type FirebaseCustomTokenMinter func(ctx context.Context, identifier string) (customToken string, err error)
+
 // SessionMinter creates a server-side session for an already-authenticated
 // user and returns the opaque token. Injected from the app's consumer
 // AuthAdapter.CreateSession (provider-agnostic after the session-decoupling),

@@ -101,14 +101,17 @@
             function showError(msg) {
                 if (errEl) { errEl.textContent = msg || 'Sign-in failed'; errEl.hidden = false; }
             }
-            function postToken(idToken) {
-                return fetch(postURL, {
+            function postForm(url, body) {
+                return fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: 'id_token=' + encodeURIComponent(idToken)
+                    body: body
                 }).then(function(r) {
                     return r.json().then(function(d) { return { ok: r.ok, data: d }; });
                 });
+            }
+            function postToken(idToken) {
+                return postForm(postURL, 'id_token=' + encodeURIComponent(idToken));
             }
             function onResult(res) {
                 if (res.ok && res.data && res.data.redirect) {
@@ -153,6 +156,33 @@
                         .then(function(result) { return result.user.getIdToken(); })
                         .then(postToken).then(onResult)
                         .catch(function(e) { showError(e && e.message); });
+                });
+            }
+
+            // Local-development impersonation. The button and URL are emitted
+            // only when the backend has mounted the equally gated endpoint.
+            // The custom token remains transient: Firebase exchanges it for a
+            // normal ID token, then the existing postToken path creates the
+            // same opaque Ichizen session as every other Firebase login.
+            var impersonateBtn = document.querySelector('[data-testid="firebase-impersonate"]');
+            var impersonationURL = cfg.getAttribute('data-impersonation-url');
+            if (impersonateBtn && impersonationURL) {
+                impersonateBtn.addEventListener('click', function() {
+                    if (errEl) { errEl.hidden = true; }
+                    var emailEl = document.getElementById('email');
+                    if (!emailEl || !emailEl.reportValidity()) return;
+                    impersonateBtn.disabled = true;
+                    postForm(impersonationURL, 'email=' + encodeURIComponent(emailEl.value.trim()))
+                        .then(function(res) {
+                            if (!res.ok || !res.data || !res.data.custom_token) {
+                                throw new Error((res.data && res.data.error) || 'Sign-in failed');
+                            }
+                            return auth.signInWithCustomToken(res.data.custom_token);
+                        })
+                        .then(function(result) { return result.user.getIdToken(); })
+                        .then(postToken).then(onResult)
+                        .catch(function(e) { showError(e && e.message); })
+                        .finally(function() { impersonateBtn.disabled = false; });
                 });
             }
         })();
@@ -209,6 +239,7 @@
                     data-project-id="{{.FirebaseConfig.ProjectID}}"
                     data-emulator="{{.FirebaseConfig.EmulatorHost}}"
                     data-microsoft-tenant="{{.FirebaseConfig.MicrosoftTenant}}"
+                    data-impersonation-url="{{.FirebaseConfig.ImpersonationPostURL}}"
                     data-post-url="{{.FirebaseConfig.FirebasePostURL}}"></div>
                 {{end}}
                 <!-- Logo -->
@@ -266,7 +297,29 @@
                     </div>
 
                     <button type="submit" class="auth-button" data-testid="login-submit">{{.Labels.SignInButton}}</button>
+                    {{if and .FirebaseConfig .FirebaseConfig.ImpersonationPostURL}}
+                    <button type="button" class="auth-social-button" data-testid="firebase-impersonate">{{.Labels.ImpersonateButton}}</button>
+                    {{end}}
                 </form>
+                {{end}}
+
+                {{if and (not .ShowPasswordForm) .FirebaseConfig .FirebaseConfig.ImpersonationPostURL}}
+                <div class="auth-form" data-testid="firebase-impersonation-form">
+                    <div class="auth-form-group">
+                        <label class="auth-form-label" for="email">{{.Labels.EmailLabel}}</label>
+                        <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            class="auth-form-input"
+                            placeholder="{{.Labels.EmailPlaceholder}}"
+                            required
+                            autocomplete="email"
+                        >
+                        <span class="auth-form-error" id="emailError"></span>
+                    </div>
+                    <button type="button" class="auth-social-button" data-testid="firebase-impersonate">{{.Labels.ImpersonateButton}}</button>
+                </div>
                 {{end}}
 
                 {{if .FirebaseConfig}}

@@ -211,6 +211,8 @@ func (d *authChainDeps) buildAuthDeps() *auth.Deps {
 	var sessionMinter auth.SessionMinter
 	var allowedSignInMethods []string
 	var firebaseWebConfig *auth.FirebaseWebConfig
+	var firebaseCustomTokenMinter auth.FirebaseCustomTokenMinter
+	allowFirebaseImpersonation := false
 	if d.authAdapter != nil && getEnv("CONFIG_AUTH_PROVIDER", "") == "firebase" {
 		aa := d.authAdapter
 		firebaseVerifier = func(ctx context.Context, idToken string) (string, string, error) {
@@ -227,6 +229,15 @@ func (d *authChainDeps) buildAuthDeps() *auth.Deps {
 			EmulatorHost:    getEnv("FIREBASE_AUTH_EMULATOR_HOST", ""),
 			MicrosoftTenant: getEnv("AUTH_FIREBASE_MICROSOFT_TENANT", ""),
 		}
+		allowFirebaseImpersonation = firebaseImpersonationEnabled(
+			getEnv("APP_ENVIRONMENT", ""),
+			getEnv("AUTH_FIREBASE_ALLOW_IMPERSONATION", ""),
+		)
+		if allowFirebaseImpersonation {
+			firebaseCustomTokenMinter = func(ctx context.Context, identifier string) (string, error) {
+				return aa.CreateCustomToken(ctx, identifier)
+			}
+		}
 	}
 
 	// AUTH_FIREBASE_ALLOW_SIGNUPS gates the login02 "no account? sign up" link
@@ -242,12 +253,14 @@ func (d *authChainDeps) buildAuthDeps() *auth.Deps {
 		AuthAdapter:    authAdapter,
 		SessionManager: d.sessionMw,
 
-		FirebaseVerifier:     firebaseVerifier,
-		SessionMinter:        sessionMinter,
-		AllowedSignInMethods: allowedSignInMethods,
-		FirebaseWebConfig:    firebaseWebConfig,
-		AllowSignups:         allowSignups,
-		AllowPasswordChange:  entydad.PasswordChangeEnabled(),
+		FirebaseVerifier:           firebaseVerifier,
+		SessionMinter:              sessionMinter,
+		AllowedSignInMethods:       allowedSignInMethods,
+		FirebaseWebConfig:          firebaseWebConfig,
+		FirebaseCustomTokenMinter:  firebaseCustomTokenMinter,
+		AllowFirebaseImpersonation: allowFirebaseImpersonation,
+		AllowSignups:               allowSignups,
+		AllowPasswordChange:        entydad.PasswordChangeEnabled(),
 
 		PrincipalResolver: resolver,
 		PrincipalSwitcher: func(ctx context.Context, input auth.PrincipalSwitchInput) (*auth.PrincipalSwitchResult, error) {
@@ -347,4 +360,12 @@ func splitAndTrim(s string) []string {
 func equalFoldTrue(s string) bool {
 	return len(s) == 4 &&
 		(s[0]|0x20) == 't' && (s[1]|0x20) == 'r' && (s[2]|0x20) == 'u' && (s[3]|0x20) == 'e'
+}
+
+// firebaseImpersonationEnabled is the single fail-closed configuration gate
+// shared by route registration and login-page rendering. Both conditions are
+// explicit; an unknown or empty value disables the capability.
+func firebaseImpersonationEnabled(appEnvironment, allow string) bool {
+	return strings.EqualFold(strings.TrimSpace(appEnvironment), "local") &&
+		equalFoldTrue(strings.TrimSpace(allow))
 }

@@ -21,6 +21,7 @@ func DefaultLogin02Labels() Login02Labels {
 		RememberMe:          "Remember me",
 		ForgotPassword:      "Forgot password?",
 		SignInButton:        "Sign In",
+		ImpersonateButton:   "Impersonate",
 		NoAccount:           "Don't have an account?",
 		SignUpLink:          "Sign up",
 		SocialDivider:       "or continue with",

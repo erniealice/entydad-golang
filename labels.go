@@ -97,6 +97,7 @@ type Login02Labels struct {
 	RememberMe          string `json:"remember_me"`
 	ForgotPassword      string `json:"forgot_password"`
 	SignInButton        string `json:"sign_in_button"`
+	ImpersonateButton   string `json:"impersonate_button"`
 	NoAccount           string `json:"no_account"`
 	SignUpLink          string `json:"sign_up_link"`
 	SocialDivider       string `json:"social_divider"`

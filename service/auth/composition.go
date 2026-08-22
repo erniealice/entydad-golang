@@ -87,6 +87,11 @@ type Deps struct {
 	FirebaseVerifier     FirebaseVerifier
 	SessionMinter        SessionMinter
 	AllowedSignInMethods []string
+	// FirebaseCustomTokenMinter and AllowFirebaseImpersonation must both be
+	// present to mount/render the local-only impersonation flow. The block owns
+	// the environment/provider gate; this module owns dependency completeness.
+	FirebaseCustomTokenMinter  FirebaseCustomTokenMinter
+	AllowFirebaseImpersonation bool
 
 	// FirebaseWebConfig is the PUBLIC browser config (apiKey/authDomain/
 	// projectId) threaded to login02. Non-nil ⇒ login02 renders in firebase
@@ -160,6 +165,10 @@ func (m *AuthModule) RegisterRoutes(routes RouteRegistrar) {
 	var fbConfig *login02mod.FirebaseConfig
 	var socialProviders []login02mod.SocialProvider
 	showPasswordForm := true
+	impersonationEnabled := deps.FirebaseWebConfig != nil &&
+		deps.FirebaseVerifier != nil && deps.SessionMinter != nil && deps.SessionManager != nil &&
+		deps.UserIDByEmail != nil && deps.CSRFIssuer != nil &&
+		deps.FirebaseCustomTokenMinter != nil && deps.AllowFirebaseImpersonation
 	if deps.FirebaseWebConfig != nil {
 		fbConfig = &login02mod.FirebaseConfig{
 			APIKey:          deps.FirebaseWebConfig.APIKey,
@@ -168,6 +177,9 @@ func (m *AuthModule) RegisterRoutes(routes RouteRegistrar) {
 			EmulatorHost:    deps.FirebaseWebConfig.EmulatorHost,
 			MicrosoftTenant: deps.FirebaseWebConfig.MicrosoftTenant,
 			FirebasePostURL: entydad.AuthFirebaseLoginURL,
+		}
+		if impersonationEnabled {
+			fbConfig.ImpersonationPostURL = entydad.AuthFirebaseImpersonationURL
 		}
 		socialProviders = firebaseSocialProviders(deps.AllowedSignInMethods)
 		showPasswordForm = passwordMethodEnabled(deps.AllowedSignInMethods)
@@ -196,8 +208,13 @@ func (m *AuthModule) RegisterRoutes(routes RouteRegistrar) {
 	// under /auth/ so it shares the session-exclude + CSRF-exempt posture of
 	// the password login POST.
 	if deps.FirebaseVerifier != nil && deps.SessionMinter != nil {
-		routes.HandleFunc("POST", entydad.AuthFirebaseLoginURL, m.handleFirebaseLogin())
+		routes.HandleFunc("POST", entydad.AuthFirebaseLoginURL, m.handleFirebaseLogin(impersonationEnabled))
 		log.Println("  ✓ Firebase ID-token login mounted: POST /auth/firebase")
+	}
+
+	if impersonationEnabled {
+		routes.HandleFunc("POST", entydad.AuthFirebaseImpersonationURL, m.handleFirebaseImpersonation())
+		log.Println("  ✓ Local Firebase impersonation mounted: POST /auth/firebase/impersonate")
 	}
 
 	// Signup (GET + POST)

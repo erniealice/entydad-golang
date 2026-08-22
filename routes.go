@@ -34,6 +34,10 @@ const (
 	// AuthFirebaseLoginURL is the Firebase ID-token login POST. Under /auth/ so
 	// it shares the session-exclude + CSRF-exempt posture of /auth/login.
 	AuthFirebaseLoginURL = "/auth/firebase"
+	// AuthFirebaseImpersonationURL mints a local-development custom token. The
+	// route is registered only when the Firebase provider and both explicit
+	// local impersonation flags are active.
+	AuthFirebaseImpersonationURL = "/auth/firebase/impersonate"
 
 	// Legacy login routes (redirect to /auth/login)
 	LoginURL     = "/login"
