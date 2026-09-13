@@ -6,7 +6,11 @@ package list
 // the correct Disabled flag across the {viewer, editor, admin} matrix.
 
 import (
+	"context"
+	"errors"
 	"fmt"
+	"github.com/erniealice/espyna-golang/shared/tableparams"
+	supplierpb "github.com/erniealice/esqyma/pkg/schema/v1/domain/entity/supplier"
 	"testing"
 
 	pyeza "github.com/erniealice/pyeza-golang"
@@ -207,6 +211,33 @@ func TestBuildBulkActions_SupplierPermissionMatrix(t *testing.T) {
 			}
 			if tc.wantDeleteTooltip != "" && deleteAct.DisabledTooltip != tc.wantDeleteTooltip {
 				t.Errorf("bulk delete.DisabledTooltip = %q, want %q", deleteAct.DisabledTooltip, tc.wantDeleteTooltip)
+			}
+		})
+	}
+}
+
+func TestSupplierCanonicalStatusFilters(t *testing.T) {
+	stop := errors.New("captured")
+	for _, status := range []string{"active", "blocked", "on_hold"} {
+		t.Run(status, func(t *testing.T) {
+			called := false
+			deps := &ListViewDeps{GetListPageData: func(_ context.Context, req *supplierpb.GetSupplierListPageDataRequest) (*supplierpb.GetSupplierListPageDataResponse, error) {
+				called = true
+				filters := req.GetFilters().GetFilters()
+				if len(filters) != 2 {
+					t.Fatalf("expected lifecycle and activation filters, got %d", len(filters))
+				}
+				if filters[0].GetField() != "status" || filters[0].GetStringFilter().GetValue() != status {
+					t.Fatalf("invalid lifecycle filter: %v", filters[0])
+				}
+				if filters[1].GetField() != "active" || filters[1].GetBooleanFilter() == nil || !filters[1].GetBooleanFilter().GetValue() {
+					t.Fatalf("missing soft-delete exclusion: %v", filters[1])
+				}
+				return nil, stop
+			}}
+			_, err := buildTableConfig(context.Background(), deps, nil, status, tableparams.TableQueryParams{})
+			if !called || !errors.Is(err, stop) {
+				t.Fatalf("expected capture, called=%v err=%v", called, err)
 			}
 		})
 	}

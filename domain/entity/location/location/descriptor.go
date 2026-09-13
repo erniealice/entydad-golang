@@ -18,6 +18,7 @@ func Describe() compose.Unit {
 			AppEntry: &compose.AppEntry{
 				Key:        "location",
 				Route:      "location.list",
+				Params:     map[string]string{"status": "active"},
 				Label:      "Locations",
 				Icon:       "icon-map-pin",
 				Permission: "location:list",

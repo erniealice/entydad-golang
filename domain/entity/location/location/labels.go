@@ -32,7 +32,8 @@ type PageLabels struct {
 }
 
 type ButtonLabels struct {
-	AddLocation string `json:"add_location"`
+	AddLocation           string `json:"add_location"`
+	AddLocationActiveOnly string `json:"add_location_active_only"`
 }
 
 type ColumnLabels struct {

@@ -141,7 +141,7 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, columns []types.T
 		listParams.Filters = &commonpb.FilterRequest{}
 	}
 	listParams.Filters.Filters = append(listParams.Filters.Filters, &commonpb.TypedFilter{
-		Field: "s.status",
+		Field: "status",
 		FilterType: &commonpb.TypedFilter_StringFilter{
 			StringFilter: &commonpb.StringFilter{
 				Value:    status,
@@ -154,7 +154,7 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, columns []types.T
 	// DeleteSupplier flips `active` to false but leaves `status` intact, so a
 	// status-only filter still surfaces deleted rows.
 	listParams.Filters.Filters = append(listParams.Filters.Filters, &commonpb.TypedFilter{
-		Field: "s.active",
+		Field: "active",
 		FilterType: &commonpb.TypedFilter_BooleanFilter{
 			BooleanFilter: &commonpb.BooleanFilter{Value: true},
 		},

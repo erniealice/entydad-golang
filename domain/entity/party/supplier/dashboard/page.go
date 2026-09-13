@@ -2,6 +2,7 @@ package dashboard
 
 import (
 	"context"
+	"github.com/erniealice/pyeza-golang/route"
 
 	pyeza "github.com/erniealice/pyeza-golang"
 	"github.com/erniealice/pyeza-golang/types"
@@ -52,7 +53,7 @@ func NewView(deps *Deps) view.View {
 		dash := types.DashboardData{
 			QuickActions: []types.QuickAction{
 				{Icon: "icon-truck", Label: l.QuickNew, Href: deps.Routes.AddURL, Variant: "primary", TestID: "supplier-action-new"},
-				{Icon: "icon-list", Label: l.QuickViewAll, Href: deps.Routes.ListURL, TestID: "supplier-action-list"},
+				{Icon: "icon-list", Label: l.QuickViewAll, Href: route.ResolveURL(deps.Routes.ListURL, "status", "active"), TestID: "supplier-action-list"},
 				{Icon: "icon-tag", Label: l.QuickTags, Href: deps.SupplierTagRoutes.ListURL, TestID: "supplier-action-tags"},
 				{Icon: "icon-folder", Label: l.QuickCategories, Href: deps.SupplierTagRoutes.ListURL, TestID: "supplier-action-categories"},
 			},
@@ -75,7 +76,7 @@ func NewView(deps *Deps) view.View {
 				{
 					ID: "recent", Title: l.RecentActivity, Type: "list", Span: 1,
 					HeaderActions: []types.QuickAction{
-						{Label: l.ViewAll, Href: deps.Routes.ListURL},
+						{Label: l.ViewAll, Href: route.ResolveURL(deps.Routes.ListURL, "status", "active")},
 					},
 					ListItems: []types.ActivityItem{
 						{IconName: "icon-truck", IconVariant: "client", Title: l.SupplierAdded, Description: "Global Materials Inc. onboarded", Time: "2m ago", TestID: "supplier-activity-added"},

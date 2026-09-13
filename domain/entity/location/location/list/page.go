@@ -137,7 +137,7 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, columns []types.T
 		listParams.Filters = &commonpb.FilterRequest{}
 	}
 	listParams.Filters.Filters = append(listParams.Filters.Filters, &commonpb.TypedFilter{
-		Field: "l.active",
+		Field: "active",
 		FilterType: &commonpb.TypedFilter_BooleanFilter{
 			BooleanFilter: &commonpb.BooleanFilter{Value: activeValue},
 		},
@@ -215,11 +215,14 @@ func buildTableConfig(ctx context.Context, deps *ListViewDeps, columns []types.T
 			Label:           l.Buttons.AddLocation,
 			ActionURL:       deps.Routes.AddURL,
 			Icon:            "icon-plus",
-			Disabled:        !perms.Can("location", "create"),
+			Disabled:        status != "active" || !perms.Can("location", "create"),
 			DisabledTooltip: fmt.Sprintf(deps.CommonLabels.Errors.MissingPermission, "location:create"),
 		},
 		BulkActions:      &bulkCfg,
 		ServerPagination: sp,
+	}
+	if status != "active" {
+		tableConfig.PrimaryAction.DisabledTooltip = l.Buttons.AddLocationActiveOnly
 	}
 	types.ApplyTableSettings(tableConfig)
 

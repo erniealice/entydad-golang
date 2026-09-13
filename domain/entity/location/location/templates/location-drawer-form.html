@@ -25,6 +25,7 @@ Data: .Name, .Address, .Description, .Timezone, .Active, .ID, .FormAction, .IsEd
             {{template "form-group" (dict
                 "Type" "text"
                 "Name" "address"
+                "Required" true
                 "Label" .Labels.Address
                 "Value" .Address
                 "Placeholder" .Labels.AddressPlaceholder
