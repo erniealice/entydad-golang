@@ -661,6 +661,9 @@ func loadClientSubscriptions(ctx context.Context, deps *DetailViewDeps, clientID
 // buildSubscriptionAddURL appends client_id, client_name, and (when set)
 // billing_currency so the subscription drawer can scope the plan search.
 func buildSubscriptionAddURL(base, clientID, clientName, billingCurrency string) string {
+	if base == "" {
+		return ""
+	}
 	u := base + "?client_id=" + clientID + "&client_name=" + url.QueryEscape(clientName)
 	if billingCurrency != "" {
 		u += "&billing_currency=" + url.QueryEscape(billingCurrency)

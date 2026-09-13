@@ -16,10 +16,10 @@ func TestLoadBlockRoutes_ServiceOverridesCrossPackageSubscriptionRoutes(t *testi
 	translations := lynguaV1.NewTranslationProviderFromFS(lyngua.TranslationsFS)
 	routes := loadBlockRoutes(translations, "service")
 
-	if got, want := routes.Subscription.ListURL, "/app/memberships/list/{status}"; got != want {
+	if got, want := routes.Subscription.ListURL, "/memberships/list/{status}"; got != want {
 		t.Fatalf("Subscription.ListURL = %q, want %q", got, want)
 	}
-	if got, want := routes.Subscription.DetailURL, "/app/memberships/detail/{id}"; got != want {
+	if got, want := routes.Subscription.DetailURL, "/memberships/detail/{id}"; got != want {
 		t.Fatalf("Subscription.DetailURL = %q, want %q", got, want)
 	}
 	if got, want := routes.Subscription.AddURL, "/action/membership/add"; got != want {
@@ -31,7 +31,7 @@ func TestLoadBlockRoutes_ServiceOverridesCrossPackageSubscriptionRoutes(t *testi
 	if got, want := routes.Subscription.DeleteURL, "/action/membership/delete"; got != want {
 		t.Fatalf("Subscription.DeleteURL = %q, want %q", got, want)
 	}
-	if got, want := routes.Client.ListURL, "/app/customers/list/{status}"; got != want {
+	if got, want := routes.Client.ListURL, "/customers/list/{status}"; got != want {
 		t.Fatalf("Client.ListURL = %q, want %q", got, want)
 	}
 }

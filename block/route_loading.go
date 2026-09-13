@@ -149,6 +149,16 @@ func loadBlockLabels(t *lynguaV1.TranslationProvider, businessType string) block
 
 // loadBlockRoutes loads all entydad route configs with lyngua JSON overrides.
 // Mirrors the entydad section of route_config.go in service-admin/retail-admin.
+// loadClientSubscriptionRoutes resolves the cross-engine routes used by client
+// detail drawers. The subscription unit is mounted by a separate engine.
+func loadClientSubscriptionRoutes(t *lynguaV1.TranslationProvider, businessType string) centymo.SubscriptionRoutes {
+	routes := centymo.DefaultSubscriptionRoutes()
+	if t != nil {
+		_ = t.LoadPathIfExists("en", businessType, "route.json", "subscription", &routes)
+	}
+	return routes
+}
+
 func loadBlockRoutes(t *lynguaV1.TranslationProvider, businessType string) blockRoutes {
 	r := blockRoutes{}
 
@@ -170,8 +180,7 @@ func loadBlockRoutes(t *lynguaV1.TranslationProvider, businessType string) block
 	r.SupplierPaymentTerm = entity.DefaultSupplierPaymentTermRoutes()
 	_ = t.LoadPathIfExists("en", businessType, "route.json", "supplier_payment_term", &r.SupplierPaymentTerm)
 
-	r.Subscription = centymo.DefaultSubscriptionRoutes()
-	_ = t.LoadPathIfExists("en", businessType, "route.json", "subscription", &r.Subscription)
+	r.Subscription = loadClientSubscriptionRoutes(t, businessType)
 
 	r.PriceSchedule = centymo.DefaultPriceScheduleRoutes()
 	_ = t.LoadPathIfExists("en", businessType, "route.json", "price_schedule", &r.PriceSchedule)

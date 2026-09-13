@@ -25,6 +25,7 @@ package block
 
 import (
 	"context"
+	lynguaV1 "github.com/erniealice/lyngua/golang/v1"
 	"log"
 	"net/http"
 	"os"
@@ -92,6 +93,8 @@ func EngineBlock(opts ...EngineBlockOption) consumerapp.AppOption {
 
 		// ── Infra ───────────────────────────────────────────────────────────
 		infra := &Infra{}
+		translations, _ := ctx.Translations.(*lynguaV1.TranslationProvider)
+		infra.SubscriptionRoutes = loadClientSubscriptionRoutes(translations, ctx.BusinessType)
 		infra.EnableClientAttributes = cfg.clientAttributes
 		infra.UploadFile, _ = ctx.UploadFile.(func(context.Context, string, string, []byte, string) error)
 		infra.ListAttachments, _ = ctx.ListAttachments.(func(context.Context, string, string) (*attachmentpb.ListAttachmentsResponse, error))
