@@ -329,7 +329,7 @@ func (d *authChainDeps) buildAuthDeps() *auth.Deps {
 
 		Labels: d.authLabels,
 
-		LogoText:     getEnv("ICHIZEN_LOGO_TEXT", "Ichizen"),
+		LogoText:     getEnv("APP_TITLE", "Ichizen"),
 		AuthProvider: getEnv("CONFIG_AUTH_PROVIDER", ""),
 		TestMode:     equalFoldTrue(getEnv("AUTH_PASSWORD_TEST_MODE", "")),
 		// SecureCookies — derived from the host-resolved cookie-secure policy
