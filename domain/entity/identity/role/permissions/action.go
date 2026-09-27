@@ -152,8 +152,11 @@ func NewRemoveAction(deps *ActionDeps) view.View {
 			return view.HTMXError(viewCtx.T("shared.errors.id_required"))
 		}
 
+		// RoleId binds the grant to the role in the URL: the use case rejects a
+		// grant whose stored parent differs, or whose role is in another
+		// workspace (tenant boundary, U-03).
 		_, err := deps.DeleteRolePermission(ctx, &rolepermissionpb.DeleteRolePermissionRequest{
-			Data: &rolepermissionpb.RolePermission{Id: rpID},
+			Data: &rolepermissionpb.RolePermission{Id: rpID, RoleId: roleID},
 		})
 		if err != nil {
 			log.Printf("Failed to remove permission %s from role %s: %v", rpID, roleID, err)

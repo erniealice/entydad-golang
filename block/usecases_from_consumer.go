@@ -2,6 +2,7 @@ package block
 
 import (
 	"context"
+	"errors"
 	"log"
 
 	locationdashboardview "github.com/erniealice/entydad-golang/domain/entity/location/location/dashboard"
@@ -77,6 +78,9 @@ func buildEntydadUseCases(uc *consumer.UseCases, db any) *UseCases {
 		// map. Mirrors the deleted entydad duck's
 		// Update(collection, id, {"active": active}).
 		result.SetActive = func(ctx context.Context, collection string, id string, active bool) error {
+			if err := denyPlatformGlobalToggle(collection); err != nil {
+				return err
+			}
 			_, err := ops.Update(ctx, collection, id, map[string]any{"active": active})
 			return err
 		}
@@ -87,6 +91,9 @@ func buildEntydadUseCases(uc *consumer.UseCases, db any) *UseCases {
 		// Mirrors the deleted duck's
 		// Update(collection, id, {"status": status, "active": active}).
 		result.SetStatus = func(ctx context.Context, collection string, id string, status string, active bool) error {
+			if err := denyPlatformGlobalToggle(collection); err != nil {
+				return err
+			}
 			_, err := ops.Update(ctx, collection, id, map[string]any{
 				"status": status,
 				"active": active,
@@ -531,4 +538,21 @@ func buildConversationUseCases(uc *consumer.UseCases) ConversationUseCases {
 	}
 
 	return out
+}
+
+// errPlatformGlobalToggle is returned when a tenant request tries to flip the
+// active/status flag of a platform-global row. user and workspace carry no
+// workspace_id, so this raw ops.Update would act across every tenant with no
+// use-case gate at all. Decision Q1 of plan 20260927-tenant-boundary-hardening:
+// such changes are control-plane only; tenants deactivate the workspace
+// membership (workspace_user) instead.
+var errPlatformGlobalToggle = errors.New("this change is managed by platform operators; deactivate the workspace membership instead")
+
+// denyPlatformGlobalToggle fails closed for platform-global collections.
+func denyPlatformGlobalToggle(collection string) error {
+	switch collection {
+	case "user", "workspace":
+		return errPlatformGlobalToggle
+	}
+	return nil
 }
