@@ -26,10 +26,10 @@ type ListLabels struct {
 
 // ColumnLabels holds individual column header strings.
 type ColumnLabels struct {
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Students string `json:"students"`
-	Active   string `json:"active"`
+	Name    string `json:"name"`
+	Email   string `json:"email"`
+	Clients string `json:"clients"`
+	Active  string `json:"active"`
 }
 
 // ActionLabels holds add/edit/delete action labels.

@@ -214,7 +214,7 @@ func delegateColumns(l entitydelegate.Labels) []types.TableColumn {
 	return []types.TableColumn{
 		{Key: "name", Label: l.List.Columns.Name},
 		{Key: "email", Label: l.List.Columns.Email, NoSort: true},
-		{Key: "students", Label: l.List.Columns.Students, NoFilter: true, Align: "right"},
+		{Key: "clients", Label: l.List.Columns.Clients, NoFilter: true, Align: "right"},
 	}
 }
 
